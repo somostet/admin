@@ -6,7 +6,7 @@ var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(600);
 canvas.setWidth(600);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
-canvas.setBackgroundImage('./public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
+canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
   height: canvas.height
 });
@@ -34,7 +34,7 @@ function center (){
 }
 
 function download (){
-    var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    var image = canvas.toDataURL("image/png");
     window.location.href=image;     
 }
 
