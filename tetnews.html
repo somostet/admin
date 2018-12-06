@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="./public/vendor/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./public/css/style.css">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <meta property="og:image" content="./public/img/Logotet.png" />
+    <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
+    <title>Tet News Generator</title>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-black">
+        <a class="navbar-brand" href="#">tu espacio tecnológico</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="home.html">home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="">support</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="">database</a>
+                </li>
+            </ul>
+            <span class="navbar-text text-white">Bienvenid@, Sr. Usuario&nbsp; | </span>
+            <span class="navbar-text text-white">&nbsp; <a href="index.html">Cerrar Sesión</a></span>
+        </div>  
+      </nav>
+
+    <!-- Cuerpo -->
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col-xl-2">
+                <ul class="list-group list-group-flush">
+                    <a href="home.html" class="list-group-item list-group-item-action active"><i class="fa fa-external-link-square" aria-hidden="true"></i>&nbsp;tet news</a>
+                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-tasks" aria-hidden="true"></i>&nbsp;Curiosidades</a>
+                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-smile-o" aria-hidden="true"></i>&nbsp;Articulos</a>
+                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-shield" aria-hidden="true"></i>&nbsp;Especiales</a>
+                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-bar-chart" aria-hidden="true"></i>&nbsp;Por publicar</a>
+                </ul>
+                <img src="./public/img/Logotet.png" class="w-100 mt-3 d-none d-md-block"/>
+            </div>
+            <div class="col">
+                <div class="alert alert-primary" role="alert">
+                    <h3>Generador de tet news</h3>
+                </div>
+                <form autocomplete="on">
+                    <div class="container-fluid border rounded border-dark pt-3 pb-3">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <label for="titular">Titular</label>
+                                    <input type="text" class="form-control" id="titular" autofocus>
+                                </div>
+                                <div class="form-group">
+                                    <label for="detalles">Detalles</label>
+                                    <textarea class="form-control text-justify" id="detalles" rows="6" cols="50"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="imagen">Imagen</label>
+                                    <input type="file" class="form-control" id="imagen" accept="image/*" onchange="picload()" crossOrigin="anonymous">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sombra">Sombra:</label>
+                                    <input type="range" value="0" min="0" max="100" class="form-control-range" id="sombra">
+                                </div>
+                                <button type="button" class="btn btn-success btn-lg btn-block" onclick="center()">Centrar</button>
+                                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="generate()">Generar</button>
+                                <button type="button" class="btn btn-danger btn-lg btn-block" onclick="remover()">Remover</button>
+                            </div>
+                            <div class="col-sm-8">
+                                Imagen generada:
+                                <div id="img" class="border border-dark rounded mt-1 mb-2 w-100" crossOrigin="anonymous">
+                                    <canvas id="tetnews" crossOrigin="anonymous"></canvas>
+                                </div>
+                                
+                                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="download()">Descargar</button>
+                                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="publish()">Publicar</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>     
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- Modal -->
+    <div class="modal" id="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">tet news</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-cuerpo">
+                    <p>Modal body text goes here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark">
+        <!-- Copyright-->
+        <div class="footer-copyright bg-black py-3 text-white text-center mt-2">
+                © 2018 Copyright:
+                    <span class="font-weight-bold">tu espacio tecnológico</span>
+                <br>Servicio de Administración
+            </div>
+        <!--/.Copyright -->
+    </footer>
+
+    <!-- Scripts -->
+    <script src="./public/vendor/jquery/jquery-3.3.1.min.js"></script>
+    <script src="./public/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="./public/vendor/fabricjs/fabric.min.js"></script>
+    <script src="./public/js/main.js"></script>
+    <script>
+        document.getElementById("sombra").step = "1";
+    </script>
+</body>
+</html>
