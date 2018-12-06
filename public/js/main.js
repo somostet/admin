@@ -34,8 +34,10 @@ function center (){
 }
 
 function download (){
-    var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-    window.location.href=image+".png";     
+    /*var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    window.location.href=image;  */
+    ReImg.fromCanvas(document.getElementById('tetnews')).toPng()
+    ReImg.fromCanvas(document.getElementById('tetnews')).downloadPng()
 }
 
 function remover (){
