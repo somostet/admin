@@ -10,7 +10,7 @@
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
-    <title>Tet News Generator</title>
+    <title>tet news Generator</title>
 </head>
 <body>
     <!-- Navbar -->
@@ -73,6 +73,10 @@
                                 <div class="form-group">
                                     <label for="sombra">Sombra:</label>
                                     <input type="range" value="0" min="0" max="100" class="form-control-range" id="sombra">
+                                </div>
+                                <div class="form-group">
+                                    <label for="color">Color:</label>
+                                    <input type="color" id="color" name="favcolor" value="#ff0000">
                                 </div>
                                 <button type="button" class="btn btn-success btn-lg btn-block" onclick="center()">Centrar</button>
                                 <button type="button" class="btn btn-primary btn-lg btn-block" onclick="generate()">Generar</button>

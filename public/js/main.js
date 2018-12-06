@@ -25,6 +25,21 @@ document.getElementById('sombra').oninput = function sombrear(){
     canvas.renderAll();
 }
 
+document.getElementById('color').oninput = function colored(){
+    var color = this.value;
+    var obj = canvas.getActiveObject();
+    if (obj) {
+        var style = { };
+        style['fill'] = color;
+        obj.setSelectionStyles(style).setCoords();
+        /*obj.set({
+            fill: color
+        });*/
+    }
+
+    canvas.renderAll();
+}
+
 function center (){
     var obj = canvas.getActiveObject();
     if (obj){
@@ -71,6 +86,7 @@ function generate(){
     var titulo = titular.value;
     var detail = detalles.value;
     var shad = sombra.value;
+    var col = color.value;
         
     fabric.Image.fromURL(globalpic, function(oImg) {
         canvas.add(oImg);
@@ -80,7 +96,8 @@ function generate(){
     canvas.add(new fabric.IText(titulo, { 
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
-        fill: '#333',
+        textAlign: 'justify-center',
+        fill: col,
         fontSize: 72
     }));
 
@@ -88,7 +105,7 @@ function generate(){
         width: canvas.width -100,
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
-        fill: '#333',
+        fill: col,
         textAlign: 'justify-left',
         fontSize: 32
     }));
