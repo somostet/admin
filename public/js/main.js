@@ -8,8 +8,7 @@ canvas.setWidth(600);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
 canvas.setBackgroundImage('./public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
-  height: canvas.height,
-  crossOrigin: 'anonymous'
+  height: canvas.height
 });
 /* fin canvas code*/
 
@@ -35,8 +34,8 @@ function center (){
 }
 
 function download (){
-    var dataURL = canvas.toDataURL('image/png');
-    button.href = dataURL;
+    var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    window.location.href=image;     
 }
 
 function remover (){
