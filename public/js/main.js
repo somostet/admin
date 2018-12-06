@@ -34,8 +34,8 @@ function center (){
 }
 
 function download (){
-    var image = canvas.toDataURL("image/png");
-    window.location.href=image;     
+    var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    window.location.href=image+".png";     
 }
 
 function remover (){
