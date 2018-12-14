@@ -1,55 +1,178 @@
+<!DOCTYPE html>
 <html>
 
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>tu espacio tecnológico</title>
-  <link rel="stylesheet" href="./public/vendor/bootstrap/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="./public/css/style.css" />
-  <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
-  <meta property="og:image" content="./public/img/Logotet.png" />
-    <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>tet | Admin</title>
+
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <!-- Our Custom CSS -->
+    <link rel="stylesheet" href="./public/css/styleB.css">
+    <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
+
+    <!-- Font Awesome JS -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
+    
 </head>
 
-<body class="bg-secondary">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-black"><a class="navbar-brand" href="#">tu espacio tecnológico | administrador</a></nav>
-  <div class="container-fluid">
-    <div class="row mt-3">
-      <div class="col-sm-4 offset-sm-4 bg-white pt-3 border rounded">
-        <form>
-          <fieldset class="border border-dark">
-            <h3>Iniciar Sesión</h3>
-            <h6>Este servicio es solo para los administradores</h6>
-            <h6 style="color:blue;"></h6>
-            <div class="form-group">
-              <label for="email">Correo Electrónico</label>
-              <input class="form-control" id="email" type="email" name="email" required="" aria-describedby="email" placeholder="Introduzca su correo" />
+<body>
+
+    <div class="wrapper">
+        <!-- Sidebar Holder -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h3>tet</h3>
             </div>
-            <div class="form-group">
-              <label for="pass">Contraseña</label><a href="#" style="float: right;">¿Olvidó su contraseña?</a>
-              <input class="form-control" id="pass" type="password" name="password" required="" placeholder="Introduzca su contraseña" />
-            </div>
-            <small class="text-justify">¿Problemas iniciando sesión? Confirme que su navegador tenga activados los cookies y el javascript.</small>
-            <br><br><br><br><br><br><a href="tetnews.html"><button class="btn btn-primary btn-right" type="submit">Iniciar Sesión</button></a>
-        </fieldset>
-        </form>
-      </div>
-    </div>
-  </div>
-  <script src="./public/vendor/jquery/dist/jquery.min.js"></script>
-  <script src="./public/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
-  <!-- Footer-->
-  <!-- Footer -->
-  <footer class="bg-dark">
-        <!-- Copyright-->
-        <div class="footer-copyright bg-black py-3 text-white text-center mt-2 fixed-bottom">
-            © 2018 Copyright:
-                <span class="font-weight-bold">tu espacio tecnológico</span>
-            <br>Servicio de Administración
+
+            <ul class="list-unstyled components">
+                <p>Creador de imágenes</p>
+                <li class="active">
+                    <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Home</a>
+                    <ul class="collapse list-unstyled" id="homeSubmenu">
+                        <li>
+                            <a href="#">Home 1</a>
+                        </li>
+                        <li>
+                            <a href="#">Home 2</a>
+                        </li>
+                        <li>
+                            <a href="#">Home 3</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#">About</a>
+                    <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Pages</a>
+                    <ul class="collapse list-unstyled" id="pageSubmenu">
+                        <li>
+                            <a href="#">Page 1</a>
+                        </li>
+                        <li>
+                            <a href="#">Page 2</a>
+                        </li>
+                        <li>
+                            <a href="#">Page 3</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#">Portfolio</a>
+                </li>
+                <li>
+                    <a href="#">Contact</a>
+                </li>
+            </ul>
+
+        </nav>
+
+        <!-- Page Content Holder -->
+        <div id="content">
+
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+
+                    <button type="button" id="sidebarCollapse" class="navbar-btn">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <i class="fas fa-align-justify"></i>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav ml-auto">
+                            <li class="nav-item active">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            
+            <h2>Collapsible Sidebar Using Bootstrap 4</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+            <div class="line"></div>
+
+            <h2>Lorem Ipsum Dolor</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+            <div class="line"></div>
+
+            <h2>Lorem Ipsum Dolor</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+            <div class="line"></div>
+
+            <h3>Lorem Ipsum Dolor</h3>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
         </div>
-        <!--/.Copyright -->
+    </div>
+    <footer class="" style="background-color: #1a1a1a; ">
+            <!-- Copyright-->
+            <div class="footer-copyright py-3 text-white text-center pt-5">
+              <p class="text-center">
+                <img class="img-fluid" src="./public/img/Logotet.png" width="50px" height="50px" alt="tet">
+              </p>
+                © 2018 Copyright: 
+                <a href="https://www.facebook.com/TuEspacioT/ " target="_blank" rel="noopener">
+                    tu espacio tecnológico
+                </a>
+        
+                <br>La tecnologia tiene su espacio<br>
+                <!-- Redes Sociales -->
+                <div class="text-center mt-3">
+                    <!--Facebook-->
+                    <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" class="fb-ic ml-0">
+                        <i class="fa fa-facebook text-white" aria-hidden="true"></i>
+                    </a>
+                    <!--Twitter-->
+                    <a href="https://twitter.com/TuEspacioTecno" target="_blank" rel="noopener" class="tw-ic pl-2">
+                        <i class="fa fa-twitter text-white"> </i>
+                    </a>
+                    <!--Youtube-->
+                    <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg?view_as=subscriber" target="_blank" rel="noopener" class="ytube-ic pl-2">
+                        <i class="fa fa-youtube text-white"> </i>
+                    </a>
+                    <!--Instagram-->
+                    <a href="https://www.instagram.com/tet_507/" target="_blank" rel="noopener" class="ins-ic pl-2">
+                        <i class="fa fa-instagram text-white"> </i>
+                    </a>
+                </div>
+            </div>
     </footer>
+
+    <!-- jQuery CDN - Slim version (=without AJAX) -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <!-- Popper.JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#sidebarCollapse').on('click', function () {
+                $('#sidebar').toggleClass('active');
+                $(this).toggleClass('active');
+            });
+        });
+    </script>
 </body>
 
 </html>
