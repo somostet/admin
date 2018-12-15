@@ -14,8 +14,8 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-black">
-        <a class="navbar-brand" href="#">tu espacio tecnológico</a>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-black" style="background-color: #1a1a1a; ">
+        <a class="navbar-brand" href="https://t-e-t.github.io/">tu espacio tecnológico</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -23,39 +23,25 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
-                    <a class="nav-link" href="tetnews.html">home</a>
+                    <a class="nav-link" href="tetnews.html">tet news</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="">support</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="">database</a>
+                    <a class="nav-link" href="./index.html">Admin</a>
                 </li>
             </ul>
-            <span class="navbar-text text-white">Bienvenid@, Sr. Usuario&nbsp; | </span>
-            <span class="navbar-text text-white">&nbsp; <a href="index.html">Cerrar Sesión</a></span>
+
         </div>  
       </nav>
 
     <!-- Cuerpo -->
     <div class="container-fluid">
         <div class="row mt-3">
-            <div class="col-xl-2">
-                <ul class="list-group list-group-flush">
-                    <a href="tetnews.html" class="list-group-item list-group-item-action active"><i class="fa fa-external-link-square" aria-hidden="true"></i>&nbsp;tet news</a>
-                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-tasks" aria-hidden="true"></i>&nbsp;Curiosidades</a>
-                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-smile-o" aria-hidden="true"></i>&nbsp;Articulos</a>
-                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-shield" aria-hidden="true"></i>&nbsp;Especiales</a>
-                    <a href="" class="list-group-item list-group-item-action"><i class="fa fa-bar-chart" aria-hidden="true"></i>&nbsp;Por publicar</a>
-                </ul>
-                <img src="./public/img/Logotet.png" class="w-100 mt-3 d-none d-md-block"/>
-            </div>
             <div class="col">
-                <div class="alert alert-primary" role="alert">
+                <div class="alert text-center" role="alert">
                     <h3>Generador de tet news</h3>
                 </div>
-                <form autocomplete="on">
-                    <div class="container-fluid border rounded border-dark pt-3 pb-3">
+                <form autocomplete="on" class="pb-5">
+                    <div class="container-fluid border rounded border-muted pt-3 pb-3">
                         <div class="row">
                             <div class="col-sm-4">
                                 <div class="form-group">
@@ -78,18 +64,21 @@
                                     <label for="color">Color:</label>
                                     <input type="color" id="color" name="favcolor" value="#ff0000">
                                 </div>
-                                <button type="button" class="btn btn-success btn-lg btn-block" onclick="center()">Centrar</button>
                                 <button type="button" class="btn btn-primary btn-lg btn-block" onclick="generate()">Generar</button>
+                                <button type="button" class="btn btn-success btn-lg btn-block" onclick="center()">Centrar</button>
                                 <button type="button" class="btn btn-danger btn-lg btn-block" onclick="remover()">Remover</button>
                             </div>
                             <div class="col-sm-8">
-                                Imagen generada:
-                                <div id="img" class="border border-dark rounded mt-1 mb-2 w-100" crossOrigin="anonymous">
-                                    <canvas id="tetnews" crossOrigin="anonymous"></canvas>
+                                <h1>Imagen generada:</h1>
+                                <center>
+                                <div id="img" class=" text-center mt-1 mb-2 w-75" crossOrigin="anonymous">
+                                    <canvas id="tetnews"  crossOrigin="anonymous"></canvas>
                                 </div>
-                                
+                              </center>
+                                <p class="text-center">
                                 <button type="button" id=button class="btn btn-primary btn-lg btn-block" onclick="download()">Descargar</button>
                                 <button type="button" class="btn btn-primary btn-lg btn-block" onclick="publish()">Publicar</button>
+                            </p>
                             </div>
                         </div>
                     </div>
@@ -99,33 +88,22 @@
     </div>
     
 
-    <!-- Modal -->
-    <div class="modal" id="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">tet news</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="modal-cuerpo">
-                    <p>Modal body text goes here.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
-    <footer class="bg-dark">
-        <!-- Copyright-->
-        <div class="footer-copyright bg-black py-3 text-white text-center mt-2">
-                © 2018 Copyright:
-                    <span class="font-weight-bold">tu espacio tecnológico</span>
-                <br>Servicio de Administración
+    <footer class="p-1" style="background-color: #1a1a1a; ">
+            <!-- Copyright-->
+            <div class="footer-copyright  pb-2 text-white text-center pt-3">
+              <p class="text-center">
+                    <a href="https://t-e-t.github.io/"><img class="img-fluid" src="./public/img/Logotet.png" width="50px" height="50px" alt="tet"></a>
+              </p>
+                © 2018 Copyright: 
+                <a href="https://www.facebook.com/TuEspacioT/ " target="_blank" rel="noopener">
+                    tu espacio tecnológico
+                </a>
+        
+                <br>La tecnologia tiene su espacio<br>
             </div>
-        <!--/.Copyright -->
     </footer>
+
 
     <!-- Scripts -->
     <script src="./public/vendor/jquery/jquery-3.3.1.min.js"></script>
