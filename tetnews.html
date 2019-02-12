@@ -1,107 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="./public/vendor/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="./public/vendor/bootstrap/css/bootstrap.min.css" />
     <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
-    <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
+    <meta name="description"
+        content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
     <title>tet news Generator</title>
 </head>
+
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-black" style="background-color: #1a1a1a; ">
-        <a class="navbar-brand" href="https://t-e-t.github.io/">tu espacio tecnológico</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-      
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="tetnews.html">tet news</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="./index.html">Admin</a>
-                </li>
-            </ul>
+    <div class="pos-f-t text-white">
+        <div class="collapse" id="navbarToggleExternalContent">
+            <div class="p-4" style="background: #161d2b;">
+                <h5 class="text-white h4">tu espacio tecnológico</h5>
+                <span class="text-muted">Aplicación de administración y creación de multimedia</span>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm">
+                            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="./tetnews.html">news tet</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Resumen tet news</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Diccionario Tecnológico tet</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-sm">
+                            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Creadores tet</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Miniaturas de YouTube</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Artículos</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-sm">
+                            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">tet Mascotas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Curiosidades tet</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">vs</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-sm">
+                            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Modo Creativo</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Momentos Históricos</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link  text-white" href="#">Ayuda</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        </div>  
-      </nav>
-
+        <nav class="navbar navbar-dark" style="background: #1d2b43;">
+            <button class="navbar-toggler" type="button" data-toggle="collapse"
+                data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand" href="index.html">tet admin</a>
+        </nav>
+    </div>
     <!-- Cuerpo -->
     <div class="container-fluid">
         <div class="row mt-3">
-            <div class="col">
-                <div class="alert text-center" role="alert">
-                    <h3>Generador de tet news</h3>
-                </div>
+            <div class="col-12">
                 <form autocomplete="on" class="pb-5">
-                    <div class="container-fluid border rounded border-muted pt-3 pb-3">
+                    <div class="container-fluid pt-3 pb-3">
                         <div class="row">
-                            <div class="col-sm-4">
+                            <div class="col-12 col-sm-4 shadow pt-3 pb-3 border">
                                 <div class="form-group">
-                                    <label for="titular">Titular</label>
+                                    <h5> <label for="titular">Titular</label></h5>
                                     <input type="text" class="form-control" id="titular" autofocus>
                                 </div>
                                 <div class="form-group">
-                                    <label for="detalles">Detalles</label>
-                                    <textarea class="form-control text-justify" id="detalles" rows="6" cols="50"></textarea>
+                                    <h5><label for="detalles">Detalles</label></h5>
+                                    <textarea class="form-control text-justify" id="detalles" rows="6"
+                                        cols="50"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="imagen">Imagen</label>
-                                    <input type="file" class="form-control" id="imagen" accept="image/*" onchange="picload()" crossOrigin="anonymous">
+                                    <h5> <label for="imagen">Imagen:</label></h5>
+                                    <input type="file" class="form-control-file" id="imagen" accept="image/*"
+                                        onchange="picload()" crossOrigin="anonymous">
                                 </div>
                                 <div class="form-group">
-                                    <label for="sombra">Sombra:</label>
-                                    <input type="range" value="0" min="0" max="100" class="form-control-range" id="sombra">
+                                    <h5><label for="sombra">Sombra:</label>
+                                        <input type="range" value="0" min="0" max="100" class="custom-range"
+                                            id="sombra">
                                 </div>
+
                                 <div class="form-group">
-                                    <label for="color">Color:</label>
-                                    <input type="color" id="color" name="favcolor" value="#ff0000">
+
+                                    <h5><label for="color">Colores:</label></h5>
+                                    <div class="row  p-5">
+                                        <div class="col p-2">
+                                            <div class="input-color-container">
+                                                <input type="color" id="color" class="input-color" name="favcolor"
+                                                    value="##000000">
+                                            </div>
+                                        </div>
+                                        <div class="col p-2">
+                                            <div class="input-color-container">
+                                                <input type="color" id="color2" class="input-color" name="favcolor"
+                                                    value="#0000FF">
+                                            </div>
+                                        </div>
+                                        <div class="col p-2">
+                                                <div class="input-color-container">
+                                                    <input type="color" id="color3" class="input-color" name="favcolor"
+                                                        value="#00FF00">
+                                                </div>
+                                            </div>
+                                            <div class="col p-2">
+                                                    <div class="input-color-container">
+                                                        <input type="color" id="color4" class="input-color" name="favcolor"
+                                                            value="#ff0000">
+                                                    </div>
+                                                </div>
+
+
+                                                                
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="generate()">Generar</button>
-                                <button type="button" class="btn btn-success btn-lg btn-block" onclick="center()">Centrar</button>
-                                <button type="button" class="btn btn-danger btn-lg btn-block" onclick="remover()">Remover</button>
+                                <button type="button" class="btn btn-primary btn-lg btn-block"
+                                    onclick="generate()">Generar</button>
+                                <button type="button" class="btn btn-success btn-lg btn-block"
+                                    onclick="center()">Centrar</button>
+                                <button type="button" class="btn btn-danger btn-lg btn-block"
+                                    onclick="remover()">Remover</button>
                             </div>
-                            <div class="col-sm-8">
-                                <h1>Imagen generada:</h1>
-                                <center>
-                                <div id="img" class=" text-center mt-1 mb-2 w-75" crossOrigin="anonymous">
-                                    <canvas id="tetnews"  crossOrigin="anonymous"></canvas>
-                                </div>
-                              </center>
+                            <div class="col-12 col-sm-8 p-5 table-responsive">
+
+                                    <div id="img" class=" mt-1 mb-2" crossOrigin="anonymous">
+                                       <center><canvas  id="tetnews" crossOrigin="anonymous"></canvas></center> 
+                                    </div>
+
+                                
                                 <p class="text-center">
-                                <button type="button" id=button class="btn btn-primary btn-lg btn-block" onclick="download()">Descargar</button>
-                                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="publish()">Publicar</button>
-                            </p>
+                                    <button type="button" id=button class="btn btn-primary btn-lg btn-block"
+                                        onclick="download()">Descargar</button>
+
+                                </p>
                             </div>
                         </div>
                     </div>
-                </form>     
+                </form>
             </div>
         </div>
     </div>
-    
+
 
     <!-- Footer -->
     <footer class="p-1" style="background-color: #1a1a1a; ">
-            <!-- Copyright-->
-            <div class="footer-copyright  pb-2 text-white text-center pt-3">
-              <p class="text-center">
-                    <a href="https://t-e-t.github.io/"><img class="img-fluid" src="./public/img/Logotet.png" width="50px" height="50px" alt="tet"></a>
-              </p>
-                © 2018 Copyright: 
-                <a href="https://www.facebook.com/TuEspacioT/ " target="_blank" rel="noopener">
-                    tu espacio tecnológico
-                </a>
-        
-                <br>La tecnologia tiene su espacio<br>
-            </div>
+        <!-- Copyright-->
+        <div class="footer-copyright  pb-2 text-white text-center pt-3">
+            <p class="text-center">
+                <a href="https://t-e-t.github.io/"><img class="img-fluid" src="./public/img/Logotet.png" width="50px"
+                        height="50px" alt="tet"></a>
+            </p>
+            © 2019 Copyright:
+            <a href="https://www.facebook.com/TuEspacioT/ " target="_blank" rel="noopener">
+                tu espacio tecnológico
+            </a>
+
+            <br>La tecnologia tiene su espacio<br>
+        </div>
     </footer>
 
 
@@ -115,4 +206,5 @@
         document.getElementById("sombra").step = "1";
     </script>
 </body>
+
 </html>
