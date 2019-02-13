@@ -3,8 +3,8 @@ var oImg;
 
 /* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
-canvas.setHeight(600);
-canvas.setWidth(600);
+canvas.setHeight(500);
+canvas.setWidth(500);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
 canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,

@@ -96,79 +96,52 @@
                 <form autocomplete="on" class="pb-5">
                     <div class="container-fluid pt-3 pb-3">
                         <div class="row">
-                            <div class="col-12 col-sm-4 shadow pt-3 pb-3 border">
+                            <div class="col-xs-12 col-sm-3 shadow pt-3 pb-3 border">
                                 <div class="form-group">
-                                    <h5> <label for="titular">Titular</label></h5>
+                                    <label for="titular">Titular</label>
                                     <input type="text" class="form-control" id="titular" autofocus>
                                 </div>
                                 <div class="form-group">
-                                    <h5><label for="detalles">Detalles</label></h5>
+                                    <label for="detalles">Detalles</label>
                                     <textarea class="form-control text-justify" id="detalles" rows="6"
                                         cols="50"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <h5> <label for="imagen">Imagen:</label></h5>
+                                    <label for="imagen">Imagen:</label>
                                     <input type="file" class="form-control-file" id="imagen" accept="image/*"
                                         onchange="picload()" crossOrigin="anonymous">
                                 </div>
                                 <div class="form-group">
-                                    <h5><label for="sombra">Sombra:</label>
-                                        <input type="range" value="0" min="0" max="100" class="custom-range"
-                                            id="sombra">
+                                    <label for="sombra">Sombra:</label>
+                                    <input type="range" value="0" min="0" max="100" class="custom-range" id="sombra">
                                 </div>
 
                                 <div class="form-group">
 
-                                    <h5><label for="color">Colores:</label></h5>
-                                    <div class="row  p-5">
-                                        <div class="col p-2">
-                                            <div class="input-color-container">
-                                                <input type="color" id="color" class="input-color" name="favcolor"
-                                                    value="##000000">
-                                            </div>
-                                        </div>
-                                        <div class="col p-2">
-                                            <div class="input-color-container">
-                                                <input type="color" id="color2" class="input-color" name="favcolor"
-                                                    value="#0000FF">
-                                            </div>
-                                        </div>
-                                        <div class="col p-2">
-                                                <div class="input-color-container">
-                                                    <input type="color" id="color3" class="input-color" name="favcolor"
-                                                        value="#00FF00">
-                                                </div>
-                                            </div>
-                                            <div class="col p-2">
-                                                    <div class="input-color-container">
-                                                        <input type="color" id="color4" class="input-color" name="favcolor"
-                                                            value="#ff0000">
-                                                    </div>
-                                                </div>
+                                    <label for="color">Color:</label>
 
-
-                                                                
+                                    <div class="input-color-container">
+                                        <input type="color" id="color" class="input-color" name="favcolor"
+                                            value="##000000">
                                     </div>
                                 </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-3 p-5">
                                 <button type="button" class="btn btn-primary btn-lg btn-block"
                                     onclick="generate()">Generar</button>
-                                <button type="button" class="btn btn-success btn-lg btn-block"
+                                <button type="button" class="btn btn-info btn-lg btn-block"
                                     onclick="center()">Centrar</button>
                                 <button type="button" class="btn btn-danger btn-lg btn-block"
                                     onclick="remover()">Remover</button>
+                                <button type="button" id=button class="btn btn-success btn-lg btn-block"
+                                    onclick="download()">Descargar</button>
                             </div>
-                            <div class="col-12 col-sm-8 p-5 table-responsive">
+                            <div class="col-12 col-sm-6 table-responsive">
 
-                                    <div id="img" class=" mt-1 mb-2" crossOrigin="anonymous">
-                                       <center><canvas  id="tetnews" crossOrigin="anonymous"></canvas></center> 
-                                    </div>
+                                <div id="img" class="" crossOrigin="anonymous">
+                                    <center><canvas id="tetnews" crossOrigin="anonymous"></canvas></center>
+                                </div>
 
-                                
-                                <p class="text-center">
-                                    <button type="button" id=button class="btn btn-primary btn-lg btn-block"
-                                        onclick="download()">Descargar</button>
-
-                                </p>
                             </div>
                         </div>
                     </div>
