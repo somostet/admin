@@ -13,7 +13,7 @@
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description"
         content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
-    <title>tet news Generator</title>
+    <title>Miniaturas Generator</title>
 </head>
 
 <body>
@@ -89,74 +89,36 @@
                     <a class="navbar-brand" href="index.html">tet admin</a>
                 </nav>
             </div>
-    <!-- Cuerpo -->
-    <div class="container-fluid">
-        <div class="row mt-3">
-            <div class="col-12">
-                <form autocomplete="on" class="pb-5">
-                    <div class="container-fluid pt-3 pb-3">
-                        <div class="row">
-                            <div class="col-xs-12 col-sm-3 shadow pt-3 pb-3 border">
-                                <div class="form-group">
-                                    <label for="titular">Titular</label>
-                                    <input type="text" class="form-control" id="titular" autofocus>
-                                </div>
-                                <div class="form-group">
-                                    <label for="detalles">Detalles</label>
-                                    <textarea class="form-control text-justify" id="detalles" rows="4"
-                                        cols="50"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="imagen">Imagen:</label>
-                                    <input type="file" class="form-control-file" id="imagen" accept="image/*"
-                                        onchange="picload()" crossOrigin="anonymous">
-                                </div>
-                                <div class="form-group">
-                                    <label for="sombra">Sombra:</label>
-                                    <input type="range" value="0" min="0" max="100" class="custom-range" id="sombra">
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label for="color">Color:</label>
-
-                                    <div class="input-color-container">
-                                        <input type="color" id="color" class="input-color" name="favcolor"
-                                            value="##000000">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-sm-3 p-5">
-                                <button type="button" class="btn btn-primary btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Generar" onclick="generate()"><i class="fa fa-cogs"
-                                        aria-hidden="true"></i></button>
-                                <button type="button" class="btn btn-info btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Centrar" onclick="center()"><i
-                                        class="fa fa-align-center" aria-hidden="true"></i></button>
-                                <button type="button" class="btn btn-danger btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Remover" onclick="remover()"><i class="fa fa-trash-o"
-                                        aria-hidden="true"></i></button>
-                                <button type="button" id=button class="btn btn-success btn-lg btn-block"
-                                    data-toggle="tooltip" data-placement="right" title="Descargar"
-                                    onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
-                            </div>
-                            <div class="col-12 col-sm-6 table-responsive">
-
-                                <div id="img" class="" crossOrigin="anonymous">
-                                    <center><canvas id="tetnews" crossOrigin="anonymous"></canvas></center>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                </form>
+    <div class="container p-5 m-t-5">
+            <h1 class="text-center p-2 pb-4">Generar Miniaturas para vídeos</h1>
+    <div class="row">
+        <div class="col">
+        <h2 class="text-center">YouTube</h2>
+    </div>
+    <div class="col">
+            <h2 class="text-center">Facebook</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col  p-2 m-2 border shadowE">
+            
+            <div class="text-center" onclick="location.href = './miniaturaY.html';">
+                <img class="img-fluid" src="./public/img/iconos/youtube.png" alt="miniaturas">
+            </div>
+        </div>
+        <div class="col  p-2 m-2 border shadowE">
+            <div class="text-center" onclick="location.href = './miniaturaF.html';">
+                <img class="img-fluid"  src="./public/img/iconos/facebook.png" alt="miniaturas">
             </div>
         </div>
     </div>
+    </div>
+    <br><br>
+
 
 
     <!-- Footer -->
-    <footer class="p-1" style="background-color: #1a1a1a; ">
+    <footer class="p-5" style="background-color: #1a1a1a; ">
         <!-- Copyright-->
         <div class="footer-copyright  pb-2 text-white text-center pt-3">
             <p class="text-center">
@@ -186,12 +148,6 @@
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
     <script src="./public/js/main.js"></script>
-    <script>
-        document.getElementById("sombra").step = "1";
-        $(document).ready(function () {
-            $('[data-toggle="tooltip"]').tooltip();
-        });
-    </script>
 </body>
 
 </html>
