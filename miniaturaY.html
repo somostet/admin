@@ -141,21 +141,21 @@
                                     <ul class="list-group list-group-horizontal  mx-auto justify-content-center">
                                         <li class="list-group-item"> <button type="button"
                                                 class="btn btn-primary btn-lg btn-block" data-toggle="tooltip"
-                                                data-placement="right" title="Generar" onclick="generate()"><i
+                                                data-placement="top" title="Generar" onclick="generate()"><i
                                                     class="fa fa-cogs" aria-hidden="true"></i></button></li>
                                         <li class="list-group-item">
                                             <button type="button" class="btn btn-info btn-lg btn-block"
-                                                data-toggle="tooltip" data-placement="right" title="Centrar"
+                                                data-toggle="tooltip" data-placement="top" title="Centrar"
                                                 onclick="center()"><i class="fa fa-align-center"
                                                     aria-hidden="true"></i></button></li>
                                         <li class="list-group-item">
                                             <button type="button" class="btn btn-danger btn-lg btn-block"
-                                                data-toggle="tooltip" data-placement="right" title="Remover"
+                                                data-toggle="tooltip" data-placement="top" title="Remover"
                                                 onclick="remover()"><i class="fa fa-trash-o"
                                                     aria-hidden="true"></i></button></li>
                                         <li class="list-group-item">
                                             <button type="button" id=button class="btn btn-success btn-lg btn-block"
-                                                data-toggle="tooltip" data-placement="right" title="Descargar"
+                                                data-toggle="tooltip" data-placement="top" title="Descargar"
                                                 onclick="download()"><i class="fa fa-download"
                                                     aria-hidden="true"></i></button></li>
                                     </ul>
@@ -202,6 +202,12 @@
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
     <script src="./public/js/miniaturas.js"></script>
+    <script>
+            document.getElementById("sombra").step = "1";
+            $(document).ready(function () {
+                $('[data-toggle="tooltip"]').tooltip();
+            });
+        </script>
 </body>
 
 </html>
