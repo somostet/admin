@@ -5,8 +5,8 @@ var oImg;
 var canvas = new fabric.Canvas('YouTube');
 canvas.setHeight(360);
 canvas.setWidth(640);
-canvas.setDimensions({width: 1200, height: 675}, {backstoreOnly: true});
-canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/Plantillas/miniaturaFB.png', canvas.renderAll.bind(canvas), {
+canvas.setDimensions({width: 1280, height: 720}, {backstoreOnly: true});
+canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/Plantillas/miniaturaYouTube.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
   height: canvas.height
 });
