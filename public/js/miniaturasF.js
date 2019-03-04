@@ -2,9 +2,9 @@ var globalpic;
 var oImg;
 
 /* inicio canvas code*/
-var canvas = new fabric.Canvas('YouTube');
-canvas.setHeight(360);
-canvas.setWidth(640);
+var canvas = new fabric.Canvas('FB');
+canvas.setHeight(337);
+canvas.setWidth(600);
 canvas.setDimensions({width: 1200, height: 675}, {backstoreOnly: true});
 canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/Plantillas/miniaturaFB.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
@@ -53,8 +53,8 @@ function download (){
     window.location.href=image;  */
     canvas.discardActiveObject();
     canvas.renderAll(); 
-    ReImg.fromCanvas(document.getElementById('YouTube')).toPng()
-    ReImg.fromCanvas(document.getElementById('YouTube')).downloadPng()
+    ReImg.fromCanvas(document.getElementById('FB')).toPng()
+    ReImg.fromCanvas(document.getElementById('FB')).downloadPng()
 }
 
 function remover (){
