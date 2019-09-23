@@ -105,19 +105,21 @@
     <div class="container p-5">
         <div class="row">
             <div class="jumbotron jumbotron-fluid">
-                <h1 class="display-4 text-center p-1">Generador de Diccionario Tecnológico</h1>
+                <h1 class=" text-center ">Generador de Diccionario Tecnológico</h1>
                 <hr class="my-4">
                 <p class="text-center">Fuente de la plantilla, tamaño del título del término, tamaño del texto y
                     separación entre letras.</p>
                 <img src="./public/img/dictec/Reglas.png" class="img-fluid" alt="Reglas">
                 <hr class="my-4">
-                <p class="p-3">hashtags:</p>
-                <p class="p-3">#DiccionarioTecnológico
+                <p><h3 class="pl-3">hashtags:</h3></p>
+                <p class="p-3"><button type="button" class="btn btn-secondary btn-sm float-right"onclick="copiar()" >Copiar</button></p>
+                <p class="p-3" id="texto">#DiccionarioTecnológico
                     #Tecnología #tech #tet #technologies
                     #technology #gadgets #instatech #techie #device #gadget #techy #electronics #computers #laptops
-                    #hack #electronic #screen #geek #nerd #smartphone #mobile #sweepstakes #innovation #contestalert #pc
-                    #android #deal #socialmedia #startup #software #smallbiz #developer #hardware
+                    #hack #electronic #geek #nerd #smartphone #mobile #innovation #pc
+                    #android #socialmedia #startup #software #developer #hardware
                 </p>
+
             </div>
         </div>
         <hr class="my-4">
@@ -175,6 +177,9 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
         integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
         crossorigin="anonymous"></script>
+
+    <script src="./public/js/dictec.js">
+    </script>
 
     <script type="text/javascript">
         $(document).ready(function () {
