@@ -1,6 +1,22 @@
 var globalpic;
 var oImg;
+var hc =500;
+var wc =500;
 
+function myFunction() {
+    if (x.matches) { // If media query matches
+        hc = 300;
+        wc = 300;
+      } else {
+          hc = 500;
+          wc = 500;
+      }
+    
+  }
+
+var x = window.matchMedia("(max-width: 700px)")
+myFunction(x) // Call listener function at run time
+x.addListener(myFunction) // Attach listener function on state changes
 /* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(500);
