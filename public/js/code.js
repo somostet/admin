@@ -30,22 +30,28 @@ canvas.setBackgroundImage('./public/img/dictec/code.png', canvas.renderAll.bind(
 /* fin canvas code*/
 
 
-function sombrear(){
-    var shad = this.value;
-    var obj = canvas.getActiveObject();
+function generate(){
+    var titulo = titular.value;
+    var detail = detalles.value;
 
-    canvas.renderAll();
-}
- function colored(){
-    var color = this.value;
-    var obj = canvas.getActiveObject();
+    
+    canvas.add(new fabric.IText(titulo, { 
+        fontFamily: 'Arial Rounded MT',
+        fontWeight: 'bold',
+        textAlign: 'justify-center',
+        fill: 'white',
+        fontSize: 72
+    }));
 
-
-    canvas.renderAll();
-}
-  
-
-
+    canvas.add(new fabric.Textbox(detail, { 
+        width: canvas.width -100,
+        fontFamily: 'Arial Rounded MT',
+        fontWeight: 'bold',
+        fill: 'white',
+        textAlign: 'justify-left',
+        fontSize: 32
+    }));
+}    
 function center (){
     var obj = canvas.getActiveObject();
     if (obj){
@@ -55,8 +61,6 @@ function center (){
 }
 
 function download (){
-    /*var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-    window.location.href=image;  */
     canvas.discardActiveObject();
     canvas.renderAll(); 
     ReImg.fromCanvas(document.getElementById('code')).toPng()
@@ -70,51 +74,6 @@ function remover (){
         canvas.renderAll();
     }
 }
-
-function picload(){
-    var preview = document.querySelector('img');
-    var file    = document.querySelector('input[type=file]').files[0];
-    var reader  = new FileReader();
-
-    reader.onloadend = function () {
-        globalpic = reader.result;
-    }
-
-    if (file) {
-        reader.readAsDataURL(file);
-    } else {
-        $("#modal").modal("show");
-        $("#modal-cuerpo").html(`El archivo no es soportado`);
-    }
-}
-
-function generate(){
-    var titulo = titular.value;
-    var detail = detalles.value;
-
-        
-    fabric.Image.fromURL(globalpic, function(oImg) {
-        canvas.add(oImg);
-        oImg.setShadow({ color: 'rgba(17,17,17,1)', blur: shad});
-      });
-    
-    canvas.add(new fabric.IText(titulo, { 
-        fontFamily: 'Arial Rounded MT',
-        fontWeight: 'bold',
-        textAlign: 'justify-center',
-        fill: col,
-        fontSize: 72
-    }));
-
-    canvas.add(new fabric.Textbox(detail, { 
-        width: canvas.width -100,
-        fontFamily: 'Arial Rounded MT',
-        fontWeight: 'bold',
-        fill: col,
-        textAlign: 'justify-left',
-        fontSize: 32
-    }));
-}    
 
 function publish(){
     $("#modal").modal("show");
