@@ -23,13 +23,14 @@ var canvas = new fabric.Canvas('code');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
-canvas.setBackgroundImage('./public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
+canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
   height: canvas.height
 });
 /* fin canvas code*/
 
-document.getElementById('sombra').oninput = function sombrear(){
+
+function sombrear(){
     var shad = this.value;
     var obj = canvas.getActiveObject();
     if (obj) {
@@ -42,8 +43,8 @@ document.getElementById('sombra').oninput = function sombrear(){
     canvas.renderAll();
 }
 
-document.getElementById('color').oninput = function colored(){
-    var color = this.value;
+function colored{
+    var color = FFFFFF;
     var obj = canvas.getActiveObject();
     if (obj) {
         var style = { };
@@ -56,6 +57,8 @@ document.getElementById('color').oninput = function colored(){
 
     canvas.renderAll();
 }
+  
+
 
 function center (){
     var obj = canvas.getActiveObject();
