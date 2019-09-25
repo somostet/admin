@@ -33,27 +33,13 @@ canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/dictec/code.
 function sombrear(){
     var shad = this.value;
     var obj = canvas.getActiveObject();
-    if (obj) {
-        obj.setShadow({
-            color: "#000000",
-            blur: shad
-        });
-    }
 
     canvas.renderAll();
 }
-
-function colored{
-    var color = FFFFFF;
+ function colored(){
+    var color = this.value;
     var obj = canvas.getActiveObject();
-    if (obj) {
-        var style = { };
-        style['fill'] = color;
-        obj.setSelectionStyles(style).setCoords();
-        /*obj.set({
-            fill: color
-        });*/
-    }
+
 
     canvas.renderAll();
 }
@@ -105,8 +91,7 @@ function picload(){
 function generate(){
     var titulo = titular.value;
     var detail = detalles.value;
-    var shad = sombra.value;
-    var col = color.value;
+
         
     fabric.Image.fromURL(globalpic, function(oImg) {
         canvas.add(oImg);
