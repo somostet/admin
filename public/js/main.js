@@ -114,7 +114,11 @@ function generate(){
         fontWeight: 'bold',
         textAlign: 'justify-center',
         fill: col,
-        fontSize: 72
+        fontSize: 72,
+        cornerColor: 'black',
+        cornerSize: 20,
+        borderColor: 'black',
+        transparentCorners: false
     }));
 
     canvas.add(new fabric.Textbox(detail, { 
@@ -123,7 +127,11 @@ function generate(){
         fontWeight: 'bold',
         fill: col,
         textAlign: 'justify-left',
-        fontSize: 32
+        fontSize: 32,
+        cornerColor: 'black',
+        cornerSize: 20,
+        borderColor: 'black',
+        transparentCorners: false
     }));
 }    
 

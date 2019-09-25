@@ -25,10 +25,11 @@ canvas.setWidth(wc);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
 canvas.setBackgroundImage('./public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
-  height: canvas.height
+  height: canvas.height,
+  
 });
-/* fin canvas code*/
 
+/* fin canvas code*/
 
 function generate(){
     var titulo = titular.value;
@@ -38,18 +39,32 @@ function generate(){
     canvas.add(new fabric.IText(titulo, { 
         fontFamily: 'Arial Rounded MT',
         fontWeight: 'bold',
-        textAlign: 'justify-center',
+        textAlign: 'center',
         fill: 'white',
-        fontSize: 72
+        fontSize: 72,
+        shadow: 'rgba(0,0,0) 2px 2px 2px',
+        left: 200,
+        top: 200,
+        cornerColor: 'white',
+        cornerSize: 20,
+        borderColor: 'white',
+        transparentCorners: false
     }));
 
     canvas.add(new fabric.Textbox(detail, { 
-        width: canvas.width -100,
+        width: canvas.width -350,
         fontFamily: 'Arial Rounded MT',
         fontWeight: 'bold',
         fill: 'white',
         textAlign: 'justify-left',
-        fontSize: 32
+        fontSize: 32, 
+        shadow: 'rgba(0,0,0) 2px 2px 2px',
+        left: 200,
+        top: 400,
+        cornerColor: 'white',
+        cornerSize: 20,
+        borderColor: 'white',
+        transparentCorners: false
     }));
 }    
 function center (){
@@ -73,9 +88,4 @@ function remover (){
         canvas.remove(obj);
         canvas.renderAll();
     }
-}
-
-function publish(){
-    $("#modal").modal("show");
-    $("#modal-cuerpo").html(`La imagen ha sido publicada`);
 }
