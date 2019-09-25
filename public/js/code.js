@@ -14,7 +14,7 @@ function myFunction() {
     
   }
 
-var x = window.matchMedia("(max-width: 700px)")
+var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
 x.addListener(myFunction) // Attach listener function on state changes
 
@@ -23,7 +23,7 @@ var canvas = new fabric.Canvas('code');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
-canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
+canvas.setBackgroundImage('./public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
   height: canvas.height
 });
@@ -111,7 +111,7 @@ function generate(){
       });
     
     canvas.add(new fabric.IText(titulo, { 
-        fontFamily: 'sans-serif',
+        fontFamily: 'Arial Rounded MT',
         fontWeight: 'bold',
         textAlign: 'justify-center',
         fill: col,
@@ -120,7 +120,7 @@ function generate(){
 
     canvas.add(new fabric.Textbox(detail, { 
         width: canvas.width -100,
-        fontFamily: 'sans-serif',
+        fontFamily: 'Arial Rounded MT',
         fontWeight: 'bold',
         fill: col,
         textAlign: 'justify-left',

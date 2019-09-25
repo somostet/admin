@@ -99,52 +99,35 @@
                         <div class="row">
                             <div class="col-xs-12 col-sm-3 shadow pt-3 pb-3 border">
                                 <div class="form-group">
-                                    <label for="titular">Titular</label>
+                                    <label for="titular">Término:</label>
                                     <input type="text" class="form-control" id="titular" autofocus>
                                 </div>
                                 <div class="form-group">
-                                    <label for="detalles">Detalles</label>
+                                    <label for="detalles">Significado:</label>
                                     <textarea class="form-control text-justify" id="detalles" rows="4"
                                         cols="50"></textarea>
                                 </div>
-                                <div class="form-group">
-                                    <label for="imagen">Imagen:</label>
-                                    <input type="file" class="form-control-file" id="imagen" accept="image/*"
-                                        onchange="picload()" crossOrigin="anonymous">
-                                </div>
-                                <div class="form-group">
-                                    <label for="sombra">Sombra:</label>
-                                    <input type="range" value="0" min="0" max="100" class="custom-range" id="sombra">
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label for="color">Color:</label>
-
-                                    <div class="input-color-container">
-                                        <input type="color" id="color" class="input-color" name="favcolor"
-                                            value="##000000">
-                                    </div>
-                                </div>
+                                <br> <br>
+                                <div class="text-center"> <button type="button" class="btn btn-primary text-center" data-toggle="tooltip"
+                                        data-placement="top" title="Generar" onclick="generate()"><i class="fa fa-cogs"
+                                            aria-hidden="true"></i></button>
+                                    <button type="button" class="btn btn-info text-center " data-toggle="tooltip"
+                                        data-placement="top" title="Centrar" onclick="center()"><i
+                                            class="fa fa-align-center" aria-hidden="true"></i></button>
+                                    <button type="button" class="btn btn-danger text-center " data-toggle="tooltip"
+                                        data-placement="top" title="Remover" onclick="remover()"><i
+                                            class="fa fa-trash-o" aria-hidden="true"></i></button>
+                                    <button type="button" id=button class="btn btn-success text-center "
+                                        data-toggle="tooltip" data-placement="top" title="Descargar"
+                                        onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
+                              </div>
                             </div>
-                            <div class="col-xs-12 col-sm-3 p-5">
-                                <button type="button" class="btn btn-primary btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Generar" onclick="generate()"><i class="fa fa-cogs"
-                                        aria-hidden="true"></i></button>
-                                <button type="button" class="btn btn-info btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Centrar" onclick="center()"><i
-                                        class="fa fa-align-center" aria-hidden="true"></i></button>
-                                <button type="button" class="btn btn-danger btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Remover" onclick="remover()"><i class="fa fa-trash-o"
-                                        aria-hidden="true"></i></button>
-                                <button type="button" id=button class="btn btn-success btn-lg btn-block"
-                                    data-toggle="tooltip" data-placement="right" title="Descargar"
-                                    onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
                             </div>
-                            <div class="col-12 col-sm-6 table-responsive">
+
+                            <div class="col-12 col-sm-9 table-responsive">
 
                                 <div id="img" class="" crossOrigin="anonymous">
-                                    <center><canvas id="tetnews" crossOrigin="anonymous"></canvas></center>
+                                    <center><canvas id="code" crossOrigin="anonymous"></canvas></center>
                                 </div>
 
                             </div>
@@ -154,7 +137,7 @@
             </div>
         </div>
     </div>
-
+    <br><br><br><br><br>
 
     <footer class="page-footer font-small text-light pt-4" style="background: rgb(23, 32, 42);">
 
@@ -170,7 +153,6 @@
         </div>
 
         <br>
-
 
     </footer>
     <div class="py-3 p-4 text-center" style="background: rgb(32, 39, 48);"> <a href="https://t-e-t.github.io/"

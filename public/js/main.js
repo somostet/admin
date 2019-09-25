@@ -14,13 +14,13 @@ function myFunction() {
     
   }
 
-var x = window.matchMedia("(max-width: 700px)")
+var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
 x.addListener(myFunction) // Attach listener function on state changes
 /* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
-canvas.setHeight(500);
-canvas.setWidth(500);
+canvas.setHeight(hc);
+canvas.setWidth(wc);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
 canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
