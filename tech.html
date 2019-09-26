@@ -1,30 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="description" content="Página principal de tet.">
-    <meta name="keywords" content="tech,tecnológia">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
-    <title>tet | Generador de Diccionario Tecnológico</title>
-
-    <!-- Bootstrap CSS CDN -->
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <!-- Our Custom CSS -->
-    <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
-
-    <!-- Font Awesome JS -->
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js"
-        integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ"
-        crossorigin="anonymous"></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js"
-        integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY"
-        crossorigin="anonymous"></script>
-
+    <link rel="stylesheet" href="./public/css/style.css">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <meta property="og:image" content="./public/img/Logotet.png" />
+    <meta name="description"
+        content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
+    <title>tet | Generador de Diccionario Tecnológico</title>
 </head>
 
 <body>
@@ -101,55 +90,54 @@
             <a class="navbar-brand" href="index.html">tet admin</a>
         </nav>
     </div>
-    <div class="container p-5">
-        <div class="row">
-            <div class="jumbotron jumbotron-fluid">
-                <h1 class=" text-center ">Generador de Diccionario Tecnológico</h1>
-                <hr class="my-4">
-                <p class="text-center">Fuente de la plantilla, tamaño del título del término, tamaño del texto y
-                    separación entre letras.</p>
-                <img src="./public/img/dictec/Reglas.png" class="img-fluid" alt="Reglas">
-                <hr class="my-4">
-                <p>
-                    <h3 class="pl-3">hashtags:</h3>
-                </p>
-                <p class="p-3"><button type="button" class="btn btn-secondary btn-sm float-right"
-                        onclick="copiar()">Copiar</button></p>
-                <p class="p-3" id="texto">#DiccionarioTecnológico
-                    #Tecnología #tech #tet #technologies
-                    #technology #gadgets #instatech #techie #device #gadget #techy #electronics #computers #laptops
-                    #hack #electronic #geek #nerd #smartphone #mobile #innovation #pc
-                    #android #socialmedia #startup #software #developer #hardware
-                </p>
+    <!-- Cuerpo -->
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col-12">
+                <form autocomplete="on" class="pb-5">
+                    <div class="container-fluid pt-3 pb-3">
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-3 shadow pt-3 pb-3 border">
+                                <div class="form-group">
+                                    <label for="titular">Término:</label>
+                                    <input type="text" class="form-control" id="titular" autofocus>
+                                </div>
+                                <div class="form-group">
+                                    <label for="detalles">Significado:</label>
+                                    <textarea class="form-control text-justify" id="detalles" rows="4"
+                                        cols="50"></textarea>
+                                </div>
+ 
+                                <br> <br>
+                               <div class="text-center"> <button type="button" class="btn btn-primary text-center" data-toggle="tooltip"
+                                    data-placement="top" title="Generar" onclick="generate()"><i class="fa fa-cogs"
+                                        aria-hidden="true"></i></button>
+                                <button type="button" class="btn btn-info text-center " data-toggle="tooltip"
+                                    data-placement="top" title="Centrar" onclick="center()"><i
+                                        class="fa fa-align-center" aria-hidden="true"></i></button>
+                                <button type="button" class="btn btn-danger text-center " data-toggle="tooltip"
+                                    data-placement="top" title="Remover" onclick="remover()"><i class="fa fa-trash-o"
+                                        aria-hidden="true"></i></button>
+                                <button type="button" id=button class="btn btn-success text-center "
+                                    data-toggle="tooltip" data-placement="top" title="Descargar"
+                                    onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button></div>
+                            </div>
 
-            </div>
-        </div>
-        <hr class="my-4">
-        <h1 class="text-center p-3">Elije la Plantilla</h1>
-        <hr class="my-4">
-        <div class="row p-5 text-center">
+                            <div class="col-12 col-sm-9 table-responsive">
+                                <br>
+                                <div id="img" class="" crossOrigin="anonymous">
+                                    <center><canvas id="code" crossOrigin="anonymous"></canvas></center>
+                                </div>
 
-            <div class="col-lg-4 col-sm-12 p-2">
-
-                <a href="./code.html"><img src="./public/img/dictec/code.png" class="card-img-top shadowI"
-                        alt="code"></a>
-
-            </div>
-            <div class="col-lg-4 col-sm-12 p-2">
-
-                <a href="./tech.html"> <img src="./public/img/dictec/tech.png" class="card-img-top shadowI"
-                        alt="tech"></a>
-
-            </div>
-            <div class="col-lg-4 col-sm-12 p-2">
-
-                <a href="./game.html"><img src="./public/img/dictec/game.png" class="card-img-top shadowI"
-                        alt="game"></a>
-
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <br>
+    <br><br><br><br><br>
+
     <footer class="page-footer font-small text-light pt-4" style="background: rgb(23, 32, 42);">
 
         <div class="container-fluid text-center  text-light">
@@ -165,33 +153,26 @@
 
         <br>
 
-
     </footer>
     <div class="py-3 p-4 text-center" style="background: rgb(32, 39, 48);"> <a href="https://t-e-t.github.io/"
             class="text-white">© 2019 Copyright tet</a></div>
 
-    <!-- jQuery CDN - Slim version (=without AJAX) -->
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
-    <!-- Popper.JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"
-        integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+        integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
         crossorigin="anonymous"></script>
-    <!-- Bootstrap JS -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
-        integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+        integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
-
-    <script src="./public/js/dictec.js">
-    </script>
-
-    <script type="text/javascript">
+    <script src="./public/vendor/fabricjs/fabric.min.js"></script>
+    <script src="./public/vendor/reimg/reimg.js"></script>
+    <script src="./public/js/tech.js"></script>
+    <script>
         $(document).ready(function () {
-            $('#sidebarCollapse').on('click', function () {
-                $('#sidebar').toggleClass('active');
-                $(this).toggleClass('active');
-            });
+            $('[data-toggle="tooltip"]').tooltip();
         });
     </script>
 </body>
