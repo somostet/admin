@@ -88,9 +88,15 @@ function generate(){
     var shad = sombra.value;
     var col = color.value;
         
+    var filter = new fabric.Image.filters.Blur({
+        blur: shad
+      });
+
     fabric.Image.fromURL(globalpic, function(oImg) {
+        oImg.filters.push(filter);
+        oImg.applyFilters();
+        oImg.set('padding', 20);
         canvas.add(oImg);
-        oImg.setShadow({ color: 'rgba(17,17,17,1)', blur: shad});
       });
     
     canvas.add(new fabric.IText(titulo, { 
