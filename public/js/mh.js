@@ -23,7 +23,7 @@ var canvas = new fabric.Canvas('mh');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
-canvas.setBackgroundImage('./public/img/Plantillas/mh.png', canvas.renderAll.bind(canvas), {
+canvas.setBackgroundImage('./admin/public/img/Plantillas/mh.png', canvas.renderAll.bind(canvas), {
   width: canvas.width,
   height: canvas.height,
   
