@@ -1,0 +1,9 @@
+{
+    "name": "tet admin",
+    "short_name": "tet admin",
+    "theme_color": "#0660a7",
+    "background_color": "#ffffff",
+    "display": "fullscreen",
+    "scope": "/",
+    "start_url": "/"
+  }
