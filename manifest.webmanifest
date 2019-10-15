@@ -4,6 +4,5 @@
     "theme_color": "#0660a7",
     "background_color": "#ffffff",
     "display": "fullscreen",
-    "scope": "/admin",
-    "start_url": "/admin"
+    "start_url": "/admin/index.html"
   }
