@@ -11,34 +11,29 @@
     <title>tet | Admin</title>
 
     <!-- Bootstrap CSS CDN -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <!-- Our Custom CSS -->
     <link rel="stylesheet" href="./public/css/styleB.css">
     <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
 
     <!-- Font Awesome JS -->
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js"
-        integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ"
-        crossorigin="anonymous"></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js"
-        integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY"
-        crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
 
-    
+
     <!-- loading pwa -->
     <script src="public/vendor/workbox/workbox-sw.js"></script>
     <!-- manifest del app -->
     <link rel="manifest" href="manifest.webmanifest" />
-    
+
     <script>
-    // Check that service workers are supported
-    if ('serviceWorker' in navigator) {
-        // Use the window load event to keep the page load performant
-        window.addEventListener('load', () => {
-        navigator.serviceWorker.register('public/sw.js');
-        });
-    }
+        // Check that service workers are supported
+        if ('serviceWorker' in navigator) {
+            // Use the window load event to keep the page load performant
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('public/sw.js');
+            });
+        }
     </script>
 
 </head>
@@ -47,7 +42,7 @@
     <div class="pos-f-t text-white">
         <div class="collapse" id="navbarToggleExternalContent">
             <div class="p-4" style="background: #161d2b;">
-                <h5 class="text-white h4">tu espacio tecnológico</h5>
+                <h4 class="text-white h4">tu espacio tecnológico</h4>
                 <span class="text-muted">Aplicación de administración y creación de multimedia</span>
                 <div class="container">
                     <div class="row">
@@ -109,174 +104,214 @@
         </div>
 
         <nav class="navbar navbar-dark" style="background: #1d2b43;">
-            <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent"
-                aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <a class="navbar-brand" href="index.html">tet admin</a>
         </nav>
     </div>
 
-    <div class="container p-5">
-        <div class="row">
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        tet news
-                    </div>
+    <div class="container p-5 text-center">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb rounded shadow-sm text-center">
+                <li class="breadcrumb-item"><a href="./tetnews.html">tet news</a></li>
+                <li class="breadcrumb-item"><a href="./tetnewsR.html">Resumen tet news</a></li>
+                <li class="breadcrumb-item"><a href="./dictec.html">Diccionario Tecnológico tet</a></li>
+                <li class="breadcrumb-item"><a href="./miniaturas.html">Miniaturas</a></li>
+                <li class="breadcrumb-item"><a href="./historia.html">Momentos Históricos</a></li>
+                <li class="breadcrumb-item"><a href="./curio.html">Curiosidades tet</a></li>
+                <li class="breadcrumb-item"><a href="./mascotas.html">tet Mascotas</a></li>
+                <li class="breadcrumb-item"><a href="./articulos.html">Artículos</a></li>
+                <li class="breadcrumb-item"><a href="./creadores.html">Creadores tet</a></li>
+                <li class="breadcrumb-item"><a href="./vs.html">vs</a></li>
+                <li class="breadcrumb-item"><a href="./modoc.html">Modo Creativo</a></li>
+                <li class="breadcrumb-item"><a href="./ayuda.html">Ayuda</a></li>
+                <li class="breadcrumb-item active" aria-current="page">tet admin</li>
+            </ol>
+        </nav>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_news.png" class="card-img" alt="tetnews">
+                </div>
+                <div class="col-md-8">
                     <div class="card-body">
-                        <h5 class="card-title">Generador de tet news 🗞</h5>
+                        <h4 class="card-title">Generador de tet news 🗞</h4>
                         <p class="card-text">La sección de noticas del mundo de la tecnología.</p>
-                        <a href="./tetnews.html" class="btn btn-primary float-right float-right">Crear</a>
+                        <p class="card-text"><a href="./tetnews.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Diccionario Tecnológico tet
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Diccionario Tecnológico 📖</h5>
-                        <p class="card-text">Términos variados del mundo de la tecnología.</p>
-                        <a href="./dictec.html" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Miniaturas
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Miniaturas 🖼</h5>
-                        <p class="card-text">Generar Miniaturas para vídeos.</p>
-                        <a href="./miniaturas.html" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Acontecimientos Históricos
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Acontecimientos Históricos 📚</h5>
-                        <p class="card-text">Momentos importantes y curiosos para el mundo tech.</p>
-                        <a href="./historia.html" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Resumen tet news
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">tet news semanal 📰</h5>
-                        <p class="card-text">Resumen semanal de noticias publicadas en tet.</p>
-                        <a href="./tetnewsR.html" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Creadores tet
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Creadores tet 💡</h5>
-                        <p class="card-text">Personas que contribuyeron a la sociedad con su innovaciones.</p>
-                        <a href="./creadores" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Artículos
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Generador de miniaturas de Artículos 🖊</h5>
-                        <p class="card-text">Crea las portadas para los artículos de tet.</p>
-                        <a href="./articulos" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        tet mascotas/CEO
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Mascotas y CEO de las empresas tech 🐶👨‍💼</h5>
-                        <p class="card-text">Mascotas del mundo de la tecnología y CEO.</p>
-                        <a href="./mascotas" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        VS
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Versus 🥊</h5>
-                        <p class="card-text">Creación de imágenes para vs en encuestas.</p>
-                        <a href="./vs" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Curiosidades tet 
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Generador de Curiosidades tet😲🤯</h5>
-                        <p class="card-text">Crea imágenes para esta sección en tet.</p>
-                        <a href="./curio" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Modo Creativo 
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Generador de Plantillas y más 🎨</h5>
-                        <p class="card-text">Deja volar tu imaginación y crea nuevas imágenes.</p>
-                        <a href="./modoc" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 p-2">
-                <div class="card">
-                    <div class="card-header">
-                        Ayuda
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Ayuda ❓</h5>
-                        <p class="card-text">Tutorial de como usar este sistema.</p>
-                        <a href="./ayuda" class="btn btn-primary float-right">Crear</a>
-                    </div>
-                </div>
-            </div>
-
         </div>
-    </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_dictec.png" class="card-img" alt="dic tet">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Diccionario Tecnológico 📖</h4>
+                        <p class="card-text">Términos variados del mundo de la tecnología.</p>
+                        <p class="card-text"><a href="./dictec.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_mini.png" class="card-img" alt="miniaturas">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Miniaturas 🖼</h4>
+                        <p class="card-text">Generar Miniaturas para vídeos.</p>
+                        <p class="card-text"><a href="./miniaturas.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_ah.png" class="card-img" alt="acontecimientos">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Acontecimientos Históricos 📚</h4>
+                        <p class="card-text">Momentos importantes y curiosos para el mundo tech.</p>
+                        <p class="card-text"><a href="./historia.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_rnews.png" class="card-img" alt="tetnews semanal">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">tet news semanal 📰</h4>
+                        <p class="card-text">Resumen semanal de noticias publicadas en tet.</p>
+                        <p class="card-text"><a href="./tetnewsR.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_cre.png" class="card-img" alt="creadores">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Creadores tet 💡</h4>
+                        <p class="card-text">Personas que contribuyeron a la sociedad con sus innovaciones.</p>
+                        <p class="card-text"><a href="./creadores.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_art.png" class="card-img" alt="articulos">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Generador de miniaturas de Artículos 🖊</h4>
+                        <p class="card-text">Crea las portadas para los artículos de tet.</p>
+                        <p class="card-text"><a href="./articulos.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_masceo.png" class="card-img" alt="mascotas">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Mascotas y CEO de las empresas tech 🐶👨‍💼</h4>
+                        <p class="card-text">Mascotas del mundo de la tecnología y CEO.</p>
+                        <p class="card-text"><a href="./mascotas.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_vs.png" class="card-img" alt="vs">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Versus 🥊</h4>
+                        <p class="card-text">Creación de imágenes para vs en encuestas.</p>
+                        <p class="card-text"><a href="./vs.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_curi.png" class="card-img" alt="Curiosidades">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Generador de Curiosidades tet😲🤯</h4>
+                        <p class="card-text">Crea imágenes para esta sección en tet.</p>
+                        <p class="card-text"><a href="./curio.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_modcre.png" class="card-img" alt="modo creativo">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Generador de Plantillas y más 🎨</h4>
+                        <p class="card-text">Deja volar tu imaginación y crea nuevas imágenes.</p>
+                        <p class="card-text"><a href="./modoc.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3 bg-white rounded shadow-sm text-center">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="./public/img/secciones/sec_ayuda.png" class="card-img" alt="ayuda">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h4 class="card-title">Ayuda ❓</h4>
+                        <p class="card-text">Tutorial de cómo usar este sistema.</p>
+                        <p class="card-text"><a href="./ayuda.html" class="btn btn-primary shadow pr-5 pl-5 btn-lg">Crear</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<br>
+    </div>
+    <br>
+
+
+
+
+
     <footer class="page-footer font-small text-light pt-4" style="background: rgb(23, 32, 42);">
 
         <div class="container-fluid text-center  text-light">
-            <p class="text-center pt-5"><img src="./public/img/Logotet.png" alt="Logo"
-                    style="width:150px;height:150px;"></p>
+            <p class="text-center pt-5"><img src="./public/img/Logotet.png" alt="Logo" style="width:150px;height:150px;"></p>
             <br><br>
 
-            <h5 class="text-uppercase">La tecnologia tiene su espacio</h5><br>
+            <h4 class="text-uppercase">La tecnologia tiene su espacio</h4><br>
             <a href="https://www.facebook.com/TuEspacioT/" class="text-white">Página de Facebook</a>
             <br><br>
 
@@ -285,26 +320,19 @@
         <br>
 
     </footer>
-    <div class="py-3 p-4 text-center" style="background: rgb(32, 39, 48);"> <a href="https://t-e-t.github.io/"
-            class="text-white">© 2019 Copyright tet</a></div>
+    <div class="py-3 p-4 text-center" style="background: rgb(32, 39, 48);"> <a href="https://t-e-t.github.io/" class="text-white">© 2020 Copyright tet</a></div>
 
 
     <!-- jQuery CDN - Slim version (=without AJAX) -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <!-- Popper.JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"
-        integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
-        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
     <!-- Bootstrap JS -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
-        integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
-        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
 
     <script type="text/javascript">
-        $(document).ready(function () {
-            $('#sidebarCollapse').on('click', function () {
+        $(document).ready(function() {
+            $('#sidebarCollapse').on('click', function() {
                 $('#sidebar').toggleClass('active');
                 $(this).toggleClass('active');
             });
