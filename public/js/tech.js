@@ -1,18 +1,18 @@
 var globalpic;
 var oImg;
-var hc =500;
-var wc =500;
+var hc = 500;
+var wc = 500;
 
 function myFunction() {
     if (x.matches) { // If media query matches
         hc = 300;
         wc = 300;
-      } else {
-          hc = 500;
-          wc = 500;
-      }
-    
-  }
+    } else {
+        hc = 500;
+        wc = 500;
+    }
+
+}
 
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
@@ -22,21 +22,21 @@ x.addListener(myFunction) // Attach listener function on state changes
 var canvas = new fabric.Canvas('tech');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
-canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
-canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/dictec/tech.png', canvas.renderAll.bind(canvas), {
-  width: canvas.width,
-  height: canvas.height,
-  
+canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
+canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/tech.png', canvas.renderAll.bind(canvas), {
+    width: canvas.width,
+    height: canvas.height,
+
 });
 
 /* fin canvas code*/
 
-function generate(){
+function generate() {
     var titulo = titular.value;
     var detail = detalles.value;
 
-    
-    canvas.add(new fabric.IText(titulo, { 
+
+    canvas.add(new fabric.IText(titulo, {
         fontFamily: 'Arial Rounded MT',
         fontWeight: 'bold',
         textAlign: 'center',
@@ -51,13 +51,13 @@ function generate(){
         transparentCorners: false
     }));
 
-    canvas.add(new fabric.Textbox(detail, { 
-        width: canvas.width -350,
+    canvas.add(new fabric.Textbox(detail, {
+        width: canvas.width - 350,
         fontFamily: 'Arial Rounded MT',
         fontWeight: 'bold',
         fill: 'white',
         textAlign: 'justify-left',
-        fontSize: 32, 
+        fontSize: 32,
         shadow: 'rgba(0,0,0) 2px 2px 2px',
         left: 200,
         top: 400,
@@ -66,25 +66,26 @@ function generate(){
         borderColor: 'white',
         transparentCorners: false
     }));
-}    
-function center (){
+}
+
+function center() {
     var obj = canvas.getActiveObject();
-    if (obj){
+    if (obj) {
         obj.centerH();
         canvas.renderAll();
     }
 }
 
-function download (){
+function download() {
     canvas.discardActiveObject();
-    canvas.renderAll(); 
+    canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('tech')).toPng()
     ReImg.fromCanvas(document.getElementById('tech')).downloadPng()
 }
 
-function remover (){
+function remover() {
     var obj = canvas.getActiveObject();
-    if (obj){
+    if (obj) {
         canvas.remove(obj);
         canvas.renderAll();
     }

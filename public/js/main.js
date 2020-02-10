@@ -1,34 +1,34 @@
 var globalpic;
 var oImg;
-var hc =500;
-var wc =500;
+var hc = 500;
+var wc = 500;
 
 function myFunction() {
     if (x.matches) { // If media query matches
         hc = 300;
         wc = 300;
-      } else {
-          hc = 500;
-          wc = 500;
-      }
-    
-  }
+    } else {
+        hc = 500;
+        wc = 500;
+    }
+
+}
 
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
 x.addListener(myFunction) // Attach listener function on state changes
-/* inicio canvas code*/
+    /* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
-canvas.setDimensions({width: 1200, height: 1200}, {backstoreOnly: true});
-canvas.setBackgroundImage('https://t-e-t.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
-  width: canvas.width,
-  height: canvas.height
+canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
+canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
+    width: canvas.width,
+    height: canvas.height
 });
 /* fin canvas code*/
 
-document.getElementById('sombra').oninput = function sombrear(){
+document.getElementById('sombra').oninput = function sombrear() {
     var shad = this.value;
     var obj = canvas.getActiveObject();
     if (obj) {
@@ -41,11 +41,11 @@ document.getElementById('sombra').oninput = function sombrear(){
     canvas.renderAll();
 }
 
-document.getElementById('color').oninput = function colored(){
+document.getElementById('color').oninput = function colored() {
     var color = this.value;
     var obj = canvas.getActiveObject();
     if (obj) {
-        var style = { };
+        var style = {};
         style['fill'] = color;
         obj.setSelectionStyles(style).setCoords();
         /*obj.set({
@@ -56,37 +56,37 @@ document.getElementById('color').oninput = function colored(){
     canvas.renderAll();
 }
 
-function center (){
+function center() {
     var obj = canvas.getActiveObject();
-    if (obj){
+    if (obj) {
         obj.centerH();
         canvas.renderAll();
     }
 }
 
-function download (){
+function download() {
     /*var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
     window.location.href=image;  */
     canvas.discardActiveObject();
-    canvas.renderAll(); 
+    canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('tetnews')).toPng()
     ReImg.fromCanvas(document.getElementById('tetnews')).downloadPng()
 }
 
-function remover (){
+function remover() {
     var obj = canvas.getActiveObject();
-    if (obj){
+    if (obj) {
         canvas.remove(obj);
         canvas.renderAll();
     }
 }
 
-function picload(){
+function picload() {
     var preview = document.querySelector('img');
-    var file    = document.querySelector('input[type=file]').files[0];
-    var reader  = new FileReader();
+    var file = document.querySelector('input[type=file]').files[0];
+    var reader = new FileReader();
 
-    reader.onloadend = function () {
+    reader.onloadend = function() {
         globalpic = reader.result;
     }
 
@@ -98,23 +98,23 @@ function picload(){
     }
 }
 
-function generate(){
+function generate() {
     var titulo = titular.value;
     var detail = detalles.value;
     var shad = sombra.value;
     var col = color.value;
     var filter = new fabric.Image.filters.Blur({
         blur: shad
-      });
+    });
 
     fabric.Image.fromURL(globalpic, function(oImg) {
         oImg.filters.push(filter);
         oImg.applyFilters();
         oImg.set('padding', 20);
         canvas.add(oImg);
-      });
-    
-    canvas.add(new fabric.IText(titulo, { 
+    });
+
+    canvas.add(new fabric.IText(titulo, {
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
         textAlign: 'justify-center',
@@ -126,8 +126,8 @@ function generate(){
         transparentCorners: false
     }));
 
-    canvas.add(new fabric.Textbox(detail, { 
-        width: canvas.width -100,
+    canvas.add(new fabric.Textbox(detail, {
+        width: canvas.width - 100,
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
         fill: col,
@@ -138,9 +138,9 @@ function generate(){
         borderColor: 'black',
         transparentCorners: false
     }));
-}    
+}
 
-function publish(){
+function publish() {
     $("#modal").modal("show");
     $("#modal-cuerpo").html(`La imagen ha sido publicada`);
 }
