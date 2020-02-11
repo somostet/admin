@@ -1,7 +1,7 @@
 {
     "name": "tet admin",
     "short_name": "tet admin",
-    "theme_color": "#0660a7",
+    "theme_color": "#161d2b",
     "background_color": "#d9d9d9",
     "display": "minimal-ui",
     "start_url": "/admin/index.html"
