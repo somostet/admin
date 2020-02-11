@@ -2,7 +2,7 @@
     "name": "tet admin",
     "short_name": "tet admin",
     "theme_color": "#0660a7",
-    "background_color": "#ffffff",
+    "background_color": "#d9d9d9",
     "display": "fullscreen",
     "start_url": "/admin/index.html"
-  }
+}
