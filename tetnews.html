@@ -5,15 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
+    <link rel="stylesheet" href="./public/vendor/bulma/bulma.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description"
         content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
-    <title>tet news Generator</title>
+    <title>Content Generator</title>
 </head>
 
 <body>
@@ -21,7 +21,8 @@
         <div class="collapse" id="navbarToggleExternalContent">
             <div class="p-4" style="background: #161d2b;">
                 <h5 class="text-white h4">tu espacio tecnológico</h5>
-                <span class="text-muted">Aplicación de administración y creación de multimedia</span>
+                <span class="text-muted">Aplicación de administración y creación de multimedios</span>
+                <!-- navbar -->
                 <div class="container">
                     <div class="row">
                         <div class="col-sm">
@@ -93,55 +94,118 @@
     <!-- Cuerpo -->
     <div class="container-fluid">
         <div class="row mt-3">
-            <div class="col-12">
-                <form autocomplete="on" class="pb-5">
+            <div class="col">
+                <form class="pb-5">
                     <div class="container-fluid pt-3 pb-3">
                         <div class="row">
-                            <div class="col-xs-12 col-sm-3 shadow pt-3 pb-3 border">
-                                <div class="form-group">
-                                    <label for="titular">Titular</label>
-                                    <input type="text" class="form-control" id="titular" autofocus>
+                            <div class="col pt-3 pb-3 border">
+                                <div class="row">
+                                    <div class=col-10>
+                                        <select class="form-control" id="plantilla">
+                                            <option value="0">tet news</option>
+                                            <option value="1">curiosidades</option>
+                                            <option value="2">diccionario</option>
+                                        </select>
+                                    </div>
+                                    <div class=col>
+                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="Cargar plantilla" onclick="reload()"><i class="fas fa-sync"></i></button>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="detalles">Detalles</label>
-                                    <textarea class="form-control text-justify" id="detalles" rows="4"
-                                        cols="50"></textarea>
+                                <div class="row mt-2">
+                                    <div class=col-10>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text">Título</div>
+                                            </div>
+                                            <input type="text" class="form-control" id="titular">
+                                        </div>
+                                    </div>
+                                    <div class=col>
+                                        <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="imagen">Imagen:</label>
-                                    <input type="file" class="form-control-file" id="imagen" accept="image/*"
-                                        onchange="picload()" crossOrigin="anonymous">
+                                <div class="row mt-2">
+                                    <div class="col">
+                                        <label for="detalles">Detalles</label>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="sombra">Sombra:</label>
-                                    <input type="range" value="0" min="0" max="100" class="custom-range" id="sombra">
+                                <div class="row">
+                                    <div class="col-10">
+                                        <textarea class="form-control text-justify" id="detalles" rows="4" cols="50"></textarea>
+                                    </div>
+                                    <div class="col">
+                                        <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar detalles" onclick="set_detail()"><i class="fas fa-paragraph"></i></button>
+                                    </div>
+                                </div>
+                                    
+                                <div class="row mt-5">
+                                    <div class="col">
+                                        <div id="div-img" class="file has-name is-boxed is-small is-primary">
+                                            <label class="file-label">
+                                                <input class="file-input" type="file" id="imagen" accept="image/*" onchange="picload()" crossOrigin="anonymous">
+                                                <span class="file-cta">
+                                                    <span class="file-icon">
+                                                        <i class="fas fa-upload"></i>
+                                                    </span>
+                                                    <span class="file-label">
+                                                        Cargar una imagen...
+                                                    </span>
+                                                </span>
+                                                <span class="file-name">
+                                                    Ninguna imagen seleccionada
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col">
+                                        <div class="row">
+                                            <div class="col">
+                                                <button type="button" class="btn btn-primary btn-block" data-toggle="tooltip" data-placement="bottom" title="Insertar imagen" onclick="generate()"><i class="far fa-image"></i></button>
+                                            </div>
+                                            <div class="col">
+                                                <button type="button" class="btn btn-info btn-block" data-toggle="tooltip" data-placement="bottom" title="Centrar elemento" onclick="center()"><i class="fa fa-align-center" aria-hidden="true"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col">
+                                                <button type="button" class="btn btn-danger btn-block" data-toggle="tooltip" data-placement="bottom" title="Remover seleccionado" onclick="remover()"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                            <div class="col">
+                                                <button type="button" id=button class="btn btn-success btn-block" data-toggle="tooltip" data-placement="bottom" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                 </div>
 
-                                <div class="form-group">
+                                <div class="row">
+                                    <!-- <div class="col">
+                                        <label for="sombra">Sombra:</label>
+                                        <input type="range" value="0" min="0" max="100" class="custom-range" id="sombra">
+                                    </div> -->
 
-                                    <label for="color">Color:</label>
+                                    <div class="col">
+                                        <label for="color">Color del fondo:</label>
 
-                                    <div class="input-color-container">
-                                        <input type="color" id="color" class="input-color" name="favcolor"
-                                            value="#000000">
+                                        <div class="input-color-container">
+                                            <input type="color" id="color" class="input-color" name="favcolor"
+                                                value="#000000">
+                                        </div>
+                                    </div>
+
+                                    <div class="col">
+                                        <label for="color">Color del texto:</label>
+
+                                        <div class="input-color-container">
+                                            <input type="color" id="colorT" class="input-color" name="favcolor"
+                                                value="#000000">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-xs-12 col-sm-3 p-5">
-                                <button type="button" class="btn btn-primary btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Generar" onclick="generate()"><i class="fa fa-cogs"
-                                        aria-hidden="true"></i></button>
-                                <button type="button" class="btn btn-info btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Centrar" onclick="center()"><i
-                                        class="fa fa-align-center" aria-hidden="true"></i></button>
-                                <button type="button" class="btn btn-danger btn-lg btn-block" data-toggle="tooltip"
-                                    data-placement="right" title="Remover" onclick="remover()"><i class="fa fa-trash-o"
-                                        aria-hidden="true"></i></button>
-                                <button type="button" id=button class="btn btn-success btn-lg btn-block"
-                                    data-toggle="tooltip" data-placement="right" title="Descargar"
-                                    onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
-                            </div>
-                            <div class="col-12 col-sm-6 table-responsive">
+                            
+                            <div class="col">
 
                                 <div id="img" class="" crossOrigin="anonymous">
                                     <center><canvas id="tetnews" crossOrigin="anonymous"></canvas></center>
@@ -190,10 +254,10 @@
     <script src="./public/vendor/reimg/reimg.js"></script>
     <script src="./public/js/main.js"></script>
     <script>
-        document.getElementById("sombra").step = "1";
-        $(document).ready(function () {
-            $('[data-toggle="tooltip"]').tooltip();
-        });
+        // document.getElementById("sombra").step = "1";
+        // $(document).ready(function () {
+        //     $('[data-toggle="tooltip"]').tooltip();
+        // });
     </script>
 </body>
 
