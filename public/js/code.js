@@ -90,3 +90,34 @@ function remover() {
         canvas.renderAll();
     }
 }
+
+function reload() {
+    var section = plantilla.value;
+    var col = color.value;
+
+    switch (section) {
+        case "0":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "1":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/tech.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "3":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/game.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+    };
+
+
+
+
+}
