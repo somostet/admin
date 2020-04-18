@@ -56,28 +56,30 @@ canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla
 //     canvas.renderAll();
 // }
 
-function reload(){
+function reload() {
     var section = plantilla.value;
     var col = color.value;
 
     switch (section) {
-        case "0":   
-                    canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
-                    width: canvas.width,
-                    height: canvas.height
-                });
-                break;
-        case "1":   canvas.backgroundColor=col;
-                    canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/bars/somostetCuri.png', canvas.renderAll.bind(canvas), {
-                    width: canvas.width,
-                    height: canvas.height
-                });
-                break;
-        case "3": break;
+        case "0":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "1":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/bars/somostetCuri.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "2":
+            break;
     };
 
 
-    
+
 
 }
 
@@ -126,7 +128,7 @@ function picload() {
     }
 }
 
-function set_title(){
+function set_title() {
     var col = colorT.value;
     var titulo = titular.value;
     var obj = canvas.getActiveObject();
@@ -150,18 +152,18 @@ function set_title(){
     }));
 
     var canvas_objects = canvas._objects;
-    if(canvas_objects.length !== 0){
-        var last = canvas_objects[canvas_objects.length -1]; //Get last object   
+    if (canvas_objects.length !== 0) {
+        var last = canvas_objects[canvas_objects.length - 1]; //Get last object   
         last.centerH();
-        last.lockMovementX=true;
-        last.lockMovementY=true;
+        last.lockMovementX = true;
+        last.lockMovementY = true;
         last.lockRotation = true;
         canvase.renderAll();
-    } 
-    
+    }
+
 }
 
-function set_detail(){
+function set_detail() {
     var detail = detalles.value;
     var col = colorT.value;
 
@@ -182,20 +184,20 @@ function set_detail(){
 
 
     var canvas_objects = canvas._objects;
-    if(canvas_objects.length !== 0){
-        var last = canvas_objects[canvas_objects.length -1]; //Get last object   
+    if (canvas_objects.length !== 0) {
+        var last = canvas_objects[canvas_objects.length - 1]; //Get last object   
         last.centerH();
-        last.lockMovementX=true;
-        last.lockMovementY=true;
+        last.lockMovementX = true;
+        last.lockMovementY = true;
         last.lockRotation = true;
         canvase.renderAll();
-    } 
+    }
 
 }
 
 function generate() {
-    
-    
+
+
     //var shad = sombra.value;
     //var col = color.value;
     // var filter = new fabric.Image.filters.Resize({
@@ -209,7 +211,7 @@ function generate() {
         var width = oImg.width;
         //oImg.set('padding', 20);
         //oImg.scaleToWidth(1200);
-        
+
         if (height >= 600 && width >= 1200) {
             canvas.add(oImg.set({
                 //width: canvas.width,
@@ -223,8 +225,7 @@ function generate() {
                 lockRotation: true,
                 top: 93
             }));
-        }
-        else if (height < 600 && width >= 1200){
+        } else if (height < 600 && width >= 1200) {
             oImg.scaleToHeight(600);
 
             canvas.add(oImg.set({
@@ -234,8 +235,7 @@ function generate() {
                 lockRotation: true,
                 top: 93
             }));
-        }
-        else if (height >= 600 && width < 1200){
+        } else if (height >= 600 && width < 1200) {
             oImg.scaleToWidth(canvas.getWidth());
 
             canvas.add(oImg.set({
@@ -245,8 +245,7 @@ function generate() {
                 lockRotation: true,
                 top: 93
             }));
-        }
-        else{
+        } else {
             oImg.scaleToWidth(canvas.getWidth());
 
             canvas.add(oImg.set({
@@ -256,7 +255,7 @@ function generate() {
                 top: 93
             }));
         }
-        
+
     });
-    
+
 }
