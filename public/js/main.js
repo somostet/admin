@@ -22,7 +22,7 @@ var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
-canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
+canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
     width: canvas.width,
     height: canvas.height
 });
@@ -62,7 +62,7 @@ function reload(){
 
     switch (section) {
         case "0":   
-                    canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla.png', canvas.renderAll.bind(canvas), {
+                    canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
                     width: canvas.width,
                     height: canvas.height
                 });
@@ -73,7 +73,7 @@ function reload(){
                     height: canvas.height
                 });
                 break;
-        case "3": break;
+        case "2": break;
     };
 
 
@@ -129,6 +129,7 @@ function picload() {
 function set_title(){
     var col = colorT.value;
     var titulo = titular.value;
+    var size = font_size.value;
     var obj = canvas.getActiveObject();
     if (obj) {
         obj.centerH();
@@ -138,9 +139,9 @@ function set_title(){
     canvas.add(new fabric.IText(titulo, {
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
-        textAlign: 'justify-center',
+        textAlign: 'center',
         fill: col,
-        fontSize: 72,
+        fontSize: size,
         top: 730,
         hasControls: false,
         cornerColor: 'black',
@@ -154,7 +155,7 @@ function set_title(){
         var last = canvas_objects[canvas_objects.length -1]; //Get last object   
         last.centerH();
         last.lockMovementX=true;
-        last.lockMovementY=true;
+        //last.lockMovementY=true;
         last.lockRotation = true;
         canvase.renderAll();
     } 
@@ -164,14 +165,15 @@ function set_title(){
 function set_detail(){
     var detail = detalles.value;
     var col = colorT.value;
+    var size = font_sizeD.value;
 
     canvas.add(new fabric.Textbox(detail, {
         width: canvas.width - 100,
         fontFamily: 'sans-serif',
-        fontWeight: 'bold',
+        //fontWeight: 'bold',
         fill: col,
-        textAlign: 'justify-left',
-        fontSize: 42,
+        textAlign: 'center',
+        fontSize: size,
         top: 870,
         hasControls: false,
         cornerColor: 'black',
@@ -186,7 +188,7 @@ function set_detail(){
         var last = canvas_objects[canvas_objects.length -1]; //Get last object   
         last.centerH();
         last.lockMovementX=true;
-        last.lockMovementY=true;
+        //last.lockMovementY=true;
         last.lockRotation = true;
         canvase.renderAll();
     } 

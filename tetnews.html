@@ -104,7 +104,6 @@
                                         <select class="form-control" id="plantilla">
                                             <option value="0">tet news</option>
                                             <option value="1">curiosidades</option>
-                                            <option value="2">diccionario</option>
                                         </select>
                                     </div>
                                     <div class=col>
@@ -112,13 +111,26 @@
                                     </div>
                                 </div>
                                 <div class="row mt-2">
-                                    <div class=col-10>
+                                    <div class=col-8>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
                                                 <div class="input-group-text">Título</div>
                                             </div>
                                             <input type="text" class="form-control" id="titular">
                                         </div>
+                                    </div>
+                                    <div class=col>
+                                        <select class="form-control" id="font_size">
+                                            <option value="28">28</option>
+                                            <option value="30">30</option>
+                                            <option value="36">36</option>
+                                            <option value="42">42</option>
+                                            <option value="44">44</option>
+                                            <option value="48">48</option>
+                                            <option value="50">50</option>
+                                            <option value="60">60</option>
+                                            <option value="72">72</option>
+                                        </select>
                                     </div>
                                     <div class=col>
                                         <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
@@ -130,8 +142,21 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-10">
+                                    <div class="col-8">
                                         <textarea class="form-control text-justify" id="detalles" rows="4" cols="50"></textarea>
+                                    </div>
+                                    <div class=col>
+                                        <select class="form-control" id="font_sizeD">
+                                            <option value="28">28</option>
+                                            <option value="30">30</option>
+                                            <option value="36">36</option>
+                                            <option value="42">42</option>
+                                            <option value="44">44</option>
+                                            <option value="48">48</option>
+                                            <option value="50">50</option>
+                                            <option value="60">60</option>
+                                            <option value="72">72</option>
+                                        </select>
                                     </div>
                                     <div class="col">
                                         <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar detalles" onclick="set_detail()"><i class="fas fa-paragraph"></i></button>
