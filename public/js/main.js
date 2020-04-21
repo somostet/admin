@@ -1,8 +1,28 @@
+// Variables globales para la imagen a subir
+
 var globalpic;
 var oImg;
 var hc = 500;
 var wc = 500;
 
+// Barras superiores de cada plantilla
+var tetnews_bar = "https://somostet.github.io/admin/public/img/bars/tetnews.png";
+var curi_bar = "https://somostet.github.io/admin/public/img/bars/somostetCuri.png"
+
+
+// Coloca la barra superior, recibe URL de la imagen de la barra y COLOR del fondo
+function set_front_bar(over,color){
+    canvas.setOverlayImage(over, canvas.renderAll.bind(canvas));
+    canvas.setOverlayColor({
+        source: color,
+        repeat: 'repeat',
+        offsetX: 0,
+        offsetY: -1107
+      }, canvas.renderAll.bind(canvas));
+}
+
+
+// Metodos de creacion del canvas
 function myFunction() {
     if (x.matches) { // If media query matches
         hc = 300;
@@ -17,7 +37,7 @@ function myFunction() {
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
 x.addListener(myFunction) // Attach listener function on state changes
-    /* inicio canvas code*/
+/* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
@@ -26,36 +46,10 @@ canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla
     width: canvas.width,
     height: canvas.height
 });
+set_front_bar(tetnews_bar,"#FFFFFF");
 /* fin canvas code*/
 
-// document.getElementById('sombra').oninput = function sombrear() {
-//     var shad = this.value;
-//     var obj = canvas.getActiveObject();
-//     if (obj) {
-//         obj.setShadow({
-//             color: "#000000",
-//             blur: shad
-//         });
-//     }
-
-//     canvas.renderAll();
-// }
-
-// document.getElementById('color').oninput = function colored() {
-//     var color = this.value;
-//     var obj = canvas.getActiveObject();
-//     if (obj) {
-//         var style = {};
-//         style['fill'] = color;
-//         obj.setSelectionStyles(style).setCoords();
-//         /*obj.set({
-//             fill: color
-//         });*/
-//     }
-
-//     canvas.renderAll();
-// }
-
+// Cambio de plantilla
 function reload() {
     var section = plantilla.value;
     var col = color.value;
@@ -66,21 +60,21 @@ function reload() {
                     width: canvas.width,
                     height: canvas.height
                 });
+                    set_front_bar(tetnews_bar,"#FFFFFF");
                 break;
         case "1":   canvas.backgroundColor=col;
-                    canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/bars/somostetCuri.png', canvas.renderAll.bind(canvas), {
+                    canvas.setBackgroundImage(curi_bar, canvas.renderAll.bind(canvas), {
                     width: canvas.width,
-                    height: canvas.height
+                    height: canvas.height,
+                    opacity: 0
                 });
+                    set_front_bar(curi_bar,col);
                 break;
         case "2": break;
     };
-
-
-
-
 }
 
+// Centrar objeto seleccionado
 function center() {
     var obj = canvas.getActiveObject();
     if (obj) {
@@ -89,6 +83,7 @@ function center() {
     }
 }
 
+// Descargar como imagen PNG
 function download() {
     /*var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
     window.location.href=image;  */
@@ -98,6 +93,7 @@ function download() {
     ReImg.fromCanvas(document.getElementById('tetnews')).downloadPng()
 }
 
+// Remover objeto
 function remover() {
     var obj = canvas.getActiveObject();
     if (obj) {
@@ -106,6 +102,7 @@ function remover() {
     }
 }
 
+// Cargar URL de la imagen a subir
 function picload() {
     var preview = document.querySelector('img');
     var file = document.querySelector('input[type=file]').files[0];
@@ -126,6 +123,7 @@ function picload() {
     }
 }
 
+// Colocar titulo
 function set_title() {
     var col = colorT.value;
     var titulo = titular.value;
@@ -162,6 +160,8 @@ function set_title() {
 
 }
 
+
+// Colocar detalles
 function set_detail() {
     var detail = detalles.value;
     var col = colorT.value;
@@ -195,6 +195,8 @@ function set_detail() {
 
 }
 
+
+// Insertar imagen al canvas
 function generate() {
 
 
@@ -212,7 +214,7 @@ function generate() {
         //oImg.set('padding', 20);
         //oImg.scaleToWidth(1200);
 
-        if (height >= 600 && width >= 1200) {
+        /*if (height >= 600 && width >= 1200) {
             canvas.add(oImg.set({
                 //width: canvas.width,
                 height: 600,
@@ -254,7 +256,15 @@ function generate() {
                 lockRotation: true,
                 top: 93
             }));
-        }
+        }*/
+
+        oImg.scaleToWidth(canvas.getWidth());
+        canvas.add(oImg.set({
+            //hasControls: false,
+            //lockMovementY: true,
+            lockRotation: true,
+            top: 93
+        }));
 
     });
 
