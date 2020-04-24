@@ -5,23 +5,24 @@
     height: 40px;
     border: solid 2px #ddd;
     border-radius: 40px;
-  }
-  
-  .input-color {
+}
+
+.input-color {
     position: absolute;
     right: -8px;
     top: -8px;
     width: 56px;
     height: 56px;
     border: none;
-  }
-  .shadowE:hover{
+}
+
+.shadowE:hover {
     width: 250px;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     text-align: center;
-  }
+}
 
-  .shadowI:hover{
+.shadowI:hover {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     text-align: center;
-  }
+}
