@@ -36,10 +36,6 @@ function generate() {
     var detail = detalles.value;
     var obj = canvas.getActiveObject();
     var size = font_sizeD.value;
-    if (obj) {
-        obj.centerH();
-        canvas.renderAll();
-    }
 
 
     canvas.add(new fabric.IText(titulo, {
