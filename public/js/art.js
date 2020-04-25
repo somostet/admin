@@ -119,7 +119,7 @@ function set_title() {
         last.lockMovementX=true;
         //last.lockMovementY=true;
         last.lockRotation = true;
-        canvase.renderAll();
+        canvas.renderAll();
     }
 
 }
