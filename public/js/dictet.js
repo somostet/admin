@@ -35,6 +35,7 @@ function generate() {
     var titulo = titular.value;
     var detail = detalles.value;
     var obj = canvas.getActiveObject();
+    var size = font_sizeD.value;
     if (obj) {
         obj.centerH();
         canvas.renderAll();
@@ -62,7 +63,7 @@ function generate() {
         fontWeight: 'bold',
         fill: 'white',
         textAlign: 'justify-left',
-        fontSize: 32,
+        fontSize: size,
         shadow: 'rgba(0,0,0) 2px 2px 2px',
         top: 400,
         cornerColor: 'white',
