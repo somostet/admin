@@ -34,6 +34,11 @@ canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/co
 function generate() {
     var titulo = titular.value;
     var detail = detalles.value;
+    var obj = canvas.getActiveObject();
+    if (obj) {
+        obj.centerH();
+        canvas.renderAll();
+    }
 
 
     canvas.add(new fabric.IText(titulo, {
@@ -43,8 +48,8 @@ function generate() {
         fill: 'white',
         fontSize: 72,
         shadow: 'rgba(0,0,0) 2px 2px 2px',
-        left: 150,
-        top: 200,
+        left: 250,
+        top: 250,
         cornerColor: 'white',
         cornerSize: 20,
         borderColor: 'white',
@@ -59,13 +64,21 @@ function generate() {
         textAlign: 'justify-left',
         fontSize: 32,
         shadow: 'rgba(0,0,0) 2px 2px 2px',
-        left: 200,
         top: 400,
         cornerColor: 'white',
         cornerSize: 20,
         borderColor: 'white',
         transparentCorners: false
     }));
+    var canvas_objects = canvas._objects;
+    if (canvas_objects.length !== 0) {
+        var last = canvas_objects[canvas_objects.length - 1]; //Get last object   
+        last.centerH();
+        last.lockMovementX = true;
+        //last.lockMovementY=true;
+        last.lockRotation = true;
+        canvase.renderAll();
+    }
 }
 
 function center() {
