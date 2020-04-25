@@ -43,7 +43,7 @@ function generate() {
         fill: 'white',
         fontSize: 72,
         shadow: 'rgba(0,0,0) 2px 2px 2px',
-        left: 200,
+        left: 150,
         top: 200,
         cornerColor: 'white',
         cornerSize: 20,
@@ -91,6 +91,7 @@ function remover() {
     }
 }
 
+// Cambio de plantilla
 function reload() {
     var section = plantilla.value;
 
