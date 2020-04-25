@@ -30,3 +30,21 @@
 .zonatet{
     border: 2px dotted black;
 }
+
+.navbar{
+    max-height: 50px;
+}
+
+.navbar-expand-lg{
+    max-height: 50px;
+}
+
+.navbar-toggler{
+    max-height: 30px;
+    margin-top: -1%;
+}
+
+.navbar-toggler-icon{
+    max-height: 25px;
+    margin-top: -15%;
+}
