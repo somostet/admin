@@ -128,11 +128,6 @@ function set_title() {
     var col = colorT.value;
     var titulo = titular.value;
     var size = font_size.value;
-    var obj = canvas.getActiveObject();
-    if (obj) {
-        obj.centerH();
-        canvas.renderAll();
-    }
 
     canvas.add(new fabric.IText(titulo, {
         fontFamily: 'sans-serif',

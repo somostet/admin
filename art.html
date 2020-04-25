@@ -34,115 +34,132 @@
     <!-- Cuerpo -->
     <div class="container-fluid">
         <div class="row mt-3">
-            <div class="col">
-                <form class="pb-5">
-                    <div class="container-fluid pt-3 pb-3">
-                        <div class="row">
-                            <div class="col pt-3 pb-3 border">
-                                <div class="row mt-2">
-                                    <div class=col-8>
-                                        <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <div class="input-group-text">Título</div>
-                                            </div>
-                                            <input type="text" class="form-control" id="titular">
+            <div class="col-10 offset-1">
+                <form>
+                    <div class="row">
+                        <div class="col pt-3 pb-3 border">
+                            <div class="row mt-2">
+                                <div class="col-8">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">Título</div>
                                         </div>
+                                        <input type="text" class="form-control" id="titular">
                                     </div>
-                                    <div class=col>
-                                        <select class="form-control" id="font_size">
-                                            <option value="28">28</option>
-                                            <option value="30">30</option>
-                                            <option value="36">36</option>
-                                            <option value="42">42</option>
-                                            <option value="44">44</option>
-                                            <option value="48">48</option>
-                                            <option value="50">50</option>
-                                            <option value="60">60</option>
-                                            <option value="72">72</option>
-                                        </select>
-                                    </div>
-                                    <div class=col>
-                                        <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
+                                </div>
+                                <div class="col">
+                                    <select class="form-control" id="font_size">
+                                        <option value="28">28</option>
+                                        <option value="30">30</option>
+                                        <option value="36">36</option>
+                                        <option value="42">42</option>
+                                        <option value="44">44</option>
+                                        <option value="48">48</option>
+                                        <option value="50">50</option>
+                                        <option value="60">60</option>
+                                        <option value="72">72</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="row mt-5">
+                                <div class="col">
+                                    <div id="div-img" class="file has-name is-boxed is-small is-primary">
+                                        <label class="file-label">
+                                            <input class="file-input" type="file" id="imagen" accept="image/*" onchange="picload()" crossOrigin="anonymous">
+                                            <span class="file-cta">
+                                                <span class="file-icon">
+                                                    <i class="fas fa-upload"></i>
+                                                </span>
+                                                <span class="file-label">
+                                                    Cargar una imagen...
+                                                </span>
+                                            </span>
+                                            <span class="file-name">
+                                                Ninguna imagen seleccionada
+                                            </span>
+                                        </label>
                                     </div>
                                 </div>
 
-                                <div class="row mt-5">
-                                    <div class="col">
-                                        <div id="div-img" class="file has-name is-boxed is-small is-primary">
-                                            <label class="file-label">
-                                                <input class="file-input" type="file" id="imagen" accept="image/*" onchange="picload()" crossOrigin="anonymous">
-                                                <span class="file-cta">
-                                                    <span class="file-icon">
-                                                        <i class="fas fa-upload"></i>
-                                                    </span>
-                                                    <span class="file-label">
-                                                        Cargar una imagen...
-                                                    </span>
-                                                </span>
-                                                <span class="file-name">
-                                                    Ninguna imagen seleccionada
-                                                </span>
-                                            </label>
+                                <div class="col">
+                                    <div class="row">
+                                        <div class="col">
+                                            <button type="button" class="btn btn-primary btn-block" data-toggle="tooltip" data-placement="bottom" title="Insertar imagen" onclick="generate()"><i class="far fa-image"></i></button>
+                                        </div>
+                                        <div class="col">
+                                            <button type="button" class="btn btn-info btn-block" data-toggle="tooltip" data-placement="bottom" title="Centrar elemento" onclick="center()"><i class="fa fa-align-center" aria-hidden="true"></i></button>
                                         </div>
                                     </div>
-
-                                    <div class="col">
-                                        <div class="row">
-                                            <div class="col">
-                                                <button type="button" class="btn btn-primary btn-block" data-toggle="tooltip" data-placement="bottom" title="Insertar imagen" onclick="generate()"><i class="far fa-image"></i></button>
-                                            </div>
-                                            <div class="col">
-                                                <button type="button" class="btn btn-info btn-block" data-toggle="tooltip" data-placement="bottom" title="Centrar elemento" onclick="center()"><i class="fa fa-align-center" aria-hidden="true"></i></button>
-                                            </div>
+                                    <div class="row mt-2">
+                                        <div class="col">
+                                            <button type="button" class="btn btn-danger btn-block" data-toggle="tooltip" data-placement="bottom" title="Remover seleccionado" onclick="remover()"><i class="fas fa-trash-alt"></i></button>
                                         </div>
-                                        <div class="row mt-2">
-                                            <div class="col">
-                                                <button type="button" class="btn btn-danger btn-block" data-toggle="tooltip" data-placement="bottom" title="Remover seleccionado" onclick="remover()"><i class="fas fa-trash-alt"></i></button>
-                                            </div>
-                                            <div class="col">
-                                                <button type="button" id=button class="btn btn-success btn-block" data-toggle="tooltip" data-placement="bottom" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
-                                            </div>
+                                        <div class="col">
+                                            <button type="button" id=button class="btn btn-success btn-block" data-toggle="tooltip" data-placement="bottom" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
                                         </div>
                                     </div>
-
                                 </div>
 
-                                <div class="row">
-                                    <!-- <div class="col">
-                                        <label for="sombra">Sombra:</label>
-                                        <input type="range" value="0" min="0" max="100" class="custom-range" id="sombra">
-                                    </div> -->
-
-                                    <div class="col">
-                                        <label for="color">Color del fondo:</label>
-
-                                        <div class="input-color-container">
-                                            <input type="color" id="color" class="input-color fondocol" name="favcolor" value="#000000">
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="row mt-2">
+                                        <div class="col">
+                                            <button type="button" class="btn btn-warning btn-block" data-toggle="tooltip" data-placement="bottom" title="Enviar al fondo" onclick="toFullBack()"><i class="fas fa-battery-quarter"></i></button>
+                                        </div>
+                                        <div class="col">
+                                            <button type="button" class="btn btn-dark btn-block" data-toggle="tooltip" data-placement="bottom" title="Enviar atrás" onclick="toBackward()"><i class="fas fa-battery-half"></i></button>
                                         </div>
                                     </div>
-
-                                    <div class="col">
-                                        <label for="color">Color del texto:</label>
-
-                                        <div class="input-color-container">
-                                            <input type="color" id="colorT" class="input-color" name="favcolor" value="#000000">
+                                    <div class="row mt-2">
+                                        <div class="col">
+                                            <button type="button" class="btn btn-light btn-block" data-toggle="tooltip" data-placement="bottom" title="Enviar adelante" onclick="toForward()"><i class="fas fa-battery-three-quarters"></i></button>
+                                        </div>
+                                        <div class="col">
+                                            <button type="button" id=button class="btn btn-info btn-block" data-toggle="tooltip" data-placement="bottom" title="Enviar al frente" onclick="toFront()"><i class="fas fa-battery-full"></i></button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col">
-
-                                <div id="img" class="" crossOrigin="anonymous">
-                                    <center><canvas class="zonatet" id="tetnews" crossOrigin="anonymous"></canvas></center>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="sombra">Sombra:</label>
+                                    <input type="range" value="0" min="0" max="100" class="custom-range sombraSEL" id="sombra">
                                 </div>
 
+                                <div class="col">
+                                    <label for="color">Color del fondo:</label>
+
+                                    <div class="input-color-container">
+                                        <input type="color" id="color" class="input-color fondocol" name="favcolor" value="#000000">
+                                    </div>
+                                </div>
+
+                                <div class="col">
+                                    <label for="color">Color del texto:</label>
+
+                                    <div class="input-color-container">
+                                        <input type="color" id="colorT" class="input-color" name="favcolor" value="#000000">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                        
+                    </div>
+                    <div class="row mt-3 mb-5">
+                        <div class="col">
+
+                            <div id="img" class="" crossOrigin="anonymous">
+                                <center><canvas class="zonatet" id="tetnews" crossOrigin="anonymous"></canvas></center>
+                            </div>
+
+                        </div>
                     </div>
                 </form>
             </div>
@@ -175,10 +192,10 @@
     <script src="./public/vendor/reimg/reimg.js"></script>
     <script src="./public/js/art.js"></script>
     <script>
-        // document.getElementById("sombra").step = "1";
-        // $(document).ready(function () {
-        //     $('[data-toggle="tooltip"]').tooltip();
-        // });
+        document.getElementById("sombra").step = "1";
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
     </script>
 </body>
 
