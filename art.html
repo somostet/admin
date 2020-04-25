@@ -39,17 +39,6 @@
                     <div class="container-fluid pt-3 pb-3">
                         <div class="row">
                             <div class="col pt-3 pb-3 border">
-                                <div class="row">
-                                    <div class=col-10>
-                                        <select class="form-control" id="plantilla">
-                                            <option value="0">tet news</option>
-                                            <option value="1">curiosidades</option>
-                                        </select>
-                                    </div>
-                                    <div class=col>
-                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="Cargar plantilla" onclick="reload()"><i class="fas fa-sync"></i></button>
-                                    </div>
-                                </div>
                                 <div class="row mt-2">
                                     <div class=col-8>
                                         <div class="input-group">
@@ -74,32 +63,6 @@
                                     </div>
                                     <div class=col>
                                         <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
-                                    </div>
-                                </div>
-                                <div class="row mt-2">
-                                    <div class="col">
-                                        <label for="detalles">Detalles</label>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-8">
-                                        <textarea class="form-control text-justify" id="detalles" rows="4" cols="50"></textarea>
-                                    </div>
-                                    <div class=col>
-                                        <select class="form-control" id="font_sizeD">
-                                            <option value="28">28</option>
-                                            <option value="30">30</option>
-                                            <option value="36">36</option>
-                                            <option value="42">42</option>
-                                            <option value="44">44</option>
-                                            <option value="48">48</option>
-                                            <option value="50">50</option>
-                                            <option value="60">60</option>
-                                            <option value="72">72</option>
-                                        </select>
-                                    </div>
-                                    <div class="col">
-                                        <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar detalles" onclick="set_detail()"><i class="fas fa-paragraph"></i></button>
                                     </div>
                                 </div>
 
@@ -154,7 +117,7 @@
                                         <label for="color">Color del fondo:</label>
 
                                         <div class="input-color-container">
-                                            <input type="color" id="color" class="input-color" name="favcolor" value="#000000">
+                                            <input type="color" id="color" class="input-color fondocol" name="favcolor" value="#000000">
                                         </div>
                                     </div>
 
@@ -168,14 +131,18 @@
                                 </div>
                             </div>
 
+                            
+                        </div>
+                        <div class="row mt-3">
                             <div class="col">
 
                                 <div id="img" class="" crossOrigin="anonymous">
-                                    <center><canvas id="tetnews" crossOrigin="anonymous"></canvas></center>
+                                    <center><canvas class="zonatet" id="tetnews" crossOrigin="anonymous"></canvas></center>
                                 </div>
 
                             </div>
                         </div>
+
                     </div>
                 </form>
             </div>
@@ -206,7 +173,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
-    <script src="./public/js/main.js"></script>
+    <script src="./public/js/art.js"></script>
     <script>
         // document.getElementById("sombra").step = "1";
         // $(document).ready(function () {
