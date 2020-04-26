@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
@@ -38,8 +38,24 @@
                     <div class="container-fluid pt-3 pb-3">
                         <div class="row">
                             <div class="col-xs-12 col-sm-3 shadow pt-3 pb-3 border">
-                                <div class="form-group">
-                                    <label for="detalles">Acontecimiento:</label>
+
+                                <div class="row">
+                                    <div class="col-8">
+                                        <select class="form-control" id="plantilla">
+                                            <option value="0">Acontecimientos históricos</option>
+                                            <option value="1">Comandos Linux</option>
+                                            <option value="2">HTML 5</option>
+                                            <option value="3">CSS</option>
+                                            <option value="4">JS</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-2">
+                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="Cargar plantilla" onclick="reload()"><i class="fas fa-sync"></i></button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label for="detalles">Texto:</label>
                                     <textarea class="form-control text-justify" id="detalles" rows="8" cols="50"></textarea>
                                 </div>
 
@@ -48,7 +64,7 @@
                                         aria-hidden="true"></i></button>
                                     <button type="button" class="btn btn-info text-center " data-toggle="tooltip" data-placement="top" title="Centrar" onclick="center()"><i
                                         class="fa fa-align-center" aria-hidden="true"></i></button>
-                                    <button type="button" class="btn btn-danger text-center " data-toggle="tooltip" data-placement="top" title="Remover" onclick="remover()"><i class="fa fa-trash-o"
+                                    <button type="button" class="btn btn-danger text-center " data-toggle="tooltip" data-placement="top" title="Remover" onclick="remover()"><i class="fas fa-trash-alt"
                                         aria-hidden="true"></i></button>
                                     <button type="button" id=button class="btn btn-success text-center " data-toggle="tooltip" data-placement="top" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button></div>
                             </div>
