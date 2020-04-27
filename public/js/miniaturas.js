@@ -37,6 +37,7 @@ $(".fondocol").change(function() {
 
 // Sombras
 document.getElementById('sombra').oninput = function sombrear() {
+
     var shad = this.value;
     var obj = canvas.getActiveObject();
     if (obj) {
@@ -48,6 +49,9 @@ document.getElementById('sombra').oninput = function sombrear() {
 
     canvas.renderAll();
 }
+
+
+
 
 // Color texto en tiempo real
 document.getElementById('color').oninput = function colored() {
@@ -144,12 +148,13 @@ function set_title() {
 // Insertar imagen al canvas
 function generate() {
 
-
     var shad = sombra.value;
     //var col = color.value;
     var filter = new fabric.Image.filters.Blur({
         blur: shad
     });
+
+
 
     fabric.Image.fromURL(globalpic, function(oImg) {
         oImg.filters.push(filter);
