@@ -11,14 +11,14 @@ var curi_bar = "https://somostet.github.io/admin/public/img/bars/somostetCuri.pn
 
 
 // Coloca la barra superior, recibe URL de la imagen de la barra y COLOR del fondo
-function set_front_bar(over,color){
+function set_front_bar(over, color) {
     canvas.setOverlayImage(over, canvas.renderAll.bind(canvas));
     canvas.setOverlayColor({
         source: color,
         repeat: 'repeat',
         offsetX: 0,
         offsetY: -1107
-      }, canvas.renderAll.bind(canvas));
+    }, canvas.renderAll.bind(canvas));
 }
 
 
@@ -37,7 +37,7 @@ function myFunction() {
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
 x.addListener(myFunction) // Attach listener function on state changes
-/* inicio canvas code*/
+    /* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
@@ -46,7 +46,7 @@ canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla
     width: canvas.width,
     height: canvas.height
 });
-set_front_bar(tetnews_bar,"#FFFFFF");
+set_front_bar(tetnews_bar, "#FFFFFF");
 /* fin canvas code*/
 
 // Cambio de plantilla
@@ -55,22 +55,24 @@ function reload() {
     var col = color.value;
 
     switch (section) {
-        case "0":   
-                    canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
-                    width: canvas.width,
-                    height: canvas.height
-                });
-                    set_front_bar(tetnews_bar,"#FFFFFF");
-                break;
-        case "1":   canvas.backgroundColor=col;
-                    canvas.setBackgroundImage(curi_bar, canvas.renderAll.bind(canvas), {
-                    width: canvas.width,
-                    height: canvas.height,
-                    opacity: 0
-                });
-                    set_front_bar(curi_bar,col);
-                break;
-        case "2": break;
+        case "0":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            set_front_bar(tetnews_bar, "#FFFFFF");
+            break;
+        case "1":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage(curi_bar, canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+                opacity: 0
+            });
+            set_front_bar(curi_bar, col);
+            break;
+        case "2":
+            break;
     };
 }
 
@@ -147,7 +149,7 @@ function set_title() {
     if (canvas_objects.length !== 0) {
         var last = canvas_objects[canvas_objects.length - 1]; //Get last object   
         last.centerH();
-        last.lockMovementX=true;
+        last.lockMovementX = true;
         //last.lockMovementY=true;
         last.lockRotation = true;
         canvas.renderAll();
@@ -182,7 +184,7 @@ function set_detail() {
     if (canvas_objects.length !== 0) {
         var last = canvas_objects[canvas_objects.length - 1]; //Get last object   
         last.centerH();
-        last.lockMovementX=true;
+        last.lockMovementX = true;
         //last.lockMovementY=true;
         last.lockRotation = true;
         canvase.renderAll();
@@ -270,33 +272,33 @@ function generate() {
 
 (function() {
     var $wrapper = $('#content'),
-        pasteImage = function (e) {
-          var items=e.originalEvent.clipboardData.items;
+        pasteImage = function(e) {
+            var items = e.originalEvent.clipboardData.items;
 
-          e.preventDefault();
-          e.stopPropagation();
-  
-          //Loop through files
-          for(var i=0;i<items.length;i++){
-            if (items[i].type.indexOf('image')== -1) continue;
-            var file = items[i],
-                type = items[i].type;
-            var imageData = file.getAsFile();
-            var URLobj = window.URL || window.webkitURL;
-            var img = new Image();
-            img.src = URLobj.createObjectURL(imageData);
-            fabric.Image.fromURL(img.src, function(img){
-                canvas.add(img);
-            });
-          }
+            e.preventDefault();
+            e.stopPropagation();
+
+            //Loop through files
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') == -1) continue;
+                var file = items[i],
+                    type = items[i].type;
+                var imageData = file.getAsFile();
+                var URLobj = window.URL || window.webkitURL;
+                var img = new Image();
+                img.src = URLobj.createObjectURL(imageData);
+                fabric.Image.fromURL(img.src, function(img) {
+                    canvas.add(img);
+                });
+            }
         }
-  
+
     $(window).on('paste', pasteImage);
-    $(document).keydown(function(event){
+    $(document).keydown(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
-        if(keycode == '46' || keycode == '8'){
-            remover();    
+        if (keycode == '46') {
+            remover();
         }
     });
 
-  })();
+})();
