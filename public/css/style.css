@@ -5,6 +5,10 @@
     height: 40px;
     border: solid 2px #ddd;
     border-radius: 40px;
+    border-right: solid #d9534f;
+    border-top: solid #428bca;
+    border-left: solid #f0ad4e;
+    border-bottom: solid #5cb85c;
 }
 
 .input-color {
@@ -27,9 +31,10 @@
     text-align: center;
 }
 
-.zonatet{
-    border: 2px dotted black;
+.zonatet {
+    border: 2px outset black;
 }
+
 
 /* .navbar{
     max-height: 50px;

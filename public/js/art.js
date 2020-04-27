@@ -20,16 +20,16 @@ function myFunction() {
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
 x.addListener(myFunction) // Attach listener function on state changes
-/* inicio canvas code*/
-var canvas = new fabric.Canvas('tetnews',{
+    /* inicio canvas code*/
+var canvas = new fabric.Canvas('tet', {
     preserveObjectStacking: true
 });
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1280, height: 720 }, { backstoreOnly: true });
 
-$(".fondocol").change(function(){
-    canvas.backgroundColor=color.value;
+$(".fondocol").change(function() {
+    canvas.backgroundColor = color.value;
     canvas.renderAll();
 });
 
@@ -78,8 +78,8 @@ function download() {
     window.location.href=image;  */
     canvas.discardActiveObject();
     canvas.renderAll();
-    ReImg.fromCanvas(document.getElementById('tetnews')).toPng()
-    ReImg.fromCanvas(document.getElementById('tetnews')).downloadPng()
+    ReImg.fromCanvas(document.getElementById('tet')).toPng()
+    ReImg.fromCanvas(document.getElementById('tet')).downloadPng()
 }
 
 // Remover objeto
@@ -148,7 +148,7 @@ function generate() {
     var shad = sombra.value;
     //var col = color.value;
     var filter = new fabric.Image.filters.Blur({
-         blur: shad
+        blur: shad
     });
 
     fabric.Image.fromURL(globalpic, function(oImg) {
@@ -170,7 +170,7 @@ function generate() {
 
 // Layers
 
-function toFullBack(){
+function toFullBack() {
     var obj = canvas.getActiveObject();
     if (obj) {
         canvas.sendToBack(obj)
@@ -178,7 +178,7 @@ function toFullBack(){
     }
 }
 
-function toBackward(){
+function toBackward() {
     var obj = canvas.getActiveObject();
     if (obj) {
         canvas.sendBackwards(obj)
@@ -186,7 +186,7 @@ function toBackward(){
     }
 }
 
-function toForward(){
+function toForward() {
     var obj = canvas.getActiveObject();
     if (obj) {
         canvas.bringForward(obj)
@@ -194,7 +194,7 @@ function toForward(){
     }
 }
 
-function toFront(){
+function toFront() {
     var obj = canvas.getActiveObject();
     if (obj) {
         canvas.bringToFront(obj)
@@ -207,40 +207,40 @@ function toFront(){
 
 (function() {
     var $wrapper = $('#content'),
-        pasteImage = function (e) {
-          var items=e.originalEvent.clipboardData.items;
+        pasteImage = function(e) {
+            var items = e.originalEvent.clipboardData.items;
 
-          var shad = sombra.value;
-          var filter = new fabric.Image.filters.Blur({
-            blur: shad
-        });
-  
-          e.preventDefault();
-          e.stopPropagation();
-  
-          //Loop through files
-          for(var i=0;i<items.length;i++){
-            if (items[i].type.indexOf('image')== -1) continue;
-            var file = items[i],
-                type = items[i].type;
-            var imageData = file.getAsFile();
-            var URLobj = window.URL || window.webkitURL;
-            var img = new Image();
-            img.src = URLobj.createObjectURL(imageData);
-            fabric.Image.fromURL(img.src, function(img){
-                img.filters.push(filter);
-                img.applyFilters();
-                canvas.add(img);
+            var shad = sombra.value;
+            var filter = new fabric.Image.filters.Blur({
+                blur: shad
             });
-          }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            //Loop through files
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') == -1) continue;
+                var file = items[i],
+                    type = items[i].type;
+                var imageData = file.getAsFile();
+                var URLobj = window.URL || window.webkitURL;
+                var img = new Image();
+                img.src = URLobj.createObjectURL(imageData);
+                fabric.Image.fromURL(img.src, function(img) {
+                    img.filters.push(filter);
+                    img.applyFilters();
+                    canvas.add(img);
+                });
+            }
         }
-  
+
     $(window).on('paste', pasteImage);
-    $(document).keydown(function(event){
+    $(document).keydown(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
-        if(keycode == '46' || keycode == '8'){
-            remover();    
+        if (keycode == '46' || keycode == '8') {
+            remover();
         }
     });
 
-  })();
+})();
