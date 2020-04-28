@@ -45,32 +45,29 @@
                                             <div class="input-group-prepend">
                                                 <div class="input-group-text">Título</div>
                                             </div>
-                                            <input type="text" class="form-control" id="titular">
+                                            <input type="text" class="form-control" id="titular" placeholder="Inserte el título">
                                         </div>
                                     </div>
                                     <div class="col">
                                         <select class="form-control" id="font_size">
-                                        <option value="28">28</option>
-                                        <option value="30">30</option>
-                                        <option value="32">32</option>
-                                        <option value="36">36</option>
-                                        <option value="42">42</option>
-                                        <option value="44">44</option>
-                                        <option value="48">48</option>
-                                        <option value="50">50</option>
-                                        <option value="60">60</option>
+                                        <option value="144">144</option>
                                         <option value="72">72</option>
+                                        <option value="64">64</option>
+                                        <option value="56">56</option>
+                                        <option value="48">48</option>
+                                        <option value="40">40</option>
+                                        <option value="36">36</option>
+                                        <option value="32">32</option>
+                                        <option value="30">30</option>
+                                        <option value="28">28</option>
+                                        <option value="24">24</option>
+                                        <option value="22">22</option>
+                                        <option value="20">20</option>
+                                        <option value="15">15</option>
                                     </select>
                                     </div>
                                 </div>
 
-                                <div class="row mt-2 text-right">
-                                    <div class="offset-11 col-1">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="pastizaje">
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <div class="row pt-4">
 
@@ -85,12 +82,12 @@
                                         <label for="color">Color del texto:</label>
 
                                         <div class="input-color-container">
-                                            <input type="color" id="colorT" class="input-color" name="favcolor" value="#FFFFFF">
+                                            <input type="color" id="colorT" class="input-color" name="favcolor" value="#000000">
                                         </div>
                                     </div>
                                     <div class="col"></div>
                                 </div>
-                                <div class="row mt-5">
+                                <div class="row mt-4">
                                     <div class="col"></div>
                                     <div class="col">
                                         <div id="div-img" class="file has-name is-boxed is-small is-success">
@@ -113,26 +110,33 @@
                                     <div class="col"></div>
                                 </div>
 
-                                <div class="row m-3">
+                                <div class="row m-2">
                                     <div class="col">
                                         <label for="sombra">Sombra:</label>
                                         <input type="range" value="0" min="0" max="100" class="custom-range sombraSEL" id="sombra">
                                     </div>
                                 </div>
                                 <h6 class="text-center">Atajos:</h6>
-                                <div class="row">
-                                    <div class="col text-center">
-                                        <p>Para copiar y pegar imagenes en el lienzo precione: <kbd>ctrl</kbd>+<kbd>v</kbd></p>
+                                <div class="col text-center">
+                                    <p>Para copiar y pegar imagenes en el lienzo precione: <kbd>ctrl</kbd>+<kbd>v</kbd></p>
+                                    <div class="row">
+                                        <div class="col-3"></div>
+                                        <div class="col">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" placeholder="ctrl+v para pegar imagen" id="pastizaje">
+                                            </div>
+                                        </div>
+                                        <div class="col-3"></div>
                                     </div>
                                 </div>
 
 
-                                <div class="row">
+                                <div class="row pt-3">
                                     <div class="col text-center">
                                         <p>Para eliminar elementos en el lienzo presionar: <kbd>←</kbd> o <kbd>supr</kbd></p>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row pb-3">
                                     <div class="col text-center">
                                         <button type="button" class="btn btn-dark" data-toggle="modal" data-target=".bd-example-modal-lg">Imagenes</button>
                                     </div>
