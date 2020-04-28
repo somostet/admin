@@ -235,7 +235,7 @@ function toFront() {
             }
         }
   
-    $("#tetnews").bind('paste', pasteImage);
+    $("#tet").bind('paste', pasteImage);
     $(document).keydown(function(event){
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '46' || keycode == '8') {
