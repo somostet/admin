@@ -2,17 +2,16 @@
 
 var globalpic;
 var oImg;
-var hc = 360;
-var wc = 640;
+var hc = 500;
+var wc = 500;
 
-// Metodos de creacion del canvas
 function myFunction() {
     if (x.matches) { // If media query matches
-        hc = 168;
+        hc = 300;
         wc = 300;
     } else {
-        hc = 360;
-        wc = 640;
+        hc = 500;
+        wc = 500;
     }
 
 }
@@ -26,7 +25,7 @@ var canvas = new fabric.Canvas('tet', {
 });
 canvas.setHeight(hc);
 canvas.setWidth(wc);
-canvas.setDimensions({ width: 1280, height: 720 }, { backstoreOnly: true });
+canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
 
 $(".fondocol").change(function() {
     canvas.backgroundColor = color.value;
@@ -234,9 +233,9 @@ function toFront() {
                 });
             }
         }
-  
-    $("#tetnews").bind('paste', pasteImage);
-    $(document).keydown(function(event){
+
+    $(window).on('paste', pasteImage);
+    $(document).keydown(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '46' || keycode == '8') {
             remover();

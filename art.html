@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
-    <link rel="stylesheet" href="./public/vendor/bulma/mybulma/css/mystyles.css" >
+    <link rel="stylesheet" href="./public/vendor/bulma/mybulma/css/mystyles.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
@@ -32,25 +32,27 @@
         </nav>
     </div>
     <!-- Cuerpo -->
-    <div class="container-fluid">
+    <div class="container-fluid pb-5">
         <div class="row mt-3">
-            <div class="col-10 offset-1">
+            <div class="col">
                 <form>
-                    <div class="row">
-                        <div class="col pt-3 pb-3 border">
-                            <div class="row mt-2">
-                                <div class="col-8">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <div class="input-group-text">Título</div>
+                    <div class="container-fluid pt-3 pb-3">
+                        <div class="row">
+                            <div class="col pt-3 shadow pb-3 border">
+                                <div class="row mt-2">
+                                    <div class="col-8">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text">Título</div>
+                                            </div>
+                                            <input type="text" class="form-control" id="titular">
                                         </div>
-                                        <input type="text" class="form-control" id="titular">
                                     </div>
-                                </div>
-                                <div class="col">
-                                    <select class="form-control" id="font_size">
+                                    <div class="col">
+                                        <select class="form-control" id="font_size">
                                         <option value="28">28</option>
                                         <option value="30">30</option>
+                                        <option value="32">32</option>
                                         <option value="36">36</option>
                                         <option value="42">42</option>
                                         <option value="44">44</option>
@@ -59,16 +61,31 @@
                                         <option value="60">60</option>
                                         <option value="72">72</option>
                                     </select>
+                                    </div>
                                 </div>
-                                <div class="col">
-                                    <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
-                                </div>
-                            </div>
+                                <div class="row pt-4">
 
-                            <div class="row mt-5">
-                                <div class="col">
-                                    <div id="div-img" class="file has-name is-boxed is-small is-primary">
-                                        <label class="file-label">
+                                    <div class="col">
+                                        <label for="color">Color del fondo:</label>
+
+                                        <div class="input-color-container">
+                                            <input type="color" id="color" class="input-color fondocol" name="favcolor" value="#FFFFFF">
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <label for="color">Color del texto:</label>
+
+                                        <div class="input-color-container">
+                                            <input type="color" id="colorT" class="input-color" name="favcolor" value="#FFFFFF">
+                                        </div>
+                                    </div>
+                                    <div class="col"></div>
+                                </div>
+                                <div class="row mt-5">
+                                    <div class="col"></div>
+                                    <div class="col">
+                                        <div id="div-img" class="file has-name is-boxed is-small is-success">
+                                            <label class="file-label">
                                             <input class="file-input" type="file" id="imagen" accept="image/*" onchange="picload()" crossOrigin="anonymous">
                                             <span class="file-cta">
                                                 <span class="file-icon">
@@ -82,83 +99,64 @@
                                                 Ninguna imagen seleccionada
                                             </span>
                                         </label>
+                                        </div>
+                                    </div>
+                                    <div class="col"></div>
+                                </div>
+
+                                <div class="row m-3">
+                                    <div class="col">
+                                        <label for="sombra">Sombra:</label>
+                                        <input type="range" value="0" min="0" max="100" class="custom-range sombraSEL" id="sombra">
+                                    </div>
+                                </div>
+                                <h6 class="text-center">Atajos:</h6>
+                                <div class="row">
+                                    <div class="col text-center">
+                                        <p>Para copiar y pegar imagenes en el lienzo precione: <kbd>ctrl</kbd>+<kbd>v</kbd></p>
                                     </div>
                                 </div>
 
-                                <div class="col">
-                                    <div class="row">
-                                        <div class="col">
-                                            <button type="button" class="btn btn-primary btn-block" data-toggle="tooltip" data-placement="bottom" title="Insertar imagen" onclick="generate()"><i class="far fa-image"></i></button>
-                                        </div>
-                                        <div class="col">
-                                            <button type="button" class="btn btn-info btn-block" data-toggle="tooltip" data-placement="bottom" title="Centrar elemento" onclick="center()"><i class="fa fa-align-center" aria-hidden="true"></i></button>
-                                        </div>
+
+                                <div class="row">
+                                    <div class="col text-center">
+                                        <p>Para eliminar elementos en el lienzo presionar: <kbd>←</kbd> o <kbd>supr</kbd></p>
                                     </div>
-                                    <div class="row mt-2">
-                                        <div class="col">
-                                            <button type="button" class="btn btn-danger btn-block" data-toggle="tooltip" data-placement="bottom" title="Remover seleccionado" onclick="remover()"><i class="fas fa-trash-alt"></i></button>
-                                        </div>
-                                        <div class="col">
-                                            <button type="button" id=button class="btn btn-success btn-block" data-toggle="tooltip" data-placement="bottom" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
-                                        </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col text-center">
+                                        <button type="button" class="btn btn-dark" data-toggle="modal" data-target=".bd-example-modal-lg">Imagenes</button>
                                     </div>
                                 </div>
 
                             </div>
-                            <div class="row">
-                                <div class="col">
-                                    <div class="row mt-2">
-                                        <div class="col">
-                                            <button type="button" class="btn btn-outline-dark btn-block" data-toggle="tooltip" data-placement="bottom" title="Enviar al fondo" onclick="toFullBack()">Enviar al fondo</button>
+
+                            <div class="col mt-3 mb-5">
+                                <div class="col text-center">
+                                    <center>
+                                        <div class="row p-2">
+                                            <div class="col">
+                                                <button type="button" class="btn btn-primary m-1" data-toggle="tooltip" data-placement="top" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
+                                                <button type="button" class="btn btn-primary m-1" data-toggle="tooltip" data-placement="top" title="Insertar imagen" onclick="generate()"><i class="far fa-image"></i></button>
+                                                <button type="button" class="btn btn-info m-1" data-toggle="tooltip" data-placement="top" title="Centrar elemento" onclick="center()"><i class="fa fa-align-center" aria-hidden="true"></i></button>
+                                                <button type="button" class="btn btn-danger m-1" data-toggle="tooltip" data-placement="top" title="Remover seleccionado" onclick="remover()"><i class="fas fa-trash-alt"></i></button>
+                                                <button type="button" class="btn btn-dark m-1" data-toggle="tooltip" data-placement="top" title="Enviar al fondo" onclick="toFullBack()"><i class="fas fa-angle-double-down"></i></button>
+                                                <button type="button" class="btn btn-dark m-1" data-toggle="tooltip" data-placement="top" title="Enviar atrás" onclick="toBackward()"><i class="fas fa-angle-down"></i></button>
+                                                <button type="button" class="btn btn-dark m-1" data-toggle="tooltip" data-placement="top" title="Traer adelante" onclick="toForward()"><i class="fas fa-angle-up"></i></button>
+                                                <button type="button" id=button class="btn btn-dark m-1" data-toggle="tooltip" data-placement="top" title="Traer al frente" onclick="toFront()"><i class="fas fa-angle-double-up"></i></button>
+                                                <button type="button" id=button class="btn btn-success m-1" data-toggle="tooltip" data-placement="top" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button>
+                                            </div>
                                         </div>
-                                        <div class="col">
-                                            <button type="button" class="btn btn-outline-dark btn-block" data-toggle="tooltip" data-placement="bottom" title="Enviar atrás" onclick="toBackward()">Enviar atrás</button>
+                                        <div class="row">
+                                            <div class="col">
+                                                <div id="img" class="" crossOrigin="anonymous">
+                                                    <canvas class="zonatet shadow" id="tet" crossOrigin="anonymous"></canvas>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="row mt-2">
-                                        <div class="col">
-                                            <button type="button" class="btn btn-outline-dark btn-block" data-toggle="tooltip" data-placement="bottom" title="Traer adelante" onclick="toForward()">Traer adelante</button>
-                                        </div>
-                                        <div class="col">
-                                            <button type="button" id=button class="btn btn-outline-dark btn-block" data-toggle="tooltip" data-placement="bottom" title="Traer al frente" onclick="toFront()">Traer al frente</button>
-                                        </div>
-                                    </div>
+                                    </center>
                                 </div>
                             </div>
-
-                            <div class="row">
-                                <div class="col">
-                                    <label for="sombra">Sombra:</label>
-                                    <input type="range" value="0" min="0" max="100" class="custom-range sombraSEL" id="sombra">
-                                </div>
-
-                                <div class="col">
-                                    <label for="color">Color del fondo:</label>
-
-                                    <div class="input-color-container">
-                                        <input type="color" id="color" class="input-color fondocol" name="favcolor" value="#000000">
-                                    </div>
-                                </div>
-
-                                <div class="col">
-                                    <label for="color">Color del texto:</label>
-
-                                    <div class="input-color-container">
-                                        <input type="color" id="colorT" class="input-color" name="favcolor" value="#000000">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        
-                    </div>
-                    <div class="row mt-3 mb-5">
-                        <div class="col">
-
-                            <div id="img" class="" crossOrigin="anonymous">
-                                <center><canvas class="zonatet" id="tetnews" crossOrigin="anonymous"></canvas></center>
-                            </div>
-
                         </div>
                     </div>
                 </form>
@@ -184,16 +182,52 @@
     </footer>
     <div class="py-3 p-4 text-center" style="background: rgb(32, 39, 48);"> <a href="https://somostet.github.io/" class="text-white">© 2020 Copyright tet</a></div>
 
+    <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Imagenes para copiar y pegar en el lienzo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                </div>
+                <div class="modal-body bg-dark">
+                    <div class="row">
+                        <div class="col text-center">
+                            <img src="./public/img/Logotet.png" class=" img-fluid" alt="Logo">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/2NGSQ.png" class=" img-fluid" alt="Logo">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/somostet.png" class=" img-fluid" alt="Logo">
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col">
+                            <img src="./public/img/bars/ElegantKatHead.png" class=" img-fluid" alt="Logo">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/tetmeme.png" class=" img-fluid" alt="Logo">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/ElegantKat.png" class=" img-fluid" alt="Logo">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
-    <script src="./public/js/art.js"></script>
+    <script src="./public/js/miniaturas.js"></script>
     <script>
         document.getElementById("sombra").step = "1";
-        $(document).ready(function () {
+        $(document).ready(function() {
             $('[data-toggle="tooltip"]').tooltip();
         });
     </script>
