@@ -293,7 +293,7 @@ function generate() {
             }
         }
 
-    $(window).on('paste', pasteImage);
+    $("#tetnews").bind('paste', pasteImage);
     $(document).keydown(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '46') {
