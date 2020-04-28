@@ -209,6 +209,7 @@ function toFront() {
         pasteImage = function(e) {
             var items = e.originalEvent.clipboardData.items;
 
+            sombra.value = 0;
             var shad = sombra.value;
             var filter = new fabric.Image.filters.Blur({
                 blur: shad
@@ -234,7 +235,7 @@ function toFront() {
             }
         }
 
-    $(window).on('paste', pasteImage);
+    $("#pastizaje").on('paste', pasteImage);
     $(document).keydown(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '46' || keycode == '8') {
