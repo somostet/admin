@@ -38,7 +38,7 @@
                 <form class="pb-5">
                     <div class="container-fluid pt-3 pb-3">
                         <div class="row">
-                            <div class="col pt-3 pb-3 border">
+                            <div class="col pt-3 pb-3 border shadow">
                                 <div class="row">
                                     <div class=col-10>
                                         <select class="form-control" id="plantilla">
@@ -56,20 +56,18 @@
                                             <div class="input-group-prepend">
                                                 <div class="input-group-text">Título</div>
                                             </div>
-                                            <input type="text" class="form-control" id="titular">
+                                            <input type="text" class="form-control" placeholder="Inserte el título" id="titular">
                                         </div>
                                     </div>
                                     <div class=col>
                                         <select class="form-control" id="font_size">
-                                            <option value="28">28</option>
-                                            <option value="30">30</option>
-                                            <option value="36">36</option>
-                                            <option value="42">42</option>
-                                            <option value="44">44</option>
-                                            <option value="48">48</option>
-                                            <option value="50">50</option>
-                                            <option value="60">60</option>
                                             <option value="72">72</option>
+                                            <option value="64">64</option>
+                                            <option value="56">56</option>
+                                            <option value="48">48</option>
+                                            <option value="40">40</option>
+                                            <option value="36">36</option>
+                                            <option value="32">32</option>
                                         </select>
                                     </div>
                                     <div class=col>
@@ -78,24 +76,21 @@
                                 </div>
                                 <div class="row mt-2">
                                     <div class="col">
-                                        <label for="detalles">Detalles</label>
+                                        <label for="detalles">Detalles:</label>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-8">
-                                        <textarea class="form-control text-justify" id="detalles" rows="4" cols="50"></textarea>
+                                        <textarea class="form-control text-justify" id="detalles" rows="4" placeholder="Inserte el detalle" cols="50"></textarea>
                                     </div>
                                     <div class=col>
                                         <select class="form-control" id="font_sizeD">
                                             <option value="28">28</option>
                                             <option value="30">30</option>
                                             <option value="36">36</option>
-                                            <option value="42">42</option>
+                                            <option value="42">40</option>
                                             <option value="44">44</option>
                                             <option value="48">48</option>
-                                            <option value="50">50</option>
-                                            <option value="60">60</option>
-                                            <option value="72">72</option>
                                         </select>
                                     </div>
                                     <div class="col">
@@ -157,8 +152,35 @@
                                         <label for="color">Color del texto:</label>
 
                                         <div class="input-color-container">
-                                            <input type="color" id="colorT" class="input-color" name="favcolor" value="#FFFFFF">
+                                            <input type="color" id="colorT" class="input-color" name="favcolor" value="#000000">
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col"></div>
+                                    <div class="col">
+                                        <h6 class="text-center">Atajos:</h6>
+                                    </div>
+                                    <div class="col"></div>
+
+                                </div>
+                                <div class="row">
+                                    <div class="col text-center">
+                                        <p>Para copiar y pegar imagenes en el lienzo precione: <kbd>ctrl</kbd>+<kbd>v</kbd></p>
+                                        <div class="row">
+                                            <div class="col-3"></div>
+                                            <div class="col">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" placeholder="ctrl+v para pegar imagen" id="pastizaje">
+                                                </div>
+                                            </div>
+                                            <div class="col-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row pt-3">
+                                    <div class="col text-center">
+                                        <p>Para eliminar elementos en el lienzo presionar: <kbd>supr</kbd></p>
                                     </div>
                                 </div>
                                 <div class="row text-center">
@@ -167,19 +189,13 @@
                                         <button type="button" class="btn btn-dark" data-toggle="modal" data-target=".bd-example-modal-lg">Imagenes</button>
                                     </div>
 
-                                    <div class="offset-10 col-1">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="pastizaje">
-                                        </div>
-                                    </div>
-
                                 </div>
                             </div>
 
                             <div class="col m-4">
 
                                 <div id="img" class="" crossOrigin="anonymous">
-                                    <center><canvas id="tetnews" crossOrigin="anonymous"></canvas></center>
+                                    <center><canvas id="tetnews" crossOrigin="anonymous" class="zonatet shadow"></canvas></center>
                                 </div>
 
                             </div>
