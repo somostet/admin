@@ -10,6 +10,20 @@ var tetnews_bar = "https://somostet.github.io/admin/public/img/bars/tetnews.png"
 var curi_bar = "https://somostet.github.io/admin/public/img/bars/somostetCuri.png"
 
 
+// Color del texto
+document.getElementById('colorT').oninput = function colored() {
+    var color = this.value;
+    var obj = canvas.getActiveObject();
+    if (obj) {
+        var style = {};
+        style['fill'] = color;
+        obj.setSelectionStyles(style).setCoords();
+    }
+
+    canvas.renderAll();
+}
+
+
 // Coloca la barra superior, recibe URL de la imagen de la barra y COLOR del fondo
 function set_front_bar(over, color) {
     canvas.setOverlayImage(over, canvas.renderAll.bind(canvas));

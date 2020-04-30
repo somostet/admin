@@ -51,7 +51,7 @@ document.getElementById('sombra').oninput = function sombrear() {
 }
 
 // Color texto en tiempo real
-document.getElementById('color').oninput = function colored() {
+document.getElementById('colorT').oninput = function colored() {
     var color = this.value;
     var obj = canvas.getActiveObject();
     if (obj) {
