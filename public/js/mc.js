@@ -26,6 +26,7 @@ var canvas = new fabric.Canvas('tet', {
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
+canvas.backgroundColor = "#ffffff";
 
 $(".fondocol").change(function() {
     canvas.backgroundColor = color.value;
