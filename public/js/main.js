@@ -8,7 +8,6 @@ var wc = 500;
 // Barras superiores de cada plantilla
 var tetnews_bar = "https://somostet.github.io/admin/public/img/bars/tetnews.png";
 var curi_bar = "https://somostet.github.io/admin/public/img/bars/somostetCuri.png";
-var none_bar = "https://somostet.github.io/admin/public/img/bars/none.png"
 
 
 // Color del texto
@@ -87,11 +86,25 @@ function reload() {
             set_front_bar(curi_bar, col);
             break;
         case "2":
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/tech.png', canvas.renderAll.bind(canvas), {
+            canvas.clear();
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet1/TBtet.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height,
             });
-            set_front_bar(none_bar, col);
+            break;
+        case "3":
+            canvas.clear();
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet1/TBtet2.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+            });
+            break;
+        case "4":
+            canvas.clear();
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet1/creadores.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+            });
             break;
     };
 }
