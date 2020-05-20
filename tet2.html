@@ -95,7 +95,7 @@
                             <div class="col shadow pt-3 pb-3 border">
 
                                 <div class="row">
-                                    <div class="col-8">
+                                    <div class="col-12">
                                         <select class="form-control" id="plantilla">
                                             <option value="0">Acontecimientos históricos</option>
                                             <option value="1">Comandos Linux</option>
@@ -104,14 +104,20 @@
                                             <option value="4">JS</option>
                                         </select>
                                     </div>
-                                    <div class="col">
+                                    <div class="col-12 text-center p-2">
                                         <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="Cargar plantilla" onclick="reload()"><i class="fas fa-sync"></i></button>
                                     </div>
                                 </div>
-
+                                <div class="form-group">
+                                    <label for="titular">Subtítulo:</label>
+                                    <input type="text" class="form-control" placeholder="Inserte el término" id="titular" autofocus>
+                                </div>
+                                <div class="col text-center">
+                                    <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Insertar título" onclick="set_title()"><i class="fas fa-heading"></i></button>
+                                </div>
                                 <div class="form-group mt-3">
                                     <label for="detalles">Texto:</label>
-                                    <textarea class="form-control text-justify" id="detalles" placeholder="Inserte el texto" rows="8" cols="50"></textarea>
+                                    <textarea class="form-control text-justify" id="detalles" placeholder="Inserte el texto" rows="4" cols="50"></textarea>
                                 </div>
 
                                 <br> <br>
