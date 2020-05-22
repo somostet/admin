@@ -34,6 +34,10 @@ canvas.setBackgroundImage('./public/img/Plantillas/mh.png', canvas.renderAll.bin
     height: canvas.height,
 
 });
+colorF = "rgba(29,221,107)";
+pesoF = "bold";
+alineacion = "justify-left";
+tipoF = "Arial";
 
 /* fin canvas mh*/
 
