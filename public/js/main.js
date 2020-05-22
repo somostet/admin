@@ -6,8 +6,8 @@ var hc = 500;
 var wc = 500;
 
 // Barras superiores de cada plantilla
-var tetnews_bar = "https://somostet.github.io/admin/public/img/bars/tetnews.png";
-var curi_bar = "https://somostet.github.io/admin/public/img/bars/somostetCuri.png";
+var tetnews_bar = "./public/img/bars/tetnews.png";
+var curi_bar = "./public/img/bars/somostetCuri.png";
 
 
 // Color del texto
@@ -56,7 +56,7 @@ var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
-canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
+canvas.setBackgroundImage('./public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
     width: canvas.width,
     height: canvas.height
 });
@@ -70,7 +70,7 @@ function reload() {
 
     switch (section) {
         case "0":
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
+            canvas.setBackgroundImage('./public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height
             });
@@ -87,21 +87,21 @@ function reload() {
             break;
         case "2":
             canvas.clear();
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet1/TBtet.png', canvas.renderAll.bind(canvas), {
+            canvas.setBackgroundImage('./public/img/Plantillas/tet1/TBtet.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height,
             });
             break;
         case "3":
             canvas.clear();
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet1/TBtet2.png', canvas.renderAll.bind(canvas), {
+            canvas.setBackgroundImage('./public/img/Plantillas/tet1/TBtet2.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height,
             });
             break;
         case "4":
             canvas.clear();
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet1/creadores.png', canvas.renderAll.bind(canvas), {
+            canvas.setBackgroundImage('./public/img/Plantillas/tet1/creadores.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height,
             });
