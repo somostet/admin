@@ -13,11 +13,11 @@
     <!-- Bootstrap CSS CDN -->
     <link rel="stylesheet" href="./public/vendor/bootstrap/css/bootstrap.min.css">
     <!-- Our Custom CSS -->
-    <link rel="stylesheet" href="./public/css/styleB.css">
-    <link rel="stylesheet" href="./public/vendor/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./public/css/style.css">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
 
     <!-- loading pwa -->
-    <script src="public/vendor/workbox/workbox-sw.js"></script>
+    <script src="./public/vendor/workbox/workbox-sw.js"></script>
     <!-- manifest del app -->
     <link rel="manifest" href="manifest.webmanifest" />
 
@@ -26,7 +26,7 @@
         if ('serviceWorker' in navigator) {
             // Use the window load event to keep the page load performant
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('public/sw.js');
+                navigator.serviceWorker.register('./public/sw.js');
             });
         }
     </script>
@@ -240,6 +240,7 @@
 
     <!-- Scripts -->
     <script src="./public/vendor/jquery/jquery-3.3.1.min.js"></script>
+    <script src="./public/vendor/popper/popper.min.js"></script>
     <script src="./public/vendor/bootstrap/js/bootstrap.min.js"></script>
     
     <script type="text/javascript">
