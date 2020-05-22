@@ -8,6 +8,7 @@ var wc = 500;
 // Barras superiores de cada plantilla
 var tetnews_bar = "./public/img/bars/tetnews.png";
 var curi_bar = "./public/img/bars/somostetCuri.png";
+var rese = "./public/img/bars/somostetR.png";
 
 
 // Color del texto
@@ -105,6 +106,15 @@ function reload() {
                 width: canvas.width,
                 height: canvas.height,
             });
+            break;
+        case "5":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage(rese, canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+                opacity: 0
+            });
+            set_front_bar(rese, col);
             break;
     };
 }
