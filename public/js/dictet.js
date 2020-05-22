@@ -23,7 +23,7 @@ var canvas = new fabric.Canvas('code');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
-canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
+canvas.setBackgroundImage('./public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
     width: canvas.width,
     height: canvas.height,
 
@@ -107,19 +107,19 @@ function reload() {
 
     switch (section) {
         case "0":
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
+            canvas.setBackgroundImage('./public/img/dictec/code.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height
             });
             break;
         case "1":
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/tech.png', canvas.renderAll.bind(canvas), {
+            canvas.setBackgroundImage('./public/img/dictec/tech.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height
             });
             break;
         case "2":
-            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/dictec/game.png', canvas.renderAll.bind(canvas), {
+            canvas.setBackgroundImage('./public/img/dictec/game.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height
             });
