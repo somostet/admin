@@ -126,7 +126,4 @@ function reload() {
             break;
     };
 
-
-
-
 }

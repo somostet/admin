@@ -31,6 +31,44 @@ canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantilla
 
 /* fin canvas mh*/
 
+// Cambio de plantilla
+function reload() {
+    var section = plantilla.value;
+
+    switch (section) {
+        case "0":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/mh.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "1":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet2/P_GNU_LINUX.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "2":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet2/P_html.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "3":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet2/P_css.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+        case "4":
+            canvas.setBackgroundImage('https://somostet.github.io/admin/public/img/Plantillas/tet2/P_js.png', canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height
+            });
+            break;
+    };
+}
+
 function generate() {
     var detail = detalles.value;
     canvas.add(new fabric.Textbox(detail, {
