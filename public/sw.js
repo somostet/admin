@@ -6,6 +6,11 @@ workbox.routing.registerRoute(
 );
 
 workbox.routing.registerRoute(
+  /\.html$/,
+  new workbox.strategies.NetworkFirst()
+);
+
+workbox.routing.registerRoute(
   // Cache CSS files.
   /\.css$/,
   // Use cache but update in the background.
