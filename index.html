@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
 
     <!-- loading pwa -->
-    <script src="./public/vendor/workbox/workbox-sw.js"></script>
+    <script src="public/vendor/workbox/workbox-sw.js"></script>
     <!-- manifest del app -->
     <link rel="manifest" href="manifest.webmanifest" />
 
@@ -26,7 +26,7 @@
         if ('serviceWorker' in navigator) {
             // Use the window load event to keep the page load performant
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./public/sw.js');
+                navigator.serviceWorker.register('public/sw.js');
             });
         }
     </script>
