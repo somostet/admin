@@ -58,40 +58,40 @@ function reload() {
                 width: canvas.width,
                 height: canvas.height
             });
-            colorF = "rgba(29,221,107)";
-            pesoF = "bold";
-            alineacion = "justify-left";
-            tipoF = "Arial";
+            colorF = "white";
+            pesoF = "normal";
+            alineacion = "center";
+            tipoF = "Consolas";
             break;
         case "2":
             canvas.setBackgroundImage('./public/img/Plantillas/tet2/P_html.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height
             });
-            colorF = "rgba(29,221,107)";
-            pesoF = "bold";
-            alineacion = "justify-left";
-            tipoF = "Arial";
+            colorF = "black";
+            pesoF = "normal";
+            alineacion = "center";
+            tipoF = "Century Gothic";
             break;
         case "3":
             canvas.setBackgroundImage('./public/img/Plantillas/tet2/P_css.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height
             });
-            colorF = "rgba(29,221,107)";
-            pesoF = "bold";
-            alineacion = "justify-left";
-            tipoF = "Arial";
+            colorF = "black";
+            pesoF = "normal";
+            alineacion = "center";
+            tipoF = "Century Gothic";
             break;
         case "4":
             canvas.setBackgroundImage('./public/img/Plantillas/tet2/P_js.png', canvas.renderAll.bind(canvas), {
                 width: canvas.width,
                 height: canvas.height
             });
-            colorF = "rgba(29,221,107)";
-            pesoF = "bold";
-            alineacion = "justify-left";
-            tipoF = "Arial";
+            colorF = "black";
+            pesoF = "normal";
+            alineacion = "center";
+            tipoF = "Century Gothic";
             break;
     };
 }
