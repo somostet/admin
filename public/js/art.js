@@ -236,11 +236,11 @@ function toFront() {
                 });
             }
         }
-  
+
     $("#pastizaje").on('paste', pasteImage);
-    $(document).keydown(function(event){
+    $(document).keydown(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
-        if (keycode == '46' || keycode == '8') {
+        if (keycode == '46') {
             remover();
         }
     });
