@@ -9,6 +9,9 @@ var wc = 500;
 var tetnews_bar = "./public/img/bars/tetnews.png";
 var curi_bar = "./public/img/bars/somostetCuri.png";
 var rese = "./public/img/bars/somostetR.png";
+var MB = "./public/img/bars/somostetMB.png";
+var TT = "./public/img/bars/somostetTT.png";
+var TF = "./public/img/bars/somostetTF2079.png";
 
 
 // Color del texto
@@ -115,6 +118,33 @@ function reload() {
                 opacity: 0
             });
             set_front_bar(rese, col);
+            break;
+        case "6":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage(MB, canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+                opacity: 0
+            });
+            set_front_bar(MB, col);
+            break;
+        case "7":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage(TT, canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+                opacity: 0
+            });
+            set_front_bar(TT, col);
+            break;
+        case "8":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage(TF, canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+                opacity: 0
+            });
+            set_front_bar(TF, col);
             break;
     };
 }
