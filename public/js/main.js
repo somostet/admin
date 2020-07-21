@@ -12,6 +12,8 @@ var rese = "./public/img/bars/somostetR.png";
 var MB = "./public/img/bars/somostetMB.png";
 var TT = "./public/img/bars/somostetTT.png";
 var TF = "./public/img/bars/somostetTF2079.png";
+var Art = "./public/img/bars/somostetArt.png";
+var Blan = "./public/img/bars/somostetBlanco.png";
 
 
 // Color del texto
@@ -146,6 +148,25 @@ function reload() {
             });
             set_front_bar(TF, col);
             break;
+        case "9":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage(Art, canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+                opacity: 0
+            });
+            set_front_bar(Art, col);
+            break;
+        case "10":
+            canvas.backgroundColor = col;
+            canvas.setBackgroundImage(Blan, canvas.renderAll.bind(canvas), {
+                width: canvas.width,
+                height: canvas.height,
+                opacity: 0
+            });
+            set_front_bar(Blan, col);
+            break;
+
     };
 }
 
