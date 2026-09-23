@@ -130,7 +130,8 @@ function download() {
     canvas.discardActiveObject();
     canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('mh')).toPng()
-    ReImg.fromCanvas(document.getElementById('mh')).downloadPng()
+    $pre
+    if (window.mostrarAviso) { window.mostrarAviso('Imagen descargada', 'success'); }
 }
 
 function remover() {

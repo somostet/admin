@@ -27,6 +27,7 @@
     }
 
     /* ---------- construcción del panel ---------- */
+    var puedeCompartir = !!(navigator.share);
     var panel = document.createElement('div');
     panel.className = 'capas-panel';
     panel.innerHTML =
@@ -36,6 +37,17 @@
             '<span class="badge bg-light text-dark" id="capas-count">0</span>' +
             '<i class="fas fa-chevron-down capas-caret" aria-hidden="true"></i>' +
         '</button>' +
+        '<div class="capas-toolbar" id="capas-toolbar">' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><i class="fas fa-undo" aria-hidden="true"></i><span class="solo-movil ms-1">Deshacer</span></button>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="redo" title="Rehacer (Ctrl+Shift+Z)" aria-label="Rehacer"><i class="fas fa-redo" aria-hidden="true"></i><span class="solo-movil ms-1">Rehacer</span></button>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="dup" title="Duplicar capa seleccionada" aria-label="Duplicar capa"><i class="fas fa-clone" aria-hidden="true"></i><span class="solo-movil ms-1">Duplicar</span></button>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="save" title="Guardar proyecto (.json)" aria-label="Guardar proyecto"><i class="fas fa-save" aria-hidden="true"></i><span class="solo-movil ms-1">Guardar</span></button>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="load" title="Cargar proyecto (.json)" aria-label="Cargar proyecto"><i class="fas fa-folder-open" aria-hidden="true"></i><span class="solo-movil ms-1">Cargar</span></button>' +
+            (puedeCompartir
+                ? '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="share" title="Compartir imagen" aria-label="Compartir imagen"><i class="fas fa-share-alt" aria-hidden="true"></i><span class="solo-movil ms-1">Compartir</span></button>'
+                : '') +
+        '</div>' +
+        '<input type="file" id="capas-cargar" accept="application/json,.json" hidden>' +
         '<div class="capas-list" id="capas-list"></div>';
 
     var anchor = document.getElementById('img');
@@ -50,6 +62,8 @@
     var list = panel.querySelector('#capas-list');
     var count = panel.querySelector('#capas-count');
     var header = panel.querySelector('.capas-header');
+    var toolbar = panel.querySelector('#capas-toolbar');
+    var inputCargar = panel.querySelector('#capas-cargar');
 
     // Cabecera plegable: evita que el panel tape el lienzo o quede recortado
     header.addEventListener('click', function () {
@@ -58,7 +72,8 @@
     });
 
     // Aviso flotante (toasts de Bootstrap 5) para mensajes de los editores
-    window.mostrarAviso = function (msg) {
+    // tipo: 'success' | 'warning' | 'danger' | 'info' (por defecto warning)
+    window.mostrarAviso = function (msg, tipo) {
         var container = document.getElementById('tet-toast-container');
         if (!container) {
             container = document.createElement('div');
@@ -67,8 +82,9 @@
             container.style.zIndex = '1100';
             document.body.appendChild(container);
         }
+        var bg = 'text-bg-' + (tipo || 'warning');
         var el = document.createElement('div');
-        el.className = 'toast align-items-center text-bg-warning border-0 show';
+        el.className = 'toast align-items-center ' + bg + ' border-0 show';
         el.setAttribute('role', 'alert');
         el.innerHTML = '<div class="d-flex"><div class="toast-body"></div>' +
             '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button></div>';
@@ -83,9 +99,9 @@
         }
     };
 
-    function aviso(msg) {
+    function aviso(msg, tipo) {
         if (typeof window.mostrarAviso === 'function') {
-            window.mostrarAviso(msg);
+            window.mostrarAviso(msg, tipo);
         } else {
             console.warn(msg);
         }
@@ -222,6 +238,177 @@
         e.preventDefault();
     });
 
+    /* ---------- historial (deshacer / rehacer) ---------- */
+    var historial = [];
+    var histIdx = -1;
+    var restaurando = false;
+    var HIST_MAX = 40;
+
+    function guardarEstado() {
+        if (restaurando) return;
+        try {
+            var estado = JSON.stringify(canvas.toJSON());
+        } catch (err) {
+            return; // lienzo no serializable: no se guarda historial
+        }
+        if (histIdx >= 0 && historial[histIdx] === estado) return;
+        historial = historial.slice(0, histIdx + 1);
+        historial.push(estado);
+        if (historial.length > HIST_MAX) historial.shift();
+        histIdx = historial.length - 1;
+        actualizarToolbar();
+    }
+
+    function restaurar(idx) {
+        if (idx < 0 || idx >= historial.length) return;
+        restaurando = true;
+        canvas.loadFromJSON(historial[idx], function () {
+            canvas.renderAll();
+            restaurando = false;
+            histIdx = idx;
+            actualizarToolbar();
+            render();
+        });
+    }
+
+    function deshacer() {
+        if (histIdx > 0) restaurar(histIdx - 1);
+    }
+
+    function rehacer() {
+        if (histIdx < historial.length - 1) restaurar(histIdx + 1);
+    }
+
+    function actualizarToolbar() {
+        if (!toolbar) return;
+        var u = toolbar.querySelector('[data-act="undo"]');
+        var r = toolbar.querySelector('[data-act="redo"]');
+        if (u) u.disabled = histIdx <= 0;
+        if (r) r.disabled = histIdx >= historial.length - 1;
+    }
+
+    /* ---------- duplicar ---------- */
+    function duplicar() {
+        var obj = canvas.getActiveObject();
+        if (!obj) {
+            aviso('Selecciona una capa para duplicarla');
+            return;
+        }
+        obj.clone(function (clon) {
+            clon.set({
+                left: (obj.left || 0) + 20,
+                top: (obj.top || 0) + 20
+            });
+            canvas.add(clon).setActiveObject(clon);
+            canvas.renderAll();
+        });
+    }
+
+    /* ---------- guardar / cargar proyecto (.json) ---------- */
+    function guardarProyecto() {
+        var datos = JSON.stringify(canvas.toJSON());
+        var blob = new Blob([datos], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'tet-proyecto.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        aviso('Proyecto guardado (.json)', 'success');
+    }
+
+    if (inputCargar) {
+        inputCargar.addEventListener('change', function () {
+            var file = inputCargar.files && inputCargar.files[0];
+            if (!file) return;
+            var lector = new FileReader();
+            lector.onload = function () {
+                try {
+                    var datos = JSON.parse(lector.result);
+                } catch (err) {
+                    aviso('El archivo no es un proyecto válido', 'danger');
+                    inputCargar.value = '';
+                    return;
+                }
+                restaurando = true;
+                canvas.loadFromJSON(datos, function () {
+                    canvas.renderAll();
+                    restaurando = false;
+                    guardarEstado();
+                    render();
+                    aviso('Proyecto cargado', 'success');
+                });
+                inputCargar.value = '';
+            };
+            lector.readAsText(file);
+        });
+    }
+
+    /* ---------- compartir (Web Share API) ---------- */
+    function dataUrlABlob(dataUrl) {
+        var partes = dataUrl.split(',');
+        var mime = (partes[0].match(/:(.*?);/) || [])[1] || 'image/png';
+        var binario = atob(partes[1]);
+        var bytes = new Uint8Array(binario.length);
+        for (var i = 0; i < binario.length; i++) {
+            bytes[i] = binario.charCodeAt(i);
+        }
+        return new Blob([bytes], { type: mime });
+    }
+
+    function compartir() {
+        canvas.discardActiveObject();
+        canvas.renderAll();
+        try {
+            var blob = dataUrlABlob(canvas.toDataURL({ format: 'png' }));
+        } catch (err) {
+            aviso('No se pudo generar la imagen', 'danger');
+            return;
+        }
+        var archivo = new File([blob], 'tet.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+            navigator.share({ files: [archivo], title: 'tet admin' }).catch(function () {
+                // cancelado por el usuario: sin aviso
+            });
+        } else {
+            aviso('Tu navegador no admite compartir archivos; usa Descargar', 'warning');
+        }
+    }
+
+    if (toolbar) {
+        toolbar.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+        });
+        toolbar.addEventListener('click', function (e) {
+            var btn = e.target.closest('button[data-act]');
+            if (!btn) return;
+            switch (btn.dataset.act) {
+                case 'undo': deshacer(); break;
+                case 'redo': rehacer(); break;
+                case 'dup': duplicar(); break;
+                case 'save': guardarProyecto(); break;
+                case 'load': if (inputCargar) inputCargar.click(); break;
+                case 'share': compartir(); break;
+            }
+        });
+    }
+
+    // Atajos de teclado: Ctrl+Z deshacer, Ctrl+Shift+Z / Ctrl+Y rehacer
+    document.addEventListener('keydown', function (e) {
+        var tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (!(e.ctrlKey || e.metaKey)) return;
+        var k = (e.key || '').toLowerCase();
+        if (k === 'z' && e.shiftKey) { e.preventDefault(); rehacer(); }
+        else if (k === 'z') { e.preventDefault(); deshacer(); }
+        else if (k === 'y') { e.preventDefault(); rehacer(); }
+    });
+
+    // Estado inicial del historial
+    guardarEstado();
+
     /* ---------- sincronización con Fabric ---------- */
     ['object:added', 'object:removed', 'object:modified',
      'selection:created', 'selection:updated', 'selection:clear',
@@ -229,5 +416,12 @@
         canvas.on(evt, render);
     });
 
+    // Guarda estado para deshacer solo en cambios de contenido
+    ['object:added', 'object:removed', 'object:modified', 'text:changed']
+        .forEach(function (evt) {
+            canvas.on(evt, guardarEstado);
+        });
+
+    actualizarToolbar();
     render();
 })();

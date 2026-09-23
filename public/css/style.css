@@ -74,6 +74,77 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* ===== P2 — UI ===== */
+
+/* Tokens de diseño (sustituyen los estilos inline repetidos en las 7 páginas) */
+:root {
+    --tet-nav: #1d2b43;
+    --tet-nav-dark: #161d2b;
+    --tet-footer: rgb(23, 32, 42);
+    --tet-bar: rgb(32, 39, 48);
+}
+
+.bg-tet-nav {
+    background-color: var(--tet-nav) !important;
+}
+
+.bg-tet-nav-dark {
+    background-color: var(--tet-nav-dark) !important;
+}
+
+.bg-tet-footer {
+    background-color: var(--tet-footer) !important;
+}
+
+.bg-tet-bar {
+    background-color: var(--tet-bar) !important;
+}
+
+/* Logo del pie */
+.footer-logo {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+}
+
+/* Pie compacto en móvil */
+@media (max-width: 767.98px) {
+    .footer-logo {
+        width: 84px;
+        height: 84px;
+    }
+
+    .page-footer .pt-5 {
+        padding-top: .75rem !important;
+    }
+
+    .page-footer br {
+        display: none;
+    }
+}
+
+/* Tarjetas de la portada */
+.card {
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+}
+
+/* Foco visible accesible para teclado */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid rgba(13, 110, 253, .75) !important;
+    outline-offset: 2px;
+}
+
 /* Panel de capas (public/js/capas.js) */
 .capas-panel {
     max-width: 640px;
@@ -107,6 +178,21 @@ body {
 .capas-caret {
     margin-left: auto;
     transition: transform .2s ease;
+}
+
+/* Toolbar de acciones del panel de capas (deshacer, duplicar, proyecto...) */
+.capas-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    padding: .5rem .75rem;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+.capas-toolbar .btn {
+    flex: 1 1 auto;
+    min-width: 2.5rem;
 }
 
 .capas-panel.collapsed .capas-caret {
