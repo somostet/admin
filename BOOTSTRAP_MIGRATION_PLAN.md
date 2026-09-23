@@ -1,5 +1,7 @@
 # Plan de Migración a Bootstrap 5
 
+> 📄 Las mejoras pendientes posteriores a la migración están en **[PLAN_MEJORAS.md](./PLAN_MEJORAS.md)**.
+
 Este documento describe un plan paso a paso para migrar el proyecto de Bootstrap 4 a Bootstrap 5 sin destruir el estado actual.
 
 ## 1. Preparación y respaldo
