@@ -181,8 +181,6 @@ function center() {
 
 // Descargar como imagen PNG
 function download() {
-    /*var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-    window.location.href=image;  */
     canvas.discardActiveObject();
     canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('tetnews')).toPng()
@@ -304,52 +302,6 @@ function generate() {
         //oImg.applyFilters();
         var height = oImg.height;
         var width = oImg.width;
-        //oImg.set('padding', 20);
-        //oImg.scaleToWidth(1200);
-
-        /*if (height >= 600 && width >= 1200) {
-            canvas.add(oImg.set({
-                //width: canvas.width,
-                height: 600,
-                hasControls: false,
-                //scaleX:1,
-                //scaleY:1,
-                //strokeUniform: true,
-                //lockMovementX: true,
-                lockMovementY: true,
-                lockRotation: true,
-                top: 93
-            }));
-        } else if (height < 600 && width >= 1200) {
-            oImg.scaleToHeight(600);
-
-            canvas.add(oImg.set({
-                height: 600,
-                hasControls: false,
-                lockMovementY: true,
-                lockRotation: true,
-                top: 93
-            }));
-        } else if (height >= 600 && width < 1200) {
-            oImg.scaleToWidth(canvas.getWidth());
-
-            canvas.add(oImg.set({
-                height: 600,
-                hasControls: false,
-                lockMovementY: true,
-                lockRotation: true,
-                top: 93
-            }));
-        } else {
-            oImg.scaleToWidth(canvas.getWidth());
-
-            canvas.add(oImg.set({
-                hasControls: false,
-                lockMovementY: true,
-                lockRotation: true,
-                top: 93
-            }));
-        }*/
 
         oImg.scaleToWidth(canvas.getWidth());
         canvas.add(oImg.set({
@@ -367,8 +319,7 @@ function generate() {
 // codigo vendor
 
 (function() {
-    var $wrapper = $('#content'),
-        pasteImage = function(e) {
+    var pasteImage = function(e) {
             var items = e.originalEvent.clipboardData.items;
 
             e.preventDefault();

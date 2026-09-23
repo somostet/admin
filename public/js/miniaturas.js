@@ -78,8 +78,6 @@ function center() {
 
 // Descargar como imagen PNG
 function download() {
-    /*var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-    window.location.href=image;  */
     canvas.discardActiveObject();
     canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('tet')).toPng()
@@ -214,8 +212,7 @@ function toFront() {
 // codigo vendor
 
 (function() {
-    var $wrapper = $('#content'),
-        pasteImage = function(e) {
+    var pasteImage = function(e) {
             var items = e.originalEvent.clipboardData.items;
 
             sombra.value = 0;

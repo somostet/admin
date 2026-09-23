@@ -1,0 +1,18 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores / IDE
+.vscode/
+.idea/
+*.swp
+
+# Node (solo si aparece en el futuro)
+node_modules/
+package-lock.json
+
+# Logs y temporales
+*.log
+_tmp*.ps1
+~$*
