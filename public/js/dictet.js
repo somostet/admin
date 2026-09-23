@@ -16,7 +16,7 @@ function myFunction() {
 
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
-x.addListener(myFunction) // Attach listener function on state changes
+x.addEventListener('change', myFunction) // Attach listener function on state changes
 
 /* inicio canvas code*/
 var canvas = new fabric.Canvas('code');

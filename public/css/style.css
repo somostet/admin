@@ -36,6 +36,44 @@
     text-align: justify !important;
 }
 
+/* ===== P1 — Móvil ===== */
+
+/* Etiquetas de texto de los botones solo-icono: visibles solo en móvil
+   (en escritorio ya actúan los tooltips) */
+.solo-movil {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .solo-movil {
+        display: inline;
+    }
+
+    /* Sección "Atajos" (ctrl+v / supr): sin teclado físico en móvil */
+    .solo-desktop {
+        display: none !important;
+    }
+
+    /* iOS: evitar el zoom automático al enfocar campos */
+    input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    /* Targets táctiles cómodos (>=44px) */
+    .btn {
+        min-height: 44px;
+    }
+}
+
+/* Safe-area (notch / gestos home) */
+body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Panel de capas (public/js/capas.js) */
 .capas-panel {
     max-width: 640px;
