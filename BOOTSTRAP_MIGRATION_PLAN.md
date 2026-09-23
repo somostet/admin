@@ -111,3 +111,18 @@ Este documento describe un plan paso a paso para migrar el proyecto de Bootstrap
 
 ### Recomendación
 Migrar primero en una sola página de prueba (`tet1.html` o `art.html`) y luego replicar los cambios al resto. Esto permite validar la compatibilidad con menos riesgo antes de ajustar todas las páginas.
+
+---
+
+## Estado final (completado)
+
+Migración ejecutada en la rama `bootstrap5-migration`:
+
+1. ✅ Bootstrap **5.3.3** descargado en local: `public/vendor/bootstrap5/` (`bootstrap.min.css` + `bootstrap.bundle.min.js`).
+2. ✅ Las 7 páginas migradas: `index`, `tet1` (piloto), `tet2`, `dictet`, `art`, `miniatura`, `modcre`.
+3. ✅ Atributos `data-*` → `data-bs-*`, `input-group-prepend` → `span.input-group-text`, `close` → `btn-close`, `btn-block` → `w-100`, `pos-f-t` eliminada (era código muerto, no existía ni en BS4).
+4. ✅ Capa de compatibilidad `public/js/bootstrap5-compat.js` cargada en las 7 páginas: mantiene funcionando el código jQuery existente (`$().modal(...)`, `$().tooltip(...)`).
+5. ✅ Eliminados `public/vendor/bootstrap/` (BS4) y `public/vendor/popper/` (ya los incluye el bundle de BS5).
+6. ✅ Validación por HTTP: 7 páginas + 154 recursos responden 200; grep sin restos de BS4.
+
+**Pendiente de verificación manual**: probar en navegador navbar colapsable, tooltips, modales y canvas en cada página antes del merge a `master`.
