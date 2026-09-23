@@ -90,7 +90,7 @@ function download() {
     canvas.discardActiveObject();
     canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('code')).toPng()
-    $pre
+    ReImg.fromCanvas(document.getElementById('code')).downloadPng()
     if (window.mostrarAviso) { window.mostrarAviso('Imagen descargada', 'success'); }
 }
 

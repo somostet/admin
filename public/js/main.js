@@ -186,7 +186,7 @@ function download() {
     canvas.discardActiveObject();
     canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('tetnews')).toPng()
-    $pre
+    ReImg.fromCanvas(document.getElementById('tetnews')).downloadPng()
     if (window.mostrarAviso) { window.mostrarAviso('Imagen descargada', 'success'); }
 }
 

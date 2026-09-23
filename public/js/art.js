@@ -80,7 +80,7 @@ function download() {
     canvas.discardActiveObject();
     canvas.renderAll();
     ReImg.fromCanvas(document.getElementById('tet')).toPng()
-    $pre
+    ReImg.fromCanvas(document.getElementById('tet')).downloadPng()
     if (window.mostrarAviso) { window.mostrarAviso('Imagen descargada', 'success'); }
 }
 
