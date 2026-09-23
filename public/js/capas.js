@@ -30,11 +30,12 @@
     var panel = document.createElement('div');
     panel.className = 'capas-panel';
     panel.innerHTML =
-        '<div class="capas-header">' +
+        '<button type="button" class="capas-header" aria-expanded="true" aria-controls="capas-list">' +
             '<i class="fas fa-layer-group" aria-hidden="true"></i>' +
             '<strong>Capas</strong>' +
             '<span class="badge bg-light text-dark" id="capas-count">0</span>' +
-        '</div>' +
+            '<i class="fas fa-chevron-down capas-caret" aria-hidden="true"></i>' +
+        '</button>' +
         '<div class="capas-list" id="capas-list"></div>';
 
     var anchor = document.getElementById('img');
@@ -48,6 +49,47 @@
 
     var list = panel.querySelector('#capas-list');
     var count = panel.querySelector('#capas-count');
+    var header = panel.querySelector('.capas-header');
+
+    // Cabecera plegable: evita que el panel tape el lienzo o quede recortado
+    header.addEventListener('click', function () {
+        var collapsed = panel.classList.toggle('collapsed');
+        header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+
+    // Aviso flotante (toasts de Bootstrap 5) para mensajes de los editores
+    window.mostrarAviso = function (msg) {
+        var container = document.getElementById('tet-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'tet-toast-container';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1100';
+            document.body.appendChild(container);
+        }
+        var el = document.createElement('div');
+        el.className = 'toast align-items-center text-bg-warning border-0 show';
+        el.setAttribute('role', 'alert');
+        el.innerHTML = '<div class="d-flex"><div class="toast-body"></div>' +
+            '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button></div>';
+        el.querySelector('.toast-body').textContent = msg;
+        container.appendChild(el);
+        if (window.bootstrap && bootstrap.Toast) {
+            var toast = new bootstrap.Toast(el, { delay: 3500 });
+            toast.show();
+            el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+        } else {
+            setTimeout(function () { el.remove(); }, 3500);
+        }
+    };
+
+    function aviso(msg) {
+        if (typeof window.mostrarAviso === 'function') {
+            window.mostrarAviso(msg);
+        } else {
+            console.warn(msg);
+        }
+    }
 
     function iconFor(obj) {
         switch (obj.type) {

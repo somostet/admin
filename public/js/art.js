@@ -94,23 +94,21 @@ function remover() {
 
 // Cargar URL de la imagen a subir
 function picload() {
-    var preview = document.querySelector('img');
     var file = document.querySelector('input[type=file]').files[0];
-    var name = file.name;
     var fileName = document.querySelector('#div-img .file-name');
     var reader = new FileReader();
+
+    if (!file) {
+        if (window.mostrarAviso) { window.mostrarAviso('El archivo no es soportado'); } else { console.warn('El archivo no es soportado'); }
+        return;
+    }
 
     reader.onloadend = function() {
         globalpic = reader.result;
     }
 
-    if (file) {
-        reader.readAsDataURL(file);
-        fileName.textContent = name;
-    } else {
-        $("#modal").modal("show");
-        $("#modal-cuerpo").html("El archivo no es soportado");
-    }
+    reader.readAsDataURL(file);
+    fileName.textContent = file.name;
 }
 
 // Colocar titulo
@@ -144,7 +142,10 @@ function set_title() {
 
 // Insertar imagen al canvas
 function generate() {
-
+    if (!globalpic) {
+        if (window.mostrarAviso) { window.mostrarAviso('Primero carga una imagen'); } else { console.warn('Primero carga una imagen'); }
+        return;
+    }
 
     var shad = sombra.value;
     //var col = color.value;

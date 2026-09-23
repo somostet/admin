@@ -17,20 +17,17 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 
 ## 🔴 P0 — Bugs visibles / que rompen la experiencia
 
-1. **Panel "Capas" mal posicionado y recortado**
-   - Se inserta después de `#img`, pero en pantallas pequeñas o con scroll queda fuera de vista.
-   - Moverlo a una **columna lateral fija junto al lienzo** o plegarlo (accordion) debajo del lienzo con ancho completo.
+> ✅ **Completado** (commit `P0-fixes`): los 5 puntos resueltos.
 
-2. **`picload()` crashea sin archivo**
-   - `var name = file.name;` está antes del `if (file)` → TypeError; el modal de error es inalcanzable.
-   - Además `#modal` y `#modal-cuerpo` **no existen** en ninguna página → crear modal de error real o usar toast.
+1. ~~**Panel "Capas" mal posicionado y recortado**~~ → cabecera **plegable** (accordion) + ancho completo en desktop/móvil; ya no tapa ni se recorta.
 
-3. **`generate()` sin imagen cargada** → `fabric.Image.fromURL(undefined)` falla.
-   - Validar y mostrar aviso: "Primero carga una imagen".
+2. ~~**`picload()` crashea sin archivo**~~ → guard `if (!file)` antes de acceder, modal inexistente reemplazado por **toast** (`window.mostrarAviso`, creado en `capas.js`, usa BS5 Toast).
 
-4. **IDs duplicados inválidos**: `id=button` repetido 9 veces sin comillas → eliminar o hacer únicos.
+3. ~~**`generate()` sin imagen cargada**~~ → guard `if (!globalpic)` + aviso "Primero carga una imagen" en los 4 editores con imagen (main, art, mc, miniaturas).
 
-5. **`dictet.js` typo `canvase.renderAll()`** → ReferenceError al insertar texto (línea 77).
+4. ~~**IDs duplicados `id=button`**~~ → eliminados los 9 (nadie los referenciaba).
+
+5. ~~**Typo `canvase.renderAll()`**~~ → corregido en `dictet.js:77`.
 
 ---
 

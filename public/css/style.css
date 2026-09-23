@@ -51,9 +51,32 @@
     display: flex;
     align-items: center;
     gap: .5rem;
+    width: 100%;
     padding: .6rem .9rem;
+    border: none;
     background: #1d2b43;
     color: #fff;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.capas-header:hover,
+.capas-header:focus-visible {
+    background: #26375a;
+}
+
+.capas-caret {
+    margin-left: auto;
+    transition: transform .2s ease;
+}
+
+.capas-panel.collapsed .capas-caret {
+    transform: rotate(-90deg);
+}
+
+.capas-panel.collapsed .capas-list {
+    display: none;
 }
 
 .capas-list {
@@ -146,6 +169,12 @@
     .capa-btn {
         width: 44px;
         height: 44px;
+    }
+}
+
+@media (min-width: 992px) {
+    .capas-panel {
+        max-width: 100%;
     }
 }
 
