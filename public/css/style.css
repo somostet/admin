@@ -31,6 +31,11 @@
     text-align: center;
 }
 
+/* Compatibilidad: .text-justify fue eliminada en Bootstrap 5 */
+.text-justify {
+    text-align: justify !important;
+}
+
 .zonatet {
     border: 2px outset black;
 }
