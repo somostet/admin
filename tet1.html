@@ -51,26 +51,26 @@
                     <div class="col-sm">
                         <ul class="navbar-nav text-center">
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.facebook.com/TuEspacioT/" target="_blank">facebook</a>
+                                <a class="nav-link  text-white" href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener">facebook</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.instagram.com/somostet/" target="_blank">Instagram</a>
+                                <a class="nav-link  text-white" href="https://www.instagram.com/somostet/" target="_blank" rel="noopener">Instagram</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://twitter.com/somostet" target="_blank">twitter</a>
+                                <a class="nav-link  text-white" href="https://twitter.com/somostet" target="_blank" rel="noopener">twitter</a>
                             </li>
                         </ul>
                     </div>
                     <div class="col-sm">
                         <ul class="navbar-nav text-center">
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg?view_as=subscriber" target="_blank">YouTube</a>
+                                <a class="nav-link  text-white" href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg?view_as=subscriber" target="_blank" rel="noopener">YouTube</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.somostet.com/" target="_blank">somostet</a>
+                                <a class="nav-link  text-white" href="https://www.somostet.com/" target="_blank" rel="noopener">somostet</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://postimages.org/" target="_blank">Postimage</a>
+                                <a class="nav-link  text-white" href="https://postimages.org/" target="_blank" rel="noopener">Postimage</a>
                             </li>
                         </ul>
                     </div>
@@ -321,7 +321,7 @@
         </div>
     </div>
     <!-- Scripts -->
-    <script src="./public/vendor/jquery/jquery-3.3.1.min.js"></script>
+    <script src="./public/vendor/jquery/jquery-3.7.1.min.js"></script>
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <script src="./public/js/bootstrap5-compat.js"></script>
 
@@ -335,6 +335,13 @@
             $('[data-bs-toggle="tooltip"]').tooltip();
         });
     </script>
-</body>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script></body>
 
 </html>

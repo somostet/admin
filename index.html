@@ -17,8 +17,6 @@
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
 
-    <!-- loading pwa -->
-    <script src="public/vendor/workbox/workbox-sw.js"></script>
     <!-- manifest del app -->
     <link rel="manifest" href="manifest.webmanifest" />
 
@@ -27,7 +25,7 @@
         if ('serviceWorker' in navigator) {
             // Use the window load event to keep the page load performant
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('public/sw.js');
+                navigator.serviceWorker.register('./sw.js');
             });
         }
     </script>
@@ -86,26 +84,26 @@
                     <div class="col-sm">
                         <ul class="navbar-nav text-center">
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.facebook.com/TuEspacioT/" target="_blank">facebook</a>
+                                <a class="nav-link  text-white" href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener">facebook</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.instagram.com/somostet/" target="_blank">Instagram</a>
+                                <a class="nav-link  text-white" href="https://www.instagram.com/somostet/" target="_blank" rel="noopener">Instagram</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://twitter.com/somostet" target="_blank">twitter</a>
+                                <a class="nav-link  text-white" href="https://twitter.com/somostet" target="_blank" rel="noopener">twitter</a>
                             </li>
                         </ul>
                     </div>
                     <div class="col-sm">
                         <ul class="navbar-nav text-center">
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg?view_as=subscriber" target="_blank">YouTube</a>
+                                <a class="nav-link  text-white" href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg?view_as=subscriber" target="_blank" rel="noopener">YouTube</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://www.somostet.com/" target="_blank">somostet</a>
+                                <a class="nav-link  text-white" href="https://www.somostet.com/" target="_blank" rel="noopener">somostet</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link  text-white" href="https://postimages.org/" target="_blank">Postimage</a>
+                                <a class="nav-link  text-white" href="https://postimages.org/" target="_blank" rel="noopener">Postimage</a>
                             </li>
                         </ul>
                     </div>
@@ -240,7 +238,7 @@
     <div class="py-3 p-4 text-center" style="background: rgb(32, 39, 48);"> <a href="https://somostet.github.io/" class="text-white">© 2020 Copyright tet</a></div>
 
     <!-- Scripts -->
-    <script src="./public/vendor/jquery/jquery-3.3.1.min.js"></script>
+    <script src="./public/vendor/jquery/jquery-3.7.1.min.js"></script>
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <script src="./public/js/bootstrap5-compat.js"></script>
     
