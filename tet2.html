@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="./public/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
@@ -15,7 +15,7 @@
 </head>
 
 <body>
-    <div class="pos-f-t text-white">
+    <div class="text-white">
         <div class="collapse" id="navbarToggleExternalContent">
             <div class="p-4" style="background: #161d2b;">
                 <h5 class="text-white h4">tu espacio tecnológico</h5>
@@ -79,7 +79,7 @@
         </div>
 
         <nav class="navbar navbar-dark" style="background: #1d2b43;">
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <a class="navbar-brand" href="index.html">tet admin</a>
@@ -105,7 +105,7 @@
                                         </select>
                                     </div>
                                     <div class="col-12 text-center p-2">
-                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="right" title="Cargar plantilla" onclick="reload()"><i class="fas fa-sync"></i></button>
+                                        <button type="button" class="btn btn-info" data-bs-toggle="tooltip" data-bs-placement="right" title="Cargar plantilla" onclick="reload()"><i class="fas fa-sync"></i></button>
                                     </div>
                                 </div>
                                 <div class="form-group mt-3">
@@ -125,13 +125,13 @@
                                 </div>
 
                                 <br> <br>
-                                <div class="text-center"> <button type="button" class="btn btn-primary text-center" data-toggle="tooltip" data-placement="top" title="Generar" onclick="generate()"><i class="fa fa-cogs"
+                                <div class="text-center"> <button type="button" class="btn btn-primary text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="Generar" onclick="generate()"><i class="fa fa-cogs"
                                         aria-hidden="true"></i></button>
-                                    <button type="button" class="btn btn-info text-center " data-toggle="tooltip" data-placement="top" title="Centrar" onclick="center()"><i
+                                    <button type="button" class="btn btn-info text-center " data-bs-toggle="tooltip" data-bs-placement="top" title="Centrar" onclick="center()"><i
                                         class="fa fa-align-center" aria-hidden="true"></i></button>
-                                    <button type="button" class="btn btn-danger text-center " data-toggle="tooltip" data-placement="top" title="Remover" onclick="remover()"><i class="fas fa-trash-alt"
+                                    <button type="button" class="btn btn-danger text-center " data-bs-toggle="tooltip" data-bs-placement="top" title="Remover" onclick="remover()"><i class="fas fa-trash-alt"
                                         aria-hidden="true"></i></button>
-                                    <button type="button" id=button class="btn btn-success text-center " data-toggle="tooltip" data-placement="top" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button></div>
+                                    <button type="button" id=button class="btn btn-success text-center " data-bs-toggle="tooltip" data-bs-placement="top" title="Descargar" onclick="download()"><i class="fa fa-download" aria-hidden="true"></i></button></div>
                             </div>
 
                             <div class="col-8 m-4">
@@ -167,15 +167,15 @@
     <div class="py-3 p-4 text-center" style="background: rgb(32, 39, 48);"> <a href="https://somostet.github.io/" class="text-white">© 2020 Copyright tet</a></div>
     <!-- Scripts -->
     <script src="./public/vendor/jquery/jquery-3.3.1.min.js"></script>
-    <script src="./public/vendor/popper/popper.min.js"></script>
-    <script src="./public/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="./public/js/bootstrap5-compat.js"></script>
 
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
     <script src="./public/js/tet2.js"></script>
     <script>
         $(document).ready(function() {
-            $('[data-toggle="tooltip"]').tooltip();
+            $('[data-bs-toggle="tooltip"]').tooltip();
         });
     </script>
 </body>
