@@ -195,6 +195,69 @@ textarea:focus-visible,
     min-width: 2.5rem;
 }
 
+/* ===== P3 — Panel de formatos sociales (public/js/formatos.js) ===== */
+.formatos-panel {
+    max-width: 640px;
+    margin: 1rem auto;
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, .1);
+}
+
+.formatos-header {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem .9rem;
+    background: var(--tet-nav, #1d2b43);
+    color: #fff;
+    font-size: 1rem;
+}
+
+.formatos-body {
+    padding: .9rem;
+}
+
+/* Guía de recorte superpuesta al lienzo */
+#img {
+    position: relative;
+}
+
+.formatos-guia {
+    position: absolute;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 5;
+}
+
+.formatos-guia-recorte {
+    position: absolute;
+    border: 2px dashed rgba(255, 255, 255, .95);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, .45);
+}
+
+.formatos-guia-etiqueta {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(-100%);
+    padding: 0 .35rem;
+    background: rgba(29, 43, 67, .9);
+    color: #fff;
+    font-size: .7rem;
+    line-height: 1.4;
+    white-space: nowrap;
+    border-radius: .25rem .25rem 0 0;
+}
+
+.formatos-guia-safe {
+    position: absolute;
+    display: none;
+    border: 2px dashed #ffd43b;
+}
+
 .capas-panel.collapsed .capas-caret {
     transform: rotate(-90deg);
 }
