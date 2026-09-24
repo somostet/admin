@@ -549,3 +549,134 @@ textarea:focus-visible,
         font-size: .85rem;
     }
 }
+
+/* ===== Navbar rediseñado: barra única sin hamburguesa ===== */
+.tet-nav {
+    padding: .45rem .9rem;
+    row-gap: .2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
+}
+
+/* Marca: logo + tet admin + canvas de acento */
+.tet-nav .navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    margin-right: .9rem;
+    padding: 0;
+    color: #fff;
+}
+
+.tet-nav-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.tet-nav-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: .01em;
+    white-space: nowrap;
+}
+
+.tet-nav-accent {
+    color: #7cc4ff;
+    font-weight: 600;
+}
+
+/* Enlace «Editores» */
+.tet-nav-menu .nav-link {
+    color: rgba(255, 255, 255, .88);
+    font-size: .92rem;
+    font-weight: 600;
+    padding: .45rem .8rem;
+    border-radius: 7px;
+}
+
+.tet-nav-menu .nav-link:hover,
+.tet-nav-menu .nav-link:focus,
+.tet-nav-menu .nav-link[aria-expanded="true"] {
+    color: #fff;
+    background: rgba(255, 255, 255, .12);
+}
+
+/* Desplegable oscuro con editores */
+.tet-dd {
+    min-width: 14.5rem;
+    padding: .4rem;
+    margin-top: .4rem;
+    background: var(--tet-nav-dark);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 10px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, .38);
+}
+
+.tet-dd .dropdown-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .5rem .7rem;
+    color: #e8ecf5;
+    font-size: .92rem;
+    border-radius: 7px;
+    white-space: nowrap;
+}
+
+.tet-dd .dropdown-item:hover,
+.tet-dd .dropdown-item:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, .10);
+}
+
+.tet-dd .dropdown-item[aria-current="page"] {
+    color: #7cc4ff;
+    background: rgba(124, 196, 255, .12);
+}
+
+.tet-dd-sub {
+    color: #8fa0bd;
+    font-size: .74rem;
+    white-space: nowrap;
+}
+
+.tet-dd .dropdown-item[aria-current="page"] .tet-dd-sub {
+    color: #7cc4ff;
+}
+
+/* Navbar compacto en móvil (sin hamburguesa: la barra se envuelve) */
+@media (max-width: 575.98px) {
+    .tet-nav {
+        padding: .4rem .6rem;
+    }
+
+    .tet-nav .navbar-brand {
+        gap: .45rem;
+        margin-right: .4rem;
+    }
+
+    .tet-nav-logo {
+        width: 27px;
+        height: 27px;
+    }
+
+    .tet-nav-name {
+        font-size: .95rem;
+    }
+
+    .tet-nav-menu .nav-link {
+        padding: .4rem .6rem;
+        font-size: .86rem;
+    }
+
+    .navbar-social {
+        gap: .25rem;
+    }
+
+    .navbar-social a {
+        width: 27px;
+        height: 27px;
+        font-size: .82rem;
+    }
+}
