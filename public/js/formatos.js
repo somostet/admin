@@ -214,37 +214,92 @@
         actualizarGuia();
     }
 
-    /* ---------- exportación en píxeles exactos ---------- */
+    /* ---------- exportación en píxeles exactos (con sobremuestreo) ---------- */
     function descargar() {
         var d = dims(formatoActual());
         if (!d) return;
 
         canvas.discardActiveObject();
-        canvas.renderAll();
 
-        var src = canvas.lowerCanvasEl;
-        var sw = src.width;
-        var sh = src.height;
-        var c = recorte(sw, sh, d.w, d.h);
+        /* recorte cover centrado en coordenadas lógicas del lienzo */
+        var c = recorte(canvas.width, canvas.height, d.w, d.h);
 
-        var off = document.createElement('canvas');
-        off.width = d.w;
-        off.height = d.h;
-        var ctx = off.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(src, c.sx, c.sy, c.cw, c.ch, 0, 0, d.w, d.h);
+        /* el respaldo lógico son solo 1200px y los presets llegan a 2560:
+           antes se estiraba ese raster (texto suave). Ahora se pinta la
+           escena ×k —texto y figuras siguen siendo vectores, salen nítidos—
+           y se reduce a los píxeles exactos del preset. k<=3 por el límite
+           de canvas de iOS (~16,7 M px) */
+        var k = Math.min(3, Math.max(2, Math.ceil(Math.max(d.w / c.cw, d.h / c.ch))));
 
-        var nombre = 'tet_' + d.w + 'x' + d.h + '.png';
-        var url;
+        var w0 = canvas.width, h0 = canvas.height;
+        var vpt0 = canvas.viewportTransform;
+        var off0 = canvas.skipOffscreen;
+        var objs = canvas.getObjects();
+        var cache0 = objs.map(function (o) { return o.objectCaching; });
+        var bg = canvas.backgroundImage;
+        var bgCache0 = bg ? bg.objectCaching : null;
+        var bgL = bg ? bg.left : 0, bgT = bg ? bg.top : 0;
+        var bgSX = bg ? bg.scaleX : 1, bgSY = bg ? bg.scaleY : 1;
+
+        var url = null, fallo = null;
         try {
+            /* la imagen de fondo se renderiza FUERA del viewportTransform
+               (renderCanvas la pinta antes del transform): hay que escalarla
+               y desplazarla a mano para que cubra el recorte ×k */
+            if (bg) {
+                bg.set({
+                    left: (bgL - c.sx) * k,
+                    top: (bgT - c.sy) * k,
+                    scaleX: bgSX * k,
+                    scaleY: bgSY * k,
+                    objectCaching: false
+                });
+            }
+            /* sin cachés de objeto: se crearon a escala 1 y saldrían
+               pixeladas al pintar ×k */
+            objs.forEach(function (o) { o.objectCaching = false; });
+
+            canvas.setDimensions({
+                width: Math.round(c.cw * k),
+                height: Math.round(c.ch * k)
+            }, { backstoreOnly: true });
+            canvas.viewportTransform = [k, 0, 0, k, -c.sx * k, -c.sy * k];
+            canvas.skipOffscreen = false; /* fuera de vista = fuera del recorte */
+            canvas.renderAll();
+
+            var hi = canvas.lowerCanvasEl;
+            var off = document.createElement('canvas');
+            off.width = d.w;
+            off.height = d.h;
+            var ctx = off.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(hi, 0, 0, hi.width, hi.height, 0, 0, d.w, d.h);
             url = off.toDataURL('image/png');
         } catch (err) {
+            fallo = err;
+        } finally {
+            canvas.viewportTransform = vpt0;
+            canvas.setDimensions({ width: w0, height: h0 }, { backstoreOnly: true });
+            canvas.skipOffscreen = off0;
+            objs.forEach(function (o, i) { o.objectCaching = cache0[i]; });
+            if (bg) {
+                bg.set({
+                    left: bgL, top: bgT, scaleX: bgSX, scaleY: bgSY,
+                    objectCaching: bgCache0
+                });
+            }
+            canvas.renderAll();
+        }
+
+        if (!url) {
             // canvas "tainted" (p.ej. abierto como file://): aviso claro en vez de fallar a ciegas
-            if (window.avisoExportacion) window.avisoExportacion(err);
+            if (window.avisoExportacion) window.avisoExportacion(fallo);
             else if (window.mostrarAviso) window.mostrarAviso('No se pudo exportar la imagen', 'danger');
             return;
         }
+
+        var nombre = 'tet_' + d.w + 'x' + d.h + '.png';
         var a = document.createElement('a');
         a.href = url;
         a.download = nombre;

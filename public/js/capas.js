@@ -397,7 +397,7 @@
         canvas.renderAll();
         var blob;
         try {
-            blob = dataUrlABlob(canvas.toDataURL({ format: 'png' }));
+            blob = dataUrlABlob(canvas.toDataURL({ format: 'png', enableRetinaScaling: true }));
         } catch (err) {
             aviso('No se pudo generar la imagen', 'danger');
             return;
