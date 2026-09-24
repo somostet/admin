@@ -406,6 +406,7 @@
         panes.querySelectorAll('.dock-pane').forEach(function (p) {
             p.classList.toggle('is-active', p.dataset.pane === t.dataset.pane);
         });
+        if (t.dataset.pane === 'capas') montarCapas(); // si el panel volvió al lienzo, se reclama
     });
 
     dock.appendChild(tabs);
@@ -671,8 +672,15 @@
         panel.insertBefore(filaColores, panel.firstElementChild);
     }
 
-    var capasPanel = document.querySelector('.capas-panel');
-    if (capasPanel) paneCapas.appendChild(capasPanel);
+    /* el panel de capas vive en la pestaña Capas: se reclama al montar,
+       a los 400ms (montajes tardíos) y cada vez que se abre la pestaña,
+       por si algún código lo devuelve debajo del lienzo */
+    function montarCapas() {
+        var cp = document.querySelector('.capas-panel');
+        if (cp && cp.parentNode !== paneCapas) paneCapas.appendChild(cp);
+    }
+    montarCapas();
+    setTimeout(montarCapas, 400);
 
     /* sustituye el antiguo row > col > form por el shell */
     fluidExt.appendChild(shell);
