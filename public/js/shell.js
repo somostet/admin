@@ -202,6 +202,33 @@
         rail.appendChild(btnGaleria);
     }
 
+    /* pegar desde el portapapeles (la lógica vive en capas.js) */
+    var btnPegar = mkBtn('fa-clipboard', 'Pegar imagen (Ctrl+V)');
+    btnPegar.addEventListener('click', function () {
+        function av(msg, tipo) { if (window.mostrarAviso) window.mostrarAviso(msg, tipo); }
+        if (navigator.clipboard && navigator.clipboard.read) {
+            navigator.clipboard.read().then(function (entries) {
+                for (var i = 0; i < entries.length; i++) {
+                    var tipos = (entries[i].types || []).filter(function (t) {
+                        return t.indexOf('image/') === 0;
+                    });
+                    if (tipos.length) {
+                        entries[i].getType(tipos[0]).then(function (blob) {
+                            window.pegarImagenBlob(blob);
+                        });
+                        return;
+                    }
+                }
+                av('El portapapeles no contiene imágenes', 'warning');
+            }).catch(function () {
+                av('Pulsa Ctrl+V para pegar la imagen', 'warning');
+            });
+        } else {
+            av('Pulsa Ctrl+V para pegar la imagen', 'warning');
+        }
+    });
+    rail.appendChild(btnPegar);
+
     rail.appendChild(el('span', 'shell-rail-sep'));
 
     var t4 = moverBoton('Centrar elemento', rail);   if (t4) hacerIcono(t4);

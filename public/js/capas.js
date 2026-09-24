@@ -410,6 +410,47 @@
         else if (k === 'y') { e.preventDefault(); rehacer(); }
     });
 
+    /* ---------- pegar imagen del portapapeles sobre el lienzo ---------- */
+    // Expuesto para el botón "Pegar" de la shell (shell.js)
+    window.pegarImagenBlob = function (blob) {
+        if (!blob) return;
+        var url = (window.URL || window.webkitURL).createObjectURL(blob);
+        fabric.Image.fromURL(url, function (img) {
+            window.URL && window.URL.revokeObjectURL(url);
+            if (!img || !img.width) {
+                if (window.mostrarAviso) window.mostrarAviso('No se pudo leer la imagen del portapapeles', 'danger');
+                return;
+            }
+            // escala al70% del lienzo y lo centra (antes se pegaba a tamaño real)
+            var maxW = canvas.getWidth() * 0.7;
+            var maxH = canvas.getHeight() * 0.7;
+            var esc = Math.min(maxW / img.width, maxH / img.height, 1);
+            img.set({
+                left: Math.round((canvas.getWidth() - img.width * esc) / 2),
+                top: Math.round((canvas.getHeight() - img.height * esc) / 2),
+                scaleX: esc,
+                scaleY: esc
+            });
+            canvas.add(img);            // object:added → historial + render
+            canvas.setActiveObject(img);
+            canvas.renderAll();
+            if (window.mostrarAviso) window.mostrarAviso('Imagen pegada · Ctrl+Z deshace', 'success');
+        });
+    };
+
+    document.addEventListener('paste', function (e) {
+        var cb = e.clipboardData;
+        if (!cb || !cb.items) return;
+        for (var i = 0; i < cb.items.length; i++) {
+            var it = cb.items[i];
+            if (it.kind === 'file' && it.type.indexOf('image/') === 0) {
+                e.preventDefault();     // sólo si hay imagen: el texto sigue normal
+                window.pegarImagenBlob(it.getAsFile());
+                return;
+            }
+        }
+    });
+
     // Estado inicial del historial
     guardarEstado();
 

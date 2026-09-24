@@ -319,28 +319,7 @@ function generate() {
 // codigo vendor
 
 (function() {
-    var pasteImage = function(e) {
-            var items = e.originalEvent.clipboardData.items;
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            //Loop through files
-            for (var i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('image') == -1) continue;
-                var file = items[i],
-                    type = items[i].type;
-                var imageData = file.getAsFile();
-                var URLobj = window.URL || window.webkitURL;
-                var img = new Image();
-                img.src = URLobj.createObjectURL(imageData);
-                fabric.Image.fromURL(img.src, function(img) {
-                    canvas.add(img);
-                });
-            }
-        }
-
-    $("#pastizaje").bind('paste', pasteImage);
+    // El pegado de imágenes ahora es global (ver capas.js: paste en document)
     $(document).keydown(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '46') {
