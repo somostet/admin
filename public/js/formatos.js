@@ -254,8 +254,9 @@
     btnDescargar.addEventListener('click', descargar);
     window.addEventListener('resize', actualizarGuia);
 
-    // La shell (shell.js) lo llama tras redimensionar el lienzo
+    // La shell (shell.js) lo usa al redimensionar / vaciar el lienzo
     window.formatosActualizar = actualizarInfo;
+    window.formatosDims = function () { return dims(formatoActual()); };
 
     actualizarInfo();
     // La guía necesita las medidas finales del lienzo
