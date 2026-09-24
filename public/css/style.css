@@ -369,6 +369,11 @@ textarea:focus-visible,
     border: 2px outset black;
 }
 
+/* El botón de formato llena el ancho sólo en el panel (fuera de la shell) */
+.formatos-panel #formato-descargar {
+    width: 100%;
+}
+
 
 /* .navbar{
     max-height: 50px;

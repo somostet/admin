@@ -2,12 +2,11 @@
    shell.js — barra de estilo Inkscape para tet1 (piloto)
    Reorganiza el DOM existente SIN tocar la lógica:
    - Barra superior: plantilla + cargar, deshacer/rehacer, zoom,
-     compartir, descargar, tema.
+     formato de salida + guía, compartir, descargar, tema.
    - Rail izquierdo: herramientas (título, detalles, imagen,
-     galería, centrar, borrar, orden).
+     galería, pegar, centrar, borrar, orden).
    - Escenario: reglas (rulers) con coordenadas + lienzo.
-   - Dock derecho con pestañas: Propiedades (formulario) /
-     Capas / Formato de salida.
+   - Dock derecho con pestañas: Propiedades (formulario) / Capas.
    - Paleta de colores + barra de estado abajo.
    Requiere: canvas (Fabric), capas.js y formatos.js ya cargados.
    ============================================================ */
@@ -64,6 +63,27 @@
         if (!b) return;
         var span = b.querySelector('span');
         if (span) span.classList.add('solo-movil');
+    }
+
+    /* quita columnas/filas que quedaron vacías tras mover los botones */
+    function limpiarVacios() {
+        var esCol = /(^|\s)col(-[a-z0-9]+)*(\s|$)/i;
+        for (var p = 0; p < 5; p++) {
+            var quitados = 0;
+            panel.querySelectorAll('.row > div').forEach(function (d) {
+                if (!esCol.test(d.className || '')) return;
+                if (d.querySelector('input, select, textarea, button, label, img, canvas, kbd, h6, p')) return;
+                if (!d.textContent.trim()) { d.remove(); quitados++; }
+            });
+            panel.querySelectorAll('.row').forEach(function (r) {
+                if (!r.textContent.trim() &&
+                    !r.querySelector('input, select, textarea, button, label, img')) {
+                    r.remove();
+                    quitados++;
+                }
+            });
+            if (!quitados) break;
+        }
     }
 
     /* ---------------- estructura ---------------- */
@@ -146,6 +166,43 @@
     top.appendChild(btnZoomLbl);
     top.appendChild(btnZoomIn);
 
+    top.appendChild(sep());
+
+    /* exportación: selector de formato + guía (traídos del panel de formatos) */
+    var fmtPanel = document.querySelector('.formatos-panel');
+    var btnFmt = null;
+    if (fmtPanel) {
+        var selFmt = fmtPanel.querySelector('#formato-salida');
+        var infoFmt = fmtPanel.querySelector('#formato-info');
+        var chkWrapFmt = fmtPanel.querySelector('.form-check');
+        btnFmt = fmtPanel.querySelector('#formato-descargar');
+
+        if (selFmt) {
+            selFmt.setAttribute('title', 'Red / tamaño de exportación');
+            top.appendChild(selFmt);
+        }
+        if (infoFmt) {
+            // sigue en el DOM para formatos.js; el tamaño lo comunica el botón
+            infoFmt.classList.add('visually-hidden');
+            top.appendChild(infoFmt);
+        }
+        if (chkWrapFmt && chkWrapFmt.querySelector('input')) {
+            var chkFmt = chkWrapFmt.querySelector('input');
+            var chkLblFmt = chkWrapFmt.querySelector('label');
+            if (chkLblFmt) chkLblFmt.remove();
+            var cajaGuia = el('span', 'sh-guia');
+            cajaGuia.setAttribute('title', 'Mostrar guía de recorte');
+            var lblGuia = el('label', null, '<i class="fas fa-crop-alt" aria-hidden="true"></i>');
+            lblGuia.setAttribute('for', chkFmt.id);
+            lblGuia.setAttribute('title', 'Mostrar guía de recorte');
+            cajaGuia.appendChild(chkFmt);
+            cajaGuia.appendChild(lblGuia);
+            top.appendChild(cajaGuia);
+        }
+        if (btnFmt) btnFmt.classList.add('btn-sm');
+        fmtPanel.remove();
+    }
+
     top.appendChild(el('span', 'top-spacer'));
 
     /* compartir (reenvía al botón de la toolbar de capas) */
@@ -158,13 +215,13 @@
         top.appendChild(btnShare);
     }
 
-    /* descargar (movido del formulario, conserva su onclick) */
-    var btnDesc = moverBoton('Descargar', top);
-    if (btnDesc) {
-        btnDesc.classList.remove('btn-ghost');
-        var spanDesc = btnDesc.querySelector('span');
-        if (spanDesc) { spanDesc.className = 'ms-1'; } // texto visible siempre
-    }
+    /* descarga por formato: botón compacto junto a Compartir */
+    if (btnFmt) top.appendChild(btnFmt);
+
+    /* el descargador original del formulario se retira:
+       el preset "Origen" del selector exporta al tamaño original */
+    var btnDesc = panel.querySelector('[aria-label="Descargar"]');
+    if (btnDesc) btnDesc.remove();
 
     /* tema oscuro / claro */
     var btnTema = mkBtn('fa-moon', 'Cambiar tema');
@@ -254,8 +311,7 @@
 
     var PESTANAS = [
         { id: 'props',    icono: 'fa-pen',            texto: 'Propiedades' },
-        { id: 'capas',    icono: 'fa-layer-group',    texto: 'Capas' },
-        { id: 'formato',  icono: 'fa-crop-alt',       texto: 'Formato' }
+        { id: 'capas',    icono: 'fa-layer-group',    texto: 'Capas' }
     ];
     PESTANAS.forEach(function (p) {
         var b = el('button', 'dock-tab' + (p.id === 'props' ? ' is-active' : ''),
@@ -283,10 +339,6 @@
         panes.querySelectorAll('.dock-pane').forEach(function (p) {
             p.classList.toggle('is-active', p.dataset.pane === t.dataset.pane);
         });
-        if (t.dataset.pane === 'formato') {
-            // la guía de recorte necesita rehacer sus cálculos al volver
-            setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 30);
-        }
     });
 
     dock.appendChild(tabs);
@@ -532,6 +584,8 @@
     window.addEventListener('resize', pintarReglas);
 
     /* ---------------- montaje del DOM ---------------- */
+    limpiarVacios();
+
     shell.appendChild(top);
     shell.appendChild(mid);
     shell.appendChild(bottom);
@@ -542,17 +596,10 @@
 
     var paneProps = panes.querySelector('[data-pane="props"]');
     var paneCapas = panes.querySelector('[data-pane="capas"]');
-    var paneForm = panes.querySelector('[data-pane="formato"]');
     paneProps.appendChild(panel);
 
     var capasPanel = document.querySelector('.capas-panel');
     if (capasPanel) paneCapas.appendChild(capasPanel);
-    var formatosPanel = document.querySelector('.formatos-panel');
-    if (formatosPanel) paneForm.appendChild(formatosPanel);
-    else {
-        var tabForm = tabs.querySelector('[data-pane="formato"]');
-        if (tabForm) tabForm.style.display = 'none';
-    }
 
     /* sustituye el antiguo row > col > form por el shell */
     fluidExt.appendChild(shell);

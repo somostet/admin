@@ -10,6 +10,11 @@
 
     var FORMATOS = [
         {
+            grupo: 'Origen', items: [
+                { n: 'Tamaño original del lienzo', orig: true }
+            ]
+        },
+        {
             grupo: 'Instagram', items: [
                 { n: 'Instagram cuadrado', w: 1080, h: 1080 },
                 { n: 'Instagram vertical (4:5)', w: 1080, h: 1350 },
@@ -60,7 +65,7 @@
     var opciones = FORMATOS.map(function (g) {
         var items = g.items.map(function (f, i) {
             var valor = g.grupo + '|' + f.n;
-            return '<option value="' + valor + '">' + f.n + ' — ' + f.w + '×' + f.h + '</option>';
+            return '<option value="' + valor + '">' + f.n + (f.orig ? '' : ' — ' + f.w + '×' + f.h) + '</option>';
         }).join('');
         return '<optgroup label="' + g.grupo + '">' + items + '</optgroup>';
     }).join('');
@@ -78,7 +83,7 @@
                 '<input class="form-check-input" type="checkbox" id="formato-guia" checked>' +
                 '<label class="form-check-label" for="formato-guia">Mostrar guía de recorte</label>' +
             '</div>' +
-            '<button type="button" class="btn btn-success w-100 mt-3" id="formato-descargar">' +
+            '<button type="button" class="btn btn-success mt-3" id="formato-descargar">' +
                 '<i class="fas fa-download" aria-hidden="true"></i> <span id="formato-descargar-texto">Descargar PNG</span>' +
             '</button>' +
         '</div>';
@@ -131,6 +136,15 @@
         return found;
     }
 
+    /* dimensiones reales de exportación (el preset "Origen" lee el lienzo actual) */
+    function dims(fmt) {
+        if (!fmt) return null;
+        if (fmt.orig) {
+            return { w: canvas.lowerCanvasEl.width, h: canvas.lowerCanvasEl.height, safe: null };
+        }
+        return { w: fmt.w, h: fmt.h, safe: fmt.safe };
+    }
+
     /* ---------- geometría del recorte "cover" centrado ---------- */
     function recorte(sw, sh, W, H) {
         var m = Math.max(W / sw, H / sh);      // escala uniforme para cubrir
@@ -164,7 +178,9 @@
         guia.style.width = r.width + 'px';
         guia.style.height = r.height + 'px';
 
-        var c = recorte(sw, sh, fmt.w, fmt.h);
+        var d = dims(fmt);
+        if (!d) return;
+        var c = recorte(sw, sh, d.w, d.h);
         var ex = r.width / sw;
         var ey = r.height / sh;
 
@@ -172,11 +188,11 @@
         capaRecorte.style.top = (c.sy * ey) + 'px';
         capaRecorte.style.width = (c.cw * ex) + 'px';
         capaRecorte.style.height = (c.ch * ey) + 'px';
-        etiqueta.textContent = fmt.w + ' × ' + fmt.h;
+        etiqueta.textContent = d.w + ' × ' + d.h;
 
-        if (fmt.safe) {
-            var fw = fmt.safe.w / fmt.w;
-            var fh = fmt.safe.h / fmt.h;
+        if (d.safe) {
+            var fw = d.safe.w / d.w;
+            var fh = d.safe.h / d.h;
             var fx = (1 - fw) / 2;
             var fy = (1 - fh) / 2;
             capaSafe.style.display = 'block';
@@ -191,16 +207,17 @@
 
     function actualizarInfo() {
         var fmt = formatoActual();
-        if (!fmt) return;
-        info.textContent = fmt.w + ' × ' + fmt.h + ' px' + (fmt.safe ? ' · zona segura ' + fmt.safe.w + '×' + fmt.safe.h : '');
-        textoDescargar.textContent = 'Descargar PNG (' + fmt.w + '×' + fmt.h + ')';
+        var d = dims(fmt);
+        if (!fmt || !d) return;
+        info.textContent = d.w + ' × ' + d.h + ' px' + (d.safe ? ' · zona segura ' + d.safe.w + '×' + d.safe.h : '');
+        textoDescargar.textContent = 'Descargar ' + d.w + '×' + d.h;
         actualizarGuia();
     }
 
     /* ---------- exportación en píxeles exactos ---------- */
     function descargar() {
-        var fmt = formatoActual();
-        if (!fmt) return;
+        var d = dims(formatoActual());
+        if (!d) return;
 
         canvas.discardActiveObject();
         canvas.renderAll();
@@ -208,17 +225,17 @@
         var src = canvas.lowerCanvasEl;
         var sw = src.width;
         var sh = src.height;
-        var c = recorte(sw, sh, fmt.w, fmt.h);
+        var c = recorte(sw, sh, d.w, d.h);
 
         var off = document.createElement('canvas');
-        off.width = fmt.w;
-        off.height = fmt.h;
+        off.width = d.w;
+        off.height = d.h;
         var ctx = off.getContext('2d');
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(src, c.sx, c.sy, c.cw, c.ch, 0, 0, fmt.w, fmt.h);
+        ctx.drawImage(src, c.sx, c.sy, c.cw, c.ch, 0, 0, d.w, d.h);
 
-        var nombre = 'tet_' + fmt.w + 'x' + fmt.h + '.png';
+        var nombre = 'tet_' + d.w + 'x' + d.h + '.png';
         var a = document.createElement('a');
         a.href = off.toDataURL('image/png');
         a.download = nombre;
@@ -236,6 +253,9 @@
     chkGuia.addEventListener('change', actualizarGuia);
     btnDescargar.addEventListener('click', descargar);
     window.addEventListener('resize', actualizarGuia);
+
+    // La shell (shell.js) lo llama tras redimensionar el lienzo
+    window.formatosActualizar = actualizarInfo;
 
     actualizarInfo();
     // La guía necesita las medidas finales del lienzo

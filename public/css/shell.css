@@ -530,3 +530,222 @@ body {
         display: none;
     }
 }
+
+/* ---------- barra superior: exportación (traída del panel de formatos) ---------- */
+.shell-top #formato-salida {
+    min-width: 12.5rem;
+    max-width: 15rem;
+    height: 34px;
+    padding-top: .1rem;
+    padding-bottom: .1rem;
+    font-size: .85rem;
+}
+
+.shell-top #formato-info {
+    /* el tamaño lo comunica el botón de descarga */
+    display: none;
+}
+
+.sh-guia {
+    display: inline-flex;
+    align-items: center;
+    gap: .2rem;
+    margin: 0;
+    color: var(--sh-muted);
+    cursor: pointer;
+}
+
+.sh-guia:hover {
+    color: var(--sh-text);
+}
+
+.sh-guia input {
+    margin: 0;
+    cursor: pointer;
+}
+
+.sh-guia label {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 6px 5px;
+    color: inherit;
+    cursor: pointer;
+}
+
+.sh-guia input:checked + label i {
+    color: var(--sh-accent);
+}
+
+.shell-top .btn {
+    padding: .3rem .6rem;
+    font-size: .87rem;
+}
+
+.shell-top #formato-descargar {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ---------- propiedades: maquetación tipo panel de editor ---------- */
+.shell-dock .editor-panel > .row {
+    margin: 0 0 .7rem !important;
+    padding-top: .7rem;
+    border-top: 1px solid var(--sh-border);
+}
+
+.shell-dock .editor-panel > .row:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+.shell-dock .editor-panel label:not(.btn):not(.form-check-label) {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted);
+    margin-bottom: .3rem;
+}
+
+.shell-dock .editor-panel .input-group-text {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--sh-muted);
+    background: transparent;
+}
+
+.shell-dock .editor-panel .form-control,
+.shell-dock .editor-panel .form-select,
+.shell-dock .editor-panel select {
+    font-size: .9rem;
+    padding: .42rem .6rem;
+    border-radius: 6px;
+    min-height: 38px;
+}
+
+.shell-dock .editor-panel textarea.form-control {
+    min-height: auto;
+    line-height: 1.4;
+}
+
+.shell-dock #div-img .btn {
+    width: 100%;
+    border-style: dashed;
+    font-size: .88rem;
+}
+
+.shell-dock .file-name {
+    font-size: .78rem;
+    margin-top: .35rem;
+}
+
+.shell-dock .input-color-container {
+    margin-top: .25rem;
+}
+
+.shell-dock .input-color {
+    width: 64px;
+    height: 38px;
+    padding: 3px;
+    border: 1px solid var(--sh-border);
+    border-radius: 6px;
+    background: var(--sh-input-bg);
+    cursor: pointer;
+}
+
+.shell-dock .editor-panel p {
+    font-size: .82rem;
+    color: var(--sh-muted);
+    margin-bottom: .4rem;
+}
+
+.shell-dock .editor-panel kbd {
+    font-size: .74rem;
+    background: var(--sh-hover);
+    color: var(--sh-text);
+    border: 1px solid var(--sh-border);
+    box-shadow: none;
+}
+
+.shell-dock .editor-panel h6.solo-desktop {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted);
+    margin-bottom: .5rem;
+}
+
+/* ---------- panel de capas dentro del dock ---------- */
+.shell-dock .capas-header {
+    background: var(--sh-top);
+    padding: .5rem .7rem;
+    font-size: .92rem;
+    border-bottom: 1px solid var(--sh-border);
+}
+
+.shell-dock .capas-header:hover,
+.shell-dock .capas-header:focus-visible {
+    background: var(--sh-hover);
+}
+
+.shell-dock #capas-count {
+    background: var(--sh-accent) !important;
+    color: #10151f !important;
+}
+
+.shell-dock .capas-toolbar {
+    padding: .45rem .6rem;
+    gap: .3rem;
+}
+
+.shell-dock .capas-toolbar .btn {
+    flex: 1 10;
+    min-width: 2rem;
+    height: 32px;
+    padding: 0 .4rem;
+}
+
+.shell-dock .capa-empty {
+    border: 1px dashed var(--sh-border);
+    border-radius: 8px;
+    margin: .35rem .5rem;
+    padding: .85rem .5rem;
+    color: var(--sh-muted);
+    font-size: .84rem;
+}
+
+/* ---------- responsive fino de la shell ---------- */
+@media (max-width: 767.98px) {
+    .shell-top .btn {
+        padding: .45rem .6rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .shell-top {
+        gap: .3rem;
+        padding: .35rem .45rem;
+    }
+
+    .shell-doc {
+        display: none;
+    }
+
+    .top-sep {
+        display: none;
+    }
+
+    .shell-top #formato-salida {
+        min-width: 9rem;
+        flex: 1 1 9rem;
+        max-width: none;
+    }
+
+    .shell-top .btn {
+        padding: .5rem .55rem;
+        font-size: .84rem;
+    }
+}
