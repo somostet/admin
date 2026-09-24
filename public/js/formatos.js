@@ -11,7 +11,7 @@
     var FORMATOS = [
         {
             grupo: 'Origen', items: [
-                { n: 'Tamaño original del lienzo', orig: true }
+                { n: 'Tamaño original', orig: true }
             ]
         },
         {

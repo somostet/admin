@@ -645,6 +645,13 @@ textarea:focus-visible,
     color: #7cc4ff;
 }
 
+/* Bootstrap fuerza position:static en navbars sin expand-*: anulado para que
+   el desplegable cuelgue por encima en vez de inflar la barra */
+.tet-nav .navbar-nav .dropdown-menu {
+    position: absolute;
+    z-index: 1050;
+}
+
 /* Navbar compacto en móvil (sin hamburguesa: la barra se envuelve) */
 @media (max-width: 575.98px) {
     .tet-nav {

@@ -479,7 +479,8 @@ body {
 
     .shell-rail {
         flex-direction: row;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
         width: auto;
         overflow-x: auto;
@@ -490,6 +491,8 @@ body {
 
     .shell-rail .btn {
         width: auto;
+        flex: 0 0 auto;         /* no encoge: si no cabe, salta de fila (evita solapes) */
+        white-space: nowrap;
         min-width: 44px;
         padding: 0 .6rem;
     }
@@ -497,6 +500,7 @@ body {
     /* en móvil se ve el texto de las herramientas (P1) */
     .shell-rail .solo-movil {
         display: inline !important;
+        white-space: nowrap;
     }
 
     .shell-rail-sep {
@@ -730,8 +734,8 @@ body {
         padding: .35rem .45rem;
     }
 
-    .shell-doc {
-        display: none;
+    .shell-top .shell-doc {
+        display: none !important;
     }
 
     .top-sep {
@@ -790,6 +794,11 @@ body {
 .navbar-tpl .btn:focus-visible {
     background: rgba(255, 255, 255, .18);
     color: #fff;
+}
+
+/* en el navbar siempre icono solo (el texto rompía la barra en móvil) */
+.navbar-tpl .solo-movil {
+    display: none !important;
 }
 
 .navbar-tpl + .navbar-social {
