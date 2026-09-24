@@ -229,7 +229,8 @@
             cajaGuia.appendChild(lblGuia);
             top.appendChild(cajaGuia);
         }
-        if (btnFmt) btnFmt.classList.add('btn-sm');
+        // en la barra el alto lo fija .shell-top .btn; el mt-3 del panel desalineaba
+        if (btnFmt) btnFmt.classList.remove('mt-3');
         fmtPanel.remove();
     }
 
