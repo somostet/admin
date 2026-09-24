@@ -1,23 +1,42 @@
+/* selector de color: cuadrado moderno (antes círculo con arcoíris) */
 .input-color-container {
     position: relative;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(127, 127, 127, .45);
+    border-radius: 10px;
     overflow: hidden;
-    width: 40px;
-    height: 40px;
-    border: solid 2px #ddd;
-    border-radius: 40px;
-    border-right: solid #d9534f;
-    border-top: solid #428bca;
-    border-left: solid #f0ad4e;
-    border-bottom: solid #5cb85c;
+    background: #ffffff;
+}
+
+.input-color-container:hover {
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 3px rgba(77, 171, 247, .3);
 }
 
 .input-color {
     position: absolute;
-    right: -8px;
-    top: -8px;
-    width: 56px;
-    height: 56px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
     border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.input-color::-webkit-color-swatch-wrapper {
+    padding: 3px;
+}
+
+.input-color::-webkit-color-swatch {
+    border: none;
+    border-radius: 7px;
+}
+
+.input-color::-moz-color-swatch {
+    border: none;
+    border-radius: 7px;
 }
 
 .shadowE:hover {

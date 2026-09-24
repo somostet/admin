@@ -666,16 +666,6 @@ body {
     margin-top: .25rem;
 }
 
-.shell-dock .input-color {
-    width: 64px;
-    height: 38px;
-    padding: 3px;
-    border: 1px solid var(--sh-border);
-    border-radius: 6px;
-    background: var(--sh-input-bg);
-    cursor: pointer;
-}
-
 .shell-dock .editor-panel p {
     font-size: .82rem;
     color: var(--sh-muted);
@@ -690,12 +680,53 @@ body {
     box-shadow: none;
 }
 
-.shell-dock .editor-panel h6.solo-desktop {
+/* atajos: fila de chips compactos (antes párrafos con kbd sueltos y un input muerto) */
+.sh-atajos {
+    display: grid;
+    gap: .35rem;
+    padding-top: .7rem;
+    border-top: 1px solid var(--sh-border);
+    margin-top: .2rem;
+}
+
+.sh-atajos-tit {
     font-size: .72rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .07em;
     color: var(--sh-muted);
-    margin-bottom: .5rem;
+    margin: 0 0 .15rem;
+}
+
+.sh-atajo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    font-size: .8rem;
+}
+
+.sh-kbd {
+    display: inline-flex;
+    align-items: center;
+    gap: .2rem;
+    white-space: nowrap;
+    color: var(--sh-muted);
+}
+
+.sh-atajo-desc {
+    color: var(--sh-muted);
+    text-align: right;
+}
+
+.sh-atajos kbd {
+    font-size: .72rem;
+    padding: .12rem .4rem;
+    border-radius: 6px;
+    background: var(--sh-input-bg);
+    border: 1px solid var(--sh-border);
+    color: var(--sh-text);
+    box-shadow: none;
 }
 
 /* ---------- panel de capas dentro del dock ---------- */
