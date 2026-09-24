@@ -484,6 +484,34 @@
         return img;
     };
 
+    /* ---------- adaptar la imagen seleccionada al lienzo ----------
+       "llenar": cover — cubre todo el lienzo (sobra por los lados);
+       "ajustar": contain — la imagen entera, descubriendo donde sobre.
+       A diferencia del ajuste automático de inserción, aquí se permite
+       agrandar: es una acción explícita del usuario. */
+    window.adaptarImagenSeleccionada = function (modo) {
+        var o = canvas.getActiveObject();
+        if (!o || o.type !== 'image' || !o.width || !o.height) {
+            if (window.mostrarAviso) window.mostrarAviso('Selecciona una imagen primero', 'warning');
+            return null;
+        }
+        var W = canvas.getWidth(), H = canvas.getHeight();
+        var e = (modo === 'llenar')
+            ? Math.max(W / o.width, H / o.height)
+            : Math.min(W / o.width, H / o.height);
+        o.set({
+            scaleX: e,
+            scaleY: e,
+            left: Math.round((W - o.width * e) / 2),
+            top: Math.round((H - o.height * e) / 2)
+        });
+        o.setCoords();
+        canvas.renderAll();
+        /* historial + refresco del chip de resolución de la shell */
+        canvas.fire('object:modified', { target: o });
+        return o;
+    };
+
     /* ---------- pegar imagen del portapapeles sobre el lienzo ---------- */
     // Expuesto para el botón "Pegar" de la shell (shell.js)
     window.pegarImagenBlob = function (blob) {

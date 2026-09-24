@@ -362,6 +362,21 @@
     rail.appendChild(el('span', 'shell-rail-sep'));
 
     var t4 = moverBoton('Centrar elemento', rail);   if (t4) hacerIcono(t4);
+
+    /* adaptar la imagen seleccionada al lienzo (la lógica vive en capas.js) */
+    var btnLlenar = mkBtn('fa-expand-arrows-alt', 'Llenar lienzo', 'Llenar');
+    hacerIcono(btnLlenar);
+    btnLlenar.addEventListener('click', function () {
+        if (window.adaptarImagenSeleccionada) window.adaptarImagenSeleccionada('llenar');
+    });
+    var btnAjustar = mkBtn('fa-compress-arrows-alt', 'Ajustar al lienzo', 'Ajustar');
+    hacerIcono(btnAjustar);
+    btnAjustar.addEventListener('click', function () {
+        if (window.adaptarImagenSeleccionada) window.adaptarImagenSeleccionada('ajustar');
+    });
+    rail.appendChild(btnLlenar);
+    rail.appendChild(btnAjustar);
+
     var t5 = moverBoton('Remover seleccionado', rail); if (t5) hacerIcono(t5);
 
     rail.appendChild(el('span', 'shell-rail-sep'));
@@ -656,6 +671,29 @@
     }
 
     window.addEventListener('resize', pintarReglas);
+
+    /* ---------------- chip de resolución (aviso de ampliación) ---------------- */
+    var chipRes = el('div', 'sh-res');
+    chipRes.setAttribute('role', 'status');
+    work.appendChild(chipRes);
+
+    function revisarRes() {
+        var o = canvas.getActiveObject();
+        var x = (o && o.type === 'image' && o.width)
+            ? Math.max(o.scaleX || 1, o.scaleY || 1) : 0;
+        if (x > 1.15) {
+            chipRes.textContent = 'Origen ' + Math.round(o.width) + '×' +
+                Math.round(o.height) + ' px · ×' + x.toFixed(1) +
+                ' se verá borrosa';
+            chipRes.classList.add('is-on');
+        } else {
+            chipRes.classList.remove('is-on');
+        }
+    }
+    canvas.on('selection:created', revisarRes);
+    canvas.on('selection:updated', revisarRes);
+    canvas.on('selection:cleared', revisarRes);
+    canvas.on('object:modified', revisarRes);
 
     /* ---------------- montaje del DOM ---------------- */
     limpiarVacios();

@@ -246,6 +246,27 @@ body {
     padding: 0 !important;
 }
 
+/* chip de resolución: avisa cuando la imagen ampliada supera su nativo */
+.sh-res {
+    display: none;
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    z-index: 6;
+    max-width: calc(100% - 1rem);
+    padding: .3rem .65rem;
+    border-radius: 999px;
+    background: #ffc107;
+    color: #212529;
+    font-size: .75rem;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.sh-res.is-on {
+    display: block;
+}
+
 /* ---------- dock derecho ---------- */
 .shell-dock {
     display: flex;
