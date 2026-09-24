@@ -310,12 +310,13 @@ function generate() {
         var height = oImg.height;
         var width = oImg.width;
 
-        oImg.scaleToWidth(canvas.getWidth());
+        /* contain con margen y centrada; nunca por encima del nativo
+           (antes scaleToWidth(1200) pixelaba las fotos pequeñas) */
+        if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(oImg);
         canvas.add(oImg.set({
             //hasControls: false,
             //lockMovementY: true,
-            lockRotation: true,
-            top: 93
+            lockRotation: true
         }));
 
     });

@@ -465,6 +465,25 @@
         else if (k === 'y') { e.preventDefault(); rehacer(); }
     });
 
+    /* ---------- adaptar imágenes subidas al lienzo (sin agrandar) ----------
+       Antes cada editor hacía scaleToWidth(1200): las fotos pequeñas salían
+       pixeladas al estirarse y las grandes se colgaban del lienzo. Ahora:
+       contain con 10% de margen, centrada y nunca por encima del tamaño
+       nativo. Compartido por tet1/art/miniatura/modcre. */
+    window.ajustarImagenAlLienzo = function (img, margen) {
+        if (!img || !img.width || !img.height) return img;
+        var W = canvas.getWidth(), H = canvas.getHeight();
+        var m = (margen == null ? 0.9 : margen);
+        var e = Math.min((W * m) / img.width, (H * m) / img.height, 1);
+        img.set({
+            scaleX: e,
+            scaleY: e,
+            left: Math.round((W - img.width * e) / 2),
+            top: Math.round((H - img.height * e) / 2)
+        });
+        return img;
+    };
+
     /* ---------- pegar imagen del portapapeles sobre el lienzo ---------- */
     // Expuesto para el botón "Pegar" de la shell (shell.js)
     window.pegarImagenBlob = function (blob) {

@@ -155,12 +155,12 @@ function generate() {
         oImg.filters.push(filter);
         oImg.applyFilters();
 
-        oImg.scaleToWidth(canvas.getWidth());
+        /* contain con margen y centrada; nunca por encima del nativo */
+        if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(oImg);
         canvas.add(oImg.set({
             //hasControls: false,
             //lockMovementY: true,
             lockRotation: true,
-            top: 93,
             strokeUniform: true
         }));
 
