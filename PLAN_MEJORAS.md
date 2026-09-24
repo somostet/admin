@@ -17,7 +17,8 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | P2 — UI + capas extendidas | ✅ Completada (`4922297`) + fix `59ca606` |
 | P3 — Formatos sociales | ✅ Completada (`a0b89ff`) |
 | P4 — Repo y calidad | ✅ Completada |
-| Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, pinch-zoom, navbar, plantilla común |
+| UI estilo Inkscape (piloto tet1) | 🟡 En pruebas: barra superior, rail, reglas, dock con pestañas, paleta, tema oscuro/claro |
+| Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, pinch-zoom, navbar, plantilla común, extender shell al resto de editores |
 
 ---
 
@@ -131,6 +132,8 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 
 ## Diferidos — próximos pasos
 
+- **UI estilo Inkscape**: revisar el piloto de `tet1.html` y, si convence, replicar la shell
+  (`shell.js` + `shell.css`) en tet2, dictet, art, miniatura y modcre.
 - P1.7 offcanvas del formulario en móvil.
 - P2.5 rediseño de navbar (brand + menú agrupado).
 - P2.14 pinch-zoom/pan en el lienzo.

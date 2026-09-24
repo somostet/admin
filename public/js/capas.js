@@ -285,6 +285,10 @@
         var r = toolbar.querySelector('[data-act="redo"]');
         if (u) u.disabled = histIdx <= 0;
         if (r) r.disabled = histIdx >= historial.length - 1;
+        // sincroniza los botones externos (barra superior estilo Inkscape)
+        if (window.tetSyncHistorial) {
+            window.tetSyncHistorial(u ? !u.disabled : false, r ? !r.disabled : false);
+        }
     }
 
     /* ---------- duplicar ---------- */
