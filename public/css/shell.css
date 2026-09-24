@@ -539,7 +539,6 @@ body {
 .shell-top #formato-salida {
     min-width: 12.5rem;
     max-width: 15rem;
-    height: 34px;
     padding-top: .1rem;
     padding-bottom: .1rem;
     font-size: .85rem;
@@ -553,6 +552,7 @@ body {
 .sh-guia {
     display: inline-flex;
     align-items: center;
+    height: 38px;
     gap: .2rem;
     margin: 0;
     color: var(--sh-muted);
@@ -581,9 +581,15 @@ body {
     color: var(--sh-accent);
 }
 
+/* todos los controles de la barra, mismo alto y centrados (alineación) */
 .shell-top .btn {
-    padding: .3rem .6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    padding: 0 .65rem;
     font-size: .87rem;
+    white-space: nowrap;
 }
 
 .shell-top #formato-descargar {
@@ -723,6 +729,14 @@ body {
 
 /* ---------- responsive fino de la shell ---------- */
 @media (max-width: 767.98px) {
+    /* objetivos táctiles de 44 px */
+    .shell-top .btn,
+    .shell-top #formato-salida,
+    .shell-top select,
+    .sh-guia {
+        height: 44px;
+    }
+
     .shell-top .btn {
         padding: .45rem .6rem;
     }
