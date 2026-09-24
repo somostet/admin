@@ -387,3 +387,160 @@ textarea:focus-visible,
     max-height: 25px;
     margin-top: -15%;
 } */
+
+/* ===== Pie rediseñado (columnas + redes + año) ===== */
+.page-footer {
+    padding-top: 2rem !important;
+    border-top: 3px solid var(--tet-nav);
+}
+
+.tet-footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+    padding-bottom: 1.75rem;
+    text-align: left;
+}
+
+.tet-footer-col {
+    min-width: 0;
+}
+
+.tet-footer-col .footer-logo {
+    display: block;
+    width: 88px;
+    height: 88px;
+    margin-bottom: .6rem;
+}
+
+.tet-footer-tag {
+    color: #cfd6e4;
+    font-size: .95rem;
+    margin-bottom: .35rem;
+}
+
+.tet-footer-web {
+    color: #8fd0ff;
+    font-size: .88rem;
+    text-decoration: none;
+}
+
+.tet-footer-web:hover {
+    text-decoration: underline;
+}
+
+.tet-footer-title {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: #9aa7c0;
+    margin-bottom: .7rem;
+}
+
+.tet-footer-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+.tet-footer-list a {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 26px;
+    color: #e8ecf5;
+    font-size: .92rem;
+    text-decoration: none;
+}
+
+.tet-footer-list a:hover,
+.tet-footer-list a:focus-visible {
+    color: #8fd0ff;
+}
+
+.tet-footer-social a i {
+    width: 18px;
+    text-align: center;
+    color: #8fd0ff;
+}
+
+.tet-copy {
+    padding: .85rem 1rem;
+    font-size: .85rem;
+}
+
+.tet-copy a {
+    text-decoration: none;
+}
+
+.tet-copy a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 991.98px) {
+    .tet-footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        text-align: center;
+    }
+
+    .tet-footer-col .footer-logo {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .tet-footer-list a {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .tet-footer-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+}
+
+/* ===== Redes siempre visibles en el navbar ===== */
+.navbar-social {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-left: auto;
+    padding-right: .35rem;
+}
+
+.navbar-social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    font-size: .95rem;
+    transition: background .15s ease, transform .15s ease;
+}
+
+.navbar-social a:hover,
+.navbar-social a:focus-visible {
+    background: rgba(255, 255, 255, .32);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 575.98px) {
+    .navbar-social {
+        gap: .3rem;
+    }
+
+    .navbar-social a {
+        width: 30px;
+        height: 30px;
+        font-size: .85rem;
+    }
+}
