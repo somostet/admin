@@ -365,19 +365,44 @@
     function compartir() {
         canvas.discardActiveObject();
         canvas.renderAll();
+        var blob;
         try {
-            var blob = dataUrlABlob(canvas.toDataURL({ format: 'png' }));
+            blob = dataUrlABlob(canvas.toDataURL({ format: 'png' }));
         } catch (err) {
             aviso('No se pudo generar la imagen', 'danger');
             return;
         }
+
+        /* en escritorio no siempre hay hoja de compartir: se copia al
+           portapapeles (pégala donde quieras) y, si no, se descarga */
+        function porPortapapeles() {
+            if (navigator.clipboard && window.ClipboardItem) {
+                navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+                    .then(function () {
+                        aviso('Imagen copiada al portapapeles: pégala donde quieras', 'success');
+                    })
+                    .catch(porDescarga);
+            } else {
+                porDescarga();
+            }
+        }
+
+        function porDescarga() {
+            if (typeof download === 'function') {
+                download(); // el propio editor avisa "Imagen descargada"
+            } else {
+                aviso('Tu navegador no admite compartir; usa Descargar', 'warning');
+            }
+        }
+
         var archivo = new File([blob], 'tet.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-            navigator.share({ files: [archivo], title: 'tet admin' }).catch(function () {
-                // cancelado por el usuario: sin aviso
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+            navigator.share({ files: [archivo], title: 'tet admin' }).catch(function (err) {
+                if (err && err.name === 'AbortError') return; // cancelado por el usuario
+                porPortapapeles();
             });
         } else {
-            aviso('Tu navegador no admite compartir archivos; usa Descargar', 'warning');
+            porPortapapeles();
         }
     }
 
