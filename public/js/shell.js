@@ -106,8 +106,12 @@
     stage.appendChild(work);
 
     /* ---------------- barra superior ---------------- */
+    /* rótulo con el nombre del editor activo (Noticias, Textos, Diccionario…) */
+    var actNav = document.querySelector('.navbar a[aria-current="page"]');
+    var nombreEdit = actNav && actNav.firstChild
+        ? String(actNav.firstChild.nodeValue || '').trim() : '';
     top.appendChild(el('span', 'shell-doc',
-        '<i class="fas fa-newspaper" aria-hidden="true"></i> Tet news'));
+        '<i class="fas fa-pen" aria-hidden="true"></i> ' + (nombreEdit || 'Editor')));
 
     /* selector de plantilla + avance automático en el navbar */
     var navPrin = document.querySelector('nav.navbar');
@@ -139,10 +143,12 @@
     });
     // una elección manual detiene la rotación
     if (selTpl) selTpl.addEventListener('change', pararAuto);
-    grupoTpl.appendChild(btnAuto);
-    if (navPrin) {
-        if (socialNav) navPrin.insertBefore(grupoTpl, socialNav);
-        else navPrin.appendChild(grupoTpl);
+    if (selTpl) {
+        grupoTpl.appendChild(btnAuto);
+        if (navPrin) {
+            if (socialNav) navPrin.insertBefore(grupoTpl, socialNav);
+            else navPrin.appendChild(grupoTpl);
+        }
     }
 
     top.appendChild(sep());
@@ -438,7 +444,7 @@
         palette.appendChild(s);
     });
 
-    var estado = el('span', null, '1200 × 1200 px');
+    var estado = el('span', null, canvas.width + ' × ' + canvas.height + ' px');
     estado.id = 'sh-estado';
     var coords = el('span', null, '—, —');
     coords.id = 'sh-coords';
