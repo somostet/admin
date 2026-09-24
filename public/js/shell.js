@@ -667,7 +667,7 @@
 
     /* los colores (fondo/texto) suben al inicio de Propiedades */
     var filaColores = document.getElementById('fila-colores');
-    if (filaColores && filaColores.parentNode === panel) {
+    if (filaColores && panel.contains(filaColores) && filaColores !== panel.firstElementChild) {
         panel.insertBefore(filaColores, panel.firstElementChild);
     }
 

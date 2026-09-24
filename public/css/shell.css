@@ -309,10 +309,20 @@ body {
 
 /* ---------- formulario (Propiedades) dentro del dock ---------- */
 .shell-dock .editor-panel {
+    /* el col-lg-4 del contexto original dejaba el panel al 33% del dock (~110px):
+       los controles se aplastaban (textarea garabato, selects en cajitas minúsculas) */
+    width: 100%;
     border: none !important;
     box-shadow: none !important;
     background: transparent;
     padding: .8rem .75rem !important;
+}
+
+/* en ~310px todo se apila a ancho completo, como en móvil (patrón ya validado) */
+.shell-dock .editor-panel .row > * {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
 }
 
 /* ---------- capas + formatos dentro del dock ---------- */
