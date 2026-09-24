@@ -685,6 +685,15 @@
     /* ---------------- estado inicial ---------------- */
     aplicarZoom(1);
 
+    /* altura real de la navbar: con ella el shell llena exactamente la ventana */
+    function medirNav() {
+        if (navPrin) {
+            document.documentElement.style.setProperty('--tet-nav-h', navPrin.offsetHeight + 'px');
+        }
+    }
+    medirNav();
+    window.addEventListener('resize', medirNav);
+
     // las reglas necesitan las medidas finales del layout
     setTimeout(pintarReglas, 60);
     setTimeout(pintarReglas, 400);
