@@ -18,6 +18,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | P3 — Formatos sociales | ✅ Completada (`a0b89ff`) |
 | P4 — Repo y calidad | ✅ Completada |
 | UI estilo Inkscape (piloto tet1) | 🟡 En pruebas (`32f238e`, `da1b520`): barra superior, rail, reglas, dock Propiedades|Capas, paleta, tema oscuro/claro |
+| Lote fixes UI tet1 | ✅ Completada (`bf68993` lienzo que llena el viewport y scrollea desde el borde, `f1f15b4` colores arriba: paleta bajo las pestañas del dock y fondo/texto al inicio de Propiedades, `e38b592` atajos en chips modernos + selector de color cuadrado) |
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, pinch-zoom, plantilla común, extender shell, catálogo de elementos |
 
