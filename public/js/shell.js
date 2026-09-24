@@ -449,7 +449,7 @@
     status.appendChild(estado);
     status.appendChild(zoomEstado);
 
-    bottom.appendChild(palette);
+    dock.insertBefore(palette, panes); // en el dock, bajo las pestañas: arriba y siempre visible
     bottom.appendChild(status);
 
     palette.addEventListener('click', function (e) {
@@ -664,6 +664,12 @@
     var paneProps = panes.querySelector('[data-pane="props"]');
     var paneCapas = panes.querySelector('[data-pane="capas"]');
     paneProps.appendChild(panel);
+
+    /* los colores (fondo/texto) suben al inicio de Propiedades */
+    var filaColores = document.getElementById('fila-colores');
+    if (filaColores && filaColores.parentNode === panel) {
+        panel.insertBefore(filaColores, panel.firstElementChild);
+    }
 
     var capasPanel = document.querySelector('.capas-panel');
     if (capasPanel) paneCapas.appendChild(capasPanel);

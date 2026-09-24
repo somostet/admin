@@ -434,13 +434,14 @@ body {
     min-height: 36px;
 }
 
+/* la paleta vive en el dock, bajo las pestañas: arriba y siempre visible */
 .shell-palette {
     display: flex;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-    overflow-x: auto;
-    padding-bottom: 1px;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: .45rem .55rem;
+    background: var(--sh-panel);
+    border-bottom: 1px solid var(--sh-border);
 }
 
 .swatch {
@@ -449,7 +450,7 @@ body {
     height: 18px;
     padding: 0;
     border: 1px solid rgba(127, 127, 127, .6);
-    border-radius: 2px;
+    border-radius: 4px;
     cursor: pointer;
 }
 
@@ -535,6 +536,12 @@ body {
 
     .shell-status {
         display: none;
+    }
+
+    /* muestra más grande para dedos */
+    .swatch {
+        width: 26px;
+        height: 26px;
     }
 }
 
