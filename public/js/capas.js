@@ -6,6 +6,21 @@
         return;
     }
 
+    /* ---------- controles de objetos: asas visibles y táctiles ----------
+       Fabric usa esquinas transparentes de 13 px por defecto: las imágenes
+       pegadas/copiadas eran casi imposibles de escalar en móvil. Se unifica
+       aquí (este script se carga en los 6 editores); los objetos que ya
+       fijan sus propias asas no se ven afectados. */
+    var tactil = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+        (!window.matchMedia && navigator.maxTouchPoints > 0);
+    fabric.Object.prototype.transparentCorners = false;
+    fabric.Object.prototype.cornerStyle = 'circle';
+    fabric.Object.prototype.cornerColor = '#ffffff';
+    fabric.Object.prototype.cornerStrokeColor = '#0d6efd';
+    fabric.Object.prototype.borderColor = '#0d6efd';
+    fabric.Object.prototype.cornerSize = tactil ? 26 : 20;
+    if (tactil) fabric.Object.prototype.padding = 10;
+
     // Botones de capa globales para paginas que no los definan (tet1, tet2, dictet)
     if (typeof window.toFullBack !== 'function') {
         window.toFullBack = function () {
