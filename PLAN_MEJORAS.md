@@ -17,7 +17,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | P2 — UI + capas extendidas | ✅ Completada (`4922297`) + fix `59ca606` |
 | P3 — Formatos sociales | ✅ Completada (`a0b89ff`) |
 | P4 — Repo y calidad | ✅ Completada |
-| UI estilo Inkscape (piloto tet1) | 🟡 En pruebas (`32f238e`, `da1b520`): barra superior, rail, reglas, dock Propiedades|Capas, paleta, tema oscuro/claro |
+| UI estilo Inkscape | ✅ En los 6 editores (`32f238e`, `da1b520` piloto tet1; `bf68993`–`e685bba` fixes y rollout): barra superior, rail, reglas, dock Propiedades|Capas, paleta en dock, colores arriba, atajos en chips, tema oscuro/claro |
 | Lote fixes UI tet1 | ✅ Completada (`bf68993` lienzo que llena el viewport y scrollea desde el borde, `f1f15b4` colores arriba: paleta bajo las pestañas del dock y fondo/texto al inicio de Propiedades, `e38b592` atajos en chips modernos + selector de color cuadrado) |
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, pinch-zoom, plantilla común, extender shell, catálogo de elementos |
@@ -135,9 +135,9 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 
 ## Diferidos — próximos pasos
 
-- **UI estilo Inkscape**: revisar el piloto de `tet1.html` (barra superior con formato+guía+
-  descarga, navbar con selector ▶, portapapeles global, lienzo en blanco) y, si convence,
-  replicar la shell (`shell.js` + `shell.css`) en tet2, dictet, art, miniatura y modcre.
+- ~~**UI estilo Inkscape**~~ → ✅ shell (`shell.js` + `shell.css`) extendida a los 6
+  editores (commit `b948e2d`) + atajos en chips (`e685bba`); pendiente solo de tu
+  prueba visual.
 - **Catálogo de elementos** (nuevo): biblioteca de formas, iconos, marcos y plantillas base
   para componer imágenes — siguiente bloque grande tras validar la UI.
 - P1.7 offcanvas del formulario en móvil.
