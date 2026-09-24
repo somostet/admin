@@ -660,6 +660,13 @@
     /* ---------------- montaje del DOM ---------------- */
     limpiarVacios();
 
+    /* referencias ANTES de desenganchar nada: al mover lienzo/panel al shell
+       (que todavía no está en el documento), document.* deja de verlos y los
+       reclamos de abajo fallaban en silencio: capas fuera de su pestaña y la
+       fila de colores sin subir a Propiedades */
+    var filaColores = document.getElementById('fila-colores');
+    var capasPanel = document.querySelector('.capas-panel');
+
     shell.appendChild(top);
     shell.appendChild(mid);
     shell.appendChild(bottom);
@@ -673,16 +680,17 @@
     paneProps.appendChild(panel);
 
     /* los colores (fondo/texto) suben al inicio de Propiedades */
-    var filaColores = document.getElementById('fila-colores');
     if (filaColores && panel.contains(filaColores) && filaColores !== panel.firstElementChild) {
         panel.insertBefore(filaColores, panel.firstElementChild);
     }
 
-    /* el panel de capas vive en la pestaña Capas: se reclama al montar,
-       a los 400ms (montajes tardíos) y cada vez que se abre la pestaña,
-       por si algún código lo devuelve debajo del lienzo */
+    /* el panel de capas vive en la pestaña Capas: se reclama al montar
+       (primero en document y, si aún no está enganchado, dentro del árbol
+       recién movido), a los 400ms y cada vez que se abre la pestaña, por si
+       algún código lo devuelve debajo del lienzo */
     function montarCapas() {
-        var cp = document.querySelector('.capas-panel');
+        var cp = document.querySelector('.capas-panel') ||
+                 work.querySelector('.capas-panel') || capasPanel;
         if (cp && cp.parentNode !== paneCapas) paneCapas.appendChild(cp);
     }
     montarCapas();

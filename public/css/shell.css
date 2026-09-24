@@ -791,6 +791,24 @@ body {
     .shell-top .btn {
         padding: .45rem .6rem;
     }
+
+    /* capas en el dock: 44 px de objetivo táctil y botones que no se
+       aplastan aunque muestren su etiqueta (.solo-movil) */
+    .shell-dock .capas-header {
+        min-height: 44px;
+    }
+
+    .shell-dock .capas-toolbar .btn {
+        flex: 0 0 auto;
+        min-width: 44px;
+        height: 44px;
+        padding: 0 .55rem;
+    }
+
+    .shell-dock .capa-btn {
+        width: 44px;
+        height: 44px;
+    }
 }
 
 @media (max-width: 575.98px) {
