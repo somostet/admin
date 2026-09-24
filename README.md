@@ -6,12 +6,18 @@ todo está vendorizado en `public/vendor/`.
 
 ## Cómo abrirlo en local
 
+Doble clic en el HTML: funciona como archivo local (`file://`) **sin servidor**,
+gracias a que las plantillas viajan embebidas en `public/js/plantillas-data.js`
+(el lienzo no queda «tainted» y descargas, compartir e historial funcionan).
+
+Para desarrollo o probar el service worker, un servidor estático opcional:
+
 ```bash
 python -m http.server 8123 --bind 127.0.0.1
 # abrir http://127.0.0.1:8123/
 ```
 
-Solo hace falta un servidor estático (GitHub Pages sirve `master/` en `/admin/`).
+En producción, GitHub Pages sirve `master/` en `/admin/`.
 
 ## Páginas
 

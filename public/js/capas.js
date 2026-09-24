@@ -241,17 +241,10 @@
     /* ---------- diagnóstico de exportación (canvas "tainted") ---------- */
     window.avisoExportacion = function (err) {
         console.warn('tet: exportación fallida', err);
-        var msg = location.protocol === 'file:'
-            ? 'Exportación bloqueada: la página está abierta como archivo local (file://). Ábrela desde el servidor local http://127.0.0.1:8123 para descargar, compartir y deshacer.'
-            : 'El navegador ha bloqueado la exportación del lienzo. Recarga la página (Ctrl+F5) e inténtalo de nuevo.';
-        if (window.mostrarAviso) window.mostrarAviso(msg, 'danger');
+        if (window.mostrarAviso) {
+            window.mostrarAviso('No se pudo exportar la imagen. Recarga la página (Ctrl+F5) e inténtalo otra vez; si persiste, mira la consola (F12).', 'danger');
+        }
     };
-
-    if (location.protocol === 'file:') {
-        setTimeout(function () {
-            aviso('tet abierto como archivo local (file://): descargas, compartir y deshacer pueden fallar. Usa el servidor local http://127.0.0.1:8123', 'warning');
-        }, 900);
-    }
 
     /* ---------- historial (deshacer / rehacer) ---------- */
     var historial = [];
@@ -461,28 +454,34 @@
     // Expuesto para el botón "Pegar" de la shell (shell.js)
     window.pegarImagenBlob = function (blob) {
         if (!blob) return;
-        var url = (window.URL || window.webkitURL).createObjectURL(blob);
-        fabric.Image.fromURL(url, function (img) {
-            window.URL && window.URL.revokeObjectURL(url);
-            if (!img || !img.width) {
-                if (window.mostrarAviso) window.mostrarAviso('No se pudo leer la imagen del portapapeles', 'danger');
-                return;
-            }
-            // escala al70% del lienzo y lo centra (antes se pegaba a tamaño real)
-            var maxW = canvas.getWidth() * 0.7;
-            var maxH = canvas.getHeight() * 0.7;
-            var esc = Math.min(maxW / img.width, maxH / img.height, 1);
-            img.set({
-                left: Math.round((canvas.getWidth() - img.width * esc) / 2),
-                top: Math.round((canvas.getHeight() - img.height * esc) / 2),
-                scaleX: esc,
-                scaleY: esc
+        // como data: URL (no blob:) para no contaminar el lienzo al abrir como file://
+        var lector = new FileReader();
+        lector.onerror = function () {
+            if (window.mostrarAviso) window.mostrarAviso('No se pudo leer la imagen del portapapeles', 'danger');
+        };
+        lector.onload = function (e) {
+            fabric.Image.fromURL(e.target.result, function (img) {
+                if (!img || !img.width) {
+                    if (window.mostrarAviso) window.mostrarAviso('No se pudo leer la imagen del portapapeles', 'danger');
+                    return;
+                }
+                // escala al70% del lienzo y lo centra (antes se pegaba a tamaño real)
+                var maxW = canvas.getWidth() * 0.7;
+                var maxH = canvas.getHeight() * 0.7;
+                var esc = Math.min(maxW / img.width, maxH / img.height, 1);
+                img.set({
+                    left: Math.round((canvas.getWidth() - img.width * esc) / 2),
+                    top: Math.round((canvas.getHeight() - img.height * esc) / 2),
+                    scaleX: esc,
+                    scaleY: esc
+                });
+                canvas.add(img);            // object:added → historial + render
+                canvas.setActiveObject(img);
+                canvas.renderAll();
+                if (window.mostrarAviso) window.mostrarAviso('Imagen pegada · Ctrl+Z deshace', 'success');
             });
-            canvas.add(img);            // object:added → historial + render
-            canvas.setActiveObject(img);
-            canvas.renderAll();
-            if (window.mostrarAviso) window.mostrarAviso('Imagen pegada · Ctrl+Z deshace', 'success');
-        });
+        };
+        lector.readAsDataURL(blob);
     };
 
     document.addEventListener('paste', function (e) {
