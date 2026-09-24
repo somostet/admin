@@ -236,8 +236,17 @@
         ctx.drawImage(src, c.sx, c.sy, c.cw, c.ch, 0, 0, d.w, d.h);
 
         var nombre = 'tet_' + d.w + 'x' + d.h + '.png';
+        var url;
+        try {
+            url = off.toDataURL('image/png');
+        } catch (err) {
+            // canvas "tainted" (p.ej. abierto como file://): aviso claro en vez de fallar a ciegas
+            if (window.avisoExportacion) window.avisoExportacion(err);
+            else if (window.mostrarAviso) window.mostrarAviso('No se pudo exportar la imagen', 'danger');
+            return;
+        }
         var a = document.createElement('a');
-        a.href = off.toDataURL('image/png');
+        a.href = url;
         a.download = nombre;
         document.body.appendChild(a);
         a.click();

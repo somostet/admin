@@ -238,6 +238,21 @@
         e.preventDefault();
     });
 
+    /* ---------- diagnóstico de exportación (canvas "tainted") ---------- */
+    window.avisoExportacion = function (err) {
+        console.warn('tet: exportación fallida', err);
+        var msg = location.protocol === 'file:'
+            ? 'Exportación bloqueada: la página está abierta como archivo local (file://). Ábrela desde el servidor local http://127.0.0.1:8123 para descargar, compartir y deshacer.'
+            : 'El navegador ha bloqueado la exportación del lienzo. Recarga la página (Ctrl+F5) e inténtalo de nuevo.';
+        if (window.mostrarAviso) window.mostrarAviso(msg, 'danger');
+    };
+
+    if (location.protocol === 'file:') {
+        setTimeout(function () {
+            aviso('tet abierto como archivo local (file://): descargas, compartir y deshacer pueden fallar. Usa el servidor local http://127.0.0.1:8123', 'warning');
+        }, 900);
+    }
+
     /* ---------- historial (deshacer / rehacer) ---------- */
     var historial = [];
     var histIdx = -1;
@@ -249,7 +264,9 @@
         try {
             var estado = JSON.stringify(canvas.toJSON());
         } catch (err) {
-            return; // lienzo no serializable: no se guarda historial
+            // p.ej. canvas "tainted" al abrir como file://: sin historial, pero visible en consola
+            console.warn('tet: no se pudo guardar el historial', err);
+            return;
         }
         if (histIdx >= 0 && historial[histIdx] === estado) return;
         historial = historial.slice(0, histIdx + 1);
@@ -262,13 +279,18 @@
     function restaurar(idx) {
         if (idx < 0 || idx >= historial.length) return;
         restaurando = true;
-        canvas.loadFromJSON(historial[idx], function () {
-            canvas.renderAll();
-            restaurando = false;
-            histIdx = idx;
-            actualizarToolbar();
-            render();
-        });
+        try {
+            canvas.loadFromJSON(historial[idx], function () {
+                canvas.renderAll();
+                restaurando = false;
+                histIdx = idx;
+                actualizarToolbar();
+                render();
+            });
+        } catch (err) {
+            restaurando = false; // que no se quede el flag colgado
+            console.warn('tet: no se pudo restaurar el historial', err);
+        }
     }
 
     function deshacer() {

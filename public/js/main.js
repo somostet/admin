@@ -183,8 +183,15 @@ function center() {
 function download() {
     canvas.discardActiveObject();
     canvas.renderAll();
-    ReImg.fromCanvas(document.getElementById('tetnews')).toPng()
-    ReImg.fromCanvas(document.getElementById('tetnews')).downloadPng()
+    try {
+        ReImg.fromCanvas(document.getElementById('tetnews')).toPng()
+        ReImg.fromCanvas(document.getElementById('tetnews')).downloadPng()
+    } catch (err) {
+        // canvas "tainted" (p.ej. abierto como file://): aviso claro
+        if (window.avisoExportacion) window.avisoExportacion(err);
+        else if (window.mostrarAviso) window.mostrarAviso('No se pudo descargar la imagen', 'danger');
+        return;
+    }
     if (window.mostrarAviso) { window.mostrarAviso('Imagen descargada', 'success'); }
 }
 
