@@ -29,7 +29,9 @@ Solo hace falta un servidor estático (GitHub Pages sirve `master/` en `/admin/`
 
 - Plantillas, títulos, imágenes, detalles y capas (arrastrar orden, traer/enviar).
 - **Panel de capas** (`capas.js`): deshacer/rehacer (Ctrl+Z / Ctrl+Shift+Z), duplicar, guardar/cargar proyecto `.json`, compartir (Web Share).
-- **Formatos sociales** (`formatos.js`): presets de Instagram, Facebook, X, YouTube, TikTok, LinkedIn y Pinterest con guía de recorte y zona segura; exporta PNG en píxeles exactos.
+- **Formatos sociales** (`formatos.js`): presets de Instagram, Facebook, X, YouTube, TikTok, LinkedIn y Pinterest con guía de recorte y zona segura; exporta PNG en píxeles exactos. Incluye el preset **Origen** (tamaño original del lienzo).
+- **Portapapeles**: Ctrl+V pega cualquier imagen sobre el lienzo (escalada al70% y centrada, con historial) en los 6 editores; botón "Pegar" en tet1.
+- **UI estilo Inkscape en `tet1.html`** (piloto, `shell.js`/`shell.css`): barra superior con plantilla/deshacer/zoom/formato+guía/descarga, rail de herramientas, reglas con coordenadas, dock Propiedades|Capas, paleta de colores, tema oscuro/claro, navbar con rotación automática de plantillas ▶ y lienzo en blanco ajustado a la red elegida.
 - PWA: service worker vanilla en `sw.js` (raíz) con caché de estáticos.
 
 ## Stack

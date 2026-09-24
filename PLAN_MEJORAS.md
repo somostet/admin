@@ -17,8 +17,9 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | P2 — UI + capas extendidas | ✅ Completada (`4922297`) + fix `59ca606` |
 | P3 — Formatos sociales | ✅ Completada (`a0b89ff`) |
 | P4 — Repo y calidad | ✅ Completada |
-| UI estilo Inkscape (piloto tet1) | 🟡 En pruebas: barra superior, rail, reglas, dock con pestañas, paleta, tema oscuro/claro |
-| Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, pinch-zoom, navbar, plantilla común, extender shell al resto de editores |
+| UI estilo Inkscape (piloto tet1) | 🟡 En pruebas (`32f238e`, `da1b520`): barra superior, rail, reglas, dock Propiedades|Capas, paleta, tema oscuro/claro |
+| UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
+| Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, pinch-zoom, plantilla común, extender shell, catálogo de elementos |
 
 ---
 
@@ -69,7 +70,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 2. ✅ **Layout editor equilibrado**: `col-12 col-lg-4/8` (form/lienzo) + apilado en móvil sin huecos.
 3. ✅ **Botones con etiqueta**: icono + texto visible en móvil (`solo-movil`), `aria-label` siempre.
 4. ✅ **Cards de portada** con hover (elevación + transición).
-5. ⏸️ **Navbar mejorada** (diferido): requiere diseño visual; la actual funciona.
+5. 🟡 **Navbar mejorada**: iconos sociales siempre visibles (7 páginas) + selector de plantilla con ▶/⏸ en tet1; footer en 4 columnas con copyright 2026. Falta replicar el selector al resto al aprobar la shell.
 6. ✅ **Toasts de feedback**: "Imagen descargada" (los 6 editores) + mensajes de `mostrarAviso(msg, tipo)`.
 7. ✅ **`:focus-visible`** con contorno visible en todos los controles.
 8. ✅ **Footer compacto en móvil**: logo 150px → 84px, sin `<br>` sobrantes.
@@ -100,6 +101,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
      | LinkedIn / Pinterest | Post / Pin | 1200×627 / 1000×1500 |
    - **Export en px exactos**: canvas offscreen con recorte **cover centrado** (`m = max(W/sw, H/sh)`) desde el backstore → no redimensiona el lienzo ni rompe plantillas. Fichero `tet_<w>x<h>.png`.
    - **Guía de recorte** sobre el lienzo (zona recortada atenuada + etiqueta con px) y **zona segura** cuando el preset la define; conmutable.
+   - Preset **Origen** (tamaño original del lienzo, por defecto) y bloque de formato integrado en la **barra superior** de la shell (tet1), con botón de descarga compacto.
 2. ⬜ **Textos con borde/sombra** con controles en la UI.
 3. ⬜ **Panel de capas extendido**: miniaturas de preview, drag & drop, bloquear capa.
 4. ⬜ **Galería de plantillas** con previews generadas.
@@ -132,10 +134,12 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 
 ## Diferidos — próximos pasos
 
-- **UI estilo Inkscape**: revisar el piloto de `tet1.html` y, si convence, replicar la shell
-  (`shell.js` + `shell.css`) en tet2, dictet, art, miniatura y modcre.
+- **UI estilo Inkscape**: revisar el piloto de `tet1.html` (barra superior con formato+guía+
+  descarga, navbar con selector ▶, portapapeles global, lienzo en blanco) y, si convence,
+  replicar la shell (`shell.js` + `shell.css`) en tet2, dictet, art, miniatura y modcre.
+- **Catálogo de elementos** (nuevo): biblioteca de formas, iconos, marcos y plantillas base
+  para componer imágenes — siguiente bloque grande tras validar la UI.
 - P1.7 offcanvas del formulario en móvil.
-- P2.5 rediseño de navbar (brand + menú agrupado).
 - P2.14 pinch-zoom/pan en el lienzo.
 - P2.15 guía de estado vacío.
 - P3.2–P3.4 textos con borde/sombra, capas con preview/lock, galería de plantillas.
