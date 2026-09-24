@@ -70,7 +70,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 2. ✅ **Layout editor equilibrado**: `col-12 col-lg-4/8` (form/lienzo) + apilado en móvil sin huecos.
 3. ✅ **Botones con etiqueta**: icono + texto visible en móvil (`solo-movil`), `aria-label` siempre.
 4. ✅ **Cards de portada** con hover (elevación + transición).
-5. ✅ **Navbar rediseñada**: barra única sin hamburguesa en las 7 páginas — marca (logo + tet admin + canvas de acento) · desplegable «Editores ▾» con el editor activo resaltado (`aria-current`) · redes siempre visibles · selector de plantilla con ▶/⏸ en tet1. El bloque collapse de 4 columnas se eliminó (su contenido vive en footer/redes). Footer en 4 columnas con copyright 2026. Falta replicar el selector al resto al aprobar la shell.
+5. ✅ **Navbar rediseñada**: barra única sin hamburguesa en las 7 páginas — marca (logo + tet admin + canvas de acento) · desplegable «Crear ▾» con nombres por función (Noticias, Textos, Diccionario, Arte, Miniaturas, Creaciones — el subtitulo conserva la identidad «tet N») y el editor activo resaltado (`aria-current`) · redes siempre visibles · selector de plantilla con ▶/⏸ en tet1. El bloque collapse de 4 columnas se eliminó (su contenido vive en footer/redes). Footer en 4 columnas con copyright 2026 y columna «Crear». El tema oscuro/claro pasó al footer de tet1. Falta replicar el selector al resto al aprobar la shell.
 6. ✅ **Toasts de feedback**: "Imagen descargada" (los 6 editores) + mensajes de `mostrarAviso(msg, tipo)`.
 7. ✅ **`:focus-visible`** con contorno visible en todos los controles.
 8. ✅ **Footer compacto en móvil**: logo 150px → 84px, sin `<br>` sobrantes.
