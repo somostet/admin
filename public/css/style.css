@@ -474,8 +474,31 @@ textarea:focus-visible,
 }
 
 .tet-copy {
-    padding: .85rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .5rem .75rem;
+    padding: .5rem 1rem;
     font-size: .85rem;
+}
+
+/* botón de tema oscuro/claro en el footer (tet1) */
+.tet-copy .btn {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: #fff;
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: .5rem;
+}
+
+.tet-copy .btn:hover,
+.tet-copy .btn:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, .18);
 }
 
 .tet-copy a {

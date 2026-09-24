@@ -305,7 +305,9 @@
         pintarReglas();
     });
     pintarTemaBtn();
-    top.appendChild(btnTema);
+    /* el tema vive en el footer, junto al copyright */
+    var copy = q('.tet-copy');
+    if (copy) { copy.appendChild(btnTema); } else { top.appendChild(btnTema); }
 
     /* ---------------- rail de herramientas ---------------- */
     var t1 = moverBoton('Insertar título', rail);   if (t1) hacerIcono(t1);
