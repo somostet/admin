@@ -338,6 +338,20 @@
         });
     }
 
+    /* accesos para la barra flotante de la shell (móvil) */
+    window.duplicarSeleccion = duplicar;
+    window.eliminarSeleccion = function () {
+        var o = canvas.getActiveObject();
+        if (!o) return;
+        if (o.type === 'activeSelection') {
+            o.getObjects().forEach(function (x) { canvas.remove(x); });
+        } else {
+            canvas.remove(o);
+        }
+        canvas.discardActiveObject();
+        canvas.renderAll();
+    };
+
     /* ---------- guardar / cargar proyecto (.json) ---------- */
     function guardarProyecto() {
         var datos = JSON.stringify(canvas.toJSON());

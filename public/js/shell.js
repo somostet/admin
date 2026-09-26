@@ -767,6 +767,60 @@
     canvas.on('selection:cleared', revisarRes);
     canvas.on('object:modified', revisarRes);
 
+    /* ---------------- barra flotante de acciones ---------------- */
+    /* Aparece con la selección, anclada al escenario (fuera del área que
+       hace scroll, así no se va con el lienzo) y con asas de 44 px: en
+       móvil las acciones sobre el objeto estaban repartidas por capas,
+       el rail y el panel de propiedades. */
+    var barra = el('div', 'sh-barra');
+    barra.setAttribute('role', 'toolbar');
+    barra.setAttribute('aria-label', 'Acciones sobre la selección');
+    stage.appendChild(barra);
+
+    function btnBar(icono, titulo, fn) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'sh-barra-btn';
+        b.title = titulo;
+        b.setAttribute('aria-label', titulo);
+        b.innerHTML = '<i class="fas ' + icono + '" aria-hidden="true"></i>';
+        b.addEventListener('click', fn);
+        barra.appendChild(b);
+        return b;
+    }
+
+    var barSubir = btnBar('fa-arrow-up', 'Subir capa', function () {
+        if (window.toForward) window.toForward();
+    });
+    var barBajar = btnBar('fa-arrow-down', 'Bajar capa', function () {
+        if (window.toBackward) window.toBackward();
+    });
+    var barDup = btnBar('fa-clone', 'Duplicar', function () {
+        if (window.duplicarSeleccion) window.duplicarSeleccion();
+    });
+    var barLlenar = btnBar('fa-expand-arrows-alt', 'Llenar el lienzo', function () {
+        if (window.adaptarImagenSeleccionada) window.adaptarImagenSeleccionada('llenar');
+    });
+    var barAjustar = btnBar('fa-compress-arrows-alt', 'Ajustar al lienzo', function () {
+        if (window.adaptarImagenSeleccionada) window.adaptarImagenSeleccionada('ajustar');
+    });
+    var barBorrar = btnBar('fa-trash-alt', 'Eliminar', function () {
+        if (window.eliminarSeleccion) window.eliminarSeleccion();
+    });
+
+    function actualizarBarra() {
+        var o = canvas.getActiveObject();
+        var esImagen = !!(o && o.type === 'image');
+        /* llenar/ajustar solo tienen sentido sobre imágenes */
+        barLlenar.style.display = esImagen ? '' : 'none';
+        barAjustar.style.display = esImagen ? '' : 'none';
+        barra.classList.toggle('is-on', !!o);
+    }
+    canvas.on('selection:created', actualizarBarra);
+    canvas.on('selection:updated', actualizarBarra);
+    canvas.on('selection:cleared', actualizarBarra);
+    canvas.on('object:removed', actualizarBarra);
+
     /* ---------------- montaje del DOM ---------------- */
     limpiarVacios();
 
