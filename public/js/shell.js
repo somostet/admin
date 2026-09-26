@@ -167,20 +167,19 @@
 
     top.appendChild(sep());
 
-    /* zoom (transform sobre #img; Fabric recalcula el puntero por evento) */
+    /* zoom (transform sobre #img; Fabric recalcula el puntero por evento).
+       Acepta valores libres (pellizco y "ajustar a pantalla"); los botones
+       +/- siguen saltando por NIVELES */
     var NIVELES = [0.5, 0.75, 1, 1.25, 1.5, 2];
     var zoom = 1;
     var btnZoomOut = mkBtn('fa-search-minus', 'Alejar');
     var btnZoomLbl = mkBtn('fa-expand', 'Zoom al 100%');
     btnZoomLbl.id = 'sh-zoom-label';
     var btnZoomIn = mkBtn('fa-search-plus', 'Acercar');
+    var btnZoomFit = mkBtn('fa-compress-arrows-alt', 'Ajustar a pantalla');
 
     function aplicarZoom(z) {
-        var mejor = NIVELES[0];
-        for (var i = 0; i < NIVELES.length; i++) {
-            if (Math.abs(NIVELES[i] - z) < Math.abs(mejor - z)) mejor = NIVELES[i];
-        }
-        zoom = mejor;
+        zoom = Math.min(4, Math.max(0.25, z)); /* valor libre, sin engancharse a NIVELES */
         var img = document.getElementById('img');
         if (img) img.style.transform = zoom === 1 ? '' : 'scale(' + zoom + ')';
         btnZoomLbl.innerHTML = '<span>' + Math.round(zoom * 100) + '%</span>';
@@ -191,16 +190,89 @@
     }
     function pasoZoom(dir) {
         var idx = NIVELES.indexOf(zoom);
-        if (idx < 0) idx = 2;
+        if (idx < 0) {
+            /* zoom libre (pellizco/ajuste): parte del nivel más cercano */
+            idx = 0;
+            for (var i = 0; i < NIVELES.length; i++) {
+                if (Math.abs(NIVELES[i] - zoom) < Math.abs(NIVELES[idx] - zoom)) idx = i;
+            }
+        }
         idx = Math.min(NIVELES.length - 1, Math.max(0, idx + dir));
         aplicarZoom(NIVELES[idx]);
+    }
+    /* encaja el lienzo completo en el área de trabajo */
+    function zoomAjustar() {
+        var img = document.getElementById('img');
+        var disp = document.querySelector('.shell-work');
+        if (!img || !disp) return;
+        var base = img.getBoundingClientRect().width / (zoom || 1); /* ancho sin zoom */
+        if (!(base > 0)) return;
+        var dispW = Math.max(80, disp.clientWidth - 8);
+        var dispH = Math.max(80, Math.min(disp.clientHeight, window.innerHeight - 170) - 8);
+        aplicarZoom(dispW / base < dispH / base ? dispW / base : dispH / base);
     }
     btnZoomOut.addEventListener('click', function () { pasoZoom(-1); });
     btnZoomIn.addEventListener('click', function () { pasoZoom(1); });
     btnZoomLbl.addEventListener('click', function () { aplicarZoom(1); });
+    btnZoomFit.addEventListener('click', zoomAjustar);
     top.appendChild(btnZoomOut);
     top.appendChild(btnZoomLbl);
     top.appendChild(btnZoomIn);
+    top.appendChild(btnZoomFit);
+
+    /* ---------- zoom con dos dedos (móvil) ----------
+       Se intercepta en fase de captura sobre el área de trabajo: mientras
+       hay dos dedos Fabric no recibe ningún evento (evita que arrastre
+       objetos durante el gesto) y el zoom sigue el pellizco en valor libre */
+    var pinchVisto = false, pinchBase = 0, pinchZoom0 = 1;
+
+    function dist2(t) {
+        var dx = t[0].clientX - t[1].clientX;
+        var dy = t[0].clientY - t[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function finPinch() {
+        if (!pinchVisto) return;
+        pinchVisto = false;
+        /* si Fabric tenía un gesto a medias por el primer dedo, se cancela
+           aquí para que no haya saltos del objeto al soltar */
+        if (canvas._currentTransform) canvas._currentTransform = null;
+    }
+
+    work.addEventListener('touchstart', function (e) {
+        if (e.touches.length < 2) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!pinchVisto && e.touches.length === 2) {
+            pinchVisto = true;
+            pinchBase = dist2(e.touches);
+            pinchZoom0 = zoom;
+        }
+    }, { passive: false, capture: true });
+
+    work.addEventListener('touchmove', function (e) {
+        if (!pinchVisto) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.touches.length >= 2 && pinchBase > 0) {
+            aplicarZoom(pinchZoom0 * (dist2(e.touches) / pinchBase));
+        }
+    }, { passive: false, capture: true });
+
+    work.addEventListener('touchend', function (e) {
+        if (!pinchVisto) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.touches.length === 0) finPinch();
+    }, { passive: false, capture: true });
+
+    work.addEventListener('touchcancel', function (e) {
+        if (!pinchVisto) return;
+        e.preventDefault();
+        e.stopPropagation();
+        finPinch();
+    }, { passive: false, capture: true });
 
     top.appendChild(sep());
 
