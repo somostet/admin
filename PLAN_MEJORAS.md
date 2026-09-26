@@ -20,7 +20,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | UI estilo Inkscape | ✅ En los 6 editores (`32f238e`, `da1b520` piloto tet1; `bf68993`–`e685bba` fixes y rollout): barra superior, rail, reglas, dock Propiedades|Capas, paleta en dock, colores arriba, atajos en chips, tema oscuro/claro |
 | Lote fixes UI tet1 | ✅ Completada (`bf68993` lienzo que llena el viewport y scrollea desde el borde, `f1f15b4` colores arriba: paleta bajo las pestañas del dock y fondo/texto al inicio de Propiedades, `e38b592` atajos en chips modernos + selector de color cuadrado) |
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
-| Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, pinch-zoom, plantilla común, extender shell, catálogo de elementos |
+| Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 
 ---
 
@@ -65,7 +65,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 
 ## 🟡 P2 — UI / look & feel
 
-> ✅ **Completado** (commit `4922297`). Puntos 5, 14 y 15 **diferidos**; el 12 se hizo con archivo `.json` (más portable que localStorage).
+> ✅ **Completado** (commit `4922297`). Punto 15 **diferido**; el 12 se hizo con archivo `.json` (más portable que localStorage).
 
 1. ✅ **Design tokens**: `:root` con `--tet-nav/-dark/-footer/-bar` y clases `.bg-tet-*` sustituyen los estilos inline ×7.
 2. ✅ **Layout editor equilibrado**: `col-12 col-lg-4/8` (form/lienzo) + apilado en móvil sin huecos.
@@ -83,8 +83,10 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 11. ✅ **Duplicar elemento** (`obj.clone()` + offset) con botón.
 12. ✅ **Guardar/Cargar proyecto**: descarga `tet-proyecto.json` y carga por input de archivo (`loadFromJSON`). (No localStorage.)
 13. ✅ **Web Share API**: botón "Compartir" (solo si `navigator.share`) → PNG vía `navigator.share({files})`, con fallback a "usar Descargar".
-14. ⏸️ **Zoom/pan táctil** (pinch-to-zoom de Fabric) (diferido).
+14. ✅ **Zoom táctil y ajuste** (commit `d862f76`): pinch de dos dedos interceptado en fase de captura (mientras hay dos dedos Fabric no recibe eventos, así no arrastra objetos y su transformación a medias se cancela al soltar), zoom en **valor libre** 0.25–4× con el % siempre visible, botón **Ajustar a pantalla** que encaja el lienzo completo en el área disponible y ± que siguen saltando por niveles.
 15. ⏸️ **Guía de estado vacío** en el lienzo (diferido).
+16. ✅ **Barra flotante de acciones** (commit `90d4803`): con selección activa aparece sobre el escenario — subir/bajar capa, duplicar, recortar, llenar/ajustar al lienzo y eliminar — con botones de 44 px para el dedo; anclada fuera del área con scroll (no se va con el lienzo) y con llenar/ajustar/recortar solo visibles sobre imágenes.
+17. ✅ **Recorte libre de imágenes** (commit `ddbde2c`): marco punteado del tamaño de la imagen, movable y escalable con asas grandes (clavado dentro de la imagen al arrastrar); **Aplicar** recorta con `cropX/cropY` + `width/height` sin redecodificar el origen (calidad intacta y re-recortable); cancelable con Escape, toque fuera o cambio de selección; el marco lleva `excludeFromExport` así que no aparece en capas, historial ni `.json`, y deshacer/rehacer quedan bloqueados con aviso mientras se recorta.
 
 ---
 
@@ -141,7 +143,6 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 - **Catálogo de elementos** (nuevo): biblioteca de formas, iconos, marcos y plantillas base
   para componer imágenes — siguiente bloque grande tras validar la UI.
 - P1.7 offcanvas del formulario en móvil.
-- P2.14 pinch-zoom/pan en el lienzo.
 - P2.15 guía de estado vacío.
 - P3.2–P3.4 textos con borde/sombra, capas con preview/lock, galería de plantillas.
 - P4.8 plantilla común de HTML.
