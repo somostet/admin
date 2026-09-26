@@ -148,7 +148,9 @@
     }
 
     function render() {
-        var objs = canvas.getObjects();
+        var todos = canvas.getObjects();
+        /* el marco de recorte (excludeFromExport) no es una capa */
+        var objs = todos.filter(function (o) { return !o.excludeFromExport; });
         var active = canvas.getActiveObject();
         count.textContent = objs.length;
         list.innerHTML = '';
@@ -161,9 +163,10 @@
             return;
         }
 
-        // La capa superior se muestra primero
-        for (var i = objs.length - 1; i >= 0; i--) {
-            buildRow(objs[i], i, active);
+        // La capa superior se muestra primero (índice real del array)
+        for (var i = todos.length - 1; i >= 0; i--) {
+            if (todos[i].excludeFromExport) continue;
+            buildRow(todos[i], i, active);
         }
     }
 
@@ -285,6 +288,11 @@
     }
 
     function restaurar(idx) {
+        if (window.tetModoRecorte) {
+            /* el marco de recorte no está en los estados: se cancela o aplica antes */
+            if (window.mostrarAviso) window.mostrarAviso('Aplica o cancela el recorte primero', 'warning');
+            return;
+        }
         if (idx < 0 || idx >= historial.length) return;
         restaurando = true;
         try {

@@ -291,6 +291,17 @@ body {
     display: flex;
 }
 
+.sh-barra-grupo {
+    display: flex;
+    gap: .25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.sh-barra-grupo[hidden] {
+    display: none;
+}
+
 .sh-barra-btn {
     display: inline-flex;
     align-items: center;
@@ -313,6 +324,12 @@ body {
 
 .sh-barra-btn:active {
     transform: scale(.94);
+}
+
+.sh-barra-btn.es-primario {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
 }
 
 /* ---------- dock derecho ---------- */

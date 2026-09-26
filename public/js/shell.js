@@ -777,7 +777,14 @@
     barra.setAttribute('aria-label', 'Acciones sobre la selección');
     stage.appendChild(barra);
 
-    function btnBar(icono, titulo, fn) {
+    /* dos grupos: acciones normales / acciones del modo recorte */
+    var grupoAcciones = el('div', 'sh-barra-grupo');
+    var grupoRecorte = el('div', 'sh-barra-grupo');
+    grupoRecorte.hidden = true;
+    barra.appendChild(grupoAcciones);
+    barra.appendChild(grupoRecorte);
+
+    function btnBar(cont, icono, titulo, fn) {
         var b = document.createElement('button');
         b.type = 'button';
         b.className = 'sh-barra-btn';
@@ -785,33 +792,44 @@
         b.setAttribute('aria-label', titulo);
         b.innerHTML = '<i class="fas ' + icono + '" aria-hidden="true"></i>';
         b.addEventListener('click', fn);
-        barra.appendChild(b);
+        cont.appendChild(b);
         return b;
     }
 
-    var barSubir = btnBar('fa-arrow-up', 'Subir capa', function () {
+    var barSubir = btnBar(grupoAcciones, 'fa-arrow-up', 'Subir capa', function () {
         if (window.toForward) window.toForward();
     });
-    var barBajar = btnBar('fa-arrow-down', 'Bajar capa', function () {
+    var barBajar = btnBar(grupoAcciones, 'fa-arrow-down', 'Bajar capa', function () {
         if (window.toBackward) window.toBackward();
     });
-    var barDup = btnBar('fa-clone', 'Duplicar', function () {
+    var barDup = btnBar(grupoAcciones, 'fa-clone', 'Duplicar', function () {
         if (window.duplicarSeleccion) window.duplicarSeleccion();
     });
-    var barLlenar = btnBar('fa-expand-arrows-alt', 'Llenar el lienzo', function () {
+    var barRecortar = btnBar(grupoAcciones, 'fa-crop-alt', 'Recortar la imagen', function () {
+        iniciarRecorte();
+    });
+    var barLlenar = btnBar(grupoAcciones, 'fa-expand-arrows-alt', 'Llenar el lienzo', function () {
         if (window.adaptarImagenSeleccionada) window.adaptarImagenSeleccionada('llenar');
     });
-    var barAjustar = btnBar('fa-compress-arrows-alt', 'Ajustar al lienzo', function () {
+    var barAjustar = btnBar(grupoAcciones, 'fa-compress-arrows-alt', 'Ajustar al lienzo', function () {
         if (window.adaptarImagenSeleccionada) window.adaptarImagenSeleccionada('ajustar');
     });
-    var barBorrar = btnBar('fa-trash-alt', 'Eliminar', function () {
+    var barBorrar = btnBar(grupoAcciones, 'fa-trash-alt', 'Eliminar', function () {
         if (window.eliminarSeleccion) window.eliminarSeleccion();
     });
+    btnBar(grupoRecorte, 'fa-times', 'Cancelar el recorte', function () {
+        cancelarRecorte(true);
+    });
+    var btnAplicarRecorte = btnBar(grupoRecorte, 'fa-check', 'Aplicar el recorte', function () {
+        aplicarRecorte();
+    });
+    btnAplicarRecorte.classList.add('es-primario');
 
     function actualizarBarra() {
         var o = canvas.getActiveObject();
         var esImagen = !!(o && o.type === 'image');
-        /* llenar/ajustar solo tienen sentido sobre imágenes */
+        /* recortar/llenar/ajustar solo tienen sentido sobre imágenes */
+        barRecortar.style.display = esImagen ? '' : 'none';
         barLlenar.style.display = esImagen ? '' : 'none';
         barAjustar.style.display = esImagen ? '' : 'none';
         barra.classList.toggle('is-on', !!o);
@@ -820,6 +838,151 @@
     canvas.on('selection:updated', actualizarBarra);
     canvas.on('selection:cleared', actualizarBarra);
     canvas.on('object:removed', actualizarBarra);
+
+    /* ---------------- recorte libre de imágenes ----------------
+       El marco es un objeto Fabric con excludeFromExport: no entra en el
+       panel de capas, el historial ni el .json guardado. El recorte se
+       aplica desplazando cropX/cropY y ajustando width/height al origen,
+       así que no se vuelve a decodificar ni a perder calidad. */
+    var modoRecorte = false, entrando = false;
+    var marco = null, imgRecorte = null;
+
+    function iniciarRecorte() {
+        var img = canvas.getActiveObject();
+        if (modoRecorte || !img || img.type !== 'image') return;
+        imgRecorte = img;
+        modoRecorte = true;
+        window.tetModoRecorte = true;
+        var r = img.getBoundingRect();
+        var tactil = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+            (!window.matchMedia && navigator.maxTouchPoints > 0);
+        marco = new fabric.Rect({
+            left: r.left, top: r.top, width: r.width, height: r.height,
+            fill: 'rgba(13, 110, 253, 0.10)',
+            stroke: '#ffffff', strokeWidth: 2, strokeDashArray: [8, 6],
+            borderColor: '#0d6efd',
+            cornerColor: '#ffffff', cornerStrokeColor: '#0d6efd',
+            cornerSize: tactil ? 30 : 22,
+            transparentCorners: false,
+            lockRotation: true, hasRotatingPoint: false,
+            padding: 6,
+            objectCaching: false,
+            excludeFromExport: true
+        });
+        /* entrando = los eventos de selección que se disparan a lo largo de
+           esta transición no deben cancelar el modo que acaba de abrirse */
+        entrando = true;
+        canvas.add(marco);
+        canvas.setActiveObject(marco);
+        entrando = false;
+        grupoAcciones.hidden = true;
+        grupoRecorte.hidden = false;
+        canvas.renderAll();
+        if (window.mostrarAviso) {
+            window.mostrarAviso('Mueve el marco y escala con las asas; Aplicar deja solo lo que encierres', 'info');
+        }
+    }
+
+    function aplicarRecorte() {
+        if (!modoRecorte || !imgRecorte || !marco) return;
+        imgRecorte.setCoords();
+        marco.setCoords();
+        var ir = imgRecorte.getBoundingRect();
+        var fr = marco.getBoundingRect();
+        var x0 = Math.max(ir.left, fr.left);
+        var y0 = Math.max(ir.top, fr.top);
+        var x1 = Math.min(ir.left + ir.width, fr.left + fr.width);
+        var y1 = Math.min(ir.top + ir.height, fr.top + fr.height);
+        if (x1 - x0 < 4 || y1 - y0 < 4) {
+            if (window.mostrarAviso) window.mostrarAviso('El marco debe tocar la imagen', 'warning');
+            return; /* sigue en modo recorte */
+        }
+        var escX = ir.width / imgRecorte.width;
+        var escY = ir.height / imgRecorte.height;
+        if (!(escX > 0)) escX = imgRecorte.scaleX || 1;
+        if (!(escY > 0)) escY = imgRecorte.scaleY || 1;
+        var cx = imgRecorte.cropX || 0;
+        var cy = imgRecorte.cropY || 0;
+        var elem = imgRecorte._element;
+        var natW = (elem && elem.width) || imgRecorte.width + cx;
+        var natH = (elem && elem.height) || imgRecorte.height + cy;
+        var srcX = Math.max(0, Math.min(cx + (x0 - ir.left) / escX, natW - 2));
+        var srcY = Math.max(0, Math.min(cy + (y0 - ir.top) / escY, natH - 2));
+        var srcW = Math.min((x1 - x0) / escX, natW - srcX);
+        var srcH = Math.min((y1 - y0) / escY, natH - srcY);
+        if (!(srcW > 1) || !(srcH > 1)) {
+            if (window.mostrarAviso) window.mostrarAviso('El recorte queda demasiado pequeño', 'warning');
+            return;
+        }
+        /* normaliza a origen superior izquierdo: la caja visible pasa a ser
+           exactamente la intersección con el marco, con la escala intacta */
+        imgRecorte.set({
+            originX: 'left', originY: 'top',
+            left: x0, top: y0,
+            cropX: srcX, cropY: srcY,
+            width: srcW, height: srcH
+        });
+        imgRecorte.setCoords();
+        var img = imgRecorte;
+        cancelarRecorte(false);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        canvas.fire('object:modified', { target: img }); /* historial + chip */
+        actualizarBarra();
+        revisarRes();
+    }
+
+    function cancelarRecorte(restaurarSeleccion) {
+        if (!modoRecorte) return;
+        modoRecorte = false;
+        window.tetModoRecorte = false;
+        var eraMarco = !!(marco && canvas.getActiveObject() === marco);
+        var img = imgRecorte;
+        if (marco) { canvas.remove(marco); marco = null; }
+        imgRecorte = null;
+        grupoAcciones.hidden = false;
+        grupoRecorte.hidden = true;
+        if (eraMarco) {
+            if (restaurarSeleccion && img) canvas.setActiveObject(img);
+            else canvas.discardActiveObject();
+        }
+        canvas.renderAll();
+        actualizarBarra();
+        revisarRes();
+    }
+
+    /* salir del modo si la selección cambia (toque fuera del marco) */
+    function vigilarRecorte() {
+        if (!modoRecorte || entrando) return;
+        if (canvas.getActiveObject() !== marco) cancelarRecorte(false);
+    }
+    canvas.on('selection:created', vigilarRecorte);
+    canvas.on('selection:updated', vigilarRecorte);
+    canvas.on('selection:cleared', vigilarRecorte);
+
+    /* cualquier interacción fuera del lienzo y de la barra (descargar,
+       formato, capas…) sale del modo recorte antes de ejecutarse */
+    document.addEventListener('click', function (e) {
+        if (!modoRecorte) return;
+        if (barra.contains(e.target) || work.contains(e.target)) return;
+        cancelarRecorte(false);
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+        if (modoRecorte && (e.key === 'Escape' || e.key === 'Esc')) cancelarRecorte(true);
+    });
+
+    /* al arrastrarlo el marco no puede salirse de la imagen */
+    canvas.on('object:moving', function (e) {
+        if (!modoRecorte || e.target !== marco || !imgRecorte) return;
+        var b = imgRecorte.getBoundingRect();
+        var w = marco.getScaledWidth(), h = marco.getScaledHeight();
+        marco.set({
+            left: Math.min(Math.max(marco.left, b.left), Math.max(b.left, b.left + b.width - w)),
+            top: Math.min(Math.max(marco.top, b.top), Math.max(b.top, b.top + b.height - h))
+        });
+        marco.setCoords();
+    });
 
     /* ---------------- montaje del DOM ---------------- */
     limpiarVacios();
