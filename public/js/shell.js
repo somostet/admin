@@ -862,7 +862,7 @@
             stroke: '#ffffff', strokeWidth: 2, strokeDashArray: [8, 6],
             borderColor: '#0d6efd',
             cornerColor: '#ffffff', cornerStrokeColor: '#0d6efd',
-            cornerSize: tactil ? 30 : 22,
+            cornerSize: tactil ? 36 : 22,
             transparentCorners: false,
             lockRotation: true, hasRotatingPoint: false,
             padding: 6,

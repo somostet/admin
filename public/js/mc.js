@@ -123,7 +123,6 @@ function set_title() {
         fontSize: size,
         top: 360,
         cornerColor: 'black',
-        cornerSize: 20,
         borderColor: 'black',
         transparentCorners: false
     }));

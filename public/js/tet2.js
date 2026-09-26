@@ -112,7 +112,6 @@ function generate() {
         left: 200,
         top: 400,
         cornerColor: 'white',
-        cornerSize: 20,
         borderColor: 'white',
         transparentCorners: false
     }));

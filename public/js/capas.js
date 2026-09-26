@@ -18,8 +18,20 @@
     fabric.Object.prototype.cornerColor = '#ffffff';
     fabric.Object.prototype.cornerStrokeColor = '#0d6efd';
     fabric.Object.prototype.borderColor = '#0d6efd';
-    fabric.Object.prototype.cornerSize = tactil ? 26 : 20;
+    fabric.Object.prototype.cornerSize = tactil ? 36 : 22;
     if (tactil) fabric.Object.prototype.padding = 10;
+
+    /* asas más gordas: Fabric dibuja el trazo de los círculos con el
+       lineWidth que hereda del contexto (1 px); se fija un grosor mayor
+       justo antes de pintarlas y se restaura después */
+    var drawControls0 = fabric.Object.prototype.drawControls;
+    fabric.Object.prototype.drawControls = function (ctx, estilo) {
+        var previo = ctx.lineWidth;
+        ctx.lineWidth = tactil ? 3 : 2;
+        var r = drawControls0.call(this, ctx, estilo);
+        ctx.lineWidth = previo;
+        return r;
+    };
 
     // Botones de capa globales para paginas que no los definan (tet1, tet2, dictet)
     if (typeof window.toFullBack !== 'function') {

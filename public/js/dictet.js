@@ -48,7 +48,6 @@ function generate() {
         left: 250,
         top: 250,
         cornerColor: 'white',
-        cornerSize: 20,
         borderColor: 'white',
         transparentCorners: false
     }));
@@ -63,7 +62,6 @@ function generate() {
         shadow: 'rgba(0,0,0) 2px 2px 2px',
         top: 400,
         cornerColor: 'white',
-        cornerSize: 20,
         borderColor: 'white',
         transparentCorners: false
     }));
