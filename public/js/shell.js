@@ -805,6 +805,12 @@
     var barDup = btnBar(grupoAcciones, 'fa-clone', 'Duplicar', function () {
         if (window.duplicarSeleccion) window.duplicarSeleccion();
     });
+    var barMenos = btnBar(grupoAcciones, 'fa-minus', 'Reducir un poco', function () {
+        escalarSeleccion(0.95);
+    });
+    var barMas = btnBar(grupoAcciones, 'fa-plus', 'Agrandar un poco', function () {
+        escalarSeleccion(1.05);
+    });
     var barRecortar = btnBar(grupoAcciones, 'fa-crop-alt', 'Recortar la imagen', function () {
         iniciarRecorte();
     });
@@ -838,6 +844,22 @@
     canvas.on('selection:updated', actualizarBarra);
     canvas.on('selection:cleared', actualizarBarra);
     canvas.on('object:removed', actualizarBarra);
+
+    /* tamaño gradual de la selección: pasos de ±5 % manteniendo
+       proporciones y sin mover el centro */
+    function escalarSeleccion(paso) {
+        var o = canvas.getActiveObject();
+        if (!o) return;
+        var sx = (o.scaleX || 1) * paso;
+        var sy = (o.scaleY || 1) * paso;
+        if (sx < 0.05 || sy < 0.05 || sx > 60 || sy > 60) return;
+        var c = o.getCenterPoint();
+        o.set({ scaleX: sx, scaleY: sy });
+        o.setPositionByOrigin(c, 'center', 'center');
+        o.setCoords();
+        canvas.renderAll();
+        canvas.fire('object:modified', { target: o }); /* historial + chip de resolución */
+    }
 
     /* ---------------- recorte libre de imágenes ----------------
        El marco es un objeto Fabric con excludeFromExport: no entra en el
