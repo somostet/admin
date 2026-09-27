@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- CSP: solo en http/https; en file:// no se inyecta para no romper el modo doble-clic -->
+    <script>
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+            var csp = document.createElement('meta');
+            csp.setAttribute('http-equiv', 'Content-Security-Policy');
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            document.head.appendChild(csp);
+            /* frame-buster: en http/https el admin no se deja embeber en un iframe */
+            if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1d2b43">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script>
+        // tema del editor (oscuro por defecto) antes del primer pintado
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tetTema') || 'dark'); }
+        catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    </script>
+    <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
+    <link rel="stylesheet" href="./public/css/style.css">
+    <link rel="stylesheet" href="./public/css/shell.css">
+    <link rel="stylesheet" href="./public/css/gif.css">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <meta property="og:image" content="./public/img/Logotet.png" />
+    <meta name="description" content="Crea GIFs animados a partir de tus imágenes, un vídeo o el lienzo. Todo se procesa en tu dispositivo.">
+    <title>tet admin · GIF</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Crear</a>
+                <ul class="dropdown-menu tet-dd">
+                    <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
+                    <li><a class="dropdown-item" href="./tet2.html">Textos <span class="tet-dd-sub">tet 2</span></a></li>
+                    <li><a class="dropdown-item" href="./dictet.html">Diccionario <span class="tet-dd-sub">tet 3</span></a></li>
+                    <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
+                    <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
+                    <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
+                    <li><a class="dropdown-item" href="./gif.html" aria-current="page">GIF animado <span class="tet-dd-sub">gif</span></a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-social">
+            <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+            <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X de tet" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
+        </div>
+    </nav>
+
+    <main class="container-fluid py-3 pb-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="gif-caja">
+                    <div class="gif-caja-cab">
+                        <h1 class="gif-titulo"><i class="fas fa-file-image" aria-hidden="true"></i> Crear GIF</h1>
+                        <p class="gif-subtitulo">Varías imágenes → un GIF animado. Todo se procesa en tu dispositivo, sin subir nada a ningún servidor.</p>
+                    </div>
+
+                    <label class="btn btn-primary w-100 gif-cargar" for="gif-archivos">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Agregar imágenes
+                    </label>
+                    <input type="file" id="gif-archivos" accept="image/*" multiple class="d-none">
+
+                    <div class="gif-tira-wrap" id="gif-tira-wrap" hidden>
+                        <div class="gif-tira" id="gif-tira" aria-label="Fotogramas del GIF (selecciona uno para reordenarlo o quitarlo)"></div>
+                        <div class="sh-barra gif-acciones" id="gif-acciones">
+                            <button type="button" class="sh-barra-btn" id="gif-subir" title="Mover antes" aria-label="Mover fotograma antes"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>
+                            <button type="button" class="sh-barra-btn" id="gif-bajar" title="Mover después" aria-label="Mover fotograma después"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>
+                            <button type="button" class="sh-barra-btn" id="gif-duplicar" title="Duplicar fotograma" aria-label="Duplicar fotograma"><i class="far fa-copy" aria-hidden="true"></i></button>
+                            <button type="button" class="sh-barra-btn" id="gif-quitar" title="Quitar fotograma" aria-label="Quitar fotograma"><i class="fas fa-trash" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="form-text" id="gif-conteo">0 fotogramas</div>
+                    </div>
+
+                    <div class="row g-3 gif-ajustes mt-1">
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <label class="form-label" for="gif-tamano">Tamaño de salida</label>
+                            <select class="form-select" id="gif-tamano"></select>
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <label class="form-label" for="gif-delay">Ms por foto</label>
+                            <input type="number" class="form-control" id="gif-delay" value="500" min="20" max="10000" step="50" inputmode="numeric">
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <label class="form-label" for="gif-ajuste">Ajuste de cada foto</label>
+                            <select class="form-select" id="gif-ajuste">
+                                <option value="cover">Cubrir (recorta los bordes)</option>
+                                <option value="contain">Contener (con fondo)</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <label class="form-label" for="gif-fondo">Fondo</label>
+                            <input type="color" class="form-control form-control-color w-100" id="gif-fondo" value="#ffffff" title="Color de fondo">
+                        </div>
+                        <div class="col-6 col-lg-1 d-flex align-items-center">
+                            <div class="form-check mt-lg-4">
+                                <input class="form-check-input" type="checkbox" id="gif-bucle" checked>
+                                <label class="form-check-label" for="gif-bucle">Bucle</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gif-preview" id="gif-preview">
+                        <canvas id="gif-lienzo" width="1080" height="1080" aria-label="Vista previa del GIF"></canvas>
+                        <p class="gif-vacio" id="gif-vacio">Agrega imágenes para ver la vista previa</p>
+                    </div>
+
+                    <div class="gif-progreso" id="gif-progreso" hidden>
+                        <div class="progress" role="progressbar" aria-label="Codificando el GIF" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" id="gif-barra" style="width: 0%">0%</div>
+                        </div>
+                        <div class="form-text" id="gif-estado">Codificando…</div>
+                    </div>
+
+                    <button type="button" class="btn btn-success w-100 gif-crear mt-3" id="gif-crear" disabled>
+                        <i class="fas fa-magic" aria-hidden="true"></i> Crear GIF
+                    </button>
+
+                    <div class="mt-2" id="gif-resultado" hidden>
+                        <a class="btn btn-primary w-100" id="gif-descargar" href="#" download="tet.gif">
+                            <i class="fas fa-download" aria-hidden="true"></i> <span id="gif-descargar-texto">Descargar GIF</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer font-small text-light bg-tet-footer">
+        <div class="container tet-footer-grid">
+            <div class="tet-footer-col">
+                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo">
+                <p class="tet-footer-tag">La tecnología tiene su espacio</p>
+                <a class="tet-footer-web" href="https://www.somostet.com" target="_blank" rel="noopener">somostet.com</a>
+            </div>
+            <div class="tet-footer-col">
+                <h6 class="tet-footer-title">Crear</h6>
+                <ul class="tet-footer-list">
+                    <li><a href="./tet1.html">Noticias</a></li>
+                    <li><a href="./tet2.html">Textos</a></li>
+                    <li><a href="./dictet.html">Diccionario</a></li>
+                    <li><a href="./art.html">Arte</a></li>
+                    <li><a href="./miniatura.html">Miniaturas</a></li>
+                    <li><a href="./modcre.html">Creaciones</a></li>
+                    <li><a href="./gif.html" aria-current="page">GIF animado</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h6 class="tet-footer-title">Redes</h6>
+                <ul class="tet-footer-list tet-footer-social">
+                    <li><a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook</a></li>
+                    <li><a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i> Instagram</a></li>
+                    <li><a href="https://twitter.com/somostet" target="_blank" rel="noopener"><i class="fab fa-twitter" aria-hidden="true"></i> Twitter / X</a></li>
+                    <li><a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener"><i class="fab fa-youtube" aria-hidden="true"></i> YouTube</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h6 class="tet-footer-title">Proyecto</h6>
+                <ul class="tet-footer-list">
+                    <li><a href="https://somostet.github.io/" target="_blank" rel="noopener">tet (sitio)</a></li>
+                    <li><a href="./index.html">tet admin</a></li>
+                    <li><a href="https://postimages.org/" target="_blank" rel="noopener">Postimage</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+    <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
+
+    <!-- Scripts -->
+    <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="./public/vendor/gifenc/gifenc.js"></script>
+    <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/formatos.js?v=d1"></script>
+    <script src="./public/js/gif.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
+</body>
+
+</html>

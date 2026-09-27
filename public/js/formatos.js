@@ -4,10 +4,8 @@
    - Exporta PNG en píxeles exactos del preset con recorte "cover" centrado
    Requiere la variable global `canvas` de Fabric.js creada antes de cargar este script. */
 (function () {
-    if (typeof canvas === 'undefined' || !canvas) {
-        return;
-    }
-
+    /* Lista de presets accesible también sin lienzo (gif.html la usa para su
+       selector de tamaño); el resto del módulo necesita el canvas de fabric. */
     var FORMATOS = [
         {
             grupo: 'Origen', items: [
@@ -57,6 +55,12 @@
             ]
         }
     ];
+
+    window.TET_FORMATOS = FORMATOS; // presets también sin lienzo (gif.html)
+
+    if (typeof canvas === 'undefined' || !canvas) {
+        return;
+    }
 
     /* ---------- panel ---------- */
     var panel = document.createElement('div');

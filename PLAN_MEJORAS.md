@@ -22,7 +22,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
-| Lote D — GIF (`gif.html`) | 📋 Planificado: D1 imágenes→GIF · D2 vídeo→GIF · D3 grabar lienzo |
+| Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 📋 Planificado: E1 imágenes→vídeo · E2 grabar en directo · E3 recortar vídeo |
 
 ---
@@ -126,7 +126,10 @@ funciona igual en doble clic `file://` y en GitHub Pages; el `dist/gifenc.js`
 de npm es CommonJS sin `require()`, así que se envuelve en IIFE y se usa como
 `<script>` clásico).
 
-- **D1 · Varias imágenes → GIF**: input múltiple, tira de fotogramas con
+- **D1 · Varias imágenes → GIF ✅** (validado en Chrome: subida múltiple, tira
+  con ↑↓/duplicar/quitar, presets desde `TET_FORMATOS`, codificación por lotes
+  con progreso, GIF que decodifica y consola limpia; `gifenc` envuelto en IIFE
+  en `public/vendor/gifenc/gifenc.js`): input múltiple, tira de fotogramas con
   reordenar (↑↓)/duplicar/borrar (botones de 44 px como la barra de acciones),
   preset de tamaño (los presets sociales + Origen), delay por fotograma y
   bucle; previsualización ciclando y botón **Crear GIF** con progreso →
