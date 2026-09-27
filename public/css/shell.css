@@ -333,6 +333,28 @@ body {
     color: #fff;
 }
 
+/* escritorio con puntero fino: barra más fina (el dedo solo apreta en móvil) */
+@media (min-width: 992px) and (pointer: fine) {
+    .sh-barra {
+        gap: .15rem;
+        margin: .4rem auto;
+        padding: .2rem;
+        border-radius: .65rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+    }
+
+    .sh-barra-grupo {
+        gap: .15rem;
+    }
+
+    .sh-barra-btn {
+        width: 34px;
+        height: 34px;
+        font-size: .9rem;
+        border-radius: .5rem;
+    }
+}
+
 /* ---------- dock derecho ---------- */
 .shell-dock {
     display: flex;
