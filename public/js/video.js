@@ -17,7 +17,7 @@
     var usosUrl = {};     // objectURL -> veces usada (al duplicar)
     var sel = -1;         // índice de la imagen seleccionada
     var urlVideo = null;  // objectURL del último vídeo
-    var preview = null;   // temporizador de la vista previa
+    var preview = null;   // id de requestAnimationFrame de la vista previa
     var grabando = false;
     var recAct = null;
     var rafAct = null;
@@ -36,6 +36,7 @@
     var inpDur = document.getElementById('vid-duracion');
     var selModoDur = document.getElementById('vid-modo-dur');
     var selAjuste = document.getElementById('vid-ajuste');
+    var selTrans = document.getElementById('vid-transicion');
     var inpFondo = document.getElementById('vid-fondo');
     var vidTotal = document.getElementById('vid-total');
     var lienzo = document.getElementById('vid-lienzo');
@@ -258,19 +259,78 @@
     }
 
     /* ---------- dibujo (cover/contain sobre fondo) ---------- */
-    function dibujar(img) {
+    function pintarFondo() {
+        ctx.fillStyle = inpFondo.value;
+        ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+    }
+
+    function dibujarCentrado(img, zoom, alpha, dx) {
         var w = lienzo.width;
         var h = lienzo.height;
-        ctx.fillStyle = inpFondo.value;
-        ctx.fillRect(0, 0, w, h);
         var iw = img.naturalWidth;
         var ih = img.naturalHeight;
-        var esc = (selAjuste.value === 'contain')
+        var base = (selAjuste.value === 'contain')
             ? Math.min(w / iw, h / ih)
             : Math.max(w / iw, h / ih);
-        var dw = iw * esc;
-        var dh = ih * esc;
-        ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        var dw = iw * base * (zoom || 1);
+        var dh = ih * base * (zoom || 1);
+        if (alpha != null && alpha < 1) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+        }
+        ctx.drawImage(img, (w - dw) / 2 + (dx || 0), (h - dh) / 2, dw, dh);
+        if (alpha != null && alpha < 1) {
+            ctx.restore();
+        }
+    }
+
+    function dibujar(img, zoom) {
+        pintarFondo();
+        dibujarCentrado(img, zoom || 1);
+    }
+
+    /* ---------- F2 · transiciones ---------- */
+    function durTransicion(durMs) {
+        var t = Math.round(durMs * 0.4);   // 40% del tiempo de cada imagen…
+        if (t < 150) t = 150;              // …con suelo y techo…
+        if (t > 800) t = 800;
+        if (t > durMs) t = durMs;          // …sin pasarse del tiempo de la imagen
+        return t;
+    }
+
+    function zoomKen(local, durMs) {
+        if (selTrans.value !== 'kenburns') return 1;
+        var p = durMs > 0 ? local / durMs : 0;
+        if (p > 1) p = 1;
+        return 1 + 0.08 * p;               // el encuadre se abre un 8% durante cada imagen
+    }
+
+    /* Fotograma en el instante t (ms): el MISMO dibujo sirve para la vista
+       previa y para la grabación (las dos van contra un reloj). */
+    function dibujarEn(t, durMs) {
+        var n = imagenes.length;
+        var modo = selTrans.value;
+        var idx = Math.floor(t / durMs);
+        if (idx >= n) idx = n - 1;
+        if (idx < 0) idx = 0;
+        var local = t - idx * durMs;
+        var transMs = (idx > 0 && modo !== 'ninguna') ? durTransicion(durMs) : 0;
+        if (transMs > 0 && local < transMs) {
+            var p = local / transMs;
+            var anterior = imagenes[idx - 1].img;
+            var actual = imagenes[idx].img;
+            pintarFondo();
+            if (modo === 'deslizar') {
+                dibujarCentrado(anterior, zoomKen(durMs, durMs));
+                dibujarCentrado(actual, zoomKen(local, durMs), 1, lienzo.width * (1 - p));
+            } else {
+                // fundido cruzado (kenburns funde además de encuadrar en zoom)
+                dibujarCentrado(anterior, zoomKen(durMs, durMs));
+                dibujarCentrado(actual, zoomKen(local, durMs), p);
+            }
+        } else {
+            dibujar(imagenes[idx].img, zoomKen(local, durMs));
+        }
     }
 
     /* ---------- duración total + estado del botón ---------- */
@@ -298,7 +358,7 @@
     /* ---------- vista previa ciclando ---------- */
     function detenerPreview() {
         if (preview) {
-            clearInterval(preview);
+            cancelAnimationFrame(preview);
             preview = null;
         }
     }
@@ -317,17 +377,28 @@
             lienzo.width = d.w;
             lienzo.height = d.h;
         }
-        var i = 0;
-        dibujar(imagenes[0].img);
-        if (imagenes.length < 2) return;
-        var ms = Math.max(Math.round(MIN_POR_IMAGEN * 1000), Math.round(calculoDuracion().porImagen * 1000));
-        preview = setInterval(function () {
-            i = (i + 1) % imagenes.length;
-            dibujar(imagenes[i].img);
-        }, ms);
+        var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
+            Math.round(calculoDuracion().porImagen * 1000));
+        var total = durMs * imagenes.length;
+        dibujarEn(0, durMs);
+        var animar = selTrans.value === 'kenburns' ||
+            (selTrans.value !== 'ninguna' && imagenes.length > 1);
+        if (!animar && imagenes.length < 2) return;
+        var t0 = performance.now();
+        var ultimo = -1;
+        function paso() {
+            var t = (performance.now() - t0) % total;
+            var idx = Math.floor(t / durMs);
+            if (animar || idx !== ultimo) {   // sin transiciones solo se redibuja al cambiar de imagen
+                dibujarEn(t, durMs);
+                ultimo = idx;
+            }
+            preview = requestAnimationFrame(paso);
+        }
+        preview = requestAnimationFrame(paso);
     }
 
-    [selTam, inpDur, selAjuste, inpFondo].forEach(function (el) {
+    [selTam, inpDur, selAjuste, selTrans, inpFondo].forEach(function (el) {
         el.addEventListener('change', function () {
             actualizaCrear();
             if (!grabando) reiniciarPreview();
@@ -448,7 +519,7 @@
         var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
             Math.round(calculoDuracion().porImagen * 1000));
         var total = durMs * imagenes.length;
-        dibujar(imagenes[0].img);
+        dibujarEn(0, durMs);
 
         var stream = lienzo.captureStream(FPS);
         var chunks = [];
@@ -498,12 +569,12 @@
             if (!grabando) return;
             var t = performance.now() - t0;
             if (t >= total) {
-                dibujar(imagenes[imagenes.length - 1].img);
+                dibujarEn(total - 1, durMs);
                 grabando = false;
                 if (recAct && recAct.state !== 'inactive') recAct.stop();
                 return;
             }
-            dibujar(imagenes[Math.min(Math.floor(t / durMs), imagenes.length - 1)].img);
+            dibujarEn(t, durMs);
             var pct = Math.round(t / total * 100);
             barra.style.width = pct + '%';
             barra.textContent = pct + '%';

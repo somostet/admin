@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E2 grabar en directo ⬜ · E3 recortar vídeo ⬜ |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅** · F2 transiciones ⬜ · F3 fondo blur ⬜ · F4 logo/texto ⬜ · F5 animaciones de texto ⬜ · F6 música ⬜ · F7 compartir ⬜ · luego E2/E3 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅** · F3 fondo blur ⬜ · F4 logo/texto ⬜ · F5 animaciones de texto ⬜ · F6 música ⬜ · F7 compartir ⬜ · luego E2/E3 |
 
 ---
 
@@ -182,9 +182,16 @@ propia). Un commit por función, en este orden:
   imagen» aparece el modo *por imagen* o *total del vídeo* (p. ej. 15 s de
   Reel) → reparte solo y el texto de duración lo explica. Sigue con el tope
   de 2 minutos.
-- **F2 · Transiciones**: fundido cruzado, deslizar y zoom Ken Burns entre
-  imágenes (proporcional a la duración, máx. 800 ms), **iguales en vista
-  previa y grabación** (bucle de dibujo único contra un reloj).
+- **F2 · Transiciones ✅** (validado en Chrome midiendo los píxeles del lienzo
+  fotograma a fotograma: fundido lineal de 400 ms entre 1000 y 1400 ms —p=0,25
+  → 0,49 → 0,74→ 0,99—, corte seco con 0 muestras mezcladas, deslizar con la
+  derecha cambiando en 1073 ms y la izquierda en 1340 ms (pareja roja/azul
+  detectada), Ken Burns moviendo el borde con el zoom del 8%, grabación de
+  2 s → MP4 de 2,02 s y consola con 0 mensajes): fundido cruzado, deslizar y
+  zoom Ken Burns entre imágenes (40% del tiempo de cada imagen, suelo 150 ms,
+  techo 800 ms), **iguales en vista previa y grabación** — la vista previa
+  pasó de `setInterval` a un bucle `requestAnimationFrame` contra el mismo
+  reloj (`dibujarEn`) que usa la grabación.
 - **F3 · Fondo desenfocado**: opción «contener con fondo desenfocado» para
   verticales 9:16 con foto horizontal (fallback a color si `ctx.filter` no
   existe).
