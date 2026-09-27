@@ -56,6 +56,17 @@
         HTMLCanvasElement.prototype.captureStream &&
         MediaRecorder.isTypeSupported);
 
+    /* ctx.filter no existe en Safari < 17.4; sin él, «fondo desenfocado»
+       degrada al color de fondo normal */
+    var soportaFilter = (function () {
+        try {
+            var c = document.createElement('canvas').getContext('2d');
+            if (!('filter' in c)) return false;
+            c.filter = 'blur(2px)';
+            return c.filter === 'blur(2px)';
+        } catch (e) { return false; }
+    })();
+
     /* ---------- avisos (mismo patrón que mostrarAviso de capas.js) ---------- */
     function aviso(msg, tipo) {
         var cont = document.getElementById('tet-toast-container');
@@ -264,12 +275,31 @@
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
     }
 
+    /* estilo «stories»: la propia imagen en cover, desenfocada, como fondo */
+    function pintarDesenfado(img, alpha) {
+        if (!soportaFilter) return;
+        var w = lienzo.width;
+        var h = lienzo.height;
+        var iw = img.naturalWidth;
+        var ih = img.naturalHeight;
+        // 15% más grande que cover: el halo del desenfoque cae fuera del lienzo
+        var esc = Math.max(w / iw, h / ih) * 1.15;
+        var dw = iw * esc;
+        var dh = ih * esc;
+        ctx.save();
+        ctx.filter = 'blur(' + Math.max(16, Math.round(Math.min(w, h) / 20)) + 'px)';
+        if (alpha != null && alpha < 1) ctx.globalAlpha = alpha;
+        ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        ctx.restore();
+    }
+
     function dibujarCentrado(img, zoom, alpha, dx) {
         var w = lienzo.width;
         var h = lienzo.height;
         var iw = img.naturalWidth;
         var ih = img.naturalHeight;
-        var base = (selAjuste.value === 'contain')
+        var ajuste = selAjuste.value;
+        var base = (ajuste === 'contain' || ajuste === 'blur')
             ? Math.min(w / iw, h / ih)
             : Math.max(w / iw, h / ih);
         var dw = iw * base * (zoom || 1);
@@ -286,6 +316,7 @@
 
     function dibujar(img, zoom) {
         pintarFondo();
+        if (selAjuste.value === 'blur') pintarDesenfado(img);
         dibujarCentrado(img, zoom || 1);
     }
 
@@ -320,6 +351,10 @@
             var anterior = imagenes[idx - 1].img;
             var actual = imagenes[idx].img;
             pintarFondo();
+            if (selAjuste.value === 'blur') {   // el fondo desenfocado también funde
+                pintarDesenfado(anterior);
+                pintarDesenfado(actual, p);
+            }
             if (modo === 'deslizar') {
                 dibujarCentrado(anterior, zoomKen(durMs, durMs));
                 dibujarCentrado(actual, zoomKen(local, durMs), 1, lienzo.width * (1 - p));
@@ -400,6 +435,9 @@
 
     [selTam, inpDur, selAjuste, selTrans, inpFondo].forEach(function (el) {
         el.addEventListener('change', function () {
+            if (el === selAjuste && selAjuste.value === 'blur' && !soportaFilter) {
+                aviso('Tu navegador no hace desenfoque: se usará el color de fondo', 'info');
+            }
             actualizaCrear();
             if (!grabando) reiniciarPreview();
         });

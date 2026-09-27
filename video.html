@@ -118,6 +118,7 @@
                             <select class="form-select" id="vid-ajuste">
                                 <option value="cover">Cubrir (recorta los bordes)</option>
                                 <option value="contain">Contener (con fondo)</option>
+                                <option value="blur">Contener con fondo desenfocado</option>
                             </select>
                         </div>
                         <div class="col-6 col-lg-6">
@@ -204,8 +205,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=f2 obliga a traer la versión con transiciones aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f2"></script>
+    <!-- ?v=f3 obliga a traer la versión con fondo desenfocado aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=f3"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

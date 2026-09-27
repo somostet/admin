@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E3 subir/recortar ⬜ **adelantado tras F3** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅** · orden: F3 → E3 → F4 → F5 → F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅** · orden: E3 → F4 → F5 → F6 → F8 → F7 → E2 |
 
 ---
 
@@ -199,9 +199,18 @@ propia). Un commit por función.
   techo 800 ms), **iguales en vista previa y grabación** — la vista previa
   pasó de `setInterval` a un bucle `requestAnimationFrame` contra el mismo
   reloj (`dibujarEn`) que usa la grabación.
-- **F3 · Fondo desenfocado**: opción «contener con fondo desenfocado» para
-  verticales 9:16 con foto horizontal (fallback a color si `ctx.filter` no
-  existe).
+- **F3 · Fondo desenfocado ✅** (validado en Chrome midiendo píxeles en un
+  vertical 1080×1920 con foto de marco blanco: en «contener» la esquina sigue
+  siendo el color de fondo, en «blur» la esquina pasa a ser el cover de la
+  propia imagen, el borde blanco/verde sale mezclado —154/151/148/145, lo nítido
+  daría 255 o 46—, el centro sigue nítido, grabación → MP4 0,98 s de
+  1080×1920 y consola con 0 mensajes): opción «contener con fondo desenfocado»
+  para verticales 9:16 con foto horizontal —la imagen en cover con
+  `ctx.filter: blur()` (radio ≈ lado/20, con un 15% de sobredimensión para que
+  el halo caiga fuera del lienzo) bajo la capa nítida—; el desenfoque también
+  funde durante las transiciones y **fallback a color si `ctx.filter` no existe**
+  (Safari < 17.4: aviso al seleccionarlo). Nueva opción en `Ajuste de cada
+  imagen`; `video.js` con `?v=f3`.
 - **F4 · Logotipo y texto superpuestos**: logo PNG + línea de título con
   posición (esquinas/abajo-centro) durante todo el vídeo.
 - **F5 · Textos y animaciones** (petición del usuario): entradas animadas del
