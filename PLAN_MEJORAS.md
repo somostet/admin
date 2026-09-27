@@ -21,7 +21,9 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote fixes UI tet1 | ✅ Completada (`bf68993` lienzo que llena el viewport y scrollea desde el borde, `f1f15b4` colores arriba: paleta bajo las pestañas del dock y fondo/texto al inicio de Propiedades, `e38b592` atajos en chips modernos + selector de color cuadrado) |
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
-| Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) |
+| Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
+| Lote D — GIF (`gif.html`) | 📋 Planificado: D1 imágenes→GIF · D2 vídeo→GIF · D3 grabar lienzo |
+| Lote E — Vídeo (`video.html`) | 📋 Planificado: E1 imágenes→vídeo · E2 grabar en directo · E3 recortar vídeo |
 
 ---
 
@@ -110,6 +112,53 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 3. ⬜ **Panel de capas extendido**: miniaturas de preview, drag & drop, bloquear capa.
 4. ⬜ **Galería de plantillas** con previews generadas.
 5. ⬜ **PWA instalable**: icons en `manifest.webmanifest` + apple-touch-icon (revisar).
+
+---
+
+## 🟢 Lote D — Creador de GIF (`gif.html`) 🆕
+
+Nuevo editor para crear GIFs animados, 3 modos (alcance decidido el 27/09/2026).
+Un commit por modo.
+
+**Motor (común a los 3): `gifenc` vendorizado** en `public/vendor/gifenc/`
+(MIT, **cero dependencias**, codificación **síncrona sin Web Workers** →
+funciona igual en doble clic `file://` y en GitHub Pages; el `dist/gifenc.js`
+de npm es CommonJS sin `require()`, así que se envuelve en IIFE y se usa como
+`<script>` clásico).
+
+- **D1 · Varias imágenes → GIF**: input múltiple, tira de fotogramas con
+  reordenar (↑↓)/duplicar/borrar (botones de 44 px como la barra de acciones),
+  preset de tamaño (los presets sociales + Origen), delay por fotograma y
+  bucle; previsualización ciclando y botón **Crear GIF** con progreso →
+  descarga `tet.gif`. Toces de fotogramas/px con aviso y codificación por
+  lotes (`setTimeout`) para no congelar la UI en el móvil.
+- **D2 · Vídeo existente → GIF**: input mp4/webm con `<video>` de preview,
+  recorte de rango (inicio/fin) y fps → fotogramas extraídos con
+  `currentTime` + `drawImage` → misma tubería de D1.
+- **D3 · Grabar el lienzo → GIF**: lienzo fabric en la propia página (con la
+  rotación de plantillas de la shell) + duración/fps → captura de fotogramas
+  del canvas → misma tubería.
+
+**Validación**: abrir el `.gif` resultante en Chrome y móvil, doble clic
+`file://`, barrido HTTP 200.
+
+## 🟢 Lote E — Creador de vídeo (`video.html`) 🆕
+
+Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
+
+- **E1 · Imágenes → vídeo**: slideshow con duración por imagen →
+  `canvas.captureStream()` + **`MediaRecorder`** (autodetección:
+  `video/mp4;codecs=avc1…` en Chrome reciente e iOS, si no
+  `video/webm;codecs=vp9`, y `video/webm` de última instancia) → descarga
+  `tet.mp4|webm`. Presets sociales de salida.
+- **E2 · Grabar el lienzo en directo**: botón Grabar/Parar sobre el lienzo de
+  la página (plantillas rotando o edición) → misma tubería.
+- **E3 · Subir vídeo y editarlo**: recorte inicio/fin — se reproduce el rango
+  seleccionado mientras se regraba compuesto en el canvas → salida limpia.
+
+Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
+**Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
+(navegador antiguo) → aviso y modo deshabilitado.
 
 ---
 
