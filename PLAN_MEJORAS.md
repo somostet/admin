@@ -9,7 +9,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 
 | Área | Estado |
 |---|---|
-| Migración Bootstrap 4 → 5.3.3 | ✅ Completada (commits `fbe3076`…`3797bd3`) |
+| Migración Bootstrap 4 → 5.3.3 | ✅ Completada (commits `fbe3076`…`3797bd3`); vendor actualizado a 5.3.8 en el lote S4 de seguridad |
 | Panel de capas + botones de orden | ✅ Completada (`dcec182`) |
 | P0 — Bugs visibles | ✅ Completada (`06a93d5`) |
 | P1 — Móvil | ✅ Completada (`253e453`) |

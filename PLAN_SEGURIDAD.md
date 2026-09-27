@@ -18,7 +18,7 @@ obsoletas del service worker.
 | S1 | Quitar jQuery + `bootstrap5-compat.js` | 🔴 Alta | Bajo | ✅ Hecho |
 | S2 | CSP por meta, solo http/https | 🔴 Alta | Medio | ✅ Hecho |
 | S3 | Validar el `.json` de "Cargar proyecto" | 🟠 Media-alta | Bajo | ✅ Hecho |
-| S4 | Bootstrap a última 5.3.x · riesgo de fabric | 🟡 Media | Bajo / Proyecto | ⬜ Pendiente |
+| S4 | Bootstrap a última 5.3.x · riesgo de fabric | 🟡 Media | Bajo / Proyecto | ✅ Hecho |
 | S5 | Higiene: referrer, frame-buster opcional | 🟢 Baja | Bajo | ✅ Hecho |
 | S6 | Migrar `onclick=` a `addEventListener` | 🟢 Futuro | Alto | ⬜ Diferido |
 
@@ -29,7 +29,7 @@ Orden recomendado: **S1 → S3 → S2 → S5 → S4**; S6 cuando haya motivo.
 ## ✅ Verificado en la auditoría (no tocar)
 
 1. **Cero CDN en runtime**: todo vendorizado en `public/vendor/` (Bootstrap
-   5.3.3, fabric 2.4.3, FontAwesome 5.13.0 — jQuery retirado en S1) → sin cadena de
+   5.3.8, fabric 2.4.3, FontAwesome 5.13.0 — jQuery retirado en S1) → sin cadena de
    suministro remota y sin necesidad de SRI. Búsqueda de `googleapis|cdnjs|unpkg|
    jsdelivr|cloudflare` en HTML/CSS/JS: **ninguna**.
 2. **`rel="noopener"` en el 100 %** de los `target="_blank"` (verificado en los
@@ -140,6 +140,13 @@ los validadores en Node: **30/30**.
 
 - **Bootstrap 5.3.3 → última 5.3.x**: copiar bundle + CSS a
   `public/vendor/bootstrap5/` y probar tooltips/modales/toasts. Sin prisa.
+  **✅ Hecho (5.3.8)**: `bootstrap.min.css` + `bootstrap.bundle.min.js`
+  descargados de npm (la CDN solo se usó al vendorizar, el runtime sigue sin
+  CDN). Probado en navegador: tooltip (burbuja "Cargar plantilla"), modal
+  (show/hide con transición) y toast ✓, consola limpia en las 7 páginas. El
+  título gris claro del modal sobre cabecera blanca **no es regresión**:
+  herencia de `--sh-text` dentro de `.shell`, idéntico en 5.3.3 y 5.3.8
+  (comprobado con A/B vía stash, `rgb(230,230,230)` en ambas).
 - **fabric 2.4.3 (2019)**: sin mantenimiento. **Riesgo aceptado documentado**:
   migrar a 6.x rompe API (`fabric.Canvas`, eventos, `clipPath`) y es un proyecto
   aparte — solo si aparece un CVE real o se necesitan features nuevas.
