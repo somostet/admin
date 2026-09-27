@@ -23,7 +23,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 📋 Planificado: E1 imágenes→vídeo · E2 grabar en directo · E3 recortar vídeo |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E2 grabar en directo ⬜ · E3 recortar vídeo ⬜ |
 
 ---
 
@@ -149,7 +149,10 @@ de npm es CommonJS sin `require()`, así que se envuelve en IIFE y se usa como
 
 Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
 
-- **E1 · Imágenes → vídeo**: slideshow con duración por imagen →
+- **E1 · Imágenes → vídeo ✅** (validado en Chrome: 2 imágenes × 1 s → MP4
+  de 640×360 que decodifica con duración 2,01 s, autodetección MP4→WebM,
+  barra de grabación + cancelar, consola limpia y `media-src blob:` para
+  previsualizar el resultado): slideshow con duración por imagen →
   `canvas.captureStream()` + **`MediaRecorder`** (autodetección:
   `video/mp4;codecs=avc1…` en Chrome reciente e iOS, si no
   `video/webm;codecs=vp9`, y `video/webm` de última instancia) → descarga

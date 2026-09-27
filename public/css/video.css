@@ -1,0 +1,193 @@
+/* Página de vídeo (video.html) — espejo de gif.css con prefijo .vid-.
+   Reutiliza .sh-barra/.sh-barra-btn de shell.css para la barra de acciones
+   (44 px táctiles y adelgazado en escritorio). */
+
+.vid-caja {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .9rem;
+    background: var(--sh-panel);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
+}
+
+.vid-caja-cab {
+    margin-bottom: .75rem;
+}
+
+.vid-titulo {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--sh-text);
+}
+
+.vid-subtitulo {
+    margin: .15rem 0 0;
+    font-size: .9rem;
+    color: var(--sh-text);
+    opacity: .75;
+}
+
+.vid-cargar {
+    min-height: 44px;
+}
+
+.vid-tira-wrap {
+    margin-top: .75rem;
+}
+
+/* tira de imágenes: scroll horizontal cómodo en móvil */
+.vid-tira {
+    display: flex;
+    gap: .5rem;
+    padding: .25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.vid-foto {
+    position: relative;
+    flex: 0 0 auto;
+    width: 96px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.vid-foto-img {
+    display: block;
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border: 3px solid transparent;
+    border-radius: .55rem;
+    background: #000;
+    transition: border-color .15s ease;
+}
+
+.vid-foto[aria-pressed="true"] .vid-foto-img {
+    border-color: var(--sh-accent);
+}
+
+.vid-foto-num {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    min-width: 1.4rem;
+    padding: 0 .3rem;
+    border-radius: .6rem;
+    background: rgba(0, 0, 0, .65);
+    color: #fff;
+    font-size: .75rem;
+    line-height: 1.4rem;
+    text-align: center;
+}
+
+/* barra de acciones: centrada (encaje del .sh-barra de shell.css) */
+.vid-acciones {
+    justify-content: center;
+}
+
+.vid-acciones .sh-barra-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.vid-acciones .sh-barra-btn:disabled:hover {
+    border-color: var(--sh-border);
+    color: var(--sh-text);
+}
+
+/* el recuento, la ayuda y la duración deben leerse sobre el panel oscuro */
+#vid-conteo,
+#vid-total {
+    color: var(--sh-text);
+    opacity: .8;
+}
+
+.vid-ajustes {
+    margin-top: .75rem;
+}
+
+/* vista previa: el lienzo se escala por CSS, no por su tamaño lógico */
+.vid-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    margin-top: .75rem;
+    padding: .5rem;
+    border: 1px dashed var(--sh-border);
+    border-radius: .7rem;
+    background:
+        linear-gradient(45deg, rgba(128, 128, 128, .18) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(128, 128, 128, .18) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(128, 128, 128, .18) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(128, 128, 128, .18) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    overflow: hidden;
+}
+
+#vid-lienzo {
+    display: none;
+    max-width: 100%;
+    max-height: 420px;
+    height: auto;
+    border-radius: .4rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .35);
+}
+
+.vid-vacio {
+    margin: 1rem 0;
+    text-align: center;
+    color: var(--sh-text);
+    opacity: .7;
+    font-size: .9rem;
+}
+
+.vid-progreso {
+    margin-top: .75rem;
+}
+
+.vid-progreso .progress {
+    height: 1.1rem;
+}
+
+/* botones de acción principal: objetivo táctil de 44 px */
+.vid-crear,
+.vid-cancelar {
+    min-height: 44px;
+}
+
+#vid-resultado a {
+    min-height: 44px;
+}
+
+/* resultado: reproducidor del vídeo generado */
+.vid-repro {
+    display: block;
+    width: 100%;
+    max-height: 420px;
+    margin-top: .75rem;
+    border-radius: .6rem;
+    background: #000;
+}
+
+/* móvil: la caja se ajusta y las miniaturas encogen */
+@media (max-width: 575.98px) {
+    .vid-caja {
+        padding: .75rem;
+    }
+
+    .vid-foto,
+    .vid-foto-img {
+        width: 84px;
+    }
+
+    .vid-foto-img {
+        height: 84px;
+    }
+}

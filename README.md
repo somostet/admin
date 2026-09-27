@@ -30,6 +30,8 @@ En producción, GitHub Pages sirve `master/` en `/admin/`.
 | `art.html` | Arte 1280×720 |
 | `miniatura.html` | Miniatura 1280×720 |
 | `modcre.html` | Mod creaciones |
+| `gif.html` | GIF animado a partir de imágenes (lote D) |
+| `video.html` | Vídeo MP4/WebM a partir de imágenes (lote E) |
 
 ## Funciones del editor
 
