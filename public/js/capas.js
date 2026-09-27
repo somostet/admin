@@ -387,10 +387,60 @@
         aviso('Proyecto guardado (.json)', 'success');
     }
 
+    /* validación del .json antes de pasarlo a fabric (S3 del plan de
+       seguridad): tamaño, forma básica, lista blanca de types y cierre de
+       las dos rutas new Function de fabric (clipTo string y pattern) */
+    var TIPOS_OK = {
+        image: 1, text: 1, 'i-text': 1, textbox: 1, rect: 1, circle: 1,
+        ellipse: 1, line: 1, path: 1, polyline: 1, polygon: 1,
+        triangle: 1, group: 1
+    };
+
+    function rellenoSeguro(f) {
+        if (!f || typeof f !== 'object' || f.type !== 'pattern') return true;
+        if (typeof f.source !== 'string') return true;
+        return /^(data:|blob:|https?:)/i.test(f.source);
+    }
+
+    function fondoSeguro(v) {
+        if (!v || typeof v !== 'object') return true;
+        return rellenoSeguro(v);
+    }
+
+    function objetoSeguro(o, nivel) {
+        if (!o || typeof o !== 'object' || nivel > 40) return false;
+        if (TIPOS_OK[o.type] !== 1) return false;
+        /* un clipTo serializado como string haría new Function en fabric */
+        if (typeof o.clipTo === 'string') delete o.clipTo;
+        if (!rellenoSeguro(o.fill)) return false;
+        if (o.clipPath && !objetoSeguro(o.clipPath, nivel + 1)) return false;
+        if (Array.isArray(o.objects)) {
+            for (var i = 0; i < o.objects.length; i++) {
+                if (!objetoSeguro(o.objects[i], nivel + 1)) return false;
+            }
+        }
+        return true;
+    }
+
+    function proyectoSeguro(datos) {
+        if (!datos || typeof datos !== 'object') return false;
+        if (!Array.isArray(datos.objects)) return false;
+        if (!fondoSeguro(datos.background) || !fondoSeguro(datos.overlay)) return false;
+        for (var i = 0; i < datos.objects.length; i++) {
+            if (!objetoSeguro(datos.objects[i], 0)) return false;
+        }
+        return true;
+    }
+
     if (inputCargar) {
         inputCargar.addEventListener('change', function () {
             var file = inputCargar.files && inputCargar.files[0];
             if (!file) return;
+            if (file.size > 12 * 1024 * 1024) {
+                aviso('El proyecto supera los 12 MB', 'danger');
+                inputCargar.value = '';
+                return;
+            }
             var lector = new FileReader();
             lector.onload = function () {
                 try {
@@ -400,14 +450,24 @@
                     inputCargar.value = '';
                     return;
                 }
+                if (!proyectoSeguro(datos)) {
+                    aviso('El proyecto contiene datos no admitidos', 'danger');
+                    inputCargar.value = '';
+                    return;
+                }
                 restaurando = true;
-                canvas.loadFromJSON(datos, function () {
-                    canvas.renderAll();
+                try {
+                    canvas.loadFromJSON(datos, function () {
+                        canvas.renderAll();
+                        restaurando = false;
+                        guardarEstado();
+                        render();
+                        aviso('Proyecto cargado', 'success');
+                    });
+                } catch (err) {
                     restaurando = false;
-                    guardarEstado();
-                    render();
-                    aviso('Proyecto cargado', 'success');
-                });
+                    aviso('No se pudo cargar el proyecto', 'danger');
+                }
                 inputCargar.value = '';
             };
             lector.readAsText(file);

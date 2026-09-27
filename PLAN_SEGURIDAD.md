@@ -17,7 +17,7 @@ obsoletas del service worker.
 |---|---|---|---|---|
 | S1 | Quitar jQuery + `bootstrap5-compat.js` | 🔴 Alta | Bajo | ✅ Hecho |
 | S2 | CSP por meta, solo http/https | 🔴 Alta | Medio | ⬜ Pendiente |
-| S3 | Validar el `.json` de "Cargar proyecto" | 🟠 Media-alta | Bajo | ⬜ Pendiente |
+| S3 | Validar el `.json` de "Cargar proyecto" | 🟠 Media-alta | Bajo | ✅ Hecho |
 | S4 | Bootstrap a última 5.3.x · riesgo de fabric | 🟡 Media | Bajo / Proyecto | ⬜ Pendiente |
 | S5 | Higiene: referrer, frame-buster opcional | 🟢 Baja | Bajo | ⬜ Pendiente |
 | S6 | Migrar `onclick=` a `addEventListener` | 🟢 Futuro | Alto | ⬜ Diferido |
@@ -120,6 +120,14 @@ En el manejador de `data-act="load"` (`capas.js`), antes de `loadFromJSON`:
 **Validación**: guardar → cargar un proyecto normal (funciona); cargar un JSON
 con `type` inventado o `clipTo` string → aviso, sin romper; cargar un archivo
 gigante → aviso.
+
+**✅ Hecho**: `proyectoSeguro()` en `capas.js` — tope de 12 MB antes de leer,
+forma (`objects` con array), whitelist `TIPOS_OK` con recursión (groups y
+`clipPath`, profundidad ≤ 40, sin fugas por `constructor` en la clave) que
+además **elimina** los `clipTo` string, rellenos `pattern` y fondos solo con
+`data:`/`blob:`/`http(s):`, y `try/catch` alrededor de `loadFromJSON` (si
+algo escapa, se restaura el flag de deshacer y hay aviso). Prueba unitaria de
+los validadores en Node: **30/30**.
 
 ## S4 — Dependencias vendorizadas 🟡
 
