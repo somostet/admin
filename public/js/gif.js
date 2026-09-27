@@ -150,9 +150,11 @@
         var hay = fotos.length > 0;
         tiraWrap.hidden = !hay;
         conteo.textContent = fotos.length + (fotos.length === 1 ? ' fotograma' : ' fotogramas') +
+            ' · toca uno para reordenarlo o quitarlo' +
             (fotos.length >= MAX_FOTOS ? ' (máximo alcanzado)' : '');
         btnCrear.disabled = !hay || creando;
         if (!hay) sel = -1;
+        else if (sel < 0 || sel >= fotos.length) sel = 0; // barra ↑↓ visible de entrada
         actualizarBarra();
         reiniciarPreview();
     }

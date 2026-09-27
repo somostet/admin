@@ -90,6 +90,12 @@
     justify-content: center;
 }
 
+/* el recuento y la ayuda deben leerse sobre el panel oscuro */
+#gif-conteo {
+    color: var(--sh-text);
+    opacity: .8;
+}
+
 .gif-acciones .sh-barra-btn:disabled {
     opacity: .4;
     cursor: not-allowed;
