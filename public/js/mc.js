@@ -28,9 +28,11 @@ canvas.setWidth(wc);
 canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
 canvas.backgroundColor = "#ffffff";
 
-$(".fondocol").change(function() {
-    canvas.backgroundColor = color.value;
-    canvas.renderAll();
+document.querySelectorAll(".fondocol").forEach(function(el) {
+    el.addEventListener("change", function() {
+        canvas.backgroundColor = color.value;
+        canvas.renderAll();
+    });
 });
 
 /* fin canvas code*/
@@ -206,7 +208,7 @@ function toFront() {
 
 (function() {
     // El pegado de imágenes ahora es global (ver capas.js: paste en document)
-    $(document).keydown(function(event) {
+    document.addEventListener("keydown", function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '46') {
             remover();

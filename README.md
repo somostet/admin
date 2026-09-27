@@ -43,7 +43,7 @@ En producción, GitHub Pages sirve `master/` en `/admin/`.
 ## Stack
 
 - Bootstrap 5.3.3 (vendor local) + compat shim `bootstrap5-compat.js`
-- jQuery 3.7.1, Fabric.js 2.4.3, ReImg, FontAwesome 5.13
+- Fabric.js 2.4.3, ReImg, FontAwesome 5.13
 - CSS propio en `public/css/style.css` (tokens de diseño en `:root`)
 
 ## Documentación

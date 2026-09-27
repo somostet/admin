@@ -15,7 +15,7 @@ obsoletas del service worker.
 
 | Lote | Qué | Prioridad | Esfuerzo | Estado |
 |---|---|---|---|---|
-| S1 | Quitar jQuery + `bootstrap5-compat.js` | 🔴 Alta | Bajo | ⬜ Pendiente |
+| S1 | Quitar jQuery + `bootstrap5-compat.js` | 🔴 Alta | Bajo | ✅ Hecho |
 | S2 | CSP por meta, solo http/https | 🔴 Alta | Medio | ⬜ Pendiente |
 | S3 | Validar el `.json` de "Cargar proyecto" | 🟠 Media-alta | Bajo | ⬜ Pendiente |
 | S4 | Bootstrap a última 5.3.x · riesgo de fabric | 🟡 Media | Bajo / Proyecto | ⬜ Pendiente |
@@ -29,7 +29,7 @@ Orden recomendado: **S1 → S3 → S2 → S5 → S4**; S6 cuando haya motivo.
 ## ✅ Verificado en la auditoría (no tocar)
 
 1. **Cero CDN en runtime**: todo vendorizado en `public/vendor/` (Bootstrap
-   5.3.3, jQuery 3.7.1, fabric 2.4.3, FontAwesome 5.13.0) → sin cadena de
+   5.3.3, fabric 2.4.3, FontAwesome 5.13.0 — jQuery retirado en S1) → sin cadena de
    suministro remota y sin necesidad de SRI. Búsqueda de `googleapis|cdnjs|unpkg|
    jsdelivr|cloudflare` en HTML/CSS/JS: **ninguna**.
 2. **`rel="noopener"` en el 100 %** de los `target="_blank"` (verificado en los
@@ -70,6 +70,11 @@ Orden recomendado: **S1 → S3 → S2 → S5 → S4**; S6 cuando haya motivo.
 **Validación**: `node --check` en los 4 JS tocados, barrido HTTP 200, probar en
 navegador: tooltips (hover), modal "Imágenes", atajos de teclado, cambio de
 color de fondo (art/mc/miniaturas) y Ctrl+Z.
+
+**✅ Hecho**: portados los 7 handlers JS y los 6 init HTML a vanilla
+(`bootstrap.Tooltip.getOrCreateInstance`), fuera los 14 `<script>` (7 jQuery +
+7 shim) de las 7 páginas, y eliminados `public/js/bootstrap5-compat.js` +
+`public/vendor/jquery/`.
 
 ## S2 — CSP por meta, solo http/https 🔴
 
@@ -123,7 +128,7 @@ gigante → aviso.
 - **fabric 2.4.3 (2019)**: sin mantenimiento. **Riesgo aceptado documentado**:
   migrar a 6.x rompe API (`fabric.Canvas`, eventos, `clipPath`) y es un proyecto
   aparte — solo si aparece un CVE real o se necesitan features nuevas.
-- **jQuery**: no actualizar — eliminar (S1).
+- **jQuery**: ~~no actualizar~~ **eliminado** en S1.
 
 ## S5 — Higiene 🟢
 

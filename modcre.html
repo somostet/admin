@@ -247,9 +247,7 @@
         </div>
     </div>
     <!-- Scripts -->
-    <script src="./public/vendor/jquery/jquery-3.7.1.min.js"></script>
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
-    <script src="./public/js/bootstrap5-compat.js"></script>
 
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
@@ -259,8 +257,10 @@
     <script src="./public/js/shell.js"></script>
     <script>
         document.getElementById("sombra").step = "1";
-        $(document).ready(function() {
-            $('[data-bs-toggle="tooltip"]').tooltip();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                bootstrap.Tooltip.getOrCreateInstance(el);
+            });
         });
     </script>
 

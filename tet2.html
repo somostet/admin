@@ -145,9 +145,7 @@
     </footer>
     <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
     <!-- Scripts -->
-    <script src="./public/vendor/jquery/jquery-3.7.1.min.js"></script>
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
-    <script src="./public/js/bootstrap5-compat.js"></script>
 
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/js/plantillas-data.js"></script>
@@ -157,8 +155,10 @@
     <script src="./public/js/formatos.js"></script>
     <script src="./public/js/shell.js"></script>
     <script>
-        $(document).ready(function() {
-            $('[data-bs-toggle="tooltip"]').tooltip();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                bootstrap.Tooltip.getOrCreateInstance(el);
+            });
         });
     </script>
 

@@ -124,6 +124,7 @@ Migración ejecutada en la rama `bootstrap5-migration`:
 2. ✅ Las 7 páginas migradas: `index`, `tet1` (piloto), `tet2`, `dictet`, `art`, `miniatura`, `modcre`.
 3. ✅ Atributos `data-*` → `data-bs-*`, `input-group-prepend` → `span.input-group-text`, `close` → `btn-close`, `btn-block` → `w-100`, `pos-f-t` eliminada (era código muerto, no existía ni en BS4).
 4. ✅ Capa de compatibilidad `public/js/bootstrap5-compat.js` cargada en las 7 páginas: mantiene funcionando el código jQuery existente (`$().modal(...)`, `$().tooltip(...)`).
+   → **Retirada en el lote S1** (ver `PLAN_SEGURIDAD.md`): el código jQuery se portó a vanilla (`addEventListener`, `bootstrap.Tooltip.getOrCreateInstance`) y shim + jQuery se eliminaron.
 5. ✅ Eliminados `public/vendor/bootstrap/` (BS4) y `public/vendor/popper/` (ya los incluye el bundle de BS5).
 6. ✅ Validación por HTTP: 7 páginas + 154 recursos responden 200; grep sin restos de BS4.
 

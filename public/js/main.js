@@ -328,7 +328,7 @@ function generate() {
 
 (function() {
     // El pegado de imágenes ahora es global (ver capas.js: paste en document)
-    $(document).keydown(function(event) {
+    document.addEventListener("keydown", function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '46') {
             remover();
