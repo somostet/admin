@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E2 grabar en directo ⬜ · E3 recortar vídeo ⬜ |
-| Lote F — Enriquecimientos vídeo | 📋 F1 duración objetivo · F2 transiciones · F3 fondo blur · F4 logo/texto · F5 animaciones de texto · F6 música · F7 compartir (E2/E3 del lote E al final) |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅** · F2 transiciones ⬜ · F3 fondo blur ⬜ · F4 logo/texto ⬜ · F5 animaciones de texto ⬜ · F6 música ⬜ · F7 compartir ⬜ · luego E2/E3 |
 
 ---
 
@@ -174,9 +174,14 @@ Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
 propia). Un commit por función, en este orden:
 
-- **F1 · Duración objetivo**: al lado de «segundos por imagen» aparece el modo
-  *por imagen* o *total del vídeo* (p. ej. 15 s de Reel) → reparte solo y el
-  texto de duración lo explica. Sigue con el tope de 2 minutos.
+- **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
+  cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
+  solo al añadir/quitar imágenes, límites 0,5–30 / 1–120, el tope de 2 minutos
+  y el mínimo de 0,1 s por imagen deshabilitan con aviso, y grabar 3 s en modo
+  total dio un MP4 de 3,01 s; consola con 0 mensajes): al lado de «segundos por
+  imagen» aparece el modo *por imagen* o *total del vídeo* (p. ej. 15 s de
+  Reel) → reparte solo y el texto de duración lo explica. Sigue con el tope
+  de 2 minutos.
 - **F2 · Transiciones**: fundido cruzado, deslizar y zoom Ken Burns entre
   imágenes (proporcional a la duración, máx. 800 ms), **iguales en vista
   previa y grabación** (bucle de dibujo único contra un reloj).

@@ -111,6 +111,22 @@
     margin-top: .75rem;
 }
 
+/* duración: modo (por imagen | total) + cantidad en la misma línea */
+.vid-duracion-grupo {
+    display: flex;
+    gap: .5rem;
+}
+
+.vid-duracion-modo {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.vid-duracion-num {
+    flex: 0 0 auto;
+    width: 6rem;
+}
+
 /* vista previa: el lienzo se escala por CSS, no por su tamaño lógico */
 .vid-preview {
     display: flex;

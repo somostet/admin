@@ -10,6 +10,7 @@
     var MAX_IMAGENES = 60;
     var MAX_LADO = 1920;          // tope de píxeles (los presets más grandes se reducen con aviso)
     var MAX_TOTAL_SEG = 120;      // 2 minutos: se graba en tiempo real, no conviene más
+    var MIN_POR_IMAGEN = 0.1;      // 10 fotogramas/s por imagen: menos no lo distingue el grabador
     var FPS = 30;
 
     var imagenes = [];    // { url, img, nombre }
@@ -33,6 +34,7 @@
     var conteo = document.getElementById('vid-conteo');
     var selTam = document.getElementById('vid-tamano');
     var inpDur = document.getElementById('vid-duracion');
+    var selModoDur = document.getElementById('vid-modo-dur');
     var selAjuste = document.getElementById('vid-ajuste');
     var inpFondo = document.getElementById('vid-fondo');
     var vidTotal = document.getElementById('vid-total');
@@ -243,8 +245,16 @@
         return { w: w, h: h, reducido: false };
     }
 
-    function durSeg() {
-        return Math.max(0.5, Math.min(30, parseFloat(inpDur.value) || 2));
+    /* F1 · duración: el input puede ser «segundos por imagen» o «total del
+       vídeo»; en modo total las imágenes se reparten solas. */
+    function calculoDuracion() {
+        var v = parseFloat(inpDur.value);
+        if (!(v > 0)) v = 2;
+        if (selModoDur.value === 'total') {
+            return { total: v, porImagen: imagenes.length ? v / imagenes.length : v };
+        }
+        var porImagen = Math.max(0.5, Math.min(30, v));
+        return { total: porImagen * imagenes.length, porImagen: porImagen };
     }
 
     /* ---------- dibujo (cover/contain sobre fondo) ---------- */
@@ -265,17 +275,24 @@
 
     /* ---------- duración total + estado del botón ---------- */
     function actualizaCrear() {
-        var seg = durSeg();
-        var total = seg * imagenes.length;
-        var excede = total > MAX_TOTAL_SEG;
-        if (!imagenes.length) {
+        var d = calculoDuracion();
+        var n = imagenes.length;
+        var totalCorto = n > 0 && d.porImagen < MIN_POR_IMAGEN;
+        var excede = n > 0 && (d.total > MAX_TOTAL_SEG || totalCorto);
+        if (!n) {
             vidTotal.textContent = '';
+        } else if (selModoDur.value === 'total') {
+            vidTotal.textContent = n + (n === 1 ? ' imagen repartida en ' : ' imágenes repartidas en ') +
+                fmt(d.total) + ' s (' + fmt(d.porImagen) + ' s cada una) · se graba en tiempo real' +
+                (d.total > MAX_TOTAL_SEG ? ' (máximo 2 minutos: reduce el total)' :
+                    totalCorto ? ' (con ' + n + ' imágenes hacen falta al menos ' +
+                        fmt(n * MIN_POR_IMAGEN) + ' s)' : '');
         } else {
-            vidTotal.textContent = imagenes.length + (imagenes.length === 1 ? ' imagen' : ' imágenes') +
-                ' × ' + fmt(seg) + ' s = ' + fmt(total) + ' s de vídeo · se graba en tiempo real' +
-                (excede ? ' (máximo 2 minutos: reduce la duración o las imágenes)' : '');
+            vidTotal.textContent = n + (n === 1 ? ' imagen × ' : ' imágenes × ') +
+                fmt(d.porImagen) + ' s = ' + fmt(d.total) + ' s de vídeo · se graba en tiempo real' +
+                (d.total > MAX_TOTAL_SEG ? ' (máximo 2 minutos: reduce la duración o las imágenes)' : '');
         }
-        btnCrear.disabled = !imagenes.length || grabando || excede;
+        btnCrear.disabled = !n || grabando || excede;
     }
 
     /* ---------- vista previa ciclando ---------- */
@@ -303,7 +320,7 @@
         var i = 0;
         dibujar(imagenes[0].img);
         if (imagenes.length < 2) return;
-        var ms = Math.max(500, Math.round(durSeg() * 1000));
+        var ms = Math.max(Math.round(MIN_POR_IMAGEN * 1000), Math.round(calculoDuracion().porImagen * 1000));
         preview = setInterval(function () {
             i = (i + 1) % imagenes.length;
             dibujar(imagenes[i].img);
@@ -315,6 +332,32 @@
             actualizaCrear();
             if (!grabando) reiniciarPreview();
         });
+    });
+
+    /* al cambiar de modo se convierte el valor (2 s×5 → 10 s totales y al revés)
+       y los límites del input pasan a ser los del nuevo modo */
+    var modoAnterior = selModoDur.value;
+    selModoDur.addEventListener('change', function () {
+        var esTotal = selModoDur.value === 'total';
+        if (esTotal) {
+            inpDur.min = '1';
+            inpDur.max = String(MAX_TOTAL_SEG);
+        } else {
+            inpDur.min = '0.5';
+            inpDur.max = '30';
+        }
+        if (imagenes.length) {
+            var v = parseFloat(inpDur.value) || 2;
+            var porImagen = (modoAnterior === 'cada') ? v : v / imagenes.length;
+            var total = (modoAnterior === 'total') ? v : v * imagenes.length;
+            var val = esTotal ? total : porImagen;
+            var lo = parseFloat(inpDur.min);
+            var hi = parseFloat(inpDur.max);
+            inpDur.value = String(Math.round(Math.max(lo, Math.min(hi, val)) * 10) / 10);
+        }
+        modoAnterior = selModoDur.value;
+        actualizaCrear();
+        if (!grabando) reiniciarPreview();
     });
 
     /* ---------- grabación ---------- */
@@ -340,8 +383,14 @@
             aviso('Tu navegador no permite crear vídeos', 'danger');
             return;
         }
-        if (durSeg() * imagenes.length > MAX_TOTAL_SEG) {
+        var d = calculoDuracion();
+        if (d.total > MAX_TOTAL_SEG) {
             aviso('Máximo 2 minutos: reduce la duración o el número de imágenes', 'warning');
+            return;
+        }
+        if (d.porImagen < MIN_POR_IMAGEN) {
+            aviso('Con ' + imagenes.length + ' imágenes hacen falta al menos ' +
+                fmt(imagenes.length * MIN_POR_IMAGEN) + ' s en total', 'warning');
             return;
         }
         crearVideo();
@@ -396,7 +445,8 @@
         lienzo.width = d.w;
         lienzo.height = d.h;
 
-        var durMs = Math.max(500, Math.round(durSeg() * 1000));
+        var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
+            Math.round(calculoDuracion().porImagen * 1000));
         var total = durMs * imagenes.length;
         dibujar(imagenes[0].img);
 

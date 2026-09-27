@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css">
+    <link rel="stylesheet" href="./public/css/video.css?v=f1">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -94,9 +94,15 @@
                             <label class="form-label" for="vid-tamano">Tamaño de salida</label>
                             <select class="form-select" id="vid-tamano"></select>
                         </div>
-                        <div class="col-6 col-lg-2">
-                            <label class="form-label" for="vid-duracion">Segundos por imagen</label>
-                            <input type="number" class="form-control" id="vid-duracion" value="2" min="0.5" max="30" step="0.5" inputmode="decimal">
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <label class="form-label" for="vid-duracion">Duración</label>
+                            <div class="vid-duracion-grupo">
+                                <select class="form-select vid-duracion-modo" id="vid-modo-dur" aria-label="Modo de duración">
+                                    <option value="cada">por imagen (s)</option>
+                                    <option value="total">en total (s)</option>
+                                </select>
+                                <input type="number" class="form-control vid-duracion-num" id="vid-duracion" value="2" min="0.5" max="30" step="0.5" inputmode="decimal">
+                            </div>
                         </div>
                         <div class="col-6 col-lg-3">
                             <label class="form-label" for="vid-ajuste">Ajuste de cada imagen</label>
@@ -105,7 +111,7 @@
                                 <option value="contain">Contener (con fondo)</option>
                             </select>
                         </div>
-                        <div class="col-6 col-lg-3">
+                        <div class="col-6 col-lg-2">
                             <label class="form-label" for="vid-fondo">Fondo</label>
                             <input type="color" class="form-control form-control-color w-100" id="vid-fondo" value="#ffffff" title="Color de fondo">
                         </div>
@@ -189,7 +195,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <script src="./public/js/video.js"></script>
+    <!-- ?v=f1 obliga a traer la versión con duración total aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=f1"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
