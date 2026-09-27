@@ -21,6 +21,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote fixes UI tet1 | ✅ Completada (`bf68993` lienzo que llena el viewport y scrollea desde el borde, `f1f15b4` colores arriba: paleta bajo las pestañas del dock y fondo/texto al inicio de Propiedades, `e38b592` atajos en chips modernos + selector de color cuadrado) |
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
+| Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) |
 
 ---
 
@@ -144,6 +145,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
   para componer imágenes — siguiente bloque grande tras validar la UI.
 - P1.7 offcanvas del formulario en móvil.
 - P2.15 guía de estado vacío.
+- **Lote S — seguridad** (quitar jQuery, CSP, validar `.json`): ver [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md).
 - P3.2–P3.4 textos con borde/sombra, capas con preview/lock, galería de plantillas.
 - P4.8 plantilla común de HTML.
 
