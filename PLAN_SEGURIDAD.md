@@ -150,5 +150,5 @@ XSS confirmada → diferido hasta que S2 esté asentada.
 
 ## Nota
 
-Pendiente también: 9 commits de móvil/UX sin push (`6b43a91`…`42c0688`);
-subirlos antes o después de empezar S1 según convenga a las pruebas.
+Los commits de móvil/UX (Lote A, Lote C, asas y −/+) ya están en el remoto
+(hasta `42c0688`); lo que siga pendiente de push será documentación.
