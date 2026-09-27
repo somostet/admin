@@ -70,6 +70,14 @@
     var recMarcarIn = document.getElementById('vid-rec-marcar-in');
     var recMarcarFin = document.getElementById('vid-rec-marcar-fin');
     var vidFuente = document.getElementById('vid-fuente');
+    var vidMini = document.getElementById('vid-mini');        // vídeo oculto para las miniaturas
+    var riel = document.getElementById('vid-riel');
+    var rielFotos = document.getElementById('vid-riel-fotos');
+    var rielSombraIn = document.getElementById('riel-sombra-in');
+    var rielSombraOut = document.getElementById('riel-sombra-out');
+    var rielTirIn = document.getElementById('riel-tirador-in');
+    var rielTirOut = document.getElementById('riel-tirador-out');
+    var rielCabezal = document.getElementById('riel-cabezal');
 
     var soportado = !!(window.MediaRecorder &&
         HTMLCanvasElement.prototype.captureStream &&
@@ -221,6 +229,8 @@
             pintarModo();
             actualizaCrear();
             reiniciarPreview();
+            pintarRiel();
+            generarMiniaturas();
         };
         vidFuente.addEventListener('loadedmetadata', function oy() {
             vidFuente.removeEventListener('loadedmetadata', oy);
@@ -270,6 +280,8 @@
         vidFuente.pause();
         vidFuente.removeAttribute('src');
         vidFuente.load();
+        vidMini.removeAttribute('src');
+        rielFotos.textContent = '';
         if (urlFuente) {
             URL.revokeObjectURL(urlFuente);
             urlFuente = null;
@@ -299,6 +311,155 @@
                 'Tamaño original del vídeo' : 'Tamaño de la primera imagen';
         }
     }
+
+    /* ---------- E3 · riel de recorte (estilo editor) ---------- */
+    var rielArrastre = null;   // qué se arrastra: 'in' | 'out' | 'cabezal' | 'riel'
+
+    function pintarCabezal() {
+        if (!videoCargado || !(durVideo > 0)) return;
+        var p = Math.max(0, Math.min(100, vidFuente.currentTime / durVideo * 100));
+        rielCabezal.style.left = p + '%';
+    }
+
+    function pintarRiel() {
+        if (!videoCargado || !(durVideo > 0)) return;
+        var rr = rangoRecorte();
+        var pIn = Math.max(0, Math.min(100, rr.inicio / durVideo * 100));
+        var pFin = Math.max(0, Math.min(100, rr.fin / durVideo * 100));
+        rielTirIn.style.left = pIn + '%';
+        rielTirOut.style.left = pFin + '%';
+        rielSombraIn.style.width = pIn + '%';
+        rielSombraOut.style.width = (100 - pFin) + '%';
+        rielTirIn.setAttribute('aria-valuemax', fmt(durVideo));
+        rielTirIn.setAttribute('aria-valuenow', fmt(rr.inicio));
+        rielTirOut.setAttribute('aria-valuemax', fmt(durVideo));
+        rielTirOut.setAttribute('aria-valuenow', fmt(rr.fin));
+        pintarCabezal();
+    }
+
+    /* miniaturas del filmstrip: se recorren con un <video> oculto para no
+       mover el cabezal del reproductor visible */
+    function generarMiniaturas() {
+        var mia = urlFuente;
+        var total = Math.max(6, Math.min(24, Math.round((riel.offsetWidth || 600) / 72)));
+        var i = 0;
+        rielFotos.textContent = '';
+        vidMini.removeAttribute('src');
+        vidMini.src = mia;
+
+        var avanzar = function () {
+            if (mia !== urlFuente || !videoCargado) return;   // se quitó o cambió
+            if (i >= total) {
+                vidMini.removeAttribute('src');
+                return;
+            }
+            var t = durVideo * (i + 0.5) / total;
+            var hecho = false;
+            var avance = function () {
+                if (hecho) return;
+                hecho = true;
+                vidMini.removeEventListener('seeked', avance);
+                if (mia !== urlFuente || !videoCargado) return;
+                try {
+                    var mini = document.createElement('canvas');
+                    mini.width = 96;
+                    mini.height = 54;
+                    mini.getContext('2d').drawImage(vidMini, 0, 0, 96, 54);
+                    var img = new Image();
+                    img.alt = '';
+                    img.src = mini.toDataURL('image/jpeg', 0.65);
+                    rielFotos.appendChild(img);
+                } catch (e2) { }   // fotograma no disponible: seguimos sin esta
+                i++;
+                setTimeout(avanzar, 0);
+            };
+            vidMini.addEventListener('seeked', avance);
+            setTimeout(avance, 2500);   // si el navegador no busca, no bloqueamos
+            vidMini.currentTime = t;
+        };
+
+        vidMini.addEventListener('loadedmetadata', function oy() {
+            vidMini.removeEventListener('loadedmetadata', oy);
+            if (mia !== urlFuente) return;
+            if (!isFinite(vidMini.duration)) {
+                // webm sin duración en la cabecera: mismo truco que en la fuente
+                var oyd = function () {
+                    if (!isFinite(vidMini.duration)) return;
+                    vidMini.removeEventListener('timeupdate', oyd);
+                    avanzar();
+                };
+                vidMini.addEventListener('timeupdate', oyd);
+                vidMini.currentTime = 1e101;
+                return;
+            }
+            avanzar();
+        });
+    }
+
+    function rielPct(e) {
+        var r = riel.getBoundingClientRect();
+        if (!r.width) return 0;
+        return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    }
+
+    function rielEmpezar(e) {
+        if (grabando || !videoCargado) return;
+        var diana = (e.target && e.target.closest) ? e.target.closest('[data-riel]') : null;
+        rielArrastre = diana ? diana.getAttribute('data-riel') : 'riel';
+        if (diana && diana.setPointerCapture) {
+            try { diana.setPointerCapture(e.pointerId); } catch (e2) { }   // punteros sintéticos
+        }
+        rielMover(e);
+        e.preventDefault();
+    }
+
+    function rielMover(e) {
+        if (!rielArrastre || !videoCargado || !(durVideo > 0)) return;
+        var t = rielPct(e) * durVideo;
+        if (rielArrastre === 'in') {
+            var rr = rangoRecorte();
+            t = Math.max(0, Math.min(rr.fin - 0.2, t));
+            recIn.value = String(Math.round(t * 10) / 10);
+            actualizaCrear();   // repinta tiradores, sombras y resumen
+        } else if (rielArrastre === 'out') {
+            var rr2 = rangoRecorte();
+            t = Math.max(rr2.inicio + 0.2, Math.min(durVideo, t));
+            recFin.value = String(Math.round(t * 10) / 10);
+            actualizaCrear();
+        } else {
+            // cabezal (o clic sobre el riel): mueve la reproducción
+            t = Math.max(0, Math.min(durVideo, t));
+            if (Math.abs(vidFuente.currentTime - t) > 0.03) vidFuente.currentTime = t;
+            pintarCabezal();
+        }
+    }
+
+    riel.addEventListener('pointerdown', rielEmpezar);
+    window.addEventListener('pointermove', function (e) {
+        if (rielArrastre) rielMover(e);
+    });
+    window.addEventListener('pointerup', function () { rielArrastre = null; });
+    window.addEventListener('pointercancel', function () { rielArrastre = null; });
+
+    /* tiradores accesibles también con las flechas del teclado */
+    [[rielTirIn, recIn], [rielTirOut, recFin]].forEach(function (par) {
+        var esInicio = par[0] === rielTirIn;
+        par[0].addEventListener('keydown', function (e) {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            var paso = (e.shiftKey ? 1 : 0.1) * (e.key === 'ArrowRight' ? 1 : -1);
+            var rr = rangoRecorte();
+            var base = esInicio ? rr.inicio : rr.fin;
+            var t = base + paso;
+            if (esInicio) {
+                t = Math.max(0, Math.min(rr.fin - 0.2, t));
+            } else {
+                t = Math.max(rr.inicio + 0.2, Math.min(durVideo, t));
+            }
+            par[1].value = String(Math.round(t * 10) / 10);
+            actualizaCrear();
+        });
+    });
 
     /* ---------- tira de imágenes ---------- */
     function pintarTira() {
@@ -554,6 +715,7 @@
                   ' s · se graba en tiempo real'
                 : rr.msg;
             btnCrear.disabled = grabando || !rr.ok;
+            pintarRiel();
             return;
         }
         var d = calculoDuracion();
@@ -642,6 +804,7 @@
             if (vidFuente.readyState >= 2 && (!vidFuente.paused || marcoSucio)) {
                 dibujarFrame(vidFuente);
                 marcoSucio = false;
+                pintarCabezal();   // cabezal suavemente mientras se reproduce
             }
             preview = requestAnimationFrame(paso);
         }
@@ -651,6 +814,7 @@
     ['timeupdate', 'seeked', 'loadeddata'].forEach(function (ev) {
         vidFuente.addEventListener(ev, function () {
             marcoSucio = true;
+            pintarCabezal();
             if (videoCargado && !grabando) arrancarPreviewVideo();
         });
     });

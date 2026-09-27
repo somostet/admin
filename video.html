@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f1">
+    <link rel="stylesheet" href="./public/css/video.css?v=riel">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -123,6 +123,25 @@
                                 <button type="button" class="btn btn-outline-secondary text-nowrap" id="vid-rec-marcar-fin">Poner aquí</button>
                             </div>
                         </div>
+
+                        <!-- riel tipo editor: filmstrip del original, tiradores y cabezal -->
+                        <div class="col-12">
+                            <div class="form-label">Riel de recorte</div>
+                            <div class="vid-riel" id="vid-riel" data-riel="riel" role="group"
+                                 aria-label="Riel de recorte: arrastra los tiradores y toca para mover el cabezal">
+                                <div class="vid-riel-fotos" id="vid-riel-fotos"></div>
+                                <div class="vid-riel-sombra vid-riel-sombra-in" id="riel-sombra-in"></div>
+                                <div class="vid-riel-sombra vid-riel-sombra-out" id="riel-sombra-out"></div>
+                                <div class="vid-riel-cabezal" id="riel-cabezal" data-riel="cabezal" aria-hidden="true"></div>
+                                <div class="vid-riel-tirador" id="riel-tirador-in" data-riel="in" role="slider"
+                                     aria-label="Inicio del recorte" aria-valuemin="0" aria-valuenow="0" tabindex="0"></div>
+                                <div class="vid-riel-tirador" id="riel-tirador-out" data-riel="out" role="slider"
+                                     aria-label="Fin del recorte" aria-valuemin="0" aria-valuenow="0" tabindex="0"></div>
+                            </div>
+                            <p class="form-text mb-0">Arrastra los tiradores ▮ para elegir inicio y fin; toca el riel
+                                para posicionar el cabezal (o usa las flechas del teclado sobre un tirador).</p>
+                        </div>
+                        <video id="vid-mini" hidden muted playsinline preload="metadata"></video>
                     </div>
 
                     <div class="row g-3 vid-ajustes mt-1">
@@ -241,8 +260,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=e3 obliga a traer la versión con recorte de vídeo aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=e3"></script>
+    <!-- ?v=riel obliga a traer la versión con riel de recorte aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=riel"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

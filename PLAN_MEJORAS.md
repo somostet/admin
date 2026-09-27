@@ -165,8 +165,14 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   búsqueda al final, recorte 1,0–2,5 s → MP4 de 640×360 de 1,5 s exactos con
   pista de audio y los dos bordes verificados por píxeles, cancelar a mitad de
   grabación y vuelta al modo imágenes, consola limpia y barrido 13/13): recorte
-  inicio/fin — se reproduce el rango seleccionado mientras se regraba compuesto
-  en el canvas → salida limpia. El sonido original viaja por Web Audio (pista
+  inicio/fin sobre un **riel tipo editor** (filmstrip del original con
+  miniaturas de un `<video>` oculto —no mueve el cabezal del reproductor—,
+  tiradores de inicio/fin y cabezal arrastrables con puntero o flechas del
+  teclado, fuera de rango atenuado y scroll vertical del móvil intacto sobre
+  el riel); el riel se validó con 9/9 etapas —miniaturas, posiciones, arrastre
+  del tirador, cabezal con píxel verificado, teclado y una grabación de
+  control de 0,5 s— + consola limpia + barrido 13/13. Se reproduce el rango
+  seleccionado mientras se regraba compuesto en el canvas → salida limpia. El sonido original viaja por Web Audio (pista
   añadida al grabador; con audio se elige `avc3` porque Chrome avisa de que
   «avc1» no debe cambiar la descripción del códec durante la grabación y él
   mismo recomienda avc3). Es la puerta de entrada para clips de X/YouTube/etc.
@@ -232,8 +238,8 @@ propia). Un commit por función.
   el botón no aparece. Va tras F6 porque reutiliza su mezcla de audio.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
-se hizo justo después de F3 (✅); el siguiente es **F4** y **E2** cierra el
-bloque.
+se hizo justo después de F3 (✅), con el **riel de recorte** como commit
+propio (✅); el siguiente es **F4** y **E2** cierra el bloque.
 
 ---
 
