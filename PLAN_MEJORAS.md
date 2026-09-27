@@ -23,8 +23,8 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E2 grabar en directo ⬜ · E3 recortar vídeo ⬜ |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅** · F3 fondo blur ⬜ · F4 logo/texto ⬜ · F5 animaciones de texto ⬜ · F6 música ⬜ · F7 compartir ⬜ · luego E2/E3 |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E3 subir/recortar ⬜ **adelantado tras F3** · E2 grabar en directo ⬜ **al final** |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅** · orden: F3 → E3 → F4 → F5 → F6 → F8 → F7 → E2 |
 
 ---
 
@@ -158,10 +158,14 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   `video/mp4;codecs=avc1…` en Chrome reciente e iOS, si no
   `video/webm;codecs=vp9`, y `video/webm` de última instancia) → descarga
   `tet.mp4|webm`. Presets sociales de salida.
-- **E2 · Grabar el lienzo en directo**: botón Grabar/Parar sobre el lienzo de
-  la página (plantillas rotando o edición) → misma tubería.
-- **E3 · Subir vídeo y editarlo**: recorte inicio/fin — se reproduce el rango
-  seleccionado mientras se regraba compuesto en el canvas → salida limpia.
+- **E2 · Grabar el lienzo en directo** *(al final)*: botón Grabar/Parar sobre
+  el lienzo de la página (plantillas rotando o edición) → misma tubería.
+- **E3 · Subir vídeo y editarlo** *(adelantado tras F3)*: recorte inicio/fin —
+  se reproduce el rango seleccionado mientras se regraba compuesto en el canvas
+  → salida limpia. Es la puerta de entrada para clips de X/YouTube/etc. que
+  tengas como archivo (descarga, hoja de compartir o grabación de pantalla del
+  móvil); «pegar enlace» no es viable en una web estática (streams firmados +
+  CORS + ToS), se documenta en el plan.
 
 Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 **Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
@@ -172,7 +176,10 @@ Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 ## 🟢 Lote F — Enriquecimientos de vídeo (`video.html`) 🆕
 
 Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
-propia). Un commit por función, en este orden:
+propia). Un commit por función.
+
+**Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8):
+**F3 → E3 → F4 → F5 → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -203,9 +210,13 @@ propia). Un commit por función, en este orden:
   MP4/WebM (loop si es más corto); prueba obligatoria en iOS.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
   que el de `capas.js`.
+- **F8 · Grabar pestaña** (nuevo, solo ordenador): botón con `getDisplayMedia`
+  que graba la pestaña donde se reproduce un vídeo de X/YouTube/etc. (con audio
+  de pestaña en Chrome) como fuente más; si el navegador no lo soporta (móvil)
+  el botón no aparece. Va tras F6 porque reutiliza su mezcla de audio.
 
-Después siguen **E2** (grabar el lienzo en directo) y **E3** (subir vídeo y
-recortarlo). Validación de cada uno: E2E en Chrome + consola limpia + barrido 200.
+Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
+queda justo después de F3 y **E2** cierra el bloque.
 
 ---
 
