@@ -24,6 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E2 grabar en directo ⬜ · E3 recortar vídeo ⬜ |
+| Lote F — Enriquecimientos vídeo | 📋 F1 duración objetivo · F2 transiciones · F3 fondo blur · F4 logo/texto · F5 animaciones de texto · F6 música · F7 compartir (E2/E3 del lote E al final) |
 
 ---
 
@@ -165,6 +166,34 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
 Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 **Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
 (navegador antiguo) → aviso y modo deshabilitado.
+
+---
+
+## 🟢 Lote F — Enriquecimientos de vídeo (`video.html`) 🆕
+
+Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
+propia). Un commit por función, en este orden:
+
+- **F1 · Duración objetivo**: al lado de «segundos por imagen» aparece el modo
+  *por imagen* o *total del vídeo* (p. ej. 15 s de Reel) → reparte solo y el
+  texto de duración lo explica. Sigue con el tope de 2 minutos.
+- **F2 · Transiciones**: fundido cruzado, deslizar y zoom Ken Burns entre
+  imágenes (proporcional a la duración, máx. 800 ms), **iguales en vista
+  previa y grabación** (bucle de dibujo único contra un reloj).
+- **F3 · Fondo desenfocado**: opción «contener con fondo desenfocado» para
+  verticales 9:16 con foto horizontal (fallback a color si `ctx.filter` no
+  existe).
+- **F4 · Logotipo y texto superpuestos**: logo PNG + línea de título con
+  posición (esquinas/abajo-centro) durante todo el vídeo.
+- **F5 · Textos y animaciones** (petición del usuario): entradas animadas del
+  texto de F4 (aparecer, deslizar, escribir) con su duración.
+- **F6 · Música de fondo**: audio subido → Web Audio → pista mezclada en el
+  MP4/WebM (loop si es más corto); prueba obligatoria en iOS.
+- **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
+  que el de `capas.js`.
+
+Después siguen **E2** (grabar el lienzo en directo) y **E3** (subir vídeo y
+recortarlo). Validación de cada uno: E2E en Chrome + consola limpia + barrido 200.
 
 ---
 
