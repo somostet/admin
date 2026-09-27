@@ -9,9 +9,12 @@
             csp.setAttribute('http-equiv', 'Content-Security-Policy');
             csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
             document.head.appendChild(csp);
+            /* frame-buster: en http/https el admin no se deja embeber en un iframe */
+            if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
         }
     </script>
     <meta charset="utf-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="description" content="Página principal de tet.">
     <meta name="keywords" content="tech,tecnológia">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">

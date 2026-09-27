@@ -9,9 +9,12 @@
             csp.setAttribute('http-equiv', 'Content-Security-Policy');
             csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
             document.head.appendChild(csp);
+            /* frame-buster: en http/https el admin no se deja embeber en un iframe */
+            if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
         }
     </script>
     <meta charset="UTF-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#1d2b43">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">

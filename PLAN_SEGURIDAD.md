@@ -19,7 +19,7 @@ obsoletas del service worker.
 | S2 | CSP por meta, solo http/https | 🔴 Alta | Medio | ✅ Hecho |
 | S3 | Validar el `.json` de "Cargar proyecto" | 🟠 Media-alta | Bajo | ✅ Hecho |
 | S4 | Bootstrap a última 5.3.x · riesgo de fabric | 🟡 Media | Bajo / Proyecto | ⬜ Pendiente |
-| S5 | Higiene: referrer, frame-buster opcional | 🟢 Baja | Bajo | ⬜ Pendiente |
+| S5 | Higiene: referrer, frame-buster opcional | 🟢 Baja | Bajo | ✅ Hecho |
 | S6 | Migrar `onclick=` a `addEventListener` | 🟢 Futuro | Alto | ⬜ Diferido |
 
 Orden recomendado: **S1 → S3 → S2 → S5 → S4**; S6 cuando haya motivo.
@@ -152,6 +152,12 @@ los validadores en Node: **30/30**.
 - **Frame-buster opcional** (3 líneas, inserto como S2 solo en http/https) si
   preocupa el clickjacking; impacto bajo porque no hay acciones sensibles.
 - Mantener la regla: enlaces nuevos siempre `https://` + `rel="noopener"`.
+
+**✅ Hecho**: `<meta name="referrer" content="strict-origin-when-cross-origin">`
+en los 7 HTML (junto al charset) + **frame-buster de 3 líneas** dentro del
+mismo snippet http/https de la CSP (navega `top` a la propia URL si el admin
+se embebe). Comprobado que somostet.github.io **no** embebe el admin (solo hay
+un iframe saliente de Facebook), así que no rompe nada legítimo.
 
 ## S6 — Migrar `onclick=` a `addEventListener` 🟢 futuro
 
