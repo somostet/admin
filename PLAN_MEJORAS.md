@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅** · orden: F4 → F5 → F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅** · orden: F5 → F6 → F8 → F7 → E2 |
 
 ---
 
@@ -178,7 +178,10 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   mismo recomienda avc3). Es la puerta de entrada para clips de X/YouTube/etc.
   que tengas como archivo (descarga, hoja de compartir o grabación de pantalla
   del móvil); «pegar enlace» no es viable en una web estática (streams firmados
-  + CORS + ToS), se documenta en el plan.
+  + CORS + ToS), se documenta en el plan. Fix posterior (commit aparte): al
+  cargar un MP4 la vista previa se quedaba en el color de fondo —Chrome no
+  decodifica el primer fotograma hasta el primer «buscar» y la ruta webm ya
+  lo hacía—; `listo()` fuerza un buscar a 0.
 
 Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 **Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
@@ -192,7 +195,7 @@ Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
 propia). Un commit por función.
 
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8):
-**F3 ✅ → E3 ✅ → F4 → F5 → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -224,8 +227,17 @@ propia). Un commit por función.
   funde durante las transiciones y **fallback a color si `ctx.filter` no existe**
   (Safari < 17.4: aviso al seleccionarlo). Nueva opción en `Ajuste de cada
   imagen`; `video.js` con `?v=f3`.
-- **F4 · Logotipo y texto superpuestos**: logo PNG + línea de título con
-  posición (esquinas/abajo-centro) durante todo el vídeo.
+- **F4 · Logotipo y texto superpuestos ✅** (validado en Chrome: E2E 14/14
+  etapas —logo en las 5 posiciones verificado por píxeles, texto blanco
+  contado en su banda y encendido/apagado en vivo, MP4 de 1 s con ambas
+  superposiciones comprobadas píxel a píxel, modo vídeo y «quitar logo»—,
+  consola 0 y barrido 13/13): logo PNG (con miniatura sobre damero de
+  transparencia y botón «Quitar logo») + línea de título con posición
+  (esquinas/abajo-centro) durante todo el vídeo; cada elemento con su
+  posición y su tamaño en % del alto (el texto va en negrita con sombra y
+  se encoge si no cabe). Se dibuja al final de cada fotograma —tanto en
+  imágenes como en vídeo—, por encima de las transiciones y en la
+  grabación; `video.js` con `?v=f4`.
 - **F5 · Textos y animaciones** (petición del usuario): entradas animadas del
   texto de F4 (aparecer, deslizar, escribir) con su duración.
 - **F6 · Música de fondo**: audio subido → Web Audio → pista mezclada en el
@@ -239,7 +251,8 @@ propia). Un commit por función.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
-propio (✅); el siguiente es **F4** y **E2** cierra el bloque.
+propio (✅), el fix del primer fotograma (✅) y **F4** (✅); el siguiente es
+**F5** y **E2** cierra el bloque.
 
 ---
 

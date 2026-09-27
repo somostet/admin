@@ -325,3 +325,14 @@
         height: 64px;
     }
 }
+
+/* ---------- F4 · superposiciones ---------- */
+.vid-logo-mini {
+    height: 36px;
+    max-width: 110px;
+    object-fit: contain;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 4px;
+    background: repeating-conic-gradient(#e9ecef 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+}

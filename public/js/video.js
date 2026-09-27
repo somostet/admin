@@ -78,6 +78,19 @@
     var rielTirIn = document.getElementById('riel-tirador-in');
     var rielTirOut = document.getElementById('riel-tirador-out');
     var rielCabezal = document.getElementById('riel-cabezal');
+    /* F4 · superposiciones */
+    var supLogoArchivo = document.getElementById('vid-logo-archivo');
+    var supLogoMini = document.getElementById('vid-logo-mini');
+    var supLogoNombre = document.getElementById('vid-logo-nombre');
+    var supLogoEstado = document.getElementById('vid-logo-estado');
+    var supLogoQuitar = document.getElementById('vid-logo-quitar');
+    var supLogoPos = document.getElementById('vid-logo-pos');
+    var supLogoTam = document.getElementById('vid-logo-tam');
+    var supTitulo = document.getElementById('vid-titulo');
+    var supTituloPos = document.getElementById('vid-titulo-pos');
+    var supTituloTam = document.getElementById('vid-titulo-tam');
+    var logoImg = null;    // Image del logo cargado (null = sin logo)
+    var logoUrl = null;    // blob URL del logo para poder revocarlo
 
     var soportado = !!(window.MediaRecorder &&
         HTMLCanvasElement.prototype.captureStream &&
@@ -637,6 +650,75 @@
         pintarFondo();
         if (selAjuste.value === 'blur') pintarDesenfado(v);
         dibujarCentrado(v, 1);
+        dibujarSuperposiciones();
+    }
+
+    /* ---------- F4 · logotipo y línea de título superpuestos ---------- */
+    /* Se dibuja al FINAL de cada fotograma compuesto (dibujarFrame en vídeo e
+       dibujarEn en imágenes), así acompaña a vista previa y grabación y queda
+       por encima de las transiciones. */
+    function dibujarSuperposiciones() {
+        var w = lienzo.width;
+        var h = lienzo.height;
+        if (!w || !h) return;
+        var margen = Math.max(6, Math.round(Math.min(w, h) * 0.03));
+        var fuente = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+
+        // logotipo: alto = % del lienzo, respetando su proporción
+        if (logoImg && logoImg.naturalWidth && logoImg.naturalHeight) {
+            var pct = parseFloat(supLogoTam.value);
+            if (!(pct >= 4 && pct <= 40)) pct = 12;
+            var lh = h * pct / 100;
+            var lw = lh * (logoImg.naturalWidth / logoImg.naturalHeight);
+            if (lw > w * 0.4) {   // logotipos muy apaisados: tope por ancho
+                lw = w * 0.4;
+                lh = lw * (logoImg.naturalHeight / logoImg.naturalWidth);
+            }
+            var pl = supLogoPos.value;
+            var x = margen;
+            var y = margen;
+            if (pl === 'arriba-derecha') x = w - margen - lw;
+            else if (pl === 'abajo-izquierda') y = h - margen - lh;
+            else if (pl === 'abajo-derecha') { x = w - margen - lw; y = h - margen - lh; }
+            else if (pl === 'abajo-centro') { x = (w - lw) / 2; y = h - margen - lh; }
+            ctx.drawImage(logoImg, x, y, lw, lh);
+        }
+
+        // línea de título: blanco en negrita con sombra para que se lea sobre
+        // cualquier fondo; si no cabe, se encoge hasta el ancho disponible
+        var txt = supTitulo.value.trim();
+        if (txt) {
+            var pt = parseFloat(supTituloTam.value);
+            if (!(pt >= 2 && pt <= 25)) pt = 7;
+            var fs = Math.max(12, Math.round(h * pt / 100));
+            ctx.save();
+            ctx.font = '700 ' + fs + 'px ' + fuente;
+            var maxW = w - margen * 2;
+            var tw = ctx.measureText(txt).width;
+            if (tw > maxW && tw > 0) {
+                fs = Math.max(10, Math.round(fs * maxW / tw));
+                ctx.font = '700 ' + fs + 'px ' + fuente;
+            }
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = 'rgba(0, 0, 0, .75)';
+            ctx.shadowBlur = Math.max(2, Math.round(fs / 5));
+            ctx.shadowOffsetY = Math.max(1, Math.round(fs / 20));
+            var tp = supTituloPos.value;
+            var tx;
+            var ty;
+            if (tp === 'abajo-centro') {
+                ctx.textAlign = 'center';
+                tx = w / 2;
+                ty = h - margen - fs / 2;
+            } else {
+                ctx.textAlign = (tp === 'arriba-izquierda' || tp === 'abajo-izquierda') ? 'left' : 'right';
+                tx = (ctx.textAlign === 'left') ? margen : w - margen;
+                ty = (tp.indexOf('arriba') === 0) ? margen + fs / 2 : h - margen - fs / 2;
+            }
+            ctx.fillText(txt, tx, ty);
+            ctx.restore();
+        }
     }
 
     /* ---------- F2 · transiciones ---------- */
@@ -685,6 +767,7 @@
         } else {
             dibujar(imagenes[idx].img, zoomKen(local, durMs));
         }
+        dibujarSuperposiciones();
     }
 
     /* ---------- duración total + estado del botón ---------- */
@@ -851,6 +934,48 @@
             if (!grabando) reiniciarPreview();
         });
     });
+
+    /* ---------- F4 · superposiciones: cargar el logo y repintar ---------- */
+    function repintarSuperp() {
+        if (grabando) return;
+        reiniciarPreview();
+    }
+
+    supLogoArchivo.addEventListener('change', function () {
+        var f = supLogoArchivo.files && supLogoArchivo.files[0];
+        if (!f) return;
+        if (logoUrl) URL.revokeObjectURL(logoUrl);
+        logoUrl = URL.createObjectURL(f);
+        var im = new Image();
+        im.onload = function () {
+            logoImg = im;
+            supLogoMini.src = logoUrl;
+            supLogoNombre.textContent = f.name;
+            supLogoEstado.hidden = false;
+            repintarSuperp();
+        };
+        im.onerror = function () {
+            logoImg = null;
+            supLogoEstado.hidden = true;
+            aviso('No se pudo leer «' + f.name + '» como imagen: prueba con un PNG', 'danger');
+        };
+        im.src = logoUrl;
+    });
+
+    supLogoQuitar.addEventListener('click', function () {
+        supLogoArchivo.value = '';
+        if (logoUrl) URL.revokeObjectURL(logoUrl);
+        logoUrl = null;
+        logoImg = null;
+        supLogoMini.removeAttribute('src');
+        supLogoEstado.hidden = true;
+        repintarSuperp();
+    });
+
+    [supLogoPos, supLogoTam, supTituloPos, supTituloTam].forEach(function (el) {
+        el.addEventListener('change', repintarSuperp);
+    });
+    supTitulo.addEventListener('input', repintarSuperp);
 
     /* al cambiar de modo se convierte el valor (2 s×5 → 10 s totales y al revés)
        y los límites del input pasan a ser los del nuevo modo */

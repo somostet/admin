@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=riel">
+    <link rel="stylesheet" href="./public/css/video.css?v=f4">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -183,6 +183,60 @@
                     </div>
                     <div class="form-text mt-2" id="vid-total"></div>
 
+                    <!-- F4 · superposiciones: logo + línea de título durante todo el vídeo -->
+                    <div class="row g-3 mt-1" id="vid-superp">
+                        <div class="col-12">
+                            <div class="form-label">Superposiciones (van en todo el vídeo)</div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <label class="form-label" for="vid-logo-archivo">Logotipo (PNG con transparencia)</label>
+                            <input type="file" class="form-control" id="vid-logo-archivo"
+                                   accept="image/png,image/webp,image/svg+xml">
+                            <div class="d-flex align-items-center gap-2 mt-2" id="vid-logo-estado" hidden>
+                                <img id="vid-logo-mini" class="vid-logo-mini" alt="Vista previa del logo">
+                                <span class="small text-truncate flex-grow-1" id="vid-logo-nombre"></span>
+                                <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" id="vid-logo-quitar">
+                                    <i class="fas fa-trash" aria-hidden="true"></i> Quitar logo
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <label class="form-label" for="vid-logo-pos">Posición del logo</label>
+                            <select class="form-select" id="vid-logo-pos">
+                                <option value="arriba-izquierda">Arriba a la izquierda</option>
+                                <option value="arriba-derecha">Arriba a la derecha</option>
+                                <option value="abajo-izquierda">Abajo a la izquierda</option>
+                                <option value="abajo-derecha" selected>Abajo a la derecha</option>
+                                <option value="abajo-centro">Abajo al centro</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <label class="form-label" for="vid-logo-tam">Tamaño del logo (% del alto)</label>
+                            <input type="number" class="form-control" id="vid-logo-tam" min="4" max="40"
+                                   step="1" value="12" inputmode="numeric">
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <label class="form-label" for="vid-titulo">Línea de título</label>
+                            <input type="text" class="form-control" id="vid-titulo" maxlength="80"
+                                   placeholder="Ej.: Un día en Toledo" autocomplete="off">
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <label class="form-label" for="vid-titulo-pos">Posición del título</label>
+                            <select class="form-select" id="vid-titulo-pos">
+                                <option value="arriba-izquierda">Arriba a la izquierda</option>
+                                <option value="arriba-derecha">Arriba a la derecha</option>
+                                <option value="abajo-izquierda">Abajo a la izquierda</option>
+                                <option value="abajo-derecha">Abajo a la derecha</option>
+                                <option value="abajo-centro" selected>Abajo al centro</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <label class="form-label" for="vid-titulo-tam">Tamaño del título (% del alto)</label>
+                            <input type="number" class="form-control" id="vid-titulo-tam" min="2" max="25"
+                                   step="1" value="7" inputmode="numeric">
+                        </div>
+                    </div>
+
                     <div class="vid-preview" id="vid-preview">
                         <canvas id="vid-lienzo" width="1080" height="1080" aria-label="Vista previa del vídeo"></canvas>
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
@@ -260,7 +314,7 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=f4 obliga a traer la versión con el primer fotograma visible aunque la caché HTTP tenga la anterior -->
+    <!-- ?v=f4 obliga a traer la versión con logotipo y título superpuestos (y primer fotograma visible al cargar) aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/video.js?v=f4"></script>
 
     <script>
