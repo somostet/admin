@@ -23,8 +23,8 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅** · E3 subir/recortar ⬜ **adelantado tras F3** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅** · orden: E3 → F4 → F5 → F6 → F8 → F7 → E2 |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅** · orden: F4 → F5 → F6 → F8 → F7 → E2 |
 
 ---
 
@@ -160,12 +160,19 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   `tet.mp4|webm`. Presets sociales de salida.
 - **E2 · Grabar el lienzo en directo** *(al final)*: botón Grabar/Parar sobre
   el lienzo de la página (plantillas rotando o edición) → misma tubería.
-- **E3 · Subir vídeo y editarlo** *(adelantado tras F3)*: recorte inicio/fin —
-  se reproduce el rango seleccionado mientras se regraba compuesto en el canvas
-  → salida limpia. Es la puerta de entrada para clips de X/YouTube/etc. que
-  tengas como archivo (descarga, hoja de compartir o grabación de pantalla del
-  móvil); «pegar enlace» no es viable en una web estática (streams firmados +
-  CORS + ToS), se documenta en el plan.
+- **E3 · Subir vídeo y editarlo ✅** (validado en Chrome: carga de MP4 y de webm
+  con duración ilegible en la cabecera —el típico de `MediaRecorder`— vía
+  búsqueda al final, recorte 1,0–2,5 s → MP4 de 640×360 de 1,5 s exactos con
+  pista de audio y los dos bordes verificados por píxeles, cancelar a mitad de
+  grabación y vuelta al modo imágenes, consola limpia y barrido 13/13): recorte
+  inicio/fin — se reproduce el rango seleccionado mientras se regraba compuesto
+  en el canvas → salida limpia. El sonido original viaja por Web Audio (pista
+  añadida al grabador; con audio se elige `avc3` porque Chrome avisa de que
+  «avc1» no debe cambiar la descripción del códec durante la grabación y él
+  mismo recomienda avc3). Es la puerta de entrada para clips de X/YouTube/etc.
+  que tengas como archivo (descarga, hoja de compartir o grabación de pantalla
+  del móvil); «pegar enlace» no es viable en una web estática (streams firmados
+  + CORS + ToS), se documenta en el plan.
 
 Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 **Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
@@ -179,7 +186,7 @@ Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
 propia). Un commit por función.
 
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8):
-**F3 → E3 → F4 → F5 → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 → F5 → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -225,7 +232,8 @@ propia). Un commit por función.
   el botón no aparece. Va tras F6 porque reutiliza su mezcla de audio.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
-queda justo después de F3 y **E2** cierra el bloque.
+se hizo justo después de F3 (✅); el siguiente es **F4** y **E2** cierra el
+bloque.
 
 ---
 

@@ -70,13 +70,18 @@
                 <div class="vid-caja">
                     <div class="vid-caja-cab">
                         <h1 class="vid-titulo"><i class="fas fa-video" aria-hidden="true"></i> Crear vídeo</h1>
-                        <p class="vid-subtitulo">Varías imágenes → un vídeo MP4 o WebM. Se graba en tiempo real en tu dispositivo, sin subir nada a ningún servidor.</p>
+                        <p class="vid-subtitulo">Varías imágenes → un vídeo MP4 o WebM, o sube un vídeo para recortarlo (inicio y fin). Se graba en tiempo real en tu dispositivo, sin subir nada a ningún servidor.</p>
                     </div>
 
-                    <label class="btn btn-primary w-100 vid-cargar" for="vid-archivos">
+                    <label class="btn btn-primary w-100 vid-cargar" id="vid-etiqueta-img" for="vid-archivos">
                         <i class="fas fa-plus" aria-hidden="true"></i> Agregar imágenes
                     </label>
                     <input type="file" id="vid-archivos" accept="image/*" multiple class="d-none">
+
+                    <label class="btn btn-outline-primary w-100 vid-cargar mt-2" id="vid-etiqueta-video" for="vid-archivo-video">
+                        <i class="fas fa-file-video" aria-hidden="true"></i> Agregar vídeo (para recortar)
+                    </label>
+                    <input type="file" id="vid-archivo-video" accept="video/*" class="d-none">
 
                     <div class="vid-tira-wrap" id="vid-tira-wrap" hidden>
                         <div class="vid-tira" id="vid-tira" aria-label="Imágenes del vídeo (selecciona una para reordenarla)"></div>
@@ -87,6 +92,37 @@
                             <button type="button" class="sh-barra-btn" id="vid-quitar" title="Quitar imagen" aria-label="Quitar imagen"><i class="fas fa-trash" aria-hidden="true"></i></button>
                         </div>
                         <div class="form-text" id="vid-conteo">0 imágenes</div>
+                    </div>
+
+                    <!-- E3 · modo recorte: fuente visible + inicio/fin con «Poner aquí» -->
+                    <div class="row g-3 mt-1" id="vid-recorte" hidden>
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <strong id="vid-rec-nombre" class="text-truncate" style="max-width:100%"></strong>
+                                <span class="badge text-bg-secondary" id="vid-rec-duracion">—</span>
+                                <button type="button" class="btn btn-outline-danger ms-auto" id="vid-rec-quitar">
+                                    <i class="fas fa-trash" aria-hidden="true"></i> Quitar vídeo
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <label class="form-label" for="vid-fuente">Vídeo original — arrástralo para elegir el punto</label>
+                            <video id="vid-fuente" class="w-100" controls playsinline preload="metadata"></video>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <label class="form-label" for="vid-rec-in">Inicio del recorte (s)</label>
+                            <div class="d-flex gap-2">
+                                <input type="number" class="form-control" id="vid-rec-in" min="0" step="0.1" value="0" inputmode="decimal">
+                                <button type="button" class="btn btn-outline-secondary text-nowrap" id="vid-rec-marcar-in">Poner aquí</button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <label class="form-label" for="vid-rec-fin">Fin del recorte (s)</label>
+                            <div class="d-flex gap-2">
+                                <input type="number" class="form-control" id="vid-rec-fin" min="0" step="0.1" value="0" inputmode="decimal">
+                                <button type="button" class="btn btn-outline-secondary text-nowrap" id="vid-rec-marcar-fin">Poner aquí</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row g-3 vid-ajustes mt-1">
@@ -205,8 +241,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=f3 obliga a traer la versión con fondo desenfocado aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f3"></script>
+    <!-- ?v=e3 obliga a traer la versión con recorte de vídeo aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=e3"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

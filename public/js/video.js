@@ -22,6 +22,13 @@
     var recAct = null;
     var rafAct = null;
     var cancelado = false;
+    var videoCargado = false;  // E3: hay un vídeo fuente cargado (modo recorte)
+    var urlFuente = null;      // objectURL del vídeo fuente
+    var durVideo = 0;          // duración del fuente (s)
+    var marcoSucio = true;     // hay que redibujar el fotograma del vídeo en pausa
+    var audioCtx = null;       // Web Audio: sonido del recorte hacia el grabador
+    var audioDest = null;
+    var fuenteAudio = null;
 
     var input = document.getElementById('vid-archivos');
     var tiraWrap = document.getElementById('vid-tira-wrap');
@@ -51,6 +58,18 @@
     var txtDesc = document.getElementById('vid-descargar-texto');
     var resWrap = document.getElementById('vid-resultado');
     var repro = document.getElementById('vid-repro');
+    var btnImagenLabel = document.getElementById('vid-etiqueta-img');
+    var inpVideo = document.getElementById('vid-archivo-video');
+    var lblVideo = document.getElementById('vid-etiqueta-video');
+    var recWrap = document.getElementById('vid-recorte');
+    var recNombre = document.getElementById('vid-rec-nombre');
+    var recDur = document.getElementById('vid-rec-duracion');
+    var recQuitar = document.getElementById('vid-rec-quitar');
+    var recIn = document.getElementById('vid-rec-in');
+    var recFin = document.getElementById('vid-rec-fin');
+    var recMarcarIn = document.getElementById('vid-rec-marcar-in');
+    var recMarcarFin = document.getElementById('vid-rec-marcar-fin');
+    var vidFuente = document.getElementById('vid-fuente');
 
     var soportado = !!(window.MediaRecorder &&
         HTMLCanvasElement.prototype.captureStream &&
@@ -122,6 +141,10 @@
 
     function cargarImagen(f) {
         return new Promise(function (resolver) {
+            if (videoCargado) {
+                aviso('Quita el vídeo para agregar imágenes', 'info');
+                return resolver();
+            }
             if (!/^image\//.test(f.type)) {
                 aviso('«' + f.name + '» no es una imagen', 'warning');
                 return resolver();
@@ -156,6 +179,124 @@
         if (usosUrl[url] <= 0) {
             delete usosUrl[url];
             URL.revokeObjectURL(url);
+        }
+    }
+
+    /* ---------- E3 · carga del vídeo fuente (modo recorte) ---------- */
+    inpVideo.addEventListener('change', function () {
+        var f = (inpVideo.files || [])[0];
+        inpVideo.value = '';
+        if (!f) return;
+        if (grabando) {
+            aviso('Espera a que termine la grabación', 'info');
+            return;
+        }
+        if (imagenes.length) {
+            aviso('Quita las imágenes para recortar un vídeo', 'info');
+            return;
+        }
+        var esVideo = /^video\//.test(f.type) || /\.(mp4|webm|m4v|mov|ogv)$/i.test(f.name);
+        if (!esVideo) {
+            aviso('«' + f.name + '» no es un vídeo', 'warning');
+            return;
+        }
+        cargarVideo(f);
+    });
+
+    function cargarVideo(f) {
+        quitarVideo(true);   // sustituye una carga anterior sin avisos
+        urlFuente = URL.createObjectURL(f);
+        recNombre.textContent = f.name;
+        var mia = urlFuente;
+        vidFuente.src = urlFuente;
+        var listo = function (d) {
+            durVideo = d;
+            recIn.value = '0';
+            recFin.value = String(fmt(durVideo));
+            recIn.max = String(fmt(Math.max(0, durVideo - 0.2)));
+            recFin.max = String(fmt(durVideo));
+            videoCargado = true;
+            recDur.textContent = fmt(durVideo) + ' s';
+            recWrap.hidden = false;
+            pintarModo();
+            actualizaCrear();
+            reiniciarPreview();
+        };
+        vidFuente.addEventListener('loadedmetadata', function oy() {
+            vidFuente.removeEventListener('loadedmetadata', oy);
+            if (!isFinite(vidFuente.duration)) {
+                // webm grabado sin duración en la cabecera (típico de
+                // MediaRecorder): busca al final para que el navegador la
+                // calcule y vuelve al principio
+                var cerrado = false;
+                var desenganchar = function () {
+                    vidFuente.removeEventListener('timeupdate', fin);
+                    vidFuente.removeEventListener('seeked', fin);
+                    vidFuente.removeEventListener('durationchange', fin);
+                };
+                var fin = function () {
+                    if (cerrado) return;
+                    var d = vidFuente.duration;
+                    if (!isFinite(d) || d <= 0) return;   // aún no la calculó
+                    cerrado = true;
+                    desenganchar();
+                    vidFuente.currentTime = 0;
+                    listo(d);
+                };
+                var reloj = setTimeout(function () {
+                    if (cerrado) return;
+                    if (vidFuente.getAttribute('src') !== mia) return;
+                    cerrado = true;
+                    desenganchar();
+                    aviso('No se pudo leer la duración de «' + f.name + '»', 'danger');
+                    quitarVideo();
+                }, 4000);
+                ['timeupdate', 'seeked', 'durationchange'].forEach(function (ev) {
+                    vidFuente.addEventListener(ev, fin);
+                });
+                vidFuente.currentTime = 1e101;
+                return;
+            }
+            if (vidFuente.duration <= 0) {
+                aviso('No se pudo leer la duración de «' + f.name + '»', 'danger');
+                return quitarVideo();
+            }
+            listo(vidFuente.duration);
+        });
+    }
+
+    function quitarVideo(silencio) {
+        if (grabando) return;
+        vidFuente.pause();
+        vidFuente.removeAttribute('src');
+        vidFuente.load();
+        if (urlFuente) {
+            URL.revokeObjectURL(urlFuente);
+            urlFuente = null;
+        }
+        var estaba = videoCargado;
+        videoCargado = false;
+        durVideo = 0;
+        recWrap.hidden = true;
+        pintarModo();
+        if (estaba && !silencio) aviso('Vídeo quitado', 'info');
+        actualizaCrear();
+        reiniciarPreview();
+    }
+
+    recQuitar.addEventListener('click', function () { quitarVideo(); });
+
+    /* controles que no aplican en modo recorte (y etiquetas cruzadas) */
+    function pintarModo() {
+        var v = videoCargado;
+        inpDur.disabled = v;
+        selModoDur.disabled = v;
+        selTrans.disabled = v;
+        lblVideo.classList.toggle('disabled', v);
+        btnImagenLabel.classList.toggle('disabled', v);
+        if (selTam.options.length) {
+            selTam.options[0].textContent = v ?
+                'Tamaño original del vídeo' : 'Tamaño de la primera imagen';
         }
     }
 
@@ -241,9 +382,14 @@
     function dimsSalida() {
         var w, h;
         if (selTam.value === 'orig') {
-            var img = imagenes[0] && imagenes[0].img;
-            w = img ? img.naturalWidth : 1280;
-            h = img ? img.naturalHeight : 720;
+            if (videoCargado && vidFuente.videoWidth) {
+                w = vidFuente.videoWidth;
+                h = vidFuente.videoHeight;
+            } else {
+                var img = imagenes[0] && imagenes[0].img;
+                w = img ? img.naturalWidth : 1280;
+                h = img ? img.naturalHeight : 720;
+            }
         } else {
             var p = selTam.value.split('x');
             w = parseInt(p[0], 10);
@@ -280,8 +426,8 @@
         if (!soportaFilter) return;
         var w = lienzo.width;
         var h = lienzo.height;
-        var iw = img.naturalWidth;
-        var ih = img.naturalHeight;
+        var iw = img.naturalWidth || img.videoWidth;   // el <video> trae videoWidth
+        var ih = img.naturalHeight || img.videoHeight;
         // 15% más grande que cover: el halo del desenfoque cae fuera del lienzo
         var esc = Math.max(w / iw, h / ih) * 1.15;
         var dw = iw * esc;
@@ -296,8 +442,8 @@
     function dibujarCentrado(img, zoom, alpha, dx) {
         var w = lienzo.width;
         var h = lienzo.height;
-        var iw = img.naturalWidth;
-        var ih = img.naturalHeight;
+        var iw = img.naturalWidth || img.videoWidth;
+        var ih = img.naturalHeight || img.videoHeight;
         var ajuste = selAjuste.value;
         var base = (ajuste === 'contain' || ajuste === 'blur')
             ? Math.min(w / iw, h / ih)
@@ -318,6 +464,15 @@
         pintarFondo();
         if (selAjuste.value === 'blur') pintarDesenfado(img);
         dibujarCentrado(img, zoom || 1);
+    }
+
+    /* fotograma del vídeo fuente compuesto en el lienzo (E3): mismo fondo,
+       ajuste y tamaño que la salida */
+    function dibujarFrame(v) {
+        if (!v || v.readyState < 2) return;
+        pintarFondo();
+        if (selAjuste.value === 'blur') pintarDesenfado(v);
+        dibujarCentrado(v, 1);
     }
 
     /* ---------- F2 · transiciones ---------- */
@@ -369,7 +524,38 @@
     }
 
     /* ---------- duración total + estado del botón ---------- */
+    /* E3 · lectura saneada de los inputs de recorte */
+    function rangoRecorte() {
+        var ini = parseFloat(recIn.value);
+        var fin = parseFloat(recFin.value);
+        if (!isFinite(ini)) ini = 0;
+        if (!isFinite(fin)) fin = durVideo;
+        if (ini < 0) ini = 0;
+        if (ini > durVideo) ini = durVideo;
+        if (fin > durVideo) fin = durVideo;
+        if (fin < 0) fin = 0;
+        var seg = Math.round((fin - ini) * 100) / 100;
+        if (seg < 0.2) {
+            return { inicio: ini, fin: fin, ok: false,
+                msg: 'El recorte necesita fin - inicio de al menos 0,2 s' };
+        }
+        if (seg > MAX_TOTAL_SEG) {
+            return { inicio: ini, fin: fin, ok: false,
+                msg: 'Máximo 2 minutos por grabación en tiempo real' };
+        }
+        return { inicio: ini, fin: fin, ok: true, msg: '' };
+    }
+
     function actualizaCrear() {
+        if (videoCargado) {
+            var rr = rangoRecorte();
+            vidTotal.textContent = rr.ok
+                ? 'Recorte de ' + fmt(rr.fin - rr.inicio) + ' s de ' + fmt(durVideo) +
+                  ' s · se graba en tiempo real'
+                : rr.msg;
+            btnCrear.disabled = grabando || !rr.ok;
+            return;
+        }
         var d = calculoDuracion();
         var n = imagenes.length;
         var totalCorto = n > 0 && d.porImagen < MIN_POR_IMAGEN;
@@ -400,6 +586,19 @@
 
     function reiniciarPreview() {
         detenerPreview();
+        if (videoCargado) {
+            lienzo.style.display = 'block';
+            vacio.hidden = true;
+            var dv = dimsSalida();
+            if (lienzo.width !== dv.w || lienzo.height !== dv.h) {
+                lienzo.width = dv.w;
+                lienzo.height = dv.h;
+            }
+            marcoSucio = true;
+            dibujarFrame(vidFuente);
+            arrancarPreviewVideo();
+            return;
+        }
         if (!imagenes.length) {
             lienzo.style.display = 'none';
             vacio.hidden = false;
@@ -432,6 +631,49 @@
         }
         preview = requestAnimationFrame(paso);
     }
+
+    /* E3 · la vista previa refleja el vídeo fuente: fotograma actual cuando
+       está en pausa, en bucle mientras se reproduce */
+    function arrancarPreviewVideo() {
+        if (preview || grabando || !videoCargado) return;
+        function paso() {
+            preview = null;
+            if (!videoCargado || grabando) return;
+            if (vidFuente.readyState >= 2 && (!vidFuente.paused || marcoSucio)) {
+                dibujarFrame(vidFuente);
+                marcoSucio = false;
+            }
+            preview = requestAnimationFrame(paso);
+        }
+        preview = requestAnimationFrame(paso);
+    }
+
+    ['timeupdate', 'seeked', 'loadeddata'].forEach(function (ev) {
+        vidFuente.addEventListener(ev, function () {
+            marcoSucio = true;
+            if (videoCargado && !grabando) arrancarPreviewVideo();
+        });
+    });
+
+    /* inputs de recorte: el «input» actualiza el resumen en vivo y el
+       «change» escribe los valores saneados de vuelta */
+    [recIn, recFin].forEach(function (el) {
+        el.addEventListener('input', function () { actualizaCrear(); });
+        el.addEventListener('change', function () {
+            var rr = rangoRecorte();
+            recIn.value = String(rr.inicio);
+            recFin.value = String(rr.fin);
+            actualizaCrear();
+        });
+    });
+    recMarcarIn.addEventListener('click', function () {
+        recIn.value = String(Math.round(vidFuente.currentTime * 10) / 10);
+        actualizaCrear();
+    });
+    recMarcarFin.addEventListener('click', function () {
+        recFin.value = String(Math.round(vidFuente.currentTime * 10) / 10);
+        actualizaCrear();
+    });
 
     [selTam, inpDur, selAjuste, selTrans, inpFondo].forEach(function (el) {
         el.addEventListener('change', function () {
@@ -470,9 +712,13 @@
     });
 
     /* ---------- grabación ---------- */
-    function elegirMime() {
+    /* conAudio: lista con códecs de sonido delante (el sonido del recorte
+       viaja en la pista añadida desde Web Audio). avc3 va primero porque
+       Chrome avisa de «the codec description is not supposed to change…»
+       al grabar avc1 con audio y él mismo recomienda avc3 (SPS/PPS en banda) */
+    function elegirMime(conAudio) {
         if (!soportado) return null;
-        var candidatos = [
+        var video = [
             'video/mp4;codecs=avc1.42E01E',
             'video/mp4;codecs=avc1',
             'video/mp4',
@@ -480,6 +726,15 @@
             'video/webm;codecs=vp8',
             'video/webm'
         ];
+        var candidatos = conAudio ? [
+            'video/mp4;codecs=avc3.42E01E,mp4a.40.2',
+            'video/mp4;codecs=avc3,mp4a.40.2',
+            'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+            'video/mp4;codecs=avc1,mp4a.40.2',
+            'video/mp4',
+            'video/webm;codecs=vp9,opus',
+            'video/webm;codecs=vp8,opus'
+        ].concat(video) : video;
         for (var i = 0; i < candidatos.length; i++) {
             if (MediaRecorder.isTypeSupported(candidatos[i])) return candidatos[i];
         }
@@ -487,11 +742,20 @@
     }
 
     btnCrear.addEventListener('click', function () {
-        if (!imagenes.length || grabando) return;
+        if (grabando) return;
         if (!soportado) {
             aviso('Tu navegador no permite crear vídeos', 'danger');
             return;
         }
+        if (videoCargado) {
+            var r = rangoRecorte();
+            if (!r.ok) {
+                aviso(r.msg, 'warning');
+                return;
+            }
+            return crearVideoRecorte(r);
+        }
+        if (!imagenes.length) return;
         var d = calculoDuracion();
         if (d.total > MAX_TOTAL_SEG) {
             aviso('Máximo 2 minutos: reduce la duración o el número de imágenes', 'warning');
@@ -516,6 +780,11 @@
     });
 
     function limpiar() {
+        if (videoCargado) {
+            vidFuente.pause();
+            vidFuente.controls = true;
+            marcoSucio = true;
+        }
         progWrap.hidden = true;
         btnCancelar.hidden = true;
         grabando = false;
@@ -620,5 +889,165 @@
             rafAct = requestAnimationFrame(tick);
         }
         rafAct = requestAnimationFrame(tick);
+    }
+
+    /* ---------- E3 · recorte: regrabar el rango elegido ---------- */
+    /* El sonido del propio vídeo pasa por Web Audio para que el grabador lo
+       lleve al resultado. createMediaElementSource solo puede hacerse UNA vez
+       por elemento: se crea en el primer clic de grabar (con gesto del
+       usuario, así el AudioContext arranca despierto). */
+    function conectarAudio() {
+        try {
+            if (!audioCtx) {
+                var AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return null;
+                audioCtx = new AC();
+                audioDest = audioCtx.createMediaStreamDestination();
+                fuenteAudio = audioCtx.createMediaElementSource(vidFuente);
+                fuenteAudio.connect(audioCtx.destination);  // seguimos oyendo el vídeo
+                fuenteAudio.connect(audioDest);            // pista para el grabador
+            }
+            if (audioCtx.state === 'suspended') {
+                var p = audioCtx.resume();
+                if (p && p.catch) p.catch(function () {});
+            }
+            return audioDest;
+        } catch (e) {
+            audioCtx = null;
+            return null;
+        }
+    }
+
+    vidFuente.addEventListener('play', function () {
+        if (audioCtx && audioCtx.state === 'suspended') {
+            var p = audioCtx.resume();
+            if (p && p.catch) p.catch(function () {});
+        }
+    });
+
+    function crearVideoRecorte(r) {
+        var audio = conectarAudio();
+        var mime = elegirMime(!!audio) || elegirMime(false);
+        if (!mime) {
+            aviso('No hay códec de vídeo disponible en este navegador', 'danger');
+            return;
+        }
+
+        var inicio = r.inicio;
+        var fin = r.fin;
+        var total = Math.round((fin - inicio) * 1000);
+
+        grabando = true;
+        cancelado = false;
+        btnCrear.disabled = true;
+        btnCancelar.hidden = false;
+        resWrap.hidden = true;
+        actualizarBarra();
+        detenerPreview();
+        vidFuente.pause();
+        vidFuente.controls = false;   // sin controles mientras se graba
+
+        var d = dimsSalida();
+        if (d.reducido) {
+            aviso('Salida reducida a ' + d.w + '×' + d.h + ' px para que el vídeo no sea gigante', 'info');
+        }
+        lienzo.width = d.w;
+        lienzo.height = d.h;
+
+        var stream = lienzo.captureStream(FPS);
+        if (audio) {
+            audio.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
+        }
+        var chunks = [];
+        var mimeUsado = mime;
+        var rec;
+        try {
+            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: 8000000 });
+        } catch (e1) {
+            var mv = elegirMime(false);
+            if (!audio || !mv) return fallo('No se pudo iniciar la grabación en este navegador');
+            try {
+                stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
+                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: 8000000 });
+                mimeUsado = mv;
+            } catch (e2) {
+                return fallo('No se pudo iniciar la grabación en este navegador');
+            }
+        }
+        recAct = rec;
+        rec.ondataavailable = function (e) {
+            if (e.data && e.data.size) chunks.push(e.data);
+        };
+        rec.onstop = function () {
+            if (cancelado) {
+                aviso('Grabación cancelada', 'info');
+                return limpiar();
+            }
+            var tipo = mimeUsado.split(';')[0];
+            var blob = new Blob(chunks, { type: tipo });
+            if (!blob.size) return fallo('La grabación salió vacía');
+            if (urlVideo) URL.revokeObjectURL(urlVideo);
+            urlVideo = URL.createObjectURL(blob);
+            var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
+            aDesc.href = urlVideo;
+            aDesc.download = 'tet.' + ext;
+            txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
+                ' (' + Math.round(blob.size / 1024) + ' KB)';
+            repro.src = urlVideo;
+            repro.hidden = false;
+            resWrap.hidden = false;
+            aviso('Vídeo recortado: ' + fmt(total / 1000) + ' s · ' +
+                Math.round(blob.size / 1024) + ' KB', 'success');
+            limpiar();
+            resWrap.scrollIntoView({ block: 'nearest' });
+        };
+
+        progWrap.hidden = false;
+        barra.style.width = '0%';
+        barra.textContent = '0%';
+        estado.textContent = 'Preparando…';
+
+        var arrancar = function () {
+            if (!grabando) return;   // se canceló mientras buscaba la posición
+            dibujarFrame(vidFuente);
+            recAct.start(200);
+            var p = vidFuente.play();
+            if (p && p.catch) {
+                p.catch(function () {
+                    fallo('El navegador no dejó reproducir el vídeo: toca el vídeo una vez y reintenta');
+                });
+            }
+            estado.textContent = 'Grabando…';
+            rafAct = requestAnimationFrame(tickRec);
+        };
+
+        if (vidFuente.readyState >= 2 && Math.abs(vidFuente.currentTime - inicio) < 0.05) {
+            arrancar();
+        } else {
+            var oy = function () {
+                vidFuente.removeEventListener('seeked', oy);
+                arrancar();
+            };
+            vidFuente.addEventListener('seeked', oy);
+            vidFuente.currentTime = inicio;
+        }
+
+        function tickRec() {
+            if (!grabando) return;
+            if (vidFuente.ended || vidFuente.currentTime >= fin) {
+                dibujarFrame(vidFuente);
+                grabando = false;
+                vidFuente.pause();
+                if (recAct && recAct.state !== 'inactive') recAct.stop();
+                return;
+            }
+            dibujarFrame(vidFuente);
+            var t = Math.max(0, vidFuente.currentTime - inicio);
+            var pct = Math.max(0, Math.min(100, Math.round(t / (fin - inicio) * 100)));
+            barra.style.width = pct + '%';
+            barra.textContent = pct + '%';
+            estado.textContent = 'Grabando… ' + fmt(t) + ' / ' + fmt(fin - inicio) + ' s';
+            rafAct = requestAnimationFrame(tickRec);
+        }
     }
 })();
