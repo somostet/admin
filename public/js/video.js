@@ -231,6 +231,9 @@
             reiniciarPreview();
             pintarRiel();
             generarMiniaturas();
+            // Chrome no decodifica el primer fotograma hasta el primer «buscar»:
+            // sin este empujón la vista previa se queda en el color de fondo
+            if (!vidFuente.currentTime) vidFuente.currentTime = 0;
         };
         vidFuente.addEventListener('loadedmetadata', function oy() {
             vidFuente.removeEventListener('loadedmetadata', oy);
