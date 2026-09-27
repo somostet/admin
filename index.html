@@ -2,6 +2,15 @@
 <html lang="es">
 
 <head>
+    <!-- CSP: solo en http/https; en file:// no se inyecta para no romper el modo doble-clic -->
+    <script>
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+            var csp = document.createElement('meta');
+            csp.setAttribute('http-equiv', 'Content-Security-Policy');
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            document.head.appendChild(csp);
+        }
+    </script>
     <meta charset="utf-8">
     <meta name="description" content="Página principal de tet.">
     <meta name="keywords" content="tech,tecnológia">

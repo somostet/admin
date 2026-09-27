@@ -16,7 +16,7 @@ obsoletas del service worker.
 | Lote | Qué | Prioridad | Esfuerzo | Estado |
 |---|---|---|---|---|
 | S1 | Quitar jQuery + `bootstrap5-compat.js` | 🔴 Alta | Bajo | ✅ Hecho |
-| S2 | CSP por meta, solo http/https | 🔴 Alta | Medio | ⬜ Pendiente |
+| S2 | CSP por meta, solo http/https | 🔴 Alta | Medio | ✅ Hecho |
 | S3 | Validar el `.json` de "Cargar proyecto" | 🟠 Media-alta | Bajo | ✅ Hecho |
 | S4 | Bootstrap a última 5.3.x · riesgo de fabric | 🟡 Media | Bajo / Proyecto | ⬜ Pendiente |
 | S5 | Higiene: referrer, frame-buster opcional | 🟢 Baja | Bajo | ⬜ Pendiente |
@@ -103,6 +103,13 @@ color de fondo (art/mc/miniaturas) y Ctrl+Z.
 - **Validación**: probar **en GitHub Pages** (no solo local): editor, subir
   imagen, plantillas, descargar, compartir, service worker; revisar consola por
   violaciones. Recargar dos veces para que el SW no enmascare nada.
+
+**✅ Hecho**: snippet al inicio del `<head>` de los 7 HTML que inserta el meta
+**solo en http/https** (en `file://` no se inyecta). Verificado en Chrome local:
+meta presente 7/7, **enforcement real** (probes de `fetch` e `img` a un origen
+externo → bloqueados con violación de `connect-src`/`img-src` en consola) y
+**cero violaciones** cargando normalmente las 7 páginas. ⚠️ Queda la prueba
+obligatoria **en GitHub Pages tras el push** (misma checklist de arriba).
 
 ## S3 — Validar el `.json` de "Cargar proyecto" 🟠
 

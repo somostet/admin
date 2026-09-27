@@ -2,6 +2,15 @@
 <html lang="es">
 
 <head>
+    <!-- CSP: solo en http/https; en file:// no se inyecta para no romper el modo doble-clic -->
+    <script>
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+            var csp = document.createElement('meta');
+            csp.setAttribute('http-equiv', 'Content-Security-Policy');
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            document.head.appendChild(csp);
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#1d2b43">
