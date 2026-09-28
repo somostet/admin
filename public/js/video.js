@@ -97,14 +97,22 @@
     var supLogoQuitar = document.getElementById('vid-logo-quitar');
     var supLogoPos = document.getElementById('vid-logo-pos');
     var supLogoTam = document.getElementById('vid-logo-tam');
-    var supTitulo = document.getElementById('vid-titulo');
-    var supTituloPos = document.getElementById('vid-titulo-pos');
-    var supTituloTam = document.getElementById('vid-titulo-tam');
-    var supTituloAnim = document.getElementById('vid-titulo-anim');
-    var supTituloAnimDur = document.getElementById('vid-titulo-anim-dur');
-    var manijaTitulo = document.getElementById('vid-manija-titulo');   // F5b
-    var tituloXY = { x: 0.5, y: 0.9 };   // F5b: centro del título en fracciones del lienzo
-    var cajaTitulo = null;               // F5b: última caja dibujada (coords lógicas)
+    var listaTextos = document.getElementById('vid-textos-lista');   // F5e
+    var btnAddTexto = document.getElementById('vid-texto-add');      // F5e
+    var editTexto = document.getElementById('vid-texto-edit');       // F5e
+    var inpTxtContenido = document.getElementById('vid-txt-contenido');
+    var selTxtPos = document.getElementById('vid-txt-pos');
+    var inpTxtTam = document.getElementById('vid-txt-tam');
+    var selTxtAnim = document.getElementById('vid-txt-anim');
+    var inpTxtAnimDur = document.getElementById('vid-txt-anim-dur');
+    var selTxtSalida = document.getElementById('vid-txt-salida');
+    var inpTxtSalidaDur = document.getElementById('vid-txt-salida-dur');
+    var inpTxtInicio = document.getElementById('vid-txt-inicio');
+    var inpTxtDur = document.getElementById('vid-txt-dur');
+    var textos = [];         // F5e: un elemento por cada texto de la salida
+    var textoSel = -1;       // F5e: índice del texto en edición
+    var cajaTextoSel = null; // F5e: caja dibujada del seleccionado (para la manija)
+    var manijaTitulo = document.getElementById('vid-manija-titulo');   // F5b/F5e
     var manijaArrastrando = false;       // F5b: puntero sobre la manija
     var tUltimo = 0;                     // F5b: último instante dibujado en modo imágenes
     var logoImg = null;    // Image del logo cargado (null = sin logo)
@@ -808,70 +816,97 @@
             ctx.drawImage(logoImg, x, y, lw, lh);
         }
 
-        // línea de título: blanco en negrita con sombra para que se lea sobre
-        // cualquier fondo; si no cabe, se encoge hasta el ancho disponible
-        var txt = supTitulo.value.trim();
-        if (txt) {
-            /* F5 · animación de entrada: p recorre 0 → 1 durante la duración */
-            var anim = supTituloAnim.value;
-            var p = 1;
-            if (anim && anim !== 'ninguna') {
-                var segAnim = parseFloat(supTituloAnimDur.value);
-                if (!(segAnim >= 0.2 && segAnim <= 5)) segAnim = 1;
-                p = (tMs == null || !isFinite(tMs)) ? 1
-                    : Math.max(0, Math.min(1, tMs / (segAnim * 1000)));
-            }
-            var pt = parseFloat(supTituloTam.value);
-            if (!(pt >= 2 && pt <= 25)) pt = 7;
-            var fs = Math.max(12, Math.round(h * pt / 100));
-            ctx.save();
-            ctx.font = '700 ' + fs + 'px ' + fuente;
-            var maxW = w - margen * 2;
-            var tw = ctx.measureText(txt).width;
-            if (tw > maxW && tw > 0) {
-                fs = Math.max(10, Math.round(fs * maxW / tw));
-                ctx.font = '700 ' + fs + 'px ' + fuente;
-                tw = ctx.measureText(txt).width;   // F5b: ancho real tras encoger
-            }
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#fff';
-            ctx.shadowColor = 'rgba(0, 0, 0, .75)';
-            ctx.shadowBlur = Math.max(2, Math.round(fs / 5));
-            ctx.shadowOffsetY = Math.max(1, Math.round(fs / 20));
-            var tp = supTituloPos.value;
-            var tx;
-            var ty;
-            if (tp === 'personalizada') {
-                ctx.textAlign = 'center';
-                tx = tituloXY.x * w;
-                ty = tituloXY.y * h;
-                // F5b: el texto siempre cabe por completo dentro del lienzo
-                tx = Math.max(tw / 2, Math.min(w - tw / 2, tx));
-                ty = Math.max(fs / 2, Math.min(h - fs / 2, ty));
-            } else if (tp === 'abajo-centro') {
-                ctx.textAlign = 'center';
-                tx = w / 2;
-                ty = h - margen - fs / 2;
-            } else {
-                ctx.textAlign = (tp === 'arriba-izquierda' || tp === 'abajo-izquierda') ? 'left' : 'right';
-                tx = (ctx.textAlign === 'left') ? margen : w - margen;
-                ty = (tp.indexOf('arriba') === 0) ? margen + fs / 2 : h - margen - fs / 2;
-            }
-            // F5b: caja de reposo del texto para situar la manija de arrastre
-            cajaTitulo = { x: tx, y: ty, w: tw, h: fs * 1.2 };
-            if (anim === 'aparecer') {
-                ctx.globalAlpha = p;                 // fundido de entrada
-            } else if (anim === 'deslizar' && p < 1) {
-                var viaje = fs * 1.5;                // entra desde su borde
-                ty += (tp.indexOf('arriba') === 0) ? -viaje * (1 - p) : viaje * (1 - p);
-            } else if (anim === 'escribir' && p < 1) {
-                txt = txt.slice(0, Math.ceil(p * txt.length));   // máquina de escribir
-            }
-            ctx.fillText(txt, tx, ty);
-            ctx.restore();
+        // F5e: cada texto de la lista, dentro de su ventana temporal y con su
+        // animación de entrada y de salida; blanco en negrita con sombra para
+        // que se lea sobre cualquier fondo
+        cajaTextoSel = null;
+        for (var i = 0; i < textos.length; i++) {
+            dibujaTexto(textos[i], tMs, w, h, margen, fuente, i === textoSel);
         }
-        actualizaManija();   // F5b: coloca (o esconde) la manija sobre el texto
+        actualizaManija();   // F5b/F5e: coloca (o esconde) la manija sobre el texto
         actualizaManijaContenido();   // F5d: idem para el contenido de Tet News
+    }
+
+    /* F5e · dibuja un texto de la lista en el instante tMs (ms desde el inicio
+       del vídeo de salida). Ventana activa: [inicio, inicio+dur) con dur = 0
+       significando «hasta el final». p recorre la entrada (0 → 1) y q la
+       salida (0 → 1); si no cabe, la fuente se encoge hasta el ancho. */
+    function dibujaTexto(t, tMs, w, h, margen, fuente, esSel) {
+        var txt = t.txt.trim();
+        if (!txt) return;
+        var iniMs = (t.inicio || 0) * 1000;
+        var finMs = (t.dur > 0) ? iniMs + t.dur * 1000 : Infinity;
+        if (!(tMs >= iniMs && tMs < finMs)) return;   // fuera de su ventana
+
+        var p = 1;
+        if (t.anim && t.anim !== 'ninguna') {
+            var segAnim = t.animDur;
+            if (!(segAnim >= 0.2 && segAnim <= 5)) segAnim = 1;
+            p = (tMs - iniMs) / (segAnim * 1000);
+            p = Math.max(0, Math.min(1, p));
+        }
+        var q = 0;
+        if (t.salida && t.salida !== 'ninguna' && isFinite(finMs)) {
+            var segOut = t.salidaDur;
+            if (!(segOut >= 0.2 && segOut <= 5)) segOut = 0.5;
+            q = (tMs - (finMs - segOut * 1000)) / (segOut * 1000);
+            q = Math.max(0, Math.min(1, q));
+        }
+
+        var pt = t.tam;
+        if (!(pt >= 2 && pt <= 25)) pt = 7;
+        var fs = Math.max(12, Math.round(h * pt / 100));
+        ctx.save();
+        ctx.font = '700 ' + fs + 'px ' + fuente;
+        var maxW = w - margen * 2;
+        var tw = ctx.measureText(txt).width;
+        if (tw > maxW && tw > 0) {
+            fs = Math.max(10, Math.round(fs * maxW / tw));
+            ctx.font = '700 ' + fs + 'px ' + fuente;
+            tw = ctx.measureText(txt).width;   // F5b: ancho real tras encoger
+        }
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = 'rgba(0, 0, 0, .75)';
+        ctx.shadowBlur = Math.max(2, Math.round(fs / 5));
+        ctx.shadowOffsetY = Math.max(1, Math.round(fs / 20));
+        var tp = t.pos;
+        var tx;
+        var ty;
+        if (tp === 'personalizada') {
+            ctx.textAlign = 'center';
+            tx = t.x * w;
+            ty = t.y * h;
+            // F5b: el texto siempre cabe por completo dentro del lienzo
+            tx = Math.max(tw / 2, Math.min(w - tw / 2, tx));
+            ty = Math.max(fs / 2, Math.min(h - fs / 2, ty));
+        } else if (tp === 'abajo-centro') {
+            ctx.textAlign = 'center';
+            tx = w / 2;
+            ty = h - margen - fs / 2;
+        } else {
+            ctx.textAlign = (tp === 'arriba-izquierda' || tp === 'abajo-izquierda') ? 'left' : 'right';
+            tx = (ctx.textAlign === 'left') ? margen : w - margen;
+            ty = (tp.indexOf('arriba') === 0) ? margen + fs / 2 : h - margen - fs / 2;
+        }
+        // F5e: caja de reposo del texto seleccionado para situar la manija
+        if (esSel) cajaTextoSel = { x: tx, y: ty, w: tw, h: fs * 1.2 };
+
+        var abajo = ty > h / 2;   // el texto entra y sale por su propio borde
+        var viaje = fs * 1.5;
+        if (t.anim === 'aparecer') ctx.globalAlpha = p;        // fundido de entrada
+        if (t.salida === 'fundido') ctx.globalAlpha *= (1 - q); // fundido de salida
+        if (p < 1) {
+            if (t.anim === 'deslizar') {
+                ty += (abajo ? viaje : -viaje) * (1 - p);       // entra desde su borde
+            } else if (t.anim === 'escribir') {
+                txt = txt.slice(0, Math.ceil(p * txt.length));  // máquina de escribir
+            }
+        } else if (q > 0 && t.salida === 'deslizar') {
+            ty += (abajo ? viaje : -viaje) * q;                 // sale por su borde
+        }
+        ctx.fillText(txt, tx, ty);
+        ctx.restore();
     }
 
     /* ---------- F2 · transiciones ---------- */
@@ -1019,15 +1054,24 @@
         dibujarEn(0, durMs);
         var animar = selTrans.value === 'kenburns' ||
             (selTrans.value !== 'ninguna' && imagenes.length > 1);
-        // F5: con una sola imagen la entrada del título también necesita bucle
-        var animaTitulo = supTituloAnim.value !== 'ninguna' && !!supTitulo.value.trim();
-        if (!animar && !animaTitulo && imagenes.length < 2) return;
+        // F5e: con una sola imagen, si algún texto anima o tiene ventana
+        // temporal la vista previa también necesita bucle
+        var animaTexto = false;
+        for (var it = 0; it < textos.length; it++) {
+            var tIt = textos[it];
+            if (tIt.txt.trim() && (tIt.anim !== 'ninguna' || tIt.salida !== 'ninguna' ||
+                tIt.inicio > 0 || tIt.dur > 0)) {
+                animaTexto = true;
+                break;
+            }
+        }
+        if (!animar && !animaTexto && imagenes.length < 2) return;
         var t0 = performance.now();
         var ultimo = -1;
         function paso() {
             var t = (performance.now() - t0) % total;
             var idx = Math.floor(t / durMs);
-            if (animar || animaTitulo || idx !== ultimo) {   // sin transiciones solo se redibuja al cambiar de imagen
+            if (animar || animaTexto || idx !== ultimo) {   // sin transiciones solo se redibuja al cambiar de imagen
                 dibujarEn(t, durMs);
                 ultimo = idx;
             }
@@ -1105,16 +1149,15 @@
        El centro se guarda en fracciones del lienzo: al cambiar de tamaño de
        salida el título queda en su sitio. */
     function actualizaManija() {
-        var activa = supTituloPos.value === 'personalizada' && !!supTitulo.value.trim() &&
-            lienzo.style.display !== 'none' && !!cajaTitulo;
+        var activa = textoSel >= 0 && lienzo.style.display !== 'none' && !!cajaTextoSel;
         manijaTitulo.hidden = !activa;
         if (!activa) return;
         var f = lienzo.clientWidth / lienzo.width;
         var pad = 4;
-        manijaTitulo.style.left = (lienzo.offsetLeft + (cajaTitulo.x - cajaTitulo.w / 2) * f - pad) + 'px';
-        manijaTitulo.style.top = (lienzo.offsetTop + (cajaTitulo.y - cajaTitulo.h / 2) * f - pad) + 'px';
-        manijaTitulo.style.width = (cajaTitulo.w * f + pad * 2) + 'px';
-        manijaTitulo.style.height = (cajaTitulo.h * f + pad * 2) + 'px';
+        manijaTitulo.style.left = (lienzo.offsetLeft + (cajaTextoSel.x - cajaTextoSel.w / 2) * f - pad) + 'px';
+        manijaTitulo.style.top = (lienzo.offsetTop + (cajaTextoSel.y - cajaTextoSel.h / 2) * f - pad) + 'px';
+        manijaTitulo.style.width = (cajaTextoSel.w * f + pad * 2) + 'px';
+        manijaTitulo.style.height = (cajaTextoSel.h * f + pad * 2) + 'px';
     }
 
     function redibujarArrastre() {
@@ -1127,16 +1170,21 @@
     }
 
     manijaTitulo.addEventListener('pointerdown', function (e) {
-        if (supTituloPos.value !== 'personalizada' || grabando) return;
+        if (textoSel < 0 || grabando) return;
         manijaArrastrando = true;
         try { manijaTitulo.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         e.preventDefault();
     });
     manijaTitulo.addEventListener('pointermove', function (e) {
-        if (!manijaArrastrando) return;
+        if (!manijaArrastrando || textoSel < 0) return;
+        var t = textos[textoSel];
+        if (!t) return;
         var r = lienzo.getBoundingClientRect();
-        tituloXY.x = Math.max(0.05, Math.min(0.95, (e.clientX - r.left) / r.width));
-        tituloXY.y = Math.max(0.05, Math.min(0.95, (e.clientY - r.top) / r.height));
+        // F5e: mover el texto lo lleva a posición «personalizada»
+        t.x = Math.max(0.05, Math.min(0.95, (e.clientX - r.left) / r.width));
+        t.y = Math.max(0.05, Math.min(0.95, (e.clientY - r.top) / r.height));
+        t.pos = 'personalizada';
+        if (selTxtPos.value !== 'personalizada') selTxtPos.value = 'personalizada';
         redibujarArrastre();
         actualizaManija();
     });
@@ -1239,15 +1287,182 @@
         repintarSuperp();
     });
 
-    [supLogoPos, supLogoTam, supTituloPos, supTituloTam, supTituloAnim, supTituloAnimDur].forEach(function (el) {
+    [supLogoPos, supLogoTam].forEach(function (el) {
         el.addEventListener('change', function () {
             repintarSuperp();
-            if (el === supTituloPos && supTituloPos.value === 'personalizada') {
-                aviso('Arrastra el texto en la vista previa para colocarlo donde quieras', 'info');
-            }
         });
     });
-    supTitulo.addEventListener('input', repintarSuperp);
+
+    /* ---------- F5e · lista de textos (título, descripción…) ---------- */
+    /* Cada texto guarda: contenido, posición (preset o x/y en fracciones),
+       tamaño (% del alto), animación de entrada y de salida, y su ventana
+       temporal (inicio y duración; dur = 0 → hasta el final del vídeo). */
+    function nuevoTexto(txt, n) {
+        return {
+            txt: txt || '',
+            pos: n === 0 ? 'abajo-centro' : 'personalizada',
+            x: 0.5,
+            y: Math.max(0.12, 0.9 - n * 0.08),   // los nuevos se apilan
+            tam: 7,
+            anim: 'ninguna',
+            animDur: 1,
+            salida: 'ninguna',
+            salidaDur: 0.5,
+            inicio: 0,
+            dur: 0
+        };
+    }
+
+    function fmtSeg(x) {
+        return (Math.round(x * 10) / 10).toString().replace('.', ',');
+    }
+
+    function textoActual() {
+        return (textoSel >= 0 && textos[textoSel]) ? textos[textoSel] : null;
+    }
+
+    function pintaListaTextos() {
+        listaTextos.innerHTML = '';
+        textos.forEach(function (t, i) {
+            var fila = document.createElement('div');
+            fila.className = 'vid-texto-fila' + (i === textoSel ? ' vid-texto-activa' : '');
+            var sel = document.createElement('button');
+            sel.type = 'button';
+            sel.className = 'vid-texto-sel';
+            sel.setAttribute('role', 'option');
+            sel.setAttribute('aria-selected', i === textoSel ? 'true' : 'false');
+            var nom = document.createElement('span');
+            nom.className = 'vid-texto-nombre';
+            nom.textContent = t.txt.trim() || '(texto vacío)';
+            var hora = document.createElement('span');
+            hora.className = 'vid-texto-tiempo';
+            hora.textContent = (t.dur > 0)
+                ? fmtSeg(t.inicio) + '–' + fmtSeg(t.inicio + t.dur) + ' s'
+                : fmtSeg(t.inicio) + ' s → final';
+            sel.appendChild(nom);
+            sel.appendChild(hora);
+            sel.addEventListener('click', function () { seleccionaTexto(i); });
+            fila.appendChild(sel);
+            fila.appendChild(accionesTexto(i));
+            listaTextos.appendChild(fila);
+        });
+        editTexto.hidden = textoSel < 0;
+    }
+
+    function accionesTexto(i) {
+        var caja = document.createElement('div');
+        caja.className = 'vid-texto-acciones';
+        [
+            { icono: 'fa-arrow-up', titulo: 'Subir el texto', accion: function () { mueveTexto(i, -1); } },
+            { icono: 'fa-arrow-down', titulo: 'Bajar el texto', accion: function () { mueveTexto(i, 1); } },
+            { icono: 'fa-trash', titulo: 'Quitar el texto', accion: function () { quitaTexto(i); } }
+        ].forEach(function (b) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn';
+            btn.title = b.titulo;
+            btn.setAttribute('aria-label', b.titulo);
+            btn.innerHTML = '<i class="fas ' + b.icono + '" aria-hidden="true"></i>';
+            btn.addEventListener('click', b.accion);
+            caja.appendChild(btn);
+        });
+        return caja;
+    }
+
+    function seleccionaTexto(i) {
+        textoSel = (i >= 0 && i < textos.length) ? i : -1;
+        pintaListaTextos();
+        cargaEditor();
+        repintarSuperp();
+    }
+
+    function mueveTexto(i, delta) {
+        var j = i + delta;
+        if (j < 0 || j >= textos.length) return;
+        var t = textos[i];
+        textos[i] = textos[j];
+        textos[j] = t;
+        if (textoSel === i) textoSel = j;
+        else if (textoSel === j) textoSel = i;
+        pintaListaTextos();
+        repintarSuperp();
+    }
+
+    function quitaTexto(i) {
+        textos.splice(i, 1);
+        if (textoSel >= textos.length) textoSel = textos.length - 1;
+        pintaListaTextos();
+        cargaEditor();
+        repintarSuperp();
+    }
+
+    function cargaEditor() {
+        var t = textoActual();
+        editTexto.hidden = !t;
+        if (!t) return;
+        inpTxtContenido.value = t.txt;
+        selTxtPos.value = t.pos;
+        inpTxtTam.value = String(t.tam);
+        selTxtAnim.value = t.anim;
+        inpTxtAnimDur.value = String(t.animDur);
+        selTxtSalida.value = t.salida;
+        inpTxtSalidaDur.value = String(t.salidaDur);
+        inpTxtInicio.value = String(t.inicio);
+        inpTxtDur.value = String(t.dur);
+    }
+
+    /* el texto se escribe directo en la lista: se repinta al escribir y se
+       sanea al salir del campo (mismo patrón que el resto de inputs) */
+    inpTxtContenido.addEventListener('input', function () {
+        var t = textoActual();
+        if (!t) return;
+        t.txt = inpTxtContenido.value;
+        pintaListaTextos();
+        repintarSuperp();
+    });
+
+    [[selTxtPos, 'pos'], [selTxtAnim, 'anim'], [selTxtSalida, 'salida']].forEach(function (par) {
+        par[0].addEventListener('change', function () {
+            var t = textoActual();
+            if (!t) return;
+            t[par[1]] = par[0].value;
+            if (par[1] === 'pos' && par[0].value === 'personalizada') {
+                aviso('Arrastra el texto en la vista previa para colocarlo donde quieras', 'info');
+            }
+            repintarSuperp();
+        });
+    });
+
+    [[inpTxtTam, 'tam', 2, 25, 7],
+     [inpTxtAnimDur, 'animDur', 0.2, 5, 1],
+     [inpTxtSalidaDur, 'salidaDur', 0.2, 5, 0.5],
+     [inpTxtInicio, 'inicio', 0, 120, 0],
+     [inpTxtDur, 'dur', 0, 120, 0]].forEach(function (cfg) {
+        cfg[0].addEventListener('change', function () {
+            var t = textoActual();
+            if (!t) return;
+            var v = parseFloat(cfg[0].value);
+            if (!isFinite(v)) v = cfg[4];
+            if (v < cfg[2]) v = cfg[2];
+            if (v > cfg[3]) v = cfg[3];
+            t[cfg[1]] = Math.round(v * 10) / 10;
+            cfg[0].value = String(t[cfg[1]]);
+            pintaListaTextos();
+            repintarSuperp();
+        });
+    });
+
+    btnAddTexto.addEventListener('click', function () {
+        textos.push(nuevoTexto('', textos.length));
+        seleccionaTexto(textos.length - 1);
+        inpTxtContenido.focus();
+    });
+
+    /* arranca con un texto listo para escribir (abajo al centro) */
+    textos = [nuevoTexto('', 0)];
+    textoSel = 0;
+    pintaListaTextos();
+    cargaEditor();
 
     /* al cambiar de modo se convierte el valor (2 s×5 → 10 s totales y al revés)
        y los límites del input pasan a ser los del nuevo modo */

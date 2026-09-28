@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f5d">
+    <link rel="stylesheet" href="./public/css/video.css?v=f5e">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -234,48 +234,88 @@
                             <input type="number" class="form-control" id="vid-logo-tam" min="4" max="40"
                                    step="1" value="12" inputmode="numeric">
                         </div>
-                        <div class="col-12 col-lg-6">
-                            <label class="form-label" for="vid-titulo">Línea de título</label>
-                            <input type="text" class="form-control" id="vid-titulo" maxlength="80"
-                                   placeholder="Ej.: Un día en Toledo" autocomplete="off">
+                        <!-- F5e · lista de textos: título, descripción… cada uno con
+                             su tamaño, posición, animación de entrada y de salida y
+                             su ventana temporal (inicio y duración) -->
+                        <div class="col-12">
+                            <div class="form-label">Textos (título, descripción…)</div>
+                            <div class="vid-textos" id="vid-textos-lista"
+                                 role="listbox" aria-label="Textos del vídeo"></div>
+                            <button type="button" class="btn btn-outline-primary w-100 mt-2" id="vid-texto-add">
+                                <i class="fas fa-plus" aria-hidden="true"></i> Añadir texto
+                            </button>
                         </div>
-                        <div class="col-6 col-lg-3">
-                            <label class="form-label" for="vid-titulo-pos">Posición del título</label>
-                            <select class="form-select" id="vid-titulo-pos">
-                                <option value="arriba-izquierda">Arriba a la izquierda</option>
-                                <option value="arriba-derecha">Arriba a la derecha</option>
-                                <option value="abajo-izquierda">Abajo a la izquierda</option>
-                                <option value="abajo-derecha">Abajo a la derecha</option>
-                                <option value="abajo-centro" selected>Abajo al centro</option>
-                                <option value="personalizada">Personalizada (arrastra el texto)</option>
-                            </select>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <label class="form-label" for="vid-titulo-tam">Tamaño del título (% del alto)</label>
-                            <input type="number" class="form-control" id="vid-titulo-tam" min="2" max="25"
-                                   step="1" value="7" inputmode="numeric">
-                        </div>
-                        <div class="col-12 col-lg-6">
-                            <label class="form-label" for="vid-titulo-anim">Entrada del título</label>
-                            <select class="form-select" id="vid-titulo-anim">
-                                <option value="ninguna">Ninguna (sin animación)</option>
-                                <option value="aparecer">Aparecer (fundido)</option>
-                                <option value="deslizar">Deslizar</option>
-                                <option value="escribir">Escribir (máquina de escribir)</option>
-                            </select>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <label class="form-label" for="vid-titulo-anim-dur">Duración de la entrada (s)</label>
-                            <input type="number" class="form-control" id="vid-titulo-anim-dur" min="0.2" max="5"
-                                   step="0.1" value="1" inputmode="decimal">
+                        <div class="col-12" id="vid-texto-edit" hidden>
+                            <div class="form-label mt-1">Editar texto</div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="vid-txt-contenido">Contenido</label>
+                                    <textarea class="form-control" id="vid-txt-contenido" rows="2" maxlength="300"
+                                              placeholder="Ej.: Un día en Toledo" autocomplete="off"></textarea>
+                                </div>
+                                <div class="col-6 col-lg-4">
+                                    <label class="form-label" for="vid-txt-pos">Posición</label>
+                                    <select class="form-select" id="vid-txt-pos">
+                                        <option value="arriba-izquierda">Arriba a la izquierda</option>
+                                        <option value="arriba-derecha">Arriba a la derecha</option>
+                                        <option value="abajo-izquierda">Abajo a la izquierda</option>
+                                        <option value="abajo-derecha">Abajo a la derecha</option>
+                                        <option value="abajo-centro" selected>Abajo al centro</option>
+                                        <option value="personalizada">Personalizada (arrastra el texto)</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-lg-2">
+                                    <label class="form-label" for="vid-txt-tam">Tamaño (% del alto)</label>
+                                    <input type="number" class="form-control" id="vid-txt-tam" min="2" max="25"
+                                           step="1" value="7" inputmode="numeric">
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <label class="form-label" for="vid-txt-anim">Entrada</label>
+                                    <select class="form-select" id="vid-txt-anim">
+                                        <option value="ninguna">Ninguna (sin animación)</option>
+                                        <option value="aparecer">Aparecer (fundido)</option>
+                                        <option value="deslizar">Deslizar</option>
+                                        <option value="escribir">Escribir (máquina de escribir)</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <label class="form-label" for="vid-txt-anim-dur">Duración de la entrada (s)</label>
+                                    <input type="number" class="form-control" id="vid-txt-anim-dur" min="0.2" max="5"
+                                           step="0.1" value="1" inputmode="decimal">
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <label class="form-label" for="vid-txt-salida">Salida</label>
+                                    <select class="form-select" id="vid-txt-salida">
+                                        <option value="ninguna">Ninguna (desaparece)</option>
+                                        <option value="fundido">Fundido</option>
+                                        <option value="deslizar">Deslizar</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <label class="form-label" for="vid-txt-salida-dur">Duración de la salida (s)</label>
+                                    <input type="number" class="form-control" id="vid-txt-salida-dur" min="0.2" max="5"
+                                           step="0.1" value="0.5" inputmode="decimal">
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <label class="form-label" for="vid-txt-inicio">Aparece en (s)</label>
+                                    <input type="number" class="form-control" id="vid-txt-inicio" min="0" max="120"
+                                           step="0.1" value="0" inputmode="decimal">
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <label class="form-label" for="vid-txt-dur">Dura (s)</label>
+                                    <input type="number" class="form-control" id="vid-txt-dur" min="0" max="120"
+                                           step="0.1" value="0" inputmode="decimal">
+                                    <div class="form-text">0 = hasta el final del vídeo</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="vid-preview" id="vid-preview">
                         <canvas id="vid-lienzo" width="1080" height="1080" aria-label="Vista previa del vídeo"></canvas>
-                        <!-- F5b: manija de arrastre; solo cubre el texto, el resto del lienzo sigue moviendo la página -->
+                        <!-- F5b: manija de arrastre; solo cubre el texto seleccionado, el resto del lienzo sigue moviendo la página -->
                         <div class="vid-manija-titulo" id="vid-manija-titulo" hidden
-                             title="Arrastra para mover el título" aria-hidden="true"></div>
+                             title="Arrastra para mover el texto" aria-hidden="true"></div>
                         <!-- F5d: manija del contenido dentro de la plantilla Tet News -->
                         <div class="vid-manija-contenido" id="vid-manija-contenido" hidden
                              title="Arrastra para mover el contenido" aria-hidden="true"></div>
@@ -355,7 +395,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f5d"></script>
+    <script src="./public/js/video.js?v=f5e"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

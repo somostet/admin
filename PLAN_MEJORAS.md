@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅** · orden: F5e → F5f → F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅** · orden: F5f → F6 → F8 → F7 → E2 |
 
 ---
 
@@ -197,7 +197,7 @@ propia). Un commit por función.
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8;
 el 28/09, tras el feedback del usuario sobre las plantillas, F5 se extiende
 con F5d/F5e/F5f antes del audio):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e → F5f → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -265,10 +265,21 @@ con F5d/F5e/F5f antes del audio):
   Al activarla, si el ajuste era «cubrir» cambia a «contener». En `file://`
   la barra se sirve como data URL (`plantillas-data.js`, verificado 21 claves
   incluida la barra); `video.js` y `video.css` con `?v=f5d`.
-- **F5e · Lista de textos** (petición del usuario, antes del audio): sustituir
-  «Línea de título» por una lista de textos (título, descripción… los que
-  quieras), cada uno con tamaño, posición arrastrable, **animación de entrada
-  y animación de salida** (nueva), e inicio y duración propios.
+- **F5e · Lista de textos** ✅ (petición del usuario, antes del audio):
+  sustituye «Línea de título» por una lista de textos (título, descripción…
+  los que quieras) con filas de 44 px —nombre, ventana temporal y botones
+  subir/bajar/quitar— y panel de edición del seleccionado: contenido,
+  posición (presets + personalizada), tamaño, **animación de entrada
+  (fundido/deslizar/escribir) y animación de salida (fundido/deslizar, nueva)**,
+  «Aparece en (s)» y «Dura (s)» (0 = hasta el final). Cada texto se dibuja
+  solo dentro de su ventana, con entrada y salida combinadas (el fundido de
+  salida multiplica la alfa de entrada), y entra/sale por su propio borde. La
+  manija F5b mueve el texto seleccionado —arrastrar ⇒ posición personalizada—
+  y solo aparece mientras el texto se dibuja; al vaciar la lista se ocultan
+  editor y manija. E2E 36 comprobaciones (9 configuración/etiquetas/preview,
+  11 muestreo del MP4 en 6 instantes con la salida al 50 % ≈ punto medio,
+  8 manija+arrastre, 8 acciones de lista), consola 0, barrido 13/13;
+  `?v=f5e` en `video.html`, `video.js` y `video.css`.
 - **F5f · Riel de textos con cabezal**: riel de tiempo tipo editor bajo la
   vista previa con una barra por cada texto (mover inicio, estirar duración)
   y **cabezal con scrub** —al arrastrarlo la vista previa se pausa y muestra

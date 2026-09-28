@@ -194,6 +194,73 @@
     height: 44px;   /* el recorrido completo del input es zona de toque */
 }
 
+/* F5e · lista de textos (título, descripción…): filas de 44 px con nombre,
+   ventana temporal y acciones (subir/bajar/quitar) */
+.vid-textos {
+    border: 1px solid var(--sh-border);
+    border-radius: .55rem;
+    overflow: hidden;
+}
+
+.vid-texto-fila {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--sh-border);
+}
+
+.vid-texto-fila:last-child {
+    border-bottom: 0;
+}
+
+.vid-texto-fila.vid-texto-activa {
+    background: rgba(13, 202, 240, .16);
+}
+
+.vid-texto-sel {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .4rem .75rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.vid-texto-nombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vid-texto-tiempo {
+    flex: 0 0 auto;
+    font-size: .8rem;
+    opacity: .7;
+    white-space: nowrap;
+}
+
+.vid-texto-acciones {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.vid-texto-acciones button {
+    min-width: 44px;   /* objetivos táctiles */
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid var(--sh-border);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
 .vid-vacio {
     margin: 1rem 0;
     text-align: center;
