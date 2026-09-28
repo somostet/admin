@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5c plantilla de fondo ✅** · orden: F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅** · orden: F5e → F5f → F6 → F8 → F7 → E2 |
 
 ---
 
@@ -194,8 +194,10 @@ Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
 propia). Un commit por función.
 
-**Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8;
+el 28/09, tras el feedback del usuario sobre las plantillas, F5 se extiende
+con F5d/F5e/F5f antes del audio):
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e → F5f → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -250,14 +252,27 @@ propia). Un commit por función.
   en móvil). El centro se guarda en fracciones del lienzo —al cambiar de
   tamaño de salida el título queda en su sitio— y el texto nunca sale del
   lienzo; `?v=f5b` en `video.html`, `video.js` y `video.css`.
-- **F5c · Fondo con plantilla** (extra del usuario) ✅: select «Plantilla de
-  fondo» con las 9 imágenes de `public/img/Plantillas` que se dibujan en
-  `pintarFondo` (cover) encima del color y por debajo del contenido, en
-  imágenes y en vídeo y también en la grabación. Al elegir una, si el ajuste
-  era «cubrir» cambia a «contener» para que se vea. En `file://` se sirven
-  como data URL (`plantillas-data.js`, recién regenerado con
-  `miniaturaYouTube.png`) para no contaminar el lienzo; `video.js` con
-  `?v=f5c` y el script solo se carga en doble clic.
+- **F5c → F5d · Plantilla Tet News** (extra del usuario) ✅: el usuario pidió
+  sustituir el select de 9 plantillas por **una única plantilla que replica el
+  canvas de noticias** (`tet1.html`): interruptor «Tet News (noticias)» que
+  dibuja la barra `bars/tetnews.png` (1200×93 escalada al ancho) arriba y deja
+  el cuerpo de color (blanco por defecto). El vídeo/imagen vive **dentro del
+  cuerpo**: contain automático y centrado (como el canvas de imágenes),
+  **movible arrastrando** una manija cian sobre su caja (`touch-action:none`),
+  **ajustable** con el deslizador «Tamaño del contenido (%)» (30–300) y
+  **«Centrar contenido»** vuelve al automático; el dibujo se recorta al cuerpo
+  —la barra nunca queda tapada— y todo entra en imágenes, vídeo y grabación.
+  Al activarla, si el ajuste era «cubrir» cambia a «contener». En `file://`
+  la barra se sirve como data URL (`plantillas-data.js`, verificado 21 claves
+  incluida la barra); `video.js` y `video.css` con `?v=f5d`.
+- **F5e · Lista de textos** (petición del usuario, antes del audio): sustituir
+  «Línea de título» por una lista de textos (título, descripción… los que
+  quieras), cada uno con tamaño, posición arrastrable, **animación de entrada
+  y animación de salida** (nueva), e inicio y duración propios.
+- **F5f · Riel de textos con cabezal**: riel de tiempo tipo editor bajo la
+  vista previa con una barra por cada texto (mover inicio, estirar duración)
+  y **cabezal con scrub** —al arrastrarlo la vista previa se pausa y muestra
+  ese instante (fotograma en imágenes, seek en vídeo)—.
 - **F6 · Música de fondo**: audio subido → Web Audio → pista mezclada en el
   MP4/WebM (loop si es más corto); prueba obligatoria en iOS.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
@@ -270,8 +285,10 @@ propia). Un commit por función.
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
 propio (✅), el fix del primer fotograma (✅), **F4** (✅) y **F5** (✅, en
-tres commits: animaciones, título arrastrable y plantilla de fondo); el
-siguiente es **F6** y **E2** cierra el bloque.
+tres commits: animaciones, título arrastrable y plantilla Tet News —F5d,
+reemplazando el select de 9 plantillas—); antes del audio vienen **F5e**
+(lista de textos) y **F5f** (riel con cabezal), y después **F6** cierra la
+petición del usuario; **E2** cierra el bloque.
 
 ---
 

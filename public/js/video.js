@@ -45,8 +45,17 @@
     var selAjuste = document.getElementById('vid-ajuste');
     var selTrans = document.getElementById('vid-transicion');
     var inpFondo = document.getElementById('vid-fondo');
-    var selPlantilla = document.getElementById('vid-plantilla');   // F5c
-    var plantillaImg = null;   // F5c: Image de la plantilla elegida (null = sin plantilla)
+    var chkNews = document.getElementById('vid-news');                     // F5d
+    var inpEscContenido = document.getElementById('vid-contenido-esc');    // F5d
+    var btnCentrarContenido = document.getElementById('vid-contenido-centrar'); // F5d
+    var manijaContenido = document.getElementById('vid-manija-contenido'); // F5d
+    var noticiaActiva = false;   // F5d: plantilla Tet News activa
+    var contPos = null;          // F5d: centro del contenido en fracciones (null = automático)
+    var contEsc = 1;             // F5d: multiplicador del ajuste automático (1 = auto)
+    var cajaContenido = null;    // F5d: última caja dibujada del contenido
+    var contArrastrando = false; // F5d: puntero sobre la manija del contenido
+    var barraNews = new Image(); // F5d: barra «tet news» (1200×93)
+    var barraNewsLista = false;
     var vidTotal = document.getElementById('vid-total');
     var lienzo = document.getElementById('vid-lienzo');
     var ctx = lienzo.getContext('2d', { willReadFrequently: false });
@@ -602,93 +611,152 @@
     }
 
     /* ---------- dibujo (cover/contain sobre fondo) ---------- */
+    /* F5d · zona útil del dibujo: con la plantilla Tet News activa es el
+       cuerpo del canvas de noticias (debajo de la barra); sin ella, el lienzo
+       entero, igual que siempre. La barra mide lo mismo que en tet1.html:
+       la imagen 1200×93 escalada al ancho de la salida. */
+    var RUTA_BARRA_NEWS = './public/img/bars/tetnews.png';
+    var BARRA_RATIO = 93 / 1200;
+
+    function altoBarraNews() {
+        var bh = Math.round(lienzo.width * BARRA_RATIO);
+        if (bh >= lienzo.height) bh = Math.round(lienzo.height * 0.1);   // nunca invade todo
+        return bh;
+    }
+
+    function zonaDibujo() {
+        if (!noticiaActiva) return { x: 0, y: 0, w: lienzo.width, h: lienzo.height };
+        var barH = altoBarraNews();
+        return { x: 0, y: barH, w: lienzo.width, h: Math.max(1, lienzo.height - barH) };
+    }
+
     function pintarFondo() {
         ctx.fillStyle = inpFondo.value;
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
-        // F5c: la plantilla elegida se dibuja encima del color y cubre todo
-        // el lienzo (con el ajuste «contain» el contenido queda encima y se ve)
-        if (plantillaImg && plantillaImg.naturalWidth) {
-            var w = lienzo.width;
-            var h = lienzo.height;
-            var iw = plantillaImg.naturalWidth;
-            var ih = plantillaImg.naturalHeight;
-            var esc = Math.max(w / iw, h / ih);
-            ctx.drawImage(plantillaImg, (w - iw * esc) / 2, (h - ih * esc) / 2, iw * esc, ih * esc);
+        // F5d: plantilla Tet News = barra azul arriba + cuerpo de color
+        // (blanco por defecto, igual que el editor de noticias)
+        if (noticiaActiva && barraNewsLista && barraNews.naturalWidth) {
+            ctx.drawImage(barraNews, 0, 0, lienzo.width, altoBarraNews());
         }
     }
 
-    /* F5c · plantillas del proyecto como fondo de la salida */
+    /* F5d · la barra se sirve como data: URL en doble clic (mismo motivo que
+       F5c: evita el lienzo «tainted» que rompería grabación y descargas) */
+    function urlRecurso(ruta) {
+        return (location.protocol === 'file:' && window.TET_PLANTILLAS &&
+            window.TET_PLANTILLAS[ruta]) || ruta;
+    }
+
+    function cargarBarraNews() {
+        barraNews.onload = function () {
+            barraNewsLista = true;
+            repintarSuperp();
+        };
+        barraNews.onerror = function () {
+            barraNewsLista = false;
+            if (noticiaActiva) aviso('No se pudo cargar la barra de Tet News', 'danger');
+        };
+        barraNews.src = urlRecurso(RUTA_BARRA_NEWS);
+    }
+
     if (location.protocol === 'file:') {
         // en doble clic no hay servidor: los data: URL evitan el lienzo
         // «tainted», que rompería la grabación y las descargas
         var scPlantillas = document.createElement('script');
-        scPlantillas.src = './public/js/plantillas-data.js?v=f5c';
+        scPlantillas.src = './public/js/plantillas-data.js?v=f5d';
         scPlantillas.async = true;
+        scPlantillas.onload = cargarBarraNews;
+        scPlantillas.onerror = cargarBarraNews;
         document.head.appendChild(scPlantillas);
+    } else {
+        cargarBarraNews();
     }
 
-    selPlantilla.addEventListener('change', function () {
-        var ruta = selPlantilla.value;
-        if (!ruta) {
-            plantillaImg = null;
-            repintarSuperp();
-            return;
+    /* F5d · interruptor de la plantilla: el contenido pasa a vivir dentro del
+       cuerpo, contenido y centrado (como en el canvas de imágenes) */
+    chkNews.addEventListener('change', function () {
+        noticiaActiva = chkNews.checked;
+        inpEscContenido.disabled = !noticiaActiva;
+        btnCentrarContenido.disabled = !noticiaActiva;
+        inpEscContenido.value = String(Math.round(contEsc * 100));
+        if (noticiaActiva && selAjuste.value === 'cover') {
+            // cover recortaría los bordes del cuerpo: mejor contenerlo
+            selAjuste.value = 'contain';
+            aviso('Ajuste cambiado a «contener» para que se vea el contenido en la plantilla', 'info');
         }
-        var url = (location.protocol === 'file:' && window.TET_PLANTILLAS &&
-            window.TET_PLANTILLAS[ruta]) || ruta;
-        var im = new Image();
-        im.onload = function () {
-            plantillaImg = im;
-            if (selAjuste.value === 'cover') {
-                // si el contenido cubría el lienzo taparía la plantilla
-                selAjuste.value = 'contain';
-                aviso('Ajuste cambiado a «contener» para que se vea la plantilla', 'info');
-            }
-            repintarSuperp();
-        };
-        im.onerror = function () {
-            aviso('No se pudo cargar la plantilla', 'danger');
-        };
-        im.src = url;
+        repintarSuperp();
+        actualizaManijaContenido();
+    });
+
+    inpEscContenido.addEventListener('input', function () {
+        contEsc = (parseFloat(inpEscContenido.value) || 100) / 100;
+        redibujarArrastre();
+        actualizaManijaContenido();
+    });
+
+    btnCentrarContenido.addEventListener('click', function () {
+        contPos = null;                 // vuelve al centrado automático del cuerpo
+        contEsc = 1;
+        inpEscContenido.value = '100';
+        redibujarArrastre();
+        actualizaManijaContenido();
     });
 
     /* estilo «stories»: la propia imagen en cover, desenfocada, como fondo */
     function pintarDesenfado(img, alpha) {
         if (!soportaFilter) return;
+        var z = zonaDibujo();   // F5d: con Tet News, solo el cuerpo
         var w = lienzo.width;
         var h = lienzo.height;
         var iw = img.naturalWidth || img.videoWidth;   // el <video> trae videoWidth
         var ih = img.naturalHeight || img.videoHeight;
-        // 15% más grande que cover: el halo del desenfoque cae fuera del lienzo
-        var esc = Math.max(w / iw, h / ih) * 1.15;
+        // 15% más grande que cover: el halo del desenfoque cae fuera de la zona
+        var esc = Math.max(z.w / iw, z.h / ih) * 1.15;
         var dw = iw * esc;
         var dh = ih * esc;
         ctx.save();
+        if (noticiaActiva) {   // F5d: el contenido nunca tapa la barra
+            ctx.beginPath();
+            ctx.rect(z.x, z.y, z.w, z.h);
+            ctx.clip();
+        }
         ctx.filter = 'blur(' + Math.max(16, Math.round(Math.min(w, h) / 20)) + 'px)';
         if (alpha != null && alpha < 1) ctx.globalAlpha = alpha;
-        ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        ctx.drawImage(img, z.x + (z.w - dw) / 2, z.y + (z.h - dh) / 2, dw, dh);
         ctx.restore();
     }
 
     function dibujarCentrado(img, zoom, alpha, dx) {
         var w = lienzo.width;
         var h = lienzo.height;
+        var z = zonaDibujo();   // F5d: lienzo completo o cuerpo de Tet News
         var iw = img.naturalWidth || img.videoWidth;
         var ih = img.naturalHeight || img.videoHeight;
         var ajuste = selAjuste.value;
         var base = (ajuste === 'contain' || ajuste === 'blur')
-            ? Math.min(w / iw, h / ih)
-            : Math.max(w / iw, h / ih);
-        var dw = iw * base * (zoom || 1);
-        var dh = ih * base * (zoom || 1);
-        if (alpha != null && alpha < 1) {
-            ctx.save();
-            ctx.globalAlpha = alpha;
+            ? Math.min(z.w / iw, z.h / ih)
+            : Math.max(z.w / iw, z.h / ih);
+        var esc = noticiaActiva ? contEsc : 1;
+        var dw = iw * base * (zoom || 1) * esc;
+        var dh = ih * base * (zoom || 1) * esc;
+        var cx = z.x + z.w / 2;
+        var cy = z.y + z.h / 2;
+        if (noticiaActiva && contPos) {
+            // posición personalizada guardada en fracciones del lienzo
+            cx = contPos.x * w;
+            cy = contPos.y * h;
         }
-        ctx.drawImage(img, (w - dw) / 2 + (dx || 0), (h - dh) / 2, dw, dh);
-        if (alpha != null && alpha < 1) {
-            ctx.restore();
+        ctx.save();
+        if (noticiaActiva) {   // F5d: recortado al cuerpo: la barra queda limpia
+            ctx.beginPath();
+            ctx.rect(z.x, z.y, z.w, z.h);
+            ctx.clip();
         }
+        if (alpha != null && alpha < 1) ctx.globalAlpha = alpha;
+        ctx.drawImage(img, cx - dw / 2 + (dx || 0), cy - dh / 2, dw, dh);
+        ctx.restore();
+        // F5d: caja de reposo del contenido para situar la manija de arrastre
+        cajaContenido = { x: cx, y: cy, w: dw, h: dh };
     }
 
     function dibujar(img, zoom) {
@@ -803,6 +871,7 @@
             ctx.restore();
         }
         actualizaManija();   // F5b: coloca (o esconde) la manija sobre el texto
+        actualizaManijaContenido();   // F5d: idem para el contenido de Tet News
     }
 
     /* ---------- F2 · transiciones ---------- */
@@ -1027,6 +1096,7 @@
         if (grabando) return;
         reiniciarPreview();
         actualizaManija();   // F5b: la manija sigue al texto aunque no haya dibujo
+        actualizaManijaContenido();   // F5d: idem con el contenido de Tet News
     }
 
     /* ---------- F5b · título arrastrable (posición «personalizada») ---------- */
@@ -1077,6 +1147,64 @@
             try { manijaTitulo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
             redibujarArrastre();
             actualizaManija();
+        });
+    });
+
+    /* ---------- F5d · contenido arrastrable dentro de la plantilla Tet News ---------- */
+    /* La manija muestra la intersección de la caja del contenido con el cuerpo:
+       así se ve entera aunque el contenido se agrande y siempre se agarra la
+       parte visible. Como en F5b, cubre solo su caja y usa touch-action:none,
+       así que en móvil no roba el desplazamiento vertical de la página. */
+    function actualizaManijaContenido() {
+        var activa = noticiaActiva && !!cajaContenido &&
+            lienzo.style.display !== 'none' && (imagenes.length > 0 || videoCargado);
+        manijaContenido.hidden = !activa;
+        if (!activa) return;
+        var z = zonaDibujo();
+        var x0 = Math.max(cajaContenido.x - cajaContenido.w / 2, z.x);
+        var y0 = Math.max(cajaContenido.y - cajaContenido.h / 2, z.y);
+        var x1 = Math.min(cajaContenido.x + cajaContenido.w / 2, z.x + z.w);
+        var y1 = Math.min(cajaContenido.y + cajaContenido.h / 2, z.y + z.h);
+        if (x1 <= x0 || y1 <= y0) {
+            manijaContenido.hidden = true;
+            return;
+        }
+        var f = lienzo.clientWidth / lienzo.width;
+        var pad = 4;
+        manijaContenido.style.left = (lienzo.offsetLeft + x0 * f - pad) + 'px';
+        manijaContenido.style.top = (lienzo.offsetTop + y0 * f - pad) + 'px';
+        manijaContenido.style.width = ((x1 - x0) * f + pad * 2) + 'px';
+        manijaContenido.style.height = ((y1 - y0) * f + pad * 2) + 'px';
+    }
+
+    manijaContenido.addEventListener('pointerdown', function (e) {
+        if (!noticiaActiva || grabando) return;
+        contArrastrando = true;
+        try { manijaContenido.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+        e.preventDefault();
+    });
+    manijaContenido.addEventListener('pointermove', function (e) {
+        if (!contArrastrando) return;
+        var r = lienzo.getBoundingClientRect();
+        var z = zonaDibujo();
+        var x = (e.clientX - r.left) / r.width;
+        var y = (e.clientY - r.top) / r.height;
+        // el centro no puede salir del cuerpo de la plantilla
+        contPos = {
+            x: Math.max(0, Math.min(1, x)),
+            y: Math.max(z.y / lienzo.height,
+                Math.min((z.y + z.h) / lienzo.height, y))
+        };
+        redibujarArrastre();
+        actualizaManijaContenido();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+        manijaContenido.addEventListener(ev, function (e) {
+            if (!contArrastrando) return;
+            contArrastrando = false;
+            try { manijaContenido.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+            redibujarArrastre();
+            actualizaManijaContenido();
         });
     });
 

@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f5b">
+    <link rel="stylesheet" href="./public/css/video.css?v=f5d">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -180,22 +180,24 @@
                             <label class="form-label" for="vid-fondo">Fondo</label>
                             <input type="color" class="form-control form-control-color w-100" id="vid-fondo" value="#ffffff" title="Color de fondo">
                         </div>
+                        <!-- F5d · plantilla Tet News: única plantilla, replicando el
+                             canvas de noticias (barra + cuerpo) con el contenido dentro -->
                         <div class="col-12 col-lg-6">
-                            <label class="form-label" for="vid-plantilla">Plantilla de fondo</label>
-                            <select class="form-select" id="vid-plantilla">
-                                <option value="">Ninguna (solo color)</option>
-                                <optgroup label="Plantillas del proyecto">
-                                    <option value="./public/img/Plantillas/mh.png">mh</option>
-                                    <option value="./public/img/Plantillas/miniaturaYouTube.png">Miniatura de YouTube</option>
-                                    <option value="./public/img/Plantillas/tet1/TBtet.png">TBtet</option>
-                                    <option value="./public/img/Plantillas/tet1/TBtet2.png">TBtet 2</option>
-                                    <option value="./public/img/Plantillas/tet1/creadores.png">Creadores</option>
-                                    <option value="./public/img/Plantillas/tet2/P_GNU_LINUX.png">Plantilla tet · GNU/Linux</option>
-                                    <option value="./public/img/Plantillas/tet2/P_html.png">Plantilla tet · HTML</option>
-                                    <option value="./public/img/Plantillas/tet2/P_css.png">Plantilla tet · CSS</option>
-                                    <option value="./public/img/Plantillas/tet2/P_js.png">Plantilla tet · JavaScript</option>
-                                </optgroup>
-                            </select>
+                            <div class="form-label">Plantilla</div>
+                            <div class="form-check form-switch vid-news-fila">
+                                <input class="form-check-input" type="checkbox" id="vid-news" role="switch">
+                                <label class="form-check-label" for="vid-news">Tet News (noticias)</label>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <label class="form-label" for="vid-contenido-esc">Tamaño del contenido (%)</label>
+                            <input type="range" class="form-range" id="vid-contenido-esc"
+                                   min="30" max="300" step="5" value="100" disabled>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="vid-contenido-centrar" disabled>
+                                <i class="fas fa-crosshairs" aria-hidden="true"></i> Centrar contenido
+                            </button>
                         </div>
                     </div>
                     <div class="form-text mt-2" id="vid-total"></div>
@@ -274,6 +276,9 @@
                         <!-- F5b: manija de arrastre; solo cubre el texto, el resto del lienzo sigue moviendo la página -->
                         <div class="vid-manija-titulo" id="vid-manija-titulo" hidden
                              title="Arrastra para mover el título" aria-hidden="true"></div>
+                        <!-- F5d: manija del contenido dentro de la plantilla Tet News -->
+                        <div class="vid-manija-contenido" id="vid-manija-contenido" hidden
+                             title="Arrastra para mover el contenido" aria-hidden="true"></div>
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
                     </div>
 
@@ -350,7 +355,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f5c"></script>
+    <script src="./public/js/video.js?v=f5d"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

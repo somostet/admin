@@ -160,7 +160,9 @@
 /* F5b · manija para arrastrar el título en la posición «personalizada»:
    cubre SOLO la caja del texto y con touch-action:none —el resto del lienzo
    sigue desplazando la página con normalidad en móvil */
-.vid-manija-titulo {
+/* F5d · la manija del contenido (plantilla Tet News) reutiliza las mismas reglas */
+.vid-manija-titulo,
+.vid-manija-contenido {
     position: absolute;
     z-index: 2;
     box-sizing: border-box;
@@ -171,8 +173,25 @@
     touch-action: none;
 }
 
-.vid-manija-titulo:active {
+.vid-manija-contenido {
+    border-color: rgba(13, 202, 240, .9);   /* cian para distinguirla del título */
+    background: rgba(13, 202, 240, .08);
+}
+
+.vid-manija-titulo:active,
+.vid-manija-contenido:active {
     cursor: grabbing;
+}
+
+/* F5d · controles de la plantilla Tet News: filas de 44px para el dedo */
+.vid-news-fila {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+#vid-contenido-esc {
+    height: 44px;   /* el recorrido completo del input es zona de toque */
 }
 
 .vid-vacio {
