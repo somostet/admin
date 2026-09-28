@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f4">
+    <link rel="stylesheet" href="./public/css/video.css?v=f5b">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -228,6 +228,7 @@
                                 <option value="abajo-izquierda">Abajo a la izquierda</option>
                                 <option value="abajo-derecha">Abajo a la derecha</option>
                                 <option value="abajo-centro" selected>Abajo al centro</option>
+                                <option value="personalizada">Personalizada (arrastra el texto)</option>
                             </select>
                         </div>
                         <div class="col-6 col-lg-3">
@@ -253,6 +254,9 @@
 
                     <div class="vid-preview" id="vid-preview">
                         <canvas id="vid-lienzo" width="1080" height="1080" aria-label="Vista previa del vídeo"></canvas>
+                        <!-- F5b: manija de arrastre; solo cubre el texto, el resto del lienzo sigue moviendo la página -->
+                        <div class="vid-manija-titulo" id="vid-manija-titulo" hidden
+                             title="Arrastra para mover el título" aria-hidden="true"></div>
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
                     </div>
 
@@ -329,7 +333,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f5"></script>
+    <script src="./public/js/video.js?v=f5b"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

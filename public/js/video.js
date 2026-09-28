@@ -91,6 +91,11 @@
     var supTituloTam = document.getElementById('vid-titulo-tam');
     var supTituloAnim = document.getElementById('vid-titulo-anim');
     var supTituloAnimDur = document.getElementById('vid-titulo-anim-dur');
+    var manijaTitulo = document.getElementById('vid-manija-titulo');   // F5b
+    var tituloXY = { x: 0.5, y: 0.9 };   // F5b: centro del título en fracciones del lienzo
+    var cajaTitulo = null;               // F5b: última caja dibujada (coords lógicas)
+    var manijaArrastrando = false;       // F5b: puntero sobre la manija
+    var tUltimo = 0;                     // F5b: último instante dibujado en modo imágenes
     var logoImg = null;    // Image del logo cargado (null = sin logo)
     var logoUrl = null;    // blob URL del logo para poder revocarlo
 
@@ -711,6 +716,7 @@
             if (tw > maxW && tw > 0) {
                 fs = Math.max(10, Math.round(fs * maxW / tw));
                 ctx.font = '700 ' + fs + 'px ' + fuente;
+                tw = ctx.measureText(txt).width;   // F5b: ancho real tras encoger
             }
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#fff';
@@ -720,7 +726,14 @@
             var tp = supTituloPos.value;
             var tx;
             var ty;
-            if (tp === 'abajo-centro') {
+            if (tp === 'personalizada') {
+                ctx.textAlign = 'center';
+                tx = tituloXY.x * w;
+                ty = tituloXY.y * h;
+                // F5b: el texto siempre cabe por completo dentro del lienzo
+                tx = Math.max(tw / 2, Math.min(w - tw / 2, tx));
+                ty = Math.max(fs / 2, Math.min(h - fs / 2, ty));
+            } else if (tp === 'abajo-centro') {
                 ctx.textAlign = 'center';
                 tx = w / 2;
                 ty = h - margen - fs / 2;
@@ -729,6 +742,8 @@
                 tx = (ctx.textAlign === 'left') ? margen : w - margen;
                 ty = (tp.indexOf('arriba') === 0) ? margen + fs / 2 : h - margen - fs / 2;
             }
+            // F5b: caja de reposo del texto para situar la manija de arrastre
+            cajaTitulo = { x: tx, y: ty, w: tw, h: fs * 1.2 };
             if (anim === 'aparecer') {
                 ctx.globalAlpha = p;                 // fundido de entrada
             } else if (anim === 'deslizar' && p < 1) {
@@ -740,6 +755,7 @@
             ctx.fillText(txt, tx, ty);
             ctx.restore();
         }
+        actualizaManija();   // F5b: coloca (o esconde) la manija sobre el texto
     }
 
     /* ---------- F2 · transiciones ---------- */
@@ -761,6 +777,7 @@
     /* Fotograma en el instante t (ms): el MISMO dibujo sirve para la vista
        previa y para la grabación (las dos van contra un reloj). */
     function dibujarEn(t, durMs) {
+        tUltimo = t;   // F5b: lo guarda para redibujar durante el arrastre
         var n = imagenes.length;
         var modo = selTrans.value;
         var idx = Math.floor(t / durMs);
@@ -962,7 +979,59 @@
     function repintarSuperp() {
         if (grabando) return;
         reiniciarPreview();
+        actualizaManija();   // F5b: la manija sigue al texto aunque no haya dibujo
     }
+
+    /* ---------- F5b · título arrastrable (posición «personalizada») ---------- */
+    /* La manija cubre solo la caja del texto y usa touch-action:none, así que
+       el arrastre no roba el desplazamiento vertical de la página en móvil.
+       El centro se guarda en fracciones del lienzo: al cambiar de tamaño de
+       salida el título queda en su sitio. */
+    function actualizaManija() {
+        var activa = supTituloPos.value === 'personalizada' && !!supTitulo.value.trim() &&
+            lienzo.style.display !== 'none' && !!cajaTitulo;
+        manijaTitulo.hidden = !activa;
+        if (!activa) return;
+        var f = lienzo.clientWidth / lienzo.width;
+        var pad = 4;
+        manijaTitulo.style.left = (lienzo.offsetLeft + (cajaTitulo.x - cajaTitulo.w / 2) * f - pad) + 'px';
+        manijaTitulo.style.top = (lienzo.offsetTop + (cajaTitulo.y - cajaTitulo.h / 2) * f - pad) + 'px';
+        manijaTitulo.style.width = (cajaTitulo.w * f + pad * 2) + 'px';
+        manijaTitulo.style.height = (cajaTitulo.h * f + pad * 2) + 'px';
+    }
+
+    function redibujarArrastre() {
+        if (grabando) return;
+        if (videoCargado) { dibujarFrame(vidFuente); return; }
+        if (!imagenes.length) return;
+        var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
+            Math.round(calculoDuracion().porImagen * 1000));
+        dibujarEn(tUltimo, durMs);   // mantiene el instante de la animación
+    }
+
+    manijaTitulo.addEventListener('pointerdown', function (e) {
+        if (supTituloPos.value !== 'personalizada' || grabando) return;
+        manijaArrastrando = true;
+        try { manijaTitulo.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+        e.preventDefault();
+    });
+    manijaTitulo.addEventListener('pointermove', function (e) {
+        if (!manijaArrastrando) return;
+        var r = lienzo.getBoundingClientRect();
+        tituloXY.x = Math.max(0.05, Math.min(0.95, (e.clientX - r.left) / r.width));
+        tituloXY.y = Math.max(0.05, Math.min(0.95, (e.clientY - r.top) / r.height));
+        redibujarArrastre();
+        actualizaManija();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+        manijaTitulo.addEventListener(ev, function (e) {
+            if (!manijaArrastrando) return;
+            manijaArrastrando = false;
+            try { manijaTitulo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+            redibujarArrastre();
+            actualizaManija();
+        });
+    });
 
     supLogoArchivo.addEventListener('change', function () {
         var f = supLogoArchivo.files && supLogoArchivo.files[0];
@@ -996,7 +1065,12 @@
     });
 
     [supLogoPos, supLogoTam, supTituloPos, supTituloTam, supTituloAnim, supTituloAnimDur].forEach(function (el) {
-        el.addEventListener('change', repintarSuperp);
+        el.addEventListener('change', function () {
+            repintarSuperp();
+            if (el === supTituloPos && supTituloPos.value === 'personalizada') {
+                aviso('Arrastra el texto en la vista previa para colocarlo donde quieras', 'info');
+            }
+        });
     });
     supTitulo.addEventListener('input', repintarSuperp);
 
