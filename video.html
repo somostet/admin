@@ -180,6 +180,23 @@
                             <label class="form-label" for="vid-fondo">Fondo</label>
                             <input type="color" class="form-control form-control-color w-100" id="vid-fondo" value="#ffffff" title="Color de fondo">
                         </div>
+                        <div class="col-12 col-lg-6">
+                            <label class="form-label" for="vid-plantilla">Plantilla de fondo</label>
+                            <select class="form-select" id="vid-plantilla">
+                                <option value="">Ninguna (solo color)</option>
+                                <optgroup label="Plantillas del proyecto">
+                                    <option value="./public/img/Plantillas/mh.png">mh</option>
+                                    <option value="./public/img/Plantillas/miniaturaYouTube.png">Miniatura de YouTube</option>
+                                    <option value="./public/img/Plantillas/tet1/TBtet.png">TBtet</option>
+                                    <option value="./public/img/Plantillas/tet1/TBtet2.png">TBtet 2</option>
+                                    <option value="./public/img/Plantillas/tet1/creadores.png">Creadores</option>
+                                    <option value="./public/img/Plantillas/tet2/P_GNU_LINUX.png">Plantilla tet · GNU/Linux</option>
+                                    <option value="./public/img/Plantillas/tet2/P_html.png">Plantilla tet · HTML</option>
+                                    <option value="./public/img/Plantillas/tet2/P_css.png">Plantilla tet · CSS</option>
+                                    <option value="./public/img/Plantillas/tet2/P_js.png">Plantilla tet · JavaScript</option>
+                                </optgroup>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-text mt-2" id="vid-total"></div>
 
@@ -333,7 +350,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f5b"></script>
+    <script src="./public/js/video.js?v=f5c"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

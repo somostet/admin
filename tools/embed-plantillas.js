@@ -30,6 +30,7 @@ var plantillas = [
     './public/img/Plantillas/tet1/TBtet2.png',
     './public/img/Plantillas/tet1/creadores.png',
     './public/img/Plantillas/mh.png',
+    './public/img/Plantillas/miniaturaYouTube.png',
     './public/img/Plantillas/tet2/P_GNU_LINUX.png',
     './public/img/Plantillas/tet2/P_html.png',
     './public/img/Plantillas/tet2/P_css.png',

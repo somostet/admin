@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅** · orden: F5c → F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5c plantilla de fondo ✅** · orden: F6 → F8 → F7 → E2 |
 
 ---
 
@@ -195,8 +195,7 @@ Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
 propia). Un commit por función.
 
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 (animaciones ✅ → F5b título arrastrable ✅ →
-F5c plantilla de fondo) → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -251,8 +250,14 @@ F5c plantilla de fondo) → F6 → F8 → F7 → E2**. La lista de abajo va por 
   en móvil). El centro se guarda en fracciones del lienzo —al cambiar de
   tamaño de salida el título queda en su sitio— y el texto nunca sale del
   lienzo; `?v=f5b` en `video.html`, `video.js` y `video.css`.
-- **F5c · Fondo con plantilla** (extra del usuario): usar las imágenes de
-  `public/img/Plantillas` como base del vídeo. ⬜
+- **F5c · Fondo con plantilla** (extra del usuario) ✅: select «Plantilla de
+  fondo» con las 9 imágenes de `public/img/Plantillas` que se dibujan en
+  `pintarFondo` (cover) encima del color y por debajo del contenido, en
+  imágenes y en vídeo y también en la grabación. Al elegir una, si el ajuste
+  era «cubrir» cambia a «contener» para que se vea. En `file://` se sirven
+  como data URL (`plantillas-data.js`, recién regenerado con
+  `miniaturaYouTube.png`) para no contaminar el lienzo; `video.js` con
+  `?v=f5c` y el script solo se carga en doble clic.
 - **F6 · Música de fondo**: audio subido → Web Audio → pista mezclada en el
   MP4/WebM (loop si es más corto); prueba obligatoria en iOS.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
@@ -264,8 +269,9 @@ F5c plantilla de fondo) → F6 → F8 → F7 → E2**. La lista de abajo va por 
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
-propio (✅), el fix del primer fotograma (✅) y **F4** (✅); el siguiente es
-**F5** y **E2** cierra el bloque.
+propio (✅), el fix del primer fotograma (✅), **F4** (✅) y **F5** (✅, en
+tres commits: animaciones, título arrastrable y plantilla de fondo); el
+siguiente es **F6** y **E2** cierra el bloque.
 
 ---
 

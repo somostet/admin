@@ -45,6 +45,8 @@
     var selAjuste = document.getElementById('vid-ajuste');
     var selTrans = document.getElementById('vid-transicion');
     var inpFondo = document.getElementById('vid-fondo');
+    var selPlantilla = document.getElementById('vid-plantilla');   // F5c
+    var plantillaImg = null;   // F5c: Image de la plantilla elegida (null = sin plantilla)
     var vidTotal = document.getElementById('vid-total');
     var lienzo = document.getElementById('vid-lienzo');
     var ctx = lienzo.getContext('2d', { willReadFrequently: false });
@@ -603,7 +605,52 @@
     function pintarFondo() {
         ctx.fillStyle = inpFondo.value;
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+        // F5c: la plantilla elegida se dibuja encima del color y cubre todo
+        // el lienzo (con el ajuste «contain» el contenido queda encima y se ve)
+        if (plantillaImg && plantillaImg.naturalWidth) {
+            var w = lienzo.width;
+            var h = lienzo.height;
+            var iw = plantillaImg.naturalWidth;
+            var ih = plantillaImg.naturalHeight;
+            var esc = Math.max(w / iw, h / ih);
+            ctx.drawImage(plantillaImg, (w - iw * esc) / 2, (h - ih * esc) / 2, iw * esc, ih * esc);
+        }
     }
+
+    /* F5c · plantillas del proyecto como fondo de la salida */
+    if (location.protocol === 'file:') {
+        // en doble clic no hay servidor: los data: URL evitan el lienzo
+        // «tainted», que rompería la grabación y las descargas
+        var scPlantillas = document.createElement('script');
+        scPlantillas.src = './public/js/plantillas-data.js?v=f5c';
+        scPlantillas.async = true;
+        document.head.appendChild(scPlantillas);
+    }
+
+    selPlantilla.addEventListener('change', function () {
+        var ruta = selPlantilla.value;
+        if (!ruta) {
+            plantillaImg = null;
+            repintarSuperp();
+            return;
+        }
+        var url = (location.protocol === 'file:' && window.TET_PLANTILLAS &&
+            window.TET_PLANTILLAS[ruta]) || ruta;
+        var im = new Image();
+        im.onload = function () {
+            plantillaImg = im;
+            if (selAjuste.value === 'cover') {
+                // si el contenido cubría el lienzo taparía la plantilla
+                selAjuste.value = 'contain';
+                aviso('Ajuste cambiado a «contener» para que se vea la plantilla', 'info');
+            }
+            repintarSuperp();
+        };
+        im.onerror = function () {
+            aviso('No se pudo cargar la plantilla', 'danger');
+        };
+        im.src = url;
+    });
 
     /* estilo «stories»: la propia imagen en cover, desenfocada, como fondo */
     function pintarDesenfado(img, alpha) {
