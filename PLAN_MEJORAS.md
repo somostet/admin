@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅** · orden: F5f → F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅** · orden: F6 → F8 → F7 → E2 |
 
 ---
 
@@ -197,7 +197,7 @@ propia). Un commit por función.
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8;
 el 28/09, tras el feedback del usuario sobre las plantillas, F5 se extiende
 con F5d/F5e/F5f antes del audio):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f ✅ → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -280,10 +280,23 @@ con F5d/F5e/F5f antes del audio):
   11 muestreo del MP4 en 6 instantes con la salida al 50 % ≈ punto medio,
   8 manija+arrastre, 8 acciones de lista), consola 0, barrido 13/13;
   `?v=f5e` en `video.html`, `video.js` y `video.css`.
-- **F5f · Riel de textos con cabezal**: riel de tiempo tipo editor bajo la
-  vista previa con una barra por cada texto (mover inicio, estirar duración)
-  y **cabezal con scrub** —al arrastrarlo la vista previa se pausa y muestra
-  ese instante (fotograma en imágenes, seek en vídeo)—.
+- **F5f · Riel de textos con cabezal** ✅ (petición del usuario, «como en los
+  editores de vídeo»): bloque «Línea de tiempo» bajo la vista previa (oculto
+  sin contenido) con una **barra por texto** —el cuerpo arrastra el inicio
+  (con «dur = 0» el fin queda clavado al final), el tirador izquierdo recorta
+  el inicio con el fin fijo y el derecho estira la duración (arrancar un
+  «dur = 0» la fija explícita)—, clic sobre la barra ⇒ selección sincronizada
+  con lista y editor, y **teclado** (flechas ±0,1 s, mayús ±1 s) que además
+  sincroniza los inputs. **Regla** con marcas proporcionales al total (imágenes
+  o recorte de vídeo) y **cabezal con chip de tiempo**: al arrastrarlo la vista
+  previa se pausa y muestra ese instante —fotograma en imágenes, `seek` en
+  vídeo, reanudando después el estado de reproducción previo—, y al soltar el
+  bucle continúa **desde el cabezal**; mientras reproduce, el cabezal lo sigue
+  (y se recoloca con `actualizaCrear` cuando cambia el total). E2E 27
+  comprobaciones (9 estructura/arrastres/tiradores/teclado, 9 scrub en
+  imágenes con pausa y reaparición del texto, 9 en vídeo con webm
+  sintetizado de 4 s), consola 0, barrido 13/13; `?v=f5f` en `video.html`,
+  `video.js` y `video.css`.
 - **F6 · Música de fondo**: audio subido → Web Audio → pista mezclada en el
   MP4/WebM (loop si es más corto); prueba obligatoria en iOS.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual

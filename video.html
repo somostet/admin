@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f5e">
+    <link rel="stylesheet" href="./public/css/video.css?v=f5f">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -322,6 +322,23 @@
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
                     </div>
 
+                    <!-- F5f · riel de la línea de tiempo de salida: una barra por
+                         texto (mover inicio, estirar duración) + cabezal con scrub -->
+                    <div class="mt-3" id="vid-riel-salida-wrap" hidden>
+                        <div class="form-label">Línea de tiempo</div>
+                        <div class="vid-riel-salida" id="vid-riel-salida" role="group"
+                             aria-label="Línea de tiempo: arrastra las barras de cada texto y toca para mover el cabezal">
+                            <div class="vid-riel-salida-regla" id="vid-riel-salida-regla"
+                                 data-riel-salida="pista"></div>
+                            <div class="vid-riel-salida-filas" id="vid-riel-salida-filas"></div>
+                            <div class="vid-riel-salida-cabezal" id="vid-riel-salida-cabezal"
+                                 data-riel-salida="cabezal" aria-hidden="true"></div>
+                            <div class="vid-riel-salida-chip" id="vid-riel-salida-chip" aria-hidden="true">0 s</div>
+                        </div>
+                        <p class="form-text mb-0">Arrastra cada barra para decidir cuándo aparece cada texto —los
+                            bordes recortan inicio y duración— y toca el riel para navegar con el cabezal.</p>
+                    </div>
+
                     <div class="vid-progreso" id="vid-progreso" hidden>
                         <div class="progress" role="progressbar" aria-label="Grabando el vídeo" aria-valuemin="0" aria-valuemax="100">
                             <div class="progress-bar" id="vid-barra" style="width: 0%">0%</div>
@@ -395,7 +412,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f5e"></script>
+    <script src="./public/js/video.js?v=f5f"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

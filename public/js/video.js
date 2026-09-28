@@ -115,6 +115,18 @@
     var manijaTitulo = document.getElementById('vid-manija-titulo');   // F5b/F5e
     var manijaArrastrando = false;       // F5b: puntero sobre la manija
     var tUltimo = 0;                     // F5b: último instante dibujado en modo imágenes
+    /* F5f · riel de la línea de tiempo de salida */
+    var rielSalWrap = document.getElementById('vid-riel-salida-wrap');
+    var rielSal = document.getElementById('vid-riel-salida');
+    var rielSalRegla = document.getElementById('vid-riel-salida-regla');
+    var rielSalFilas = document.getElementById('vid-riel-salida-filas');
+    var rielSalCabezal = document.getElementById('vid-riel-salida-cabezal');
+    var rielSalChip = document.getElementById('vid-riel-salida-chip');
+    var rielSalArrastre = null;   // 'cabezal' | { tipo: 'barra'|'ini'|'fin', i, x0, inicio0, dur0 }
+    var rielSalScrub = false;     // el cabezal se está arrastrando (pausa la previa)
+    var rielSalUltimoMs = 0;      // último instante mostrado (para recolocar el cabezal)
+    var previewFase = 0;          // ms desde los que sigue el bucle tras un scrub
+    var scrubVideoPausa = null;   // estado de reproducción del vídeo antes del scrub
     var logoImg = null;    // Image del logo cargado (null = sin logo)
     var logoUrl = null;    // blob URL del logo para poder revocarlo
 
@@ -503,6 +515,279 @@
         });
     });
 
+    /* ---------- F5f · riel de la línea de tiempo de salida ---------- */
+    /* Mapea el tiempo de salida (0..total): en vídeo es el recorte, en
+       imágenes la duración total. Una barra por texto + cabezal con scrub. */
+    function totalSalida() {
+        if (videoCargado) {
+            var rr = rangoRecorte();
+            return Math.max(0.2, rr.fin - rr.inicio);
+        }
+        return Math.max(0.5, calculoDuracion().total);
+    }
+
+    function poneCabezalSalida(ms) {
+        if (!rielSalCabezal) return;   // refs aún no asignadas (eval inicial)
+        var total = totalSalida();
+        if (!(total > 0)) return;
+        if (!(ms >= 0) || !isFinite(ms)) ms = 0;
+        rielSalUltimoMs = ms;
+        var p = Math.max(0, Math.min(100, ms / 1000 / total * 100));
+        var izq = p + '%';
+        if (rielSalCabezal.style.left !== izq) rielSalCabezal.style.left = izq;
+        var chipP = Math.max(6, Math.min(94, p)) + '%';   // el chip nunca sale del riel
+        if (rielSalChip.style.left !== chipP) rielSalChip.style.left = chipP;
+        var txt = fmtSeg(Math.min(ms / 1000, total)) + ' s';
+        if (rielSalChip.textContent !== txt) rielSalChip.textContent = txt;
+    }
+
+    /* el scrub pausa la vista previa y muestra el instante pedido */
+    function iniciaScrub() {
+        if (rielSalScrub) return;
+        rielSalScrub = true;
+        if (videoCargado) {
+            scrubVideoPausa = vidFuente.paused;
+            try { vidFuente.pause(); } catch (e) { }
+        } else {
+            detenerPreview();
+        }
+    }
+
+    function muestraInstante(tMs) {
+        var total = totalSalida();
+        tMs = Math.max(0, Math.min(Math.max(0, total - 0.01) * 1000, tMs));
+        poneCabezalSalida(tMs);
+        if (videoCargado) {
+            var rr = rangoRecorte();
+            var destino = Math.max(rr.inicio, Math.min(rr.fin, rr.inicio + tMs / 1000));
+            if (Math.abs((vidFuente.currentTime || 0) - destino) > 0.03) {
+                try { vidFuente.currentTime = destino; } catch (e) { }
+            }
+            marcoSucio = true;
+            arrancarPreviewVideo();   // dibuja el fotograma en pausa (marcoSucio)
+        } else if (imagenes.length) {
+            dibujarEn(tMs, durMsPorImagen());
+        }
+    }
+
+    function finScrub() {
+        rielSalScrub = false;
+        if (videoCargado) {
+            if (scrubVideoPausa === false) {
+                var p = vidFuente.play();
+                if (p && p.catch) p.catch(function () { });
+            } else {
+                marcoSucio = true;
+                arrancarPreviewVideo();
+            }
+            scrubVideoPausa = null;
+        } else if (previewNecesitaLoop()) {
+            previewFase = rielSalUltimoMs;   // el bucle sigue desde el cabezal
+            reiniciarPreview();
+        }
+        /* sin bucle (imagen única sin animación): se queda el fotograma rascado */
+    }
+
+    /* aplica inicio/duración de una barra con los mismos límites que los
+       arrastres: dur = 0 significa «hasta el final» */
+    function aplicaBarra(i, inicio, dur, total) {
+        var t = textos[i];
+        if (!t) return;
+        inicio = Math.round(inicio * 10) / 10;
+        if (dur > 0) {
+            dur = Math.round(dur * 10) / 10;
+            inicio = Math.max(0, Math.min(Math.max(0, total - dur), inicio));
+            dur = Math.max(0.2, Math.min(Math.max(0.2, total - inicio), dur));
+            t.inicio = inicio;
+            t.dur = dur;
+        } else {
+            t.dur = 0;
+            t.inicio = Math.max(0, Math.min(Math.max(0, total - 0.2), inicio));
+        }
+    }
+
+    function posicionaBarra(barra, t, total) {
+        var ini = Math.max(0, t.inicio || 0);
+        var fin = t.dur > 0 ? Math.min(ini + t.dur, total) : total;
+        barra.style.left = (total > 0 ? ini / total * 100 : 0) + '%';
+        barra.style.width = (total > 0 ? Math.max(0, fin - ini) / total * 100 : 0) + '%';
+    }
+
+    /* refresco en caliente durante un arrastre: sin reconstruir el DOM
+       (destruiría el nodo que se está arrastrando) */
+    function refrescaBarra(i) {
+        var t = textos[i];
+        if (!t) return;
+        var total = totalSalida();
+        var barra = rielSalFilas.querySelector('.vid-riel-barra[data-i="' + i + '"]');
+        if (barra) {
+            posicionaBarra(barra, t, total);
+            barra.setAttribute('aria-valuenow', fmt(t.inicio));
+        }
+        var fila = listaTextos.querySelectorAll('.vid-texto-fila')[i];
+        if (fila) {
+            var hora = fila.querySelector('.vid-texto-tiempo');
+            if (hora) hora.textContent = etiquetaTiempo(t);
+        }
+        if (i === textoSel) {   // los inputs del editor siguen el arrastre
+            inpTxtInicio.value = String(t.inicio);
+            inpTxtDur.value = String(t.dur);
+        }
+    }
+
+    function pintaRielSalida() {
+        if (!rielSalFilas) return;
+        var total = totalSalida();
+        /* regla: marcas cada «paso» bonito sin pasarse de ~8 etiquetas */
+        rielSalRegla.textContent = '';
+        if (total > 0) {
+            var pasos = [0.5, 1, 2, 5, 10, 15, 30, 60];
+            var paso = pasos[pasos.length - 1];
+            for (var ip = 0; ip < pasos.length; ip++) {
+                if (total / pasos[ip] <= 8) { paso = pasos[ip]; break; }
+            }
+            for (var tt = 0; tt < total - 0.001; tt += paso) {
+                var tick = document.createElement('span');
+                tick.className = 'vid-riel-salida-tick';
+                tick.style.left = (tt / total * 100) + '%';
+                tick.textContent = fmtSeg(tt);
+                rielSalRegla.appendChild(tick);
+            }
+        }
+        /* una fila por texto, con su barra y sus tiradores */
+        rielSalFilas.textContent = '';
+        textos.forEach(function (t, i) {
+            var fila = document.createElement('div');
+            fila.className = 'vid-riel-fila' + (i === textoSel ? ' vid-riel-fila-activa' : '');
+            fila.setAttribute('data-riel-salida', 'pista');
+            var barra = document.createElement('div');
+            barra.className = 'vid-riel-barra';
+            barra.setAttribute('data-riel-salida', 'barra');
+            barra.setAttribute('data-i', String(i));
+            barra.setAttribute('tabindex', '0');
+            barra.setAttribute('role', 'slider');
+            barra.setAttribute('aria-valuemin', '0');
+            barra.setAttribute('aria-valuemax', fmt(total));
+            barra.setAttribute('aria-valuenow', fmt(t.inicio));
+            barra.setAttribute('aria-label', 'Barra de ' + (t.txt.trim() || 'texto vacío') +
+                ': flechas para mover cuándo aparece');
+            posicionaBarra(barra, t, total);
+            var etiqueta = document.createElement('span');
+            etiqueta.className = 'vid-riel-barra-txt';
+            etiqueta.textContent = t.txt.trim() || '(sin texto)';
+            var tIni = document.createElement('span');
+            tIni.className = 'vid-riel-barra-tir vid-riel-barra-tir-ini';
+            tIni.setAttribute('data-riel-salida', 'ini');
+            tIni.setAttribute('data-i', String(i));
+            var tFin = document.createElement('span');
+            tFin.className = 'vid-riel-barra-tir vid-riel-barra-tir-fin';
+            tFin.setAttribute('data-riel-salida', 'fin');
+            tFin.setAttribute('data-i', String(i));
+            barra.appendChild(tIni);
+            barra.appendChild(etiqueta);
+            barra.appendChild(tFin);
+            fila.appendChild(barra);
+            rielSalFilas.appendChild(fila);
+        });
+        poneCabezalSalida(rielSalUltimoMs);
+    }
+
+    function rielSalPct(e) {
+        var r = rielSal.getBoundingClientRect();
+        if (!r.width) return 0;
+        return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    }
+
+    function rielSalEmpezar(e) {
+        if (grabando) return;
+        var diana = (e.target && e.target.closest) ? e.target.closest('[data-riel-salida]') : null;
+        if (!diana) return;
+        var tipo = diana.getAttribute('data-riel-salida');
+        if (tipo === 'pista' || tipo === 'cabezal') {
+            rielSalArrastre = 'cabezal';
+            iniciaScrub();
+        } else {
+            var i = parseInt(diana.getAttribute('data-i'), 10);
+            var t = textos[i];
+            if (!t) return;
+            rielSalArrastre = { tipo: tipo, i: i, x0: e.clientX, inicio0: t.inicio, dur0: t.dur };
+            seleccionaTexto(i);   // la lista y el editor siguen a la barra
+        }
+        try { rielSal.setPointerCapture(e.pointerId); } catch (e2) { /* id sintético */ }
+        if (rielSalArrastre === 'cabezal') rielSalMover(e);   // toque = salto al instante
+        e.preventDefault();
+    }
+
+    function rielSalMover(e) {
+        if (!rielSalArrastre) return;
+        var total = totalSalida();
+        if (!(total > 0)) return;
+        if (rielSalArrastre === 'cabezal') {
+            muestraInstante(rielSalPct(e) * total * 1000);
+            return;
+        }
+        var a = rielSalArrastre;
+        var r = rielSal.getBoundingClientRect();
+        var dT = r.width ? ((e.clientX - a.x0) / r.width) * total : 0;
+        var t = textos[a.i];
+        if (!t) return;
+        if (a.tipo === 'barra') {
+            /* «dur = 0» mantiene el fin clavado al final: solo se mueve el inicio */
+            aplicaBarra(a.i, a.inicio0 + dT, a.dur0, total);
+        } else if (a.tipo === 'ini') {
+            if (a.dur0 > 0) {
+                var fin = a.inicio0 + a.dur0;              // el borde derecho no se mueve
+                var ni = Math.max(0, Math.min(fin - 0.2, a.inicio0 + dT));
+                aplicaBarra(a.i, ni, fin - ni, total);
+            } else {
+                aplicaBarra(a.i, a.inicio0 + dT, 0, total);
+            }
+        } else {   /* 'fin': estira o recorta la duración */
+            if (a.dur0 > 0) {
+                aplicaBarra(a.i, a.inicio0, a.dur0 + dT, total);
+            } else {
+                var nf = Math.max(a.inicio0 + 0.2, Math.min(total, total + dT));
+                if (nf < total - 0.02) aplicaBarra(a.i, a.inicio0, nf - a.inicio0, total);
+            }
+        }
+        refrescaBarra(a.i);
+    }
+
+    function rielSalFin() {
+        var a = rielSalArrastre;
+        rielSalArrastre = null;
+        if (a === 'cabezal') {
+            finScrub();
+        } else if (a) {
+            pintaListaTextos();   // sincroniza etiquetas, barras y resalte
+        }
+    }
+
+    rielSal.addEventListener('pointerdown', rielSalEmpezar);
+    window.addEventListener('pointermove', function (e) {
+        if (rielSalArrastre) rielSalMover(e);
+    });
+    window.addEventListener('pointerup', rielSalFin);
+    window.addEventListener('pointercancel', rielSalFin);
+
+    /* teclado: las flechas mueven la barra enfocada (mayús = 1 s) */
+    rielSalFilas.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        var barra = (e.target && e.target.closest) ? e.target.closest('.vid-riel-barra') : null;
+        if (!barra) return;
+        var i = parseInt(barra.getAttribute('data-i'), 10);
+        var t = textos[i];
+        if (!t) return;
+        e.preventDefault();
+        var paso = (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 1 : 0.1);
+        aplicaBarra(i, t.inicio + paso, t.dur, totalSalida());
+        inpTxtInicio.value = String(t.inicio);   // el editor sigue el teclado
+        inpTxtDur.value = String(t.dur);
+        pintaListaTextos();
+        var nb = rielSalFilas.querySelector('.vid-riel-barra[data-i="' + i + '"]');
+        if (nb) nb.focus();
+    });
+
     /* ---------- tira de imágenes ---------- */
     function pintarTira() {
         tira.textContent = '';
@@ -825,6 +1110,11 @@
         }
         actualizaManija();   // F5b/F5e: coloca (o esconde) la manija sobre el texto
         actualizaManijaContenido();   // F5d: idem para el contenido de Tet News
+        // F5f: el cabezal de la línea de tiempo sigue el fotograma mostrado
+        // (durante la grabación y el scrub ya lo coloca quien corresponde)
+        if (!grabando && !rielSalScrub && tMs != null && isFinite(tMs)) {
+            poneCabezalSalida(tMs);
+        }
     }
 
     /* F5e · dibuja un texto de la lista en el instante tMs (ms desde el inicio
@@ -983,6 +1273,10 @@
     }
 
     function actualizaCrear() {
+        /* F5f: el total de la salida cambia → barras, regla y cabezal se
+           recolocan (vale para recorte de vídeo y duración de imágenes) */
+        pintaRielSalida();
+        poneCabezalSalida(rielSalUltimoMs);
         if (videoCargado) {
             var rr = rangoRecorte();
             vidTotal.textContent = rr.ok
@@ -1021,9 +1315,36 @@
         }
     }
 
+    /* duración por imagen que usan vista previa y grabación */
+    function durMsPorImagen() {
+        return Math.max(Math.round(MIN_POR_IMAGEN * 1000),
+            Math.round(calculoDuracion().porImagen * 1000));
+    }
+
+    /* F5e/F5f: la previa necesita bucle si los textos animan o tienen ventana */
+    function hayTextoAnimado() {
+        for (var it = 0; it < textos.length; it++) {
+            var tIt = textos[it];
+            if (tIt.txt.trim() && (tIt.anim !== 'ninguna' || tIt.salida !== 'ninguna' ||
+                tIt.inicio > 0 || tIt.dur > 0)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function previewNecesitaLoop() {
+        if (videoCargado) return true;
+        if (!imagenes.length) return false;
+        var animar = selTrans.value === 'kenburns' ||
+            (selTrans.value !== 'ninguna' && imagenes.length > 1);
+        return animar || hayTextoAnimado() || imagenes.length > 1;
+    }
+
     function reiniciarPreview() {
         detenerPreview();
         if (videoCargado) {
+            rielSalWrap.hidden = false;   // F5f: hay línea de tiempo de salida
             lienzo.style.display = 'block';
             vacio.hidden = true;
             var dv = dimsSalida();
@@ -1037,39 +1358,35 @@
             return;
         }
         if (!imagenes.length) {
+            rielSalWrap.hidden = true;    // F5f: sin contenido no hay riel
             lienzo.style.display = 'none';
             vacio.hidden = false;
             return;
         }
         vacio.hidden = true;
+        rielSalWrap.hidden = false;
         lienzo.style.display = 'block';
         var d = dimsSalida();
         if (lienzo.width !== d.w || lienzo.height !== d.h) {
             lienzo.width = d.w;
             lienzo.height = d.h;
         }
-        var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
-            Math.round(calculoDuracion().porImagen * 1000));
+        /* F5f: el bucle continúa desde donde quedó el cabezal tras un scrub */
+        var fase = previewFase;
+        previewFase = 0;
+        var durMs = durMsPorImagen();
         var total = durMs * imagenes.length;
-        dibujarEn(0, durMs);
+        dibujarEn(fase, durMs);
         var animar = selTrans.value === 'kenburns' ||
             (selTrans.value !== 'ninguna' && imagenes.length > 1);
         // F5e: con una sola imagen, si algún texto anima o tiene ventana
         // temporal la vista previa también necesita bucle
-        var animaTexto = false;
-        for (var it = 0; it < textos.length; it++) {
-            var tIt = textos[it];
-            if (tIt.txt.trim() && (tIt.anim !== 'ninguna' || tIt.salida !== 'ninguna' ||
-                tIt.inicio > 0 || tIt.dur > 0)) {
-                animaTexto = true;
-                break;
-            }
-        }
+        var animaTexto = hayTextoAnimado();
         if (!animar && !animaTexto && imagenes.length < 2) return;
         var t0 = performance.now();
         var ultimo = -1;
         function paso() {
-            var t = (performance.now() - t0) % total;
+            var t = (fase + performance.now() - t0) % total;
             var idx = Math.floor(t / durMs);
             if (animar || animaTexto || idx !== ultimo) {   // sin transiciones solo se redibuja al cambiar de imagen
                 dibujarEn(t, durMs);
@@ -1321,6 +1638,12 @@
         return (textoSel >= 0 && textos[textoSel]) ? textos[textoSel] : null;
     }
 
+    function etiquetaTiempo(t) {
+        return (t.dur > 0)
+            ? fmtSeg(t.inicio) + '–' + fmtSeg(t.inicio + t.dur) + ' s'
+            : fmtSeg(t.inicio) + ' s → final';
+    }
+
     function pintaListaTextos() {
         listaTextos.innerHTML = '';
         textos.forEach(function (t, i) {
@@ -1336,9 +1659,7 @@
             nom.textContent = t.txt.trim() || '(texto vacío)';
             var hora = document.createElement('span');
             hora.className = 'vid-texto-tiempo';
-            hora.textContent = (t.dur > 0)
-                ? fmtSeg(t.inicio) + '–' + fmtSeg(t.inicio + t.dur) + ' s'
-                : fmtSeg(t.inicio) + ' s → final';
+            hora.textContent = etiquetaTiempo(t);
             sel.appendChild(nom);
             sel.appendChild(hora);
             sel.addEventListener('click', function () { seleccionaTexto(i); });
@@ -1347,6 +1668,7 @@
             listaTextos.appendChild(fila);
         });
         editTexto.hidden = textoSel < 0;
+        pintaRielSalida();   // F5f: barras y regla al día con la lista
     }
 
     function accionesTexto(i) {

@@ -261,6 +261,162 @@
     cursor: pointer;
 }
 
+/* F5f · riel de la línea de tiempo de salida (barras de texto + cabezal) */
+.vid-riel-salida {
+    position: relative;
+    background: #22262b;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 6px;
+    overflow: hidden;
+    touch-action: pan-y;      /* el scroll vertical sigue funcionando sobre el riel */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: crosshair;
+}
+
+.vid-riel-salida-regla {     /* escala de tiempos sobre el total de la salida */
+    position: relative;
+    height: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .18);
+    touch-action: pan-y;
+}
+
+.vid-riel-salida-tick {
+    position: absolute;
+    top: 2px;
+    font-size: .7rem;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, .75);
+    padding-left: 3px;
+    border-left: 1px solid rgba(255, 255, 255, .35);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.vid-riel-salida-filas {     /* una fila por texto */
+    position: relative;
+    touch-action: pan-y;
+}
+
+.vid-riel-fila {
+    position: relative;
+    height: 40px;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    touch-action: pan-y;
+}
+
+.vid-riel-fila:last-child {
+    border-bottom: 0;
+}
+
+.vid-riel-barra {            /* ventana [inicio, fin] de un texto */
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    display: flex;
+    align-items: center;
+    background: rgba(13, 202, 240, .35);
+    border: 1px solid #0dcaf0;
+    border-radius: 4px;
+    box-shadow: 0 0 3px rgba(0, 0, 0, .6);
+    cursor: grab;
+    touch-action: pan-y;      /* arrastre horizontal, scroll vertical libre */
+    min-width: 8px;
+}
+
+.vid-riel-fila-activa .vid-riel-barra {
+    background: rgba(13, 202, 240, .65);
+}
+
+.vid-riel-barra:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 1px;
+}
+
+.vid-riel-barra-txt {
+    padding: 0 4px;
+    font-size: .75rem;
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+
+.vid-riel-barra-tir {        /* bordes: recortan inicio (izq.) y duración (der.) */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    cursor: ew-resize;
+    touch-action: none;
+    z-index: 1;
+}
+
+.vid-riel-barra-tir::after { /* zona de dedo: 14 + 15×2 = 44 px */
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -15px;
+    right: -15px;
+}
+
+.vid-riel-barra-tir-ini { left: 0; }
+.vid-riel-barra-tir-fin { right: 0; }
+
+.vid-riel-salida-cabezal {   /* línea de reproducción de la salida */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: #fff;
+    box-shadow: 0 0 3px rgba(0, 0, 0, .85);
+    z-index: 4;
+    cursor: ew-resize;
+    touch-action: none;
+}
+
+.vid-riel-salida-cabezal::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.vid-riel-salida-cabezal::after {   /* zona de dedo: 2 + 21×2 ≈ 44 px */
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -21px;
+    right: -21px;
+}
+
+.vid-riel-salida-chip {      /* tiempo actual sobre el cabezal */
+    position: absolute;
+    top: 1px;
+    z-index: 5;
+    transform: translateX(-50%);
+    padding: 0 4px;
+    border: 1px solid rgba(255, 255, 255, .35);
+    border-radius: 4px;
+    background: #22262b;
+    font-size: .7rem;
+    line-height: 1.5;
+    color: #fff;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
 .vid-vacio {
     margin: 1rem 0;
     text-align: center;
