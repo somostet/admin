@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅** · orden: F5 → F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅** · orden: F5b → F5c → F6 → F8 → F7 → E2 |
 
 ---
 
@@ -195,7 +195,8 @@ Funciones elegidas el 27/09/2026 (incluye «textos y animaciones», petición
 propia). Un commit por función.
 
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 (animaciones ✅ → F5b título arrastrable → F5c
+plantilla de fondo) → F6 → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -238,8 +239,16 @@ propia). Un commit por función.
   se encoge si no cabe). Se dibuja al final de cada fotograma —tanto en
   imágenes como en vídeo—, por encima de las transiciones y en la
   grabación; `video.js` con `?v=f4`.
-- **F5 · Textos y animaciones** (petición del usuario): entradas animadas del
-  texto de F4 (aparecer, deslizar, escribir) con su duración.
+- **F5 · Textos y animaciones** (petición del usuario) ✅: entradas animadas
+  del texto de F4 —aparecer (fundido), deslizar y escribir (máquina de
+  escribir)— con duración configurable (0,2–5 s). El reloj se cuenta desde el
+  inicio de la salida: en vídeo, desde el inicio del recorte; la vista previa
+  de una sola imagen también anima y la entrada entra en el fotograma
+  grabado; `video.js` con `?v=f5`.
+- **F5b · Título arrastrable** (extra del usuario): posición «personalizada»
+  moviendo el texto con ratón o dedo sobre la vista previa. ⬜
+- **F5c · Fondo con plantilla** (extra del usuario): usar las imágenes de
+  `public/img/Plantillas` como base del vídeo. ⬜
 - **F6 · Música de fondo**: audio subido → Web Audio → pista mezclada en el
   MP4/WebM (loop si es más corto); prueba obligatoria en iOS.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual

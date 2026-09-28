@@ -89,6 +89,8 @@
     var supTitulo = document.getElementById('vid-titulo');
     var supTituloPos = document.getElementById('vid-titulo-pos');
     var supTituloTam = document.getElementById('vid-titulo-tam');
+    var supTituloAnim = document.getElementById('vid-titulo-anim');
+    var supTituloAnimDur = document.getElementById('vid-titulo-anim-dur');
     var logoImg = null;    // Image del logo cargado (null = sin logo)
     var logoUrl = null;    // blob URL del logo para poder revocarlo
 
@@ -650,14 +652,16 @@
         pintarFondo();
         if (selAjuste.value === 'blur') pintarDesenfado(v);
         dibujarCentrado(v, 1);
-        dibujarSuperposiciones();
+        // F5 · la animación del título cuenta desde el inicio del recorte
+        dibujarSuperposiciones(Math.max(0, (v.currentTime || 0) - rangoRecorte().inicio) * 1000);
     }
 
-    /* ---------- F4 · logotipo y línea de título superpuestos ---------- */
+    /* ---------- F4/F5 · logotipo y línea de título superpuestos ---------- */
     /* Se dibuja al FINAL de cada fotograma compuesto (dibujarFrame en vídeo e
        dibujarEn en imágenes), así acompaña a vista previa y grabación y queda
-       por encima de las transiciones. */
-    function dibujarSuperposiciones() {
+       por encima de las transiciones. tMs = milisegundos desde el inicio del
+       vídeo de salida (F5: alimenta la animación de entrada del título). */
+    function dibujarSuperposiciones(tMs) {
         var w = lienzo.width;
         var h = lienzo.height;
         if (!w || !h) return;
@@ -688,6 +692,15 @@
         // cualquier fondo; si no cabe, se encoge hasta el ancho disponible
         var txt = supTitulo.value.trim();
         if (txt) {
+            /* F5 · animación de entrada: p recorre 0 → 1 durante la duración */
+            var anim = supTituloAnim.value;
+            var p = 1;
+            if (anim && anim !== 'ninguna') {
+                var segAnim = parseFloat(supTituloAnimDur.value);
+                if (!(segAnim >= 0.2 && segAnim <= 5)) segAnim = 1;
+                p = (tMs == null || !isFinite(tMs)) ? 1
+                    : Math.max(0, Math.min(1, tMs / (segAnim * 1000)));
+            }
             var pt = parseFloat(supTituloTam.value);
             if (!(pt >= 2 && pt <= 25)) pt = 7;
             var fs = Math.max(12, Math.round(h * pt / 100));
@@ -715,6 +728,14 @@
                 ctx.textAlign = (tp === 'arriba-izquierda' || tp === 'abajo-izquierda') ? 'left' : 'right';
                 tx = (ctx.textAlign === 'left') ? margen : w - margen;
                 ty = (tp.indexOf('arriba') === 0) ? margen + fs / 2 : h - margen - fs / 2;
+            }
+            if (anim === 'aparecer') {
+                ctx.globalAlpha = p;                 // fundido de entrada
+            } else if (anim === 'deslizar' && p < 1) {
+                var viaje = fs * 1.5;                // entra desde su borde
+                ty += (tp.indexOf('arriba') === 0) ? -viaje * (1 - p) : viaje * (1 - p);
+            } else if (anim === 'escribir' && p < 1) {
+                txt = txt.slice(0, Math.ceil(p * txt.length));   // máquina de escribir
             }
             ctx.fillText(txt, tx, ty);
             ctx.restore();
@@ -767,7 +788,7 @@
         } else {
             dibujar(imagenes[idx].img, zoomKen(local, durMs));
         }
-        dibujarSuperposiciones();
+        dibujarSuperposiciones(t);
     }
 
     /* ---------- duración total + estado del botón ---------- */
@@ -865,13 +886,15 @@
         dibujarEn(0, durMs);
         var animar = selTrans.value === 'kenburns' ||
             (selTrans.value !== 'ninguna' && imagenes.length > 1);
-        if (!animar && imagenes.length < 2) return;
+        // F5: con una sola imagen la entrada del título también necesita bucle
+        var animaTitulo = supTituloAnim.value !== 'ninguna' && !!supTitulo.value.trim();
+        if (!animar && !animaTitulo && imagenes.length < 2) return;
         var t0 = performance.now();
         var ultimo = -1;
         function paso() {
             var t = (performance.now() - t0) % total;
             var idx = Math.floor(t / durMs);
-            if (animar || idx !== ultimo) {   // sin transiciones solo se redibuja al cambiar de imagen
+            if (animar || animaTitulo || idx !== ultimo) {   // sin transiciones solo se redibuja al cambiar de imagen
                 dibujarEn(t, durMs);
                 ultimo = idx;
             }
@@ -972,7 +995,7 @@
         repintarSuperp();
     });
 
-    [supLogoPos, supLogoTam, supTituloPos, supTituloTam].forEach(function (el) {
+    [supLogoPos, supLogoTam, supTituloPos, supTituloTam, supTituloAnim, supTituloAnimDur].forEach(function (el) {
         el.addEventListener('change', repintarSuperp);
     });
     supTitulo.addEventListener('input', repintarSuperp);

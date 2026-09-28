@@ -235,6 +235,20 @@
                             <input type="number" class="form-control" id="vid-titulo-tam" min="2" max="25"
                                    step="1" value="7" inputmode="numeric">
                         </div>
+                        <div class="col-12 col-lg-6">
+                            <label class="form-label" for="vid-titulo-anim">Entrada del título</label>
+                            <select class="form-select" id="vid-titulo-anim">
+                                <option value="ninguna">Ninguna (sin animación)</option>
+                                <option value="aparecer">Aparecer (fundido)</option>
+                                <option value="deslizar">Deslizar</option>
+                                <option value="escribir">Escribir (máquina de escribir)</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <label class="form-label" for="vid-titulo-anim-dur">Duración de la entrada (s)</label>
+                            <input type="number" class="form-control" id="vid-titulo-anim-dur" min="0.2" max="5"
+                                   step="0.1" value="1" inputmode="decimal">
+                        </div>
                     </div>
 
                     <div class="vid-preview" id="vid-preview">
@@ -314,8 +328,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=f4 obliga a traer la versión con logotipo y título superpuestos (y primer fotograma visible al cargar) aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f4"></script>
+    <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=f5"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
