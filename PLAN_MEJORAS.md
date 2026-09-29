@@ -23,7 +23,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅** · orden: E2 |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅** |
 
@@ -159,8 +159,22 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   `video/mp4;codecs=avc1…` en Chrome reciente e iOS, si no
   `video/webm;codecs=vp9`, y `video/webm` de última instancia) → descarga
   `tet.mp4|webm`. Presets sociales de salida.
-- **E2 · Grabar el lienzo en directo** *(al final)*: botón Grabar/Parar sobre
-  el lienzo de la página (plantillas rotando o edición) → misma tubería.
+- **E2 · Grabar el lienzo en directo ✅** (validado en Chrome: **57
+  comprobaciones** en tres tandas —estado inicial con el marcador oculto sin
+  soporte y deshabilitado sin contenido, par Grabar/Parar que muta en el
+  propio botón con reloj `Detener (0:07)`, bloqueo de «Crear vídeo» durante
+  la grabación, resultado `tet.mp4` con clip de **2,71 s** para 2,7 s de
+  grabación, música F6 mezclada —28 KB con audio frente a 3 KB sin—, rama de
+  vídeo con `dibujarFrame` (1,88 s), regresiones de E1 (cancelar), F8 y F7,
+  consola 0 y barrido 14/14): botón Grabar/Parar **bajo el lienzo** (los
+  manijas de M1/M2 conservan zona de toque libre) que graba lo que el lienzo
+  muestra —plantilla rotando o edición en directo— hasta pulsar Detener,
+  con el tiempo en el botón y tope de 2 minutos → misma tubería que E1
+  (`captureStream` + `MediaRecorder` con autodetección MP4→WebM), música en
+  bucle y el sonido del vídeo fuente en modo vídeo. *Lección:* el lienzo
+  hay que **repintar cada fotograma** (como hace E1) —si solo se redibuja
+  al cambiar de imagen, `captureStream` deja de emitir y el clip sale
+  corto: se detiene la previa y el tick del directo bombea el dibujo.
 - **E3 · Subir vídeo y editarlo ✅** (validado en Chrome: carga de MP4 y de webm
   con duración ilegible en la cabecera —el típico de `MediaRecorder`— vía
   búsqueda al final, recorte 1,0–2,5 s → MP4 de 640×360 de 1,5 s exactos con
@@ -198,7 +212,7 @@ propia). Un commit por función.
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8;
 el 28/09, tras el feedback del usuario sobre las plantillas, F5 se extiende
 con F5d/F5e/F5f antes del audio):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f ✅ → F6 ✅ → F8 ✅ → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f ✅ → F6 ✅ → F8 ✅ → F7 ✅ → E2 ✅**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -424,8 +438,9 @@ tres commits: animaciones, título arrastrable y plantilla Tet News —F5d,
 reemplazando el select de 9 plantillas—); antes del audio vienen **F5e** ✅
 (lista de textos) y **F5f** ✅ (riel con cabezal), y **F6** ✅ cerró la
 petición del usuario (la prueba en iOS queda anulada: el usuario no tiene
-iPhone); **F8** ✅ añadió la captura de pestaña como fuente y **F7** ✅ el
-botón «Compartir vídeo»; solo queda **E2** para cerrar el bloque.
+iPhone); **F8** ✅ añadió la captura de pestaña como fuente, **F7** ✅ el
+botón «Compartir vídeo» y **E2** ✅ cerró el bloque con la grabación en
+directo del lienzo (57 comprobaciones E2E, consola 0, barrido 14/14).
 
 ---
 

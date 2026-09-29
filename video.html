@@ -367,6 +367,16 @@
                         previa para seleccionarlo y arrastra su manija para colocarlo; deslizar sobre el
                         lienzo sigue moviendo la página.</p>
 
+                    <!-- E2 · grabar el lienzo en directo: el par Grabar/Parar vive bajo
+                         el lienzo (los manijas siguen con zona de toque libre) y el
+                         tiempo se enseña en el propio botón mientras graba -->
+                    <div class="mt-2" id="vid-directo-controles" hidden>
+                        <button type="button" class="btn btn-outline-danger vid-cargar" id="vid-directo" disabled>
+                            <i class="fas fa-record-vinyl" id="vid-directo-icon" aria-hidden="true"></i>
+                            <span id="vid-directo-txt">Grabar en directo</span>
+                        </button>
+                    </div>
+
                     <!-- M1 · controles del contenido JUNTO al lienzo: en móvil no hace
                          falta subir buscándolos por el formulario -->
                     <div class="vid-contenido-controles" id="vid-contenido-controles" hidden>
@@ -481,7 +491,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f7"></script>
+    <script src="./public/js/video.js?v=e2"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

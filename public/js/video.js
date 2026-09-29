@@ -103,6 +103,10 @@
     var filaPestana = document.getElementById('vid-pestana-fila');      // F8
     var tiempoPestana = document.getElementById('vid-pestana-tiempo');  // F8
     var btnPararPestana = document.getElementById('vid-pestana-parar'); // F8
+    var btnDirecto = document.getElementById('vid-directo');               // E2
+    var contDirecto = document.getElementById('vid-directo-controles');    // E2
+    var iconoDirecto = document.getElementById('vid-directo-icon');        // E2
+    var txtDirecto = document.getElementById('vid-directo-txt');           // E2
     var recWrap = document.getElementById('vid-recorte');
     var recNombre = document.getElementById('vid-rec-nombre');
     var recDur = document.getElementById('vid-rec-duracion');
@@ -476,6 +480,7 @@
         recPestana = rec;
         streamPestana = st;
         btnCrear.disabled = true;
+        pintaBotonDirecto();   // E2: la captura de pestaña bloquea el directo
         btnPestana.hidden = true;
         filaPestana.hidden = false;
         tiempoPestana.textContent = '0:00';
@@ -1524,6 +1529,7 @@
     }
 
     function actualizaCrear() {
+        pintaBotonDirecto();   // E2: el botón de directo refleja el estado global
         /* F5f: el total de la salida cambia → barras, regla y cabezal se
            recolocan (vale para recorte de vídeo y duración de imágenes) */
         pintaRielSalida();
@@ -2370,6 +2376,7 @@
         resWrap.hidden = true;
         actualizarBarra();
         detenerPreview();
+        pintaBotonDirecto();   // E2: no se puede grabar en directo mientras hay render
 
         var d = dimsSalida();
         if (d.reducido) {
@@ -2462,6 +2469,199 @@
         }
         rafAct = requestAnimationFrame(tick);
     }
+
+    /* ---------- E2 · grabar el lienzo en directo ---------- */
+    /* A diferencia de «Crear vídeo» (línea de tiempo fija), aquí se graba lo
+       que el lienzo muestra ahora mismo —plantilla animada o edición en
+       directo— hasta que se pulsa Detener. Misma tubería: captureStream +
+       MediaRecorder con autodetección de códec (máx. 2 minutos). */
+    var grabandoDirecto = false;
+    var t0Directo = 0;
+    var segsDirecto = 0;
+    var segDirectoUlt = -1;
+
+    function hayContenidoDirecto() {
+        return !!(imagenes.length || videoCargado);
+    }
+
+    function pintaBotonDirecto() {
+        contDirecto.hidden = !soportado;
+        if (!soportado) return;
+        if (grabandoDirecto) {
+            btnDirecto.disabled = false;   // mientras graba, el botón es «Detener»
+            btnDirecto.classList.remove('btn-outline-danger');
+            btnDirecto.classList.add('btn-danger');
+            iconoDirecto.className = 'fas fa-stop';
+            txtDirecto.textContent = 'Detener (' + formatoAudio(Math.max(0, segDirectoUlt)) + ')';
+            return;
+        }
+        btnDirecto.classList.remove('btn-danger');
+        btnDirecto.classList.add('btn-outline-danger');
+        iconoDirecto.className = 'fas fa-record-vinyl';
+        txtDirecto.textContent = 'Grabar en directo';
+        var libre = !grabando && !capturando && !pidiendo && hayContenidoDirecto();
+        btnDirecto.disabled = !libre;
+        btnDirecto.title = !hayContenidoDirecto()
+            ? 'Agrega imágenes o un vídeo para grabar el lienzo'
+            : libre ? 'Graba lo que se ve en el lienzo hasta que pulses Detener (máx. 2 min)'
+                : 'Espera a que termine lo que está en marcha';
+    }
+
+    btnDirecto.addEventListener('click', function () {
+        if (grabandoDirecto) return paraDirecto();
+        iniciaDirecto();
+    });
+
+    function iniciaDirecto() {
+        if (grabandoDirecto || grabando || capturando || pidiendo) {
+            aviso('Espera a que termine lo que está en marcha', 'info');
+            return;
+        }
+        if (!soportado) {
+            aviso('Tu navegador no permite grabar vídeo (MediaRecorder)', 'danger');
+            return;
+        }
+        if (!hayContenidoDirecto()) {
+            aviso('Agrega imágenes o un vídeo para grabar el lienzo', 'info');
+            return;
+        }
+
+        var audio = videoCargado ? conectarAudio() : null;   // sonido del vídeo fuente
+        var hayMusica = preparaMusica(MAX_TOTAL_SEG);   // F6: en bucle; corta al parar
+        var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
+        if (!mime) {
+            detenerMusica();
+            return aviso('No hay códec de vídeo disponible en este navegador', 'danger');
+        }
+
+        grabando = true;
+        grabandoDirecto = true;
+        cancelado = false;
+        segsDirecto = 0;
+        segDirectoUlt = -1;
+        btnCrear.disabled = true;   // como E1: nada de renders mientras se graba
+        resWrap.hidden = true;
+        detenerPreview();           // este tick lleva el dibujo (repintar cada
+                                    // fotograma: sin repaint captureStream corta)
+
+        var d = dimsSalida();
+        if (lienzo.width !== d.w || lienzo.height !== d.h) {
+            lienzo.width = d.w;
+            lienzo.height = d.h;
+            if (videoCargado) {
+                if (vidFuente.readyState >= 2) dibujarFrame(vidFuente);
+            } else {
+                dibujarEn(0, durMsPorImagen());   // fotograma semilla del stream
+            }
+        }
+
+        var stream = lienzo.captureStream(FPS);
+        if ((audio || hayMusica) && audioDest) {
+            audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
+        }
+        var mimeUsado = mime;
+        var chunks = [];
+        var rec;
+        try {
+            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: 8000000 });
+        } catch (e) {
+            var mv = elegirMime(false);
+            if (!(audio || hayMusica) || !mv) {
+                grabando = false;
+                grabandoDirecto = false;
+                detenerMusica();
+                return fallo('No se pudo iniciar la grabación en este navegador');
+            }
+            try {
+                stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
+                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: 8000000 });
+                mimeUsado = mv;
+                detenerMusica();                      // la música no entra: no iniciarla
+                hayMusica = false;
+            } catch (e2) {
+                grabando = false;
+                grabandoDirecto = false;
+                detenerMusica();
+                return fallo('No se pudo iniciar la grabación en este navegador');
+            }
+        }
+        recAct = rec;
+        rec.ondataavailable = function (e) {
+            if (e.data && e.data.size) chunks.push(e.data);
+        };
+        rec.onstop = function () {
+            grabandoDirecto = false;
+            if (cancelado) {
+                aviso('Grabación cancelada', 'info');
+                return limpiar();
+            }
+            var tipo = mimeUsado.split(';')[0];
+            var blob = new Blob(chunks, { type: tipo });
+            if (!blob.size) return fallo('La grabación salió vacía');
+            if (urlVideo) URL.revokeObjectURL(urlVideo);
+            urlVideo = URL.createObjectURL(blob);
+            blobVideo = blob;
+            var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
+            aDesc.href = urlVideo;
+            aDesc.download = 'tet.' + ext;
+            txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
+                ' (' + Math.round(blob.size / 1024) + ' KB)';
+            repro.src = urlVideo;
+            repro.hidden = false;
+            resWrap.hidden = false;
+            aviso('Grabación directa: ' + fmt(segsDirecto) + ' s · ' +
+                Math.round(blob.size / 1024) + ' KB', 'success');
+            limpiar();
+            resWrap.scrollIntoView({ block: 'nearest' });
+        };
+
+        t0Directo = performance.now();
+        rec.start(200);
+        iniciaMusica();   // F6: la música entra al empezar a grabar
+        pintaBotonDirecto();
+        aviso('Grabando el lienzo… pulsa «Detener» cuando quieras parar (máx. 2 min)', 'info');
+
+        function tickDirecto() {
+            if (!grabandoDirecto) return;
+            var t = performance.now() - t0Directo;
+            if (t >= MAX_TOTAL_SEG * 1000) {
+                segsDirecto = MAX_TOTAL_SEG;
+                grabandoDirecto = false;
+                if (recAct && recAct.state !== 'inactive') recAct.stop();
+                aviso('Máximo 2 minutos: la grabación directa se corta ahí', 'info');
+                return;
+            }
+            /* con la previa detenida aquí se bombea el dibujo en ambos modos:
+               repintar cada fotograma mantiene el stream vivo (si el lienzo
+               no cambia, captureStream deja de emitir y el clip sale corto) */
+            if (videoCargado) {
+                if (vidFuente.readyState >= 2) dibujarFrame(vidFuente);
+            } else if (imagenes.length) {
+                dibujarEn(t % (durMsPorImagen() * imagenes.length), durMsPorImagen());
+            }
+            var s = Math.floor(t / 1000);
+            if (s !== segDirectoUlt) {
+                segDirectoUlt = s;
+                segsDirecto = s;
+                txtDirecto.textContent = 'Detener (' + formatoAudio(s) + ')';
+            }
+            rafAct = requestAnimationFrame(tickDirecto);
+        }
+        rafAct = requestAnimationFrame(tickDirecto);
+    }
+
+    function paraDirecto() {
+        if (!grabandoDirecto) return;
+        segsDirecto = Math.max(segDirectoUlt, Math.floor((performance.now() - t0Directo) / 1000));
+        grabandoDirecto = false;
+        if (rafAct) {
+            cancelAnimationFrame(rafAct);
+            rafAct = null;
+        }
+        if (recAct && recAct.state !== 'inactive') recAct.stop();
+    }
+
+    pintaBotonDirecto();
 
     /* ---------- F6 · música de fondo ---------- */
     /* El archivo subido se decodifica al elegirlo; al grabar, un
@@ -2640,6 +2840,7 @@
         resWrap.hidden = true;
         actualizarBarra();
         detenerPreview();
+        pintaBotonDirecto();   // E2: no se puede grabar en directo mientras hay render
         vidFuente.pause();
         vidFuente.controls = false;   // sin controles mientras se graba
 
