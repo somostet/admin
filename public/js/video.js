@@ -17,6 +17,7 @@
     var usosUrl = {};     // objectURL -> veces usada (al duplicar)
     var sel = -1;         // índice de la imagen seleccionada
     var urlVideo = null;  // objectURL del último vídeo
+    var blobVideo = null; // F7: blob del último vídeo (para compartirlo)
     var preview = null;   // id de requestAnimationFrame de la vista previa
     var grabando = false;
     var recAct = null;
@@ -92,6 +93,7 @@
     var aDesc = document.getElementById('vid-descargar');
     var txtDesc = document.getElementById('vid-descargar-texto');
     var resWrap = document.getElementById('vid-resultado');
+    var btnCompartir = document.getElementById('vid-compartir');   // F7
     var repro = document.getElementById('vid-repro');
     var btnImagenLabel = document.getElementById('vid-etiqueta-img');
     var inpVideo = document.getElementById('vid-archivo-video');
@@ -527,6 +529,50 @@
     }
 
     pintaBotonPestana();
+
+    /* ---------- F7 · compartir (Web Share API) ---------- */
+    /* Igual que capas.js pero con el vídeo: el blob del último resultado se
+       manda como archivo a la hoja de compartir del sistema (WhatsApp,
+       Telegram, archivos…). El botón solo aparece si el navegador acepta
+       archivos en navigator.share; si no, o si algo falla, se avisa para
+       usar «Descargar vídeo», que está justo encima. Cancelar la hoja
+       (AbortError) es silencio. */
+    function pintaBotonCompartir() {
+        var hay = false;
+        try {
+            var prueba = new File([new Blob(['x'], { type: 'video/mp4' })],
+                'prueba.mp4', { type: 'video/mp4' });
+            hay = !!(navigator.share && navigator.canShare &&
+                navigator.canShare({ files: [prueba] }));
+        } catch (e) { hay = false; }
+        btnCompartir.hidden = !hay;
+    }
+
+    btnCompartir.addEventListener('click', function () {
+        if (!blobVideo) {
+            aviso('Primero crea el vídeo', 'info');
+            return;
+        }
+        var archivo;
+        try {
+            archivo = new File([blobVideo], aDesc.download || 'tet.mp4',
+                { type: blobVideo.type || 'video/mp4' });
+        } catch (e) {
+            return aviso('No se pudo preparar el vídeo para compartir', 'danger');
+        }
+        if (!(navigator.share && navigator.canShare &&
+            navigator.canShare({ files: [archivo] }))) {
+            aviso('Este navegador no admite compartir archivos; usa «Descargar vídeo»', 'warning');
+            return;
+        }
+        navigator.share({ files: [archivo], title: 'tet admin' })
+            .catch(function (err) {
+                if (err && err.name === 'AbortError') return;   // cancelado por el usuario
+                aviso('No se pudo compartir; usa «Descargar vídeo»', 'warning');
+            });
+    });
+
+    pintaBotonCompartir();
 
     /* controles que no aplican en modo recorte (y etiquetas cruzadas) */
     function pintarModo() {
@@ -2374,6 +2420,7 @@
             if (!blob.size) return fallo('La grabación salió vacía');
             if (urlVideo) URL.revokeObjectURL(urlVideo);
             urlVideo = URL.createObjectURL(blob);
+            blobVideo = blob;
             var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
             aDesc.href = urlVideo;
             aDesc.download = 'tet.' + ext;
@@ -2639,6 +2686,7 @@
             if (!blob.size) return fallo('La grabación salió vacía');
             if (urlVideo) URL.revokeObjectURL(urlVideo);
             urlVideo = URL.createObjectURL(blob);
+            blobVideo = blob;
             var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
             aDesc.href = urlVideo;
             aDesc.download = 'tet.' + ext;

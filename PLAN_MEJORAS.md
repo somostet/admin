@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅** · orden: F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅** · orden: E2 |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅** |
 
 ---
@@ -370,8 +370,20 @@ con F5d/F5e/F5f antes del audio):
   *Dato de futuro test:* Bootstrap trae `scroll-behavior: smooth` en `:root`,
   así que todo scroll programático se anima —los tests deben medir con
   `behavior: 'instant'` o esperar a que se asiente.
-- **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
-  que el de `capas.js`.
+- **F7 · Compartir ✅**: botón «Compartir vídeo» con Web Share API (archivos),
+  igual que el de `capas.js`: el blob del último resultado viaja como `File`
+  (nombre `tet.mp4`/`tet.webm`, el mismo que usa Descargar) a la hoja de
+  compartir del sistema —WhatsApp, Telegram, guardar en archivos…—. El botón
+  solo aparece si el navegador acepta archivos en `navigator.share` (móvil y
+  escritorio reciente); sin soporte, o si algo falla, se avisa para usar el
+  «Descargar vídeo» de al lado, y cancelar la hoja (AbortError) es silencio.
+  Los dos botones del resultado llevan `min-height:44px` (`vid-cargar`) para
+  el dedo. Ojo: el navegador de pruebas (Electron) no trae Web Share, así que
+  el E2E comprueba que el botón queda **oculto sin soporte** y stuba
+  `share`+`canShare` para recorrer el camino completo: **8 comprobaciones**
+  (File con nombre/tipo/tamaño/título correctos, AbortError sin aviso, aviso
+  «usa Descargar», regresiones de F8 y del fix de logo); consola 0, barrido
+  14/14, `node --check` OK; `?v=f7` en `video.html`.
 - **F8 · Grabar pestaña ✅** (nuevo, solo ordenador): botón «Grabar pestaña»
   con `getDisplayMedia` que captura la pestaña donde se reproduce un vídeo de
   X/YouTube/etc. —en Chrome, con la casilla «Compartir audio de pestaña»— y el
@@ -403,9 +415,9 @@ propio (✅), el fix del primer fotograma (✅), **F4** (✅) y **F5** (✅, en
 tres commits: animaciones, título arrastrable y plantilla Tet News —F5d,
 reemplazando el select de 9 plantillas—); antes del audio vienen **F5e** ✅
 (lista de textos) y **F5f** ✅ (riel con cabezal), y **F6** ✅ cerró la
-petición del usuario (con la prueba en iOS pendiente); **F8** ✅ añadió la
-captura de pestaña como fuente; después quedan **F7** y **E2** cierra el
-bloque.
+petición del usuario (la prueba en iOS queda anulada: el usuario no tiene
+iPhone); **F8** ✅ añadió la captura de pestaña como fuente y **F7** ✅ el
+botón «Compartir vídeo»; solo queda **E2** para cerrar el bloque.
 
 ---
 

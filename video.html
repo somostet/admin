@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f4b">
+    <link rel="stylesheet" href="./public/css/video.css?v=f7">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -423,9 +423,12 @@
                     </div>
 
                     <div class="mt-2" id="vid-resultado" hidden>
-                        <a class="btn btn-primary w-100" id="vid-descargar" href="#" download="tet.mp4">
+                        <a class="btn btn-primary w-100 vid-cargar" id="vid-descargar" href="#" download="tet.mp4">
                             <i class="fas fa-download" aria-hidden="true"></i> <span id="vid-descargar-texto">Descargar vídeo</span>
                         </a>
+                        <button type="button" class="btn btn-outline-primary w-100 vid-cargar mt-2" id="vid-compartir" hidden>
+                            <i class="fas fa-share-alt" aria-hidden="true"></i> Compartir vídeo
+                        </button>
                         <video id="vid-repro" class="vid-repro" controls playsinline hidden></video>
                     </div>
                 </div>
@@ -479,7 +482,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f4b"></script>
+    <script src="./public/js/video.js?v=f7"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
