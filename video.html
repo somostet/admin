@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f6">
+    <link rel="stylesheet" href="./public/css/video.css?v=m1">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -181,23 +181,14 @@
                             <input type="color" class="form-control form-control-color w-100" id="vid-fondo" value="#ffffff" title="Color de fondo">
                         </div>
                         <!-- F5d · plantilla Tet News: única plantilla, replicando el
-                             canvas de noticias (barra + cuerpo) con el contenido dentro -->
-                        <div class="col-12 col-lg-6">
+                             canvas de noticias (barra + cuerpo) con el contenido dentro.
+                             Tamaño y centrar del contenido viven JUNTO al lienzo (M1) -->
+                        <div class="col-12">
                             <div class="form-label">Plantilla</div>
                             <div class="form-check form-switch vid-news-fila">
                                 <input class="form-check-input" type="checkbox" id="vid-news" role="switch">
                                 <label class="form-check-label" for="vid-news">Tet News (noticias)</label>
                             </div>
-                        </div>
-                        <div class="col-12 col-lg-6">
-                            <label class="form-label" for="vid-contenido-esc">Tamaño del contenido (%)</label>
-                            <input type="range" class="form-range" id="vid-contenido-esc"
-                                   min="30" max="300" step="5" value="100" disabled>
-                        </div>
-                        <div class="col-12 col-lg-6">
-                            <button type="button" class="btn btn-outline-secondary w-100" id="vid-contenido-centrar" disabled>
-                                <i class="fas fa-crosshairs" aria-hidden="true"></i> Centrar contenido
-                            </button>
                         </div>
                     </div>
                     <div class="form-text mt-2" id="vid-total"></div>
@@ -332,13 +323,34 @@
 
                     <div class="vid-preview" id="vid-preview">
                         <canvas id="vid-lienzo" width="1080" height="1080" aria-label="Vista previa del vídeo"></canvas>
-                        <!-- F5b: manija de arrastre; solo cubre el texto seleccionado, el resto del lienzo sigue moviendo la página -->
+                        <!-- M1/F5b: manija de arrastre; solo cubre el texto seleccionado y su
+                             pseudo-elemento ensancha la zona de toque —el resto del lienzo
+                             sigue moviendo la página -->
                         <div class="vid-manija-titulo" id="vid-manija-titulo" hidden
                              title="Arrastra para mover el texto" aria-hidden="true"></div>
-                        <!-- F5d: manija del contenido dentro de la plantilla Tet News -->
+                        <!-- M1/F5d: manija del contenido dentro de la plantilla Tet News
+                             (misma zona de toque ensanchada) -->
                         <div class="vid-manija-contenido" id="vid-manija-contenido" hidden
                              title="Arrastra para mover el contenido" aria-hidden="true"></div>
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
+                    </div>
+
+                    <!-- M1 · pista para móvil: tocar un texto lo selecciona -->
+                    <p class="form-text mb-0 mt-1" id="vid-lienzo-pista" hidden>Toca un texto sobre la vista
+                        previa para seleccionarlo y arrastra su manija para colocarlo; deslizar sobre el
+                        lienzo sigue moviendo la página.</p>
+
+                    <!-- M1 · controles del contenido JUNTO al lienzo: en móvil no hace
+                         falta subir buscándolos por el formulario -->
+                    <div class="vid-contenido-controles" id="vid-contenido-controles" hidden>
+                        <label class="vid-contenido-esc-lbl" for="vid-contenido-esc">Tamaño del contenido</label>
+                        <input type="range" class="form-range" id="vid-contenido-esc"
+                               min="30" max="300" step="5" value="100" disabled>
+                        <span class="vid-contenido-valor" id="vid-contenido-valor">100 %</span>
+                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                id="vid-contenido-centrar" disabled>
+                            <i class="fas fa-crosshairs" aria-hidden="true"></i> Centrar contenido
+                        </button>
                     </div>
 
                     <!-- F5f · riel de la línea de tiempo de salida: una barra por
@@ -431,7 +443,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f6"></script>
+    <script src="./public/js/video.js?v=m1"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

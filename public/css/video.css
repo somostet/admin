@@ -153,6 +153,7 @@
     max-width: 100%;
     max-height: 420px;
     height: auto;
+    touch-action: manipulation;   /* M1: toques sin zoom de doble toque; el scroll sigue libre */
     border-radius: .4rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, .35);
 }
@@ -183,6 +184,16 @@
     cursor: grabbing;
 }
 
+/* M1 · zona de toque ensanchada: el pseudo-elemento añade agarrabilidad
+   alrededor del recuadro hasta ~44 px de dedo (—el JS fija --zona según el
+   tamaño mostrado—) sin agrandar el tamaño visual de la manija */
+.vid-manija-titulo::before,
+.vid-manija-contenido::before {
+    content: '';
+    position: absolute;
+    inset: var(--zona, -12px);
+}
+
 /* F5d · controles de la plantilla Tet News: filas de 44px para el dedo */
 .vid-news-fila {
     min-height: 44px;
@@ -192,6 +203,42 @@
 
 #vid-contenido-esc {
     height: 44px;   /* el recorrido completo del input es zona de toque */
+}
+
+/* M1 · controles del contenido JUNTO al lienzo: en móvil no hay que subir
+   buscándolos por el formulario mientras se mira la vista previa */
+.vid-contenido-controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+    margin-top: .75rem;
+    padding: .6rem .75rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .7rem;
+    background: rgba(255, 255, 255, .04);
+}
+
+.vid-contenido-esc-lbl {
+    flex: 1 1 100%;      /* la etiqueta ocupa su propia línea */
+    margin: 0;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.vid-contenido-controles .form-range {
+    flex: 1 1 9rem;
+    min-height: 44px;    /* dedo cómodo sobre el deslizador */
+}
+
+.vid-contenido-valor {
+    font-size: .85rem;
+    min-width: 3.4em;
+    text-align: right;
+}
+
+.vid-contenido-centrar {
+    min-height: 44px;    /* objetivo táctil */
 }
 
 /* F5e · lista de textos (título, descripción…): filas de 44 px con nombre,

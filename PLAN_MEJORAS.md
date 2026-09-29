@@ -25,6 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅** · orden: F8 → F7 → E2 |
+| Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅** |
 
 ---
 
@@ -321,6 +322,31 @@ con F5d/F5e/F5f antes del audio):
   `fetch(blob:)`; el análisis de los resultados se hace parcheando
   `MediaRecorder` y leyendo los chunks con `Blob.arrayBuffer()` (en memoria,
   sin red). **Prueba en iOS pendiente (obligatoria).**
+- **M1 · Controles del lienzo en móvil ✅** (peticiones del usuario: «mejora los
+  controles del video en el canvas porque es difícil manejarlo desde móvil» y
+  «cuesta ver los botones para agrandar el video y ponerlo en el centro»).
+  Cuatro mejoras: (1) **toque–selección**: cada texto guarda su caja en el
+  último fotograma (`cajasTextos`) y un toque sobre el lienzo —con 14 px de
+  tolerancia— selecciona el texto de debajo sin ir a buscarlo a la lista (en
+  zona vacía no cambia la selección); (2) **arrastre directo con ratón** desde
+  el propio lienzo con el mismo motor que la manija (`arrastraTextoA`, con el
+  seguimiento del puntero en `window`); en táctil el arrastre directo queda
+  excluido a propósito para no robar el scroll vertical de la página; (3)
+  **manijas con zona de toque ≥ 44 px**: el pseudo-elemento `::before` se
+  ensancha con `--zona` (hasta 32 px por lado) sin agrandar el recuadro
+  visible, y con Tet News activo la manija del contenido deja pasar los textos
+  —si hay uno encima manda el texto: el dedo lo selecciona y el ratón lo
+  arrastra— en lugar de robarles el toque (cubre casi todo el lienzo); (4)
+  **controles del contenido junto al lienzo**: «Tamaño del contenido», la
+  lectura en vivo del % y «Centrar contenido» pasan de lo alto del formulario a
+  una barra justo debajo de la vista previa (visible solo con Tet News; mismos
+  ids, sin cambios en la lógica), con `touch-action: manipulation` en el lienzo
+  y una pista de uso bajo la previa. E2E **21 comprobaciones** (selección por
+  toque y en zona vacía, arrastre con ratón, táctil sin arrastre, zona ≥ 44 px,
+  `touch-action` sin regresiones, barra oculta/visible y posterior al lienzo,
+  lectura del %, centrar, textos sobre el contenido con ratón y dedo,
+  regresión del arrastre de contenido); consola 0, barrido 14/14,
+  `node --check` OK; `?v=m1` en `video.html`, `video.js` y `video.css`.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
   que el de `capas.js`.
 - **F8 · Grabar pestaña** (nuevo, solo ordenador): botón con `getDisplayMedia`

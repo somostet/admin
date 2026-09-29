@@ -58,6 +58,8 @@
     var chkNews = document.getElementById('vid-news');                     // F5d
     var inpEscContenido = document.getElementById('vid-contenido-esc');    // F5d
     var btnCentrarContenido = document.getElementById('vid-contenido-centrar'); // F5d
+    var wrapContenido = document.getElementById('vid-contenido-controles'); // M1: barra junto al lienzo
+    var valContenido = document.getElementById('vid-contenido-valor');     // M1: lectura del deslizador
     var manijaContenido = document.getElementById('vid-manija-contenido'); // F5d
     var noticiaActiva = false;   // F5d: plantilla Tet News activa
     var contPos = null;          // F5d: centro del contenido en fracciones (null = automático)
@@ -124,6 +126,9 @@
     var cajaTextoSel = null; // F5e: caja dibujada del seleccionado (para la manija)
     var manijaTitulo = document.getElementById('vid-manija-titulo');   // F5b/F5e
     var manijaArrastrando = false;       // F5b: puntero sobre la manija
+    var pistaLienzo = document.getElementById('vid-lienzo-pista');    // M1
+    var cajasTextos = [];                // M1: cajas de los textos del último fotograma
+    var lienzoArrastrando = false;       // M1: puntero arrastrando desde el lienzo (ratón)
     var tUltimo = 0;                     // F5b: último instante dibujado en modo imágenes
     /* F5f · riel de la línea de tiempo de salida */
     var rielSalWrap = document.getElementById('vid-riel-salida-wrap');
@@ -982,6 +987,8 @@
         inpEscContenido.disabled = !noticiaActiva;
         btnCentrarContenido.disabled = !noticiaActiva;
         inpEscContenido.value = String(Math.round(contEsc * 100));
+        valContenido.textContent = inpEscContenido.value + ' %';   // M1
+        wrapContenido.hidden = !noticiaActiva;   // M1: la barra vive junto al lienzo
         if (noticiaActiva && selAjuste.value === 'cover') {
             // cover recortaría los bordes del cuerpo: mejor contenerlo
             selAjuste.value = 'contain';
@@ -993,6 +1000,7 @@
 
     inpEscContenido.addEventListener('input', function () {
         contEsc = (parseFloat(inpEscContenido.value) || 100) / 100;
+        valContenido.textContent = inpEscContenido.value + ' %';   // M1
         redibujarArrastre();
         actualizaManijaContenido();
     });
@@ -1001,6 +1009,7 @@
         contPos = null;                 // vuelve al centrado automático del cuerpo
         contEsc = 1;
         inpEscContenido.value = '100';
+        valContenido.textContent = '100 %';   // M1
         redibujarArrastre();
         actualizaManijaContenido();
     });
@@ -1115,8 +1124,9 @@
         // animación de entrada y de salida; blanco en negrita con sombra para
         // que se lea sobre cualquier fondo
         cajaTextoSel = null;
+        cajasTextos = [];   // M1: se rellena con la caja de cada texto dibujado
         for (var i = 0; i < textos.length; i++) {
-            dibujaTexto(textos[i], tMs, w, h, margen, fuente, i === textoSel);
+            dibujaTexto(textos[i], tMs, w, h, margen, fuente, i === textoSel, i);
         }
         actualizaManija();   // F5b/F5e: coloca (o esconde) la manija sobre el texto
         actualizaManijaContenido();   // F5d: idem para el contenido de Tet News
@@ -1131,7 +1141,7 @@
        del vídeo de salida). Ventana activa: [inicio, inicio+dur) con dur = 0
        significando «hasta el final». p recorre la entrada (0 → 1) y q la
        salida (0 → 1); si no cabe, la fuente se encoge hasta el ancho. */
-    function dibujaTexto(t, tMs, w, h, margen, fuente, esSel) {
+    function dibujaTexto(t, tMs, w, h, margen, fuente, esSel, indice) {
         var txt = t.txt.trim();
         if (!txt) return;
         var iniMs = (t.inicio || 0) * 1000;
@@ -1189,8 +1199,13 @@
             tx = (ctx.textAlign === 'left') ? margen : w - margen;
             ty = (tp.indexOf('arriba') === 0) ? margen + fs / 2 : h - margen - fs / 2;
         }
-        // F5e: caja de reposo del texto seleccionado para situar la manija
-        if (esSel) cajaTextoSel = { x: tx, y: ty, w: tw, h: fs * 1.2 };
+        // F5e: caja de reposo del texto seleccionado para situar la manija;
+        // M1: la caja de TODOS los textos permite tocarlos sobre el lienzo
+        if (esSel || typeof indice === 'number') {
+            var caja = { x: tx, y: ty, w: tw, h: fs * 1.2 };
+            if (esSel) cajaTextoSel = caja;
+            if (typeof indice === 'number') cajasTextos[indice] = caja;
+        }
 
         var abajo = ty > h / 2;   // el texto entra y sale por su propio borde
         var viaje = fs * 1.5;
@@ -1357,6 +1372,7 @@
             rielSalWrap.hidden = false;   // F5f: hay línea de tiempo de salida
             lienzo.style.display = 'block';
             vacio.hidden = true;
+            pistaLienzo.hidden = false;   // M1: hay lienzo que tocar
             var dv = dimsSalida();
             if (lienzo.width !== dv.w || lienzo.height !== dv.h) {
                 lienzo.width = dv.w;
@@ -1371,11 +1387,13 @@
             rielSalWrap.hidden = true;    // F5f: sin contenido no hay riel
             lienzo.style.display = 'none';
             vacio.hidden = false;
+            pistaLienzo.hidden = true;    // M1: sin lienzo no hay pista
             return;
         }
         vacio.hidden = true;
         rielSalWrap.hidden = false;
         lienzo.style.display = 'block';
+        pistaLienzo.hidden = false;   // M1: hay lienzo que tocar
         var d = dimsSalida();
         if (lienzo.width !== d.w || lienzo.height !== d.h) {
             lienzo.width = d.w;
@@ -1485,6 +1503,7 @@
         manijaTitulo.style.top = (lienzo.offsetTop + (cajaTextoSel.y - cajaTextoSel.h / 2) * f - pad) + 'px';
         manijaTitulo.style.width = (cajaTextoSel.w * f + pad * 2) + 'px';
         manijaTitulo.style.height = (cajaTextoSel.h * f + pad * 2) + 'px';
+        poneZonaTactil(manijaTitulo);   // M1: zona de toque hasta 44 px
     }
 
     function redibujarArrastre() {
@@ -1504,6 +1523,41 @@
     });
     manijaTitulo.addEventListener('pointermove', function (e) {
         if (!manijaArrastrando || textoSel < 0) return;
+        arrastraTextoA(e);   // M1: mismo motor que el arrastre desde el lienzo
+    });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+        manijaTitulo.addEventListener(ev, function (e) {
+            if (!manijaArrastrando) return;
+            manijaArrastrando = false;
+            try { manijaTitulo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+            redibujarArrastre();
+            actualizaManija();
+        });
+    });
+
+    /* ---------- M1 · tocar y arrastrar directamente en el lienzo (móvil) ---------- */
+    /* Un toque sobre un texto lo selecciona —con tolerancia alrededor de su
+       caja— sin tener que ir a buscarlo a la lista, y con ratón se arrastra
+       desde el propio lienzo. En táctil NO se arrastra desde aquí: el deslizar
+       vertical debe mover la página, así que el dedo selecciona con el toque y
+       coloca con la manija, que sí tiene touch-action:none y zona ensanchada. */
+    function cajaTextoBajo(e) {
+        var r = lienzo.getBoundingClientRect();
+        if (!r.width || !r.height) return -1;
+        var x = (e.clientX - r.left) * (lienzo.width / r.width);
+        var y = (e.clientY - r.top) * (lienzo.height / r.height);
+        var tol = 14 * (lienzo.width / r.width);   // 14 px de pantalla en cada lado
+        for (var i = cajasTextos.length - 1; i >= 0; i--) {
+            var c = cajasTextos[i];
+            if (!c) continue;   // texto fuera de su ventana en este fotograma
+            if (x >= c.x - c.w / 2 - tol && x <= c.x + c.w / 2 + tol &&
+                y >= c.y - c.h / 2 - tol && y <= c.y + c.h / 2 + tol) return i;
+        }
+        return -1;
+    }
+
+    function arrastraTextoA(e) {
+        if (textoSel < 0) return;
         var t = textos[textoSel];
         if (!t) return;
         var r = lienzo.getBoundingClientRect();
@@ -1514,14 +1568,46 @@
         if (selTxtPos.value !== 'personalizada') selTxtPos.value = 'personalizada';
         redibujarArrastre();
         actualizaManija();
+    }
+
+    /* M1: ensancha el área agarrable de la manija hasta ~44 px de dedo (y hasta
+       32 px de más por lado como tope) vía el pseudo-elemento ::before, sin
+       agrandar el recuadro visible */
+    function poneZonaTactil(el) {
+        var w = parseFloat(el.style.width) || 0;
+        var h = parseFloat(el.style.height) || 0;
+        var z = Math.min(32, Math.max(12, Math.ceil((44 - w) / 2), Math.ceil((44 - h) / 2)));
+        el.style.setProperty('--zona', '-' + z + 'px');
+    }
+
+    lienzo.addEventListener('click', function (e) {
+        if (grabando) return;
+        var idx = cajaTextoBajo(e);
+        if (idx >= 0 && idx !== textoSel) seleccionaTexto(idx);
     });
+
+    lienzo.addEventListener('pointerdown', function (e) {
+        if (grabando || e.pointerType === 'touch') return;   // en táctil manda el scroll
+        var idx = cajaTextoBajo(e);
+        if (idx < 0) return;
+        if (idx !== textoSel) seleccionaTexto(idx);
+        lienzoArrastrando = true;
+        try { lienzo.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+        e.preventDefault();
+    });
+
+    /* M1: el seguimiento vive en window para que el arrastre continúe aunque
+       el puntero salga del lienzo o empiece sobre la manija del contenido */
+    window.addEventListener('pointermove', function (e) {
+        if (!lienzoArrastrando) return;
+        arrastraTextoA(e);
+    });
+
     ['pointerup', 'pointercancel'].forEach(function (ev) {
-        manijaTitulo.addEventListener(ev, function (e) {
-            if (!manijaArrastrando) return;
-            manijaArrastrando = false;
-            try { manijaTitulo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
-            redibujarArrastre();
-            actualizaManija();
+        window.addEventListener(ev, function (e) {
+            if (!lienzoArrastrando) return;
+            lienzoArrastrando = false;
+            try { lienzo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         });
     });
 
@@ -1550,13 +1636,32 @@
         manijaContenido.style.top = (lienzo.offsetTop + y0 * f - pad) + 'px';
         manijaContenido.style.width = ((x1 - x0) * f + pad * 2) + 'px';
         manijaContenido.style.height = ((y1 - y0) * f + pad * 2) + 'px';
+        poneZonaTactil(manijaContenido);   // M1: zona de toque hasta 44 px
     }
 
     manijaContenido.addEventListener('pointerdown', function (e) {
         if (!noticiaActiva || grabando) return;
+        /* M1: si hay un texto encima, manda el texto —el dedo lo selecciona y
+           el ratón lo arrastra—; el contenido solo se arrastra sin texto encima */
+        var idx = cajaTextoBajo(e);
+        if (idx >= 0) {
+            if (idx !== textoSel) seleccionaTexto(idx);
+            if (e.pointerType === 'touch') return;   // en táctil: el toque selecciona
+            lienzoArrastrando = true;
+            try { manijaContenido.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+            e.preventDefault();
+            return;
+        }
         contArrastrando = true;
         try { manijaContenido.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         e.preventDefault();
+    });
+    /* M1: en táctil el toque sobre un texto —aunque esté dibujado sobre el
+       contenido de Tet News— lo selecciona, igual que en el resto del lienzo */
+    manijaContenido.addEventListener('click', function (e) {
+        if (grabando) return;
+        var idx = cajaTextoBajo(e);
+        if (idx >= 0 && idx !== textoSel) seleccionaTexto(idx);
     });
     manijaContenido.addEventListener('pointermove', function (e) {
         if (!contArrastrando) return;
