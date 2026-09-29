@@ -175,8 +175,9 @@
 }
 
 .vid-manija-contenido {
-    border-color: rgba(13, 202, 240, .9);   /* cian para distinguirla del título */
-    background: rgba(13, 202, 240, .08);
+    /* M2 · mismo azul que la selección de tet1 (Fabric: #0d6efd) */
+    border: 2px solid #0d6efd;
+    background: rgba(13, 110, 253, .08);
 }
 
 .vid-manija-titulo:active,
@@ -192,6 +193,42 @@
     content: '';
     position: absolute;
     inset: var(--zona, -12px);
+}
+
+/* M2 · asas circulares gordas en las esquinas del contenido, como las de
+   tet1 (Fabric): círculo blanco con borde azul de 2,5–3 px; el
+   pseudo-elemento ensancha el toque hasta 44 px sin agrandar el círculo */
+.vid-asa {
+    position: absolute;
+    box-sizing: border-box;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #0d6efd;   /* entero: Chrome redondea los subpíxeles */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+    touch-action: none;
+    user-select: none;
+    z-index: 1;
+}
+
+.vid-asa::before {
+    content: '';
+    position: absolute;
+    inset: -10px;   /* 26 + 20 = 46 px de dedo (más en pantallas táctiles) */
+}
+
+.vid-asa-nw { left: 0; top: 0; transform: translate(-50%, -50%); cursor: nwse-resize; }
+.vid-asa-ne { right: 0; top: 0; transform: translate(50%, -50%); cursor: nesw-resize; }
+.vid-asa-sw { left: 0; bottom: 0; transform: translate(-50%, 50%); cursor: nesw-resize; }
+.vid-asa-se { right: 0; bottom: 0; transform: translate(50%, 50%); cursor: nwse-resize; }
+
+@media (pointer: coarse) {
+    .vid-asa {
+        width: 34px;
+        height: 34px;
+        border-width: 3px;
+    }
 }
 
 /* F5d · controles de la plantilla Tet News: filas de 44px para el dedo */

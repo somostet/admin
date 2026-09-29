@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=m1">
+    <link rel="stylesheet" href="./public/css/video.css?v=m2b">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -328,10 +328,16 @@
                              sigue moviendo la página -->
                         <div class="vid-manija-titulo" id="vid-manija-titulo" hidden
                              title="Arrastra para mover el texto" aria-hidden="true"></div>
-                        <!-- M1/F5d: manija del contenido dentro de la plantilla Tet News
-                             (misma zona de toque ensanchada) -->
+                        <!-- M2: manija del contenido en estilo tet1 (borde azul) con
+                             4 asas circulares gordas para escalar; el resto del lienzo
+                             sigue moviendo la página (touch-action:none en la manija) -->
                         <div class="vid-manija-contenido" id="vid-manija-contenido" hidden
-                             title="Arrastra para mover el contenido" aria-hidden="true"></div>
+                             title="Arrastra para mover; toca una asa para escalar" aria-hidden="true">
+                            <span class="vid-asa vid-asa-nw" data-esq="nw"></span>
+                            <span class="vid-asa vid-asa-ne" data-esq="ne"></span>
+                            <span class="vid-asa vid-asa-sw" data-esq="sw"></span>
+                            <span class="vid-asa vid-asa-se" data-esq="se"></span>
+                        </div>
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
                     </div>
 
@@ -350,6 +356,15 @@
                         <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
                                 id="vid-contenido-centrar" disabled>
                             <i class="fas fa-crosshairs" aria-hidden="true"></i> Centrar contenido
+                        </button>
+                        <!-- M2 · atajos de ajuste como la barra de tet1 -->
+                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                id="vid-contenido-llenar" aria-pressed="false">
+                            <i class="fas fa-expand" aria-hidden="true"></i> Llenar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                id="vid-contenido-ajustar" aria-pressed="false">
+                            <i class="fas fa-compress" aria-hidden="true"></i> Ajustar
                         </button>
                     </div>
 
@@ -443,7 +458,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=m1"></script>
+    <script src="./public/js/video.js?v=m2b"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

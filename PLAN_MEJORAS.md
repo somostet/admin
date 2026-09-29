@@ -25,7 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅** · orden: F8 → F7 → E2 |
-| Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅** |
+| Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅** |
 
 ---
 
@@ -347,6 +347,29 @@ con F5d/F5e/F5f antes del audio):
   lectura del %, centrar, textos sobre el contenido con ratón y dedo,
   regresión del arrastre de contenido); consola 0, barrido 14/14,
   `node --check` OK; `?v=m1` en `video.html`, `video.js` y `video.css`.
+- **M2 · Manipulación del contenido estilo tet1 ✅** (petición del usuario:
+  «mejora la manipulación del vídeo como las imágenes del canvas de tet1…
+  porque se mueve extraño»). Cinco mejoras: (1) **arrastre con delta** en textos
+  y contenido: agarras donde tocas y va contigo (el origen es el centro
+  *dibujado*, no `t.x/t.y` de la plantilla, que provocaba un salto al primer
+  agarre); (2) **4 asas circulares gordas** en la esquina de la manija del
+  contenido, estilo tet1 (círculo blanco, borde azul 3 px entero —Chrome
+  redondea los subpíxeles—, 26 px y 34 px con puntero grueso, zona `::before`
+  ≥ 44 px), que escalan de 30 % a 300 % en pasos de 5 % con **la esquina
+  opuesta clavada**, sincronizadas con el deslizador y la lectura; (3) **borde
+  azul sólido 2 px** en la manija del contenido; (4) atajos **«Llenar»** y
+  **«Ajustar»** con estado resaltado en la barra junto al lienzo; (5) fix del
+  salto de página: al tocar lienzo/manijas se suelta el campo con foco
+  (si no, el navegador «revela» el textarea fuera de pantalla y tira de la
+  página hacia el formulario en mitad del arrastre —parte de lo raro—; de paso
+  cierra el teclado al tocar en móvil). E2E **20 comprobaciones** (delta de
+  texto y contenido, asas con esquina opuesta clavada al crecer y encoger,
+  lectura/escala sincronizadas, bordes y zonas táctiles, «Llenar»/«Ajustar»,
+  página quieta con el campo enfocado, regresiones M1 de toque y dedo);
+  consola 0, barrido 14/14, `node --check` OK; `?v=m2b` en `video.html`.
+  *Dato de futuro test:* Bootstrap trae `scroll-behavior: smooth` en `:root`,
+  así que todo scroll programático se anima —los tests deben medir con
+  `behavior: 'instant'` o esperar a que se asiente.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
   que el de `capas.js`.
 - **F8 · Grabar pestaña** (nuevo, solo ordenador): botón con `getDisplayMedia`

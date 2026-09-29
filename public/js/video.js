@@ -60,12 +60,18 @@
     var btnCentrarContenido = document.getElementById('vid-contenido-centrar'); // F5d
     var wrapContenido = document.getElementById('vid-contenido-controles'); // M1: barra junto al lienzo
     var valContenido = document.getElementById('vid-contenido-valor');     // M1: lectura del deslizador
+    var btnLlenar = document.getElementById('vid-contenido-llenar');       // M2: atajo «Llenar»
+    var btnAjustar = document.getElementById('vid-contenido-ajustar');     // M2: atajo «Ajustar»
     var manijaContenido = document.getElementById('vid-manija-contenido'); // F5d
     var noticiaActiva = false;   // F5d: plantilla Tet News activa
     var contPos = null;          // F5d: centro del contenido en fracciones (null = automático)
     var contEsc = 1;             // F5d: multiplicador del ajuste automático (1 = auto)
     var cajaContenido = null;    // F5d: última caja dibujada del contenido
     var contArrastrando = false; // F5d: puntero sobre la manija del contenido
+    var textoArrastreBase = null; // M2: punto de agarre del texto (mover sin salto)
+    var contArrastreBase = null;  // M2: punto de agarre del contenido
+    var contAsa = null;           // M2: esquina agarrada ('nw'|'ne'|'sw'|'se')
+    var contRedimBase = null;     // M2: estado del escalado al empezar
     var barraNews = new Image(); // F5d: barra «tet news» (1200×93)
     var barraNewsLista = false;
     var vidTotal = document.getElementById('vid-total');
@@ -994,6 +1000,7 @@
             selAjuste.value = 'contain';
             aviso('Ajuste cambiado a «contener» para que se vea el contenido en la plantilla', 'info');
         }
+        pintaAjusteRapido();   // M2: resalta el atajo tras el posible cambio a «contener»
         repintarSuperp();
         actualizaManijaContenido();
     });
@@ -1013,6 +1020,24 @@
         redibujarArrastre();
         actualizaManijaContenido();
     });
+
+    /* M2 · atajos «Llenar»/«Ajustar» junto al lienzo (como la barra de
+       acciones de tet1): reflejan el select de ajuste y lo cambian */
+    function pintaAjusteRapido() {
+        var c = selAjuste.value === 'cover';
+        var a = selAjuste.value === 'contain';
+        btnLlenar.classList.toggle('active', c);
+        btnLlenar.setAttribute('aria-pressed', String(c));
+        btnAjustar.classList.toggle('active', a);
+        btnAjustar.setAttribute('aria-pressed', String(a));
+    }
+    function ajusteRapido(v) {
+        if (selAjuste.value === v) return;
+        selAjuste.value = v;
+        selAjuste.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    btnLlenar.addEventListener('click', function () { ajusteRapido('cover'); });
+    btnAjustar.addEventListener('click', function () { ajusteRapido('contain'); });
 
     /* estilo «stories»: la propia imagen en cover, desenfocada, como fondo */
     function pintarDesenfado(img, alpha) {
@@ -1475,6 +1500,7 @@
             if (el === selAjuste && selAjuste.value === 'blur' && !soportaFilter) {
                 aviso('Tu navegador no hace desenfoque: se usará el color de fondo', 'info');
             }
+            if (el === selAjuste) pintaAjusteRapido();   // M2: resalta el atajo activo
             actualizaCrear();
             if (!grabando) reiniciarPreview();
         });
@@ -1517,6 +1543,8 @@
 
     manijaTitulo.addEventListener('pointerdown', function (e) {
         if (textoSel < 0 || grabando) return;
+        desenfocaCampo();         // M2: el campo con foco no debe tirar de la página
+        iniciaArrastreTexto(e);   // M2: delta desde donde se agarra
         manijaArrastrando = true;
         try { manijaTitulo.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         e.preventDefault();
@@ -1529,6 +1557,7 @@
         manijaTitulo.addEventListener(ev, function (e) {
             if (!manijaArrastrando) return;
             manijaArrastrando = false;
+            textoArrastreBase = null;   // M2
             try { manijaTitulo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
             redibujarArrastre();
             actualizaManija();
@@ -1556,14 +1585,28 @@
         return -1;
     }
 
+    /* M2: el texto se agarra DONDE se toca y lo sigue (delta); antes el
+       centro saltaba al puntero y el arrastre se sentía raro. El origen es el
+       centro DIBUJADO: t.x/t.y sin sincronizar en una posición de plantilla
+       harían que el texto saltara en el primer agarre */
+    function iniciaArrastreTexto(e) {
+        var t = textos[textoSel];
+        if (!t) return;
+        var cx = cajaTextoSel ? cajaTextoSel.x / lienzo.width : t.x;
+        var cy = cajaTextoSel ? cajaTextoSel.y / lienzo.height : t.y;
+        textoArrastreBase = { x: e.clientX, y: e.clientY, tx: cx, ty: cy };
+    }
+
     function arrastraTextoA(e) {
         if (textoSel < 0) return;
         var t = textos[textoSel];
         if (!t) return;
+        var b = textoArrastreBase;
+        if (!b) return;   // M2: sin punto de agarre no se mueve
         var r = lienzo.getBoundingClientRect();
         // F5e: mover el texto lo lleva a posición «personalizada»
-        t.x = Math.max(0.05, Math.min(0.95, (e.clientX - r.left) / r.width));
-        t.y = Math.max(0.05, Math.min(0.95, (e.clientY - r.top) / r.height));
+        t.x = Math.max(0.05, Math.min(0.95, b.tx + (e.clientX - b.x) / r.width));
+        t.y = Math.max(0.05, Math.min(0.95, b.ty + (e.clientY - b.y) / r.height));
         t.pos = 'personalizada';
         if (selTxtPos.value !== 'personalizada') selTxtPos.value = 'personalizada';
         redibujarArrastre();
@@ -1586,11 +1629,21 @@
         if (idx >= 0 && idx !== textoSel) seleccionaTexto(idx);
     });
 
+    /* M2 · al tocar el lienzo se suelta el campo con foco: si no, el navegador
+       «revela» el textarea (fuera de pantalla) y tira de la página hacia el
+       formulario en mitad del arrastre —ese salto era parte de lo raro— */
+    function desenfocaCampo() {
+        var a = document.activeElement;
+        if (a && a !== document.body && typeof a.blur === 'function') a.blur();
+    }
+
     lienzo.addEventListener('pointerdown', function (e) {
+        desenfocaCampo();   // M2: también cierra el teclado al tocar en móvil
         if (grabando || e.pointerType === 'touch') return;   // en táctil manda el scroll
         var idx = cajaTextoBajo(e);
         if (idx < 0) return;
         if (idx !== textoSel) seleccionaTexto(idx);
+        iniciaArrastreTexto(e);   // M2: delta desde donde se agarra
         lienzoArrastrando = true;
         try { lienzo.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         e.preventDefault();
@@ -1607,6 +1660,7 @@
         window.addEventListener(ev, function (e) {
             if (!lienzoArrastrando) return;
             lienzoArrastrando = false;
+            textoArrastreBase = null;   // M2
             try { lienzo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         });
     });
@@ -1639,19 +1693,91 @@
         poneZonaTactil(manijaContenido);   // M1: zona de toque hasta 44 px
     }
 
+    /* ---------- M2 · mover y escalar el contenido como en tet1 ---------- */
+    /* El contenido se agarra DONDE se toca (delta: sigue al dedo sin saltar)
+       y las asas de las esquinas escalan dejando la esquina opuesta clavada,
+       igual que la selección de objetos de Fabric en tet1. Mismos límites de
+       siempre: el centro no sale del cuerpo y el escalado va de 30 % a 300 %. */
+    function contPosClamp(x, y) {
+        var z = zonaDibujo();
+        return {
+            x: Math.max(0, Math.min(1, x)),
+            y: Math.max(z.y / lienzo.height,
+                Math.min((z.y + z.h) / lienzo.height, y))
+        };
+    }
+
+    function iniciaArrastreContenido(e) {
+        contArrastreBase = {
+            x: e.clientX, y: e.clientY,
+            px: cajaContenido.x / lienzo.width,   // M2: el centro tal y como se dibuja
+            py: cajaContenido.y / lienzo.height
+        };
+    }
+
+    function iniciaRedimContenido(e, esq) {
+        var rr = lienzo.getBoundingClientRect();
+        var f = rr.width / lienzo.width;
+        var sX = (esq === 'se' || esq === 'ne') ? 1 : -1;
+        var sY = (esq === 'se' || esq === 'sw') ? 1 : -1;
+        // centro y semieje del contenido en coordenadas de pantalla
+        var c0 = { x: rr.left + cajaContenido.x * f, y: rr.top + cajaContenido.y * f };
+        var v0 = { x: sX * cajaContenido.w * f / 2, y: sY * cajaContenido.h * f / 2 };
+        // esquina opuesta (la que se queda clavada) y distancia de referencia
+        var q = { x: c0.x - v0.x, y: c0.y - v0.y };
+        var dx = e.clientX - q.x, dy = e.clientY - q.y;
+        contRedimBase = {
+            esq: esq, q: q, k0: Math.sqrt(dx * dx + dy * dy) || 1,
+            c0: c0, v0: v0, esc0: contEsc
+        };
+        contAsa = esq;
+        contArrastrando = false;
+        contArrastreBase = null;
+    }
+
+    function redimContenidoA(e) {
+        var b = contRedimBase;
+        if (!b) return;
+        var dx = e.clientX - b.q.x, dy = e.clientY - b.q.y;
+        var k = Math.sqrt(dx * dx + dy * dy) / b.k0;
+        // pasos del 5 %: exactamente la misma rejilla y rango que el deslizador
+        contEsc = Math.max(0.3, Math.min(3, Math.round(b.esc0 * k * 20) / 20));
+        var k2 = b.esc0 ? contEsc / b.esc0 : 1;
+        // el centro se reubica para que la esquina opuesta no se mueva
+        var nx = b.c0.x + (k2 - 1) * b.v0.x;
+        var ny = b.c0.y + (k2 - 1) * b.v0.y;
+        var rr = lienzo.getBoundingClientRect();
+        contPos = contPosClamp((nx - rr.left) / rr.width, (ny - rr.top) / rr.height);
+        inpEscContenido.value = String(Math.round(contEsc * 100));
+        valContenido.textContent = inpEscContenido.value + ' %';   // M1
+        redibujarArrastre();
+        actualizaManijaContenido();
+    }
+
     manijaContenido.addEventListener('pointerdown', function (e) {
         if (!noticiaActiva || grabando) return;
+        desenfocaCampo();   // M2: el campo con foco no debe tirar de la página
+        /* M2: agarrando una asa → escalar (la esquina opuesta se queda fija) */
+        var esq = e.target && e.target.getAttribute ? e.target.getAttribute('data-esq') : null;
+        if (esq) {
+            iniciaRedimContenido(e, esq);
+            try { manijaContenido.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+            e.preventDefault();
+            return;
+        }
         /* M1: si hay un texto encima, manda el texto —el dedo lo selecciona y
            el ratón lo arrastra—; el contenido solo se arrastra sin texto encima */
         var idx = cajaTextoBajo(e);
         if (idx >= 0) {
             if (idx !== textoSel) seleccionaTexto(idx);
             if (e.pointerType === 'touch') return;   // en táctil: el toque selecciona
+            iniciaArrastreTexto(e);   // M2: delta desde el punto de agarre
             lienzoArrastrando = true;
             try { manijaContenido.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
             e.preventDefault();
             return;
         }
+        iniciaArrastreContenido(e);   // M2: sigue al dedo desde el agarre
         contArrastrando = true;
         try { manijaContenido.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         e.preventDefault();
@@ -1664,24 +1790,26 @@
         if (idx >= 0 && idx !== textoSel) seleccionaTexto(idx);
     });
     manijaContenido.addEventListener('pointermove', function (e) {
+        if (contAsa) { redimContenidoA(e); return; }
         if (!contArrastrando) return;
+        var b = contArrastreBase;
+        if (!b) return;
         var r = lienzo.getBoundingClientRect();
-        var z = zonaDibujo();
-        var x = (e.clientX - r.left) / r.width;
-        var y = (e.clientY - r.top) / r.height;
-        // el centro no puede salir del cuerpo de la plantilla
-        contPos = {
-            x: Math.max(0, Math.min(1, x)),
-            y: Math.max(z.y / lienzo.height,
-                Math.min((z.y + z.h) / lienzo.height, y))
-        };
+        // M2: delta — el contenido se queda bajo el dedo desde el agarre
+        contPos = contPosClamp(
+            b.px + (e.clientX - b.x) / r.width,
+            b.py + (e.clientY - b.y) / r.height
+        );
         redibujarArrastre();
         actualizaManijaContenido();
     });
     ['pointerup', 'pointercancel'].forEach(function (ev) {
         manijaContenido.addEventListener(ev, function (e) {
-            if (!contArrastrando) return;
+            if (!contArrastrando && !contAsa) return;
             contArrastrando = false;
+            contAsa = null;
+            contArrastreBase = null;
+            contRedimBase = null;
             try { manijaContenido.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
             redibujarArrastre();
             actualizaManijaContenido();
@@ -1900,6 +2028,7 @@
     textoSel = 0;
     pintaListaTextos();
     cargaEditor();
+    pintaAjusteRapido();   // M2: resalta «Llenar»/«Ajustar» según el ajuste inicial
 
     /* al cambiar de modo se convierte el valor (2 s×5 → 10 s totales y al revés)
        y los límites del input pasan a ser los del nuevo modo */
