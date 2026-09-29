@@ -387,8 +387,9 @@ con F5d/F5e/F5f antes del audio):
   igual); la captura bloquea «Crear vídeo» y las cargas de archivos.
   **Fix visual asociado:** `d-flex` (utilidad con `!important`) ganaba a
   `[hidden]` y la fila de captura se veía siempre — regla
-  `#vid-pestana-fila[hidden]{display:none !important}`; ojo, el mismo
-  patrón afecta a `#vid-logo-estado` (F4/E4), pendiente de arreglar. E2E
+  `#vid-pestana-fila[hidden]{display:none !important}`; el mismo patrón
+  afectaba a `#vid-logo-estado` (F4/E4, la barra de estado del logo se veía
+  sin logo), **arreglado acto seguido en su propio commit**. E2E
   **17 comprobaciones** con `getDisplayMedia` simulado (canvas animado +
   pista de audio) y visibilidad real por `getComputedStyle`: constraints con
   audio, códec con audio, clip `pestana-*` con duración leída, pistas

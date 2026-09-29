@@ -40,6 +40,13 @@
     display: none !important;
 }
 
+/* E4 · misma trampa: la barra de estado del logo usa d-flex y su atributo
+   [hidden] no surtía efecto (se veía siempre aunque no hubiera logo);
+   solo debe aparecer cuando el JS la muestra */
+#vid-logo-estado[hidden] {
+    display: none !important;
+}
+
 .vid-tira-wrap {
     margin-top: .75rem;
 }
