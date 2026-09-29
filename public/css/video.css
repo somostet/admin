@@ -417,6 +417,45 @@
     white-space: nowrap;
 }
 
+/* F6 · música de fondo */
+.vid-audio-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+    margin-top: .5rem;
+}
+
+.vid-audio-nombre {
+    flex: 1 1 12rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .9rem;
+}
+
+.vid-audio-vol {
+    flex: 0 1 10rem;
+    min-height: 44px;   /* dedo cómodo sobre el deslizador */
+}
+
+.vid-audio-vol-valor {
+    font-size: .85rem;
+    min-width: 3.4em;
+}
+
+.vid-audio-quitar {
+    min-width: 44px;     /* objetivo táctil */
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid var(--sh-border);
+    border-radius: .375rem;
+    background: transparent;
+    color: #dc3545;
+    cursor: pointer;
+}
+
 .vid-vacio {
     margin: 1rem 0;
     text-align: center;

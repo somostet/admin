@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f5f">
+    <link rel="stylesheet" href="./public/css/video.css?v=f6">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -309,6 +309,25 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- F6 · música de fondo: AudioBuffer mezclado con Web Audio
+                             hacia el grabador (no suena en la vista previa) -->
+                        <div class="col-12">
+                            <label class="form-label" for="vid-audio-archivo">Música de fondo (opcional)</label>
+                            <input type="file" class="form-control" id="vid-audio-archivo" accept="audio/*">
+                            <div class="vid-audio-fila" id="vid-audio-fila" hidden>
+                                <span class="vid-audio-nombre" id="vid-audio-nombre"></span>
+                                <input type="range" class="form-range vid-audio-vol" id="vid-audio-vol"
+                                       min="0" max="100" step="5" value="100"
+                                       aria-label="Volumen de la música (%)">
+                                <span class="vid-audio-vol-valor" id="vid-audio-vol-valor">100 %</span>
+                                <button type="button" class="vid-audio-quitar" id="vid-audio-quitar"
+                                        title="Quitar la música" aria-label="Quitar la música">
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <p class="form-text mb-0">Se mezcla al grabar (no suena en la vista previa); si la canción
+                                es más corta que el vídeo, se repite en bucle.</p>
+                        </div>
                     </div>
 
                     <div class="vid-preview" id="vid-preview">
@@ -412,7 +431,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f5f"></script>
+    <script src="./public/js/video.js?v=f6"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

@@ -29,6 +29,16 @@
     var audioCtx = null;       // Web Audio: sonido del recorte hacia el grabador
     var audioDest = null;
     var fuenteAudio = null;
+    /* F6 · música de fondo (misma pareja ctx/dest que el recorte) */
+    var inpMusica = document.getElementById('vid-audio-archivo');
+    var filaMusica = document.getElementById('vid-audio-fila');
+    var nombreMusica = document.getElementById('vid-audio-nombre');
+    var volMusica = document.getElementById('vid-audio-vol');
+    var volValor = document.getElementById('vid-audio-vol-valor');
+    var btnQuitarMusica = document.getElementById('vid-audio-quitar');
+    var musicaBuf = null;       // AudioBuffer decodificado del archivo subido
+    var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
+    var musicaGanancia = null;  // GainNode (el volumen también funciona en vivo)
 
     var input = document.getElementById('vid-archivos');
     var tiraWrap = document.getElementById('vid-tira-wrap');
@@ -1881,6 +1891,7 @@
     });
 
     function limpiar() {
+        detenerMusica();   // F6: corta la música al terminar, fallar o cancelar
         if (videoCargado) {
             vidFuente.pause();
             vidFuente.controls = true;
@@ -1903,7 +1914,11 @@
     }
 
     function crearVideo() {
-        var mime = elegirMime();
+        var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
+            Math.round(calculoDuracion().porImagen * 1000));
+        var total = durMs * imagenes.length;
+        var hayMusica = preparaMusica(total / 1000);   // F6
+        var mime = elegirMime(hayMusica) || elegirMime(false);
         if (!mime) {
             aviso('No hay códec de vídeo disponible en este navegador', 'danger');
             return;
@@ -1924,18 +1939,33 @@
         lienzo.width = d.w;
         lienzo.height = d.h;
 
-        var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
-            Math.round(calculoDuracion().porImagen * 1000));
-        var total = durMs * imagenes.length;
         dibujarEn(0, durMs);
 
         var stream = lienzo.captureStream(FPS);
+        if (hayMusica && audioDest) {
+            audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
+        }
+        var mimeUsado = mime;
         var chunks = [];
         var rec;
         try {
-            rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8000000 });
+            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: 8000000 });
         } catch (e) {
-            return fallo('No se pudo iniciar la grabación en este navegador');
+            var mv = elegirMime(false);
+            if (!hayMusica || !mv) {
+                detenerMusica();
+                return fallo('No se pudo iniciar la grabación en este navegador');
+            }
+            try {
+                stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
+                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: 8000000 });
+                mimeUsado = mv;
+                detenerMusica();                     // la música no entra: no iniciarla
+                hayMusica = false;
+            } catch (e2) {
+                detenerMusica();
+                return fallo('No se pudo iniciar la grabación en este navegador');
+            }
         }
         recAct = rec;
         rec.ondataavailable = function (e) {
@@ -1946,7 +1976,7 @@
                 aviso('Grabación cancelada', 'info');
                 return limpiar();
             }
-            var tipo = mime.split(';')[0];
+            var tipo = mimeUsado.split(';')[0];
             var blob = new Blob(chunks, { type: tipo });
             if (!blob.size) return fallo('La grabación salió vacía');
             if (urlVideo) URL.revokeObjectURL(urlVideo);
@@ -1972,6 +2002,7 @@
 
         var t0 = performance.now();
         rec.start(200);
+        iniciaMusica();   // F6: la música entra al empezar a grabar
 
         function tick() {
             if (!grabando) return;
@@ -1992,6 +2023,131 @@
         rafAct = requestAnimationFrame(tick);
     }
 
+    /* ---------- F6 · música de fondo ---------- */
+    /* El archivo subido se decodifica al elegirlo; al grabar, un
+       AudioBufferSourceNode (en bucle si es más corto) entra en el mismo
+       audioDest que ya usa el recorte, así el grabador lleva una única pista
+       de audio. No suena en la vista previa: solo se mezcla en la grabación. */
+    function formatoAudio(seg) {
+        var m = Math.floor(seg / 60);
+        var s = Math.round(seg % 60);
+        if (s >= 60) { m += 1; s = 0; }
+        return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function pintaMusica() {
+        var f = inpMusica.files && inpMusica.files[0];
+        var hay = !!(f && musicaBuf);
+        filaMusica.hidden = !hay;
+        nombreMusica.textContent = hay ? f.name + ' · ' + formatoAudio(musicaBuf.duration) : '';
+    }
+
+    function preparaCtxAudio() {
+        if (audioCtx && audioDest) return true;
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return false;
+        if (!audioCtx) audioCtx = new AC();
+        if (!audioDest) audioDest = audioCtx.createMediaStreamDestination();
+        return true;
+    }
+
+    function decodificaMusica(datos, nombre) {
+        var hecho = false;
+        var ok = function (buf) {
+            if (hecho) return;
+            hecho = true;
+            musicaBuf = buf;
+            pintaMusica();
+        };
+        var mal = function () {
+            if (hecho) return;
+            hecho = true;
+            aviso('No se pudo decodificar «' + nombre + '»: prueba con MP3 o WAV', 'danger');
+        };
+        try {
+            var r = audioCtx.decodeAudioData(datos, ok, mal);
+            if (r && r.then) r.then(ok).catch(mal);   // Safari solo promesa
+        } catch (e) {
+            mal();
+        }
+    }
+
+    inpMusica.addEventListener('change', function () {
+        var f = inpMusica.files && inpMusica.files[0];
+        musicaBuf = null;
+        pintaMusica();
+        if (!f) return;
+        if (!(/^audio\//.test(f.type) || /\.(mp3|m4a|aac|wav|ogg|oga|opus|flac)$/i.test(f.name))) {
+            aviso('«' + f.name + '» no es un audio', 'warning');
+            return;
+        }
+        if (!preparaCtxAudio()) {
+            aviso('Tu navegador no soporta Web Audio', 'warning');
+            return;
+        }
+        var lector = new FileReader();
+        lector.onload = function () { decodificaMusica(lector.result, f.name); };
+        lector.onerror = function () { aviso('No se pudo leer «' + f.name + '»', 'danger'); };
+        lector.readAsArrayBuffer(f);
+    });
+
+    btnQuitarMusica.addEventListener('click', function () {
+        inpMusica.value = '';
+        musicaBuf = null;
+        pintaMusica();
+    });
+
+    volMusica.addEventListener('input', function () {
+        volValor.textContent = volMusica.value + ' %';
+        if (musicaGanancia) musicaGanancia.gain.value = parseInt(volMusica.value, 10) / 100;
+    });
+
+    /* Prepara la música para la grabación que va a empezar y devuelve si hay.
+       Se llama desde el clic de «Crear vídeo» (gesto del usuario ⇒ contexto
+       despierto en iOS). La fuente de buffer sirve una sola vez: cada
+       grabación crea la suya. segTotal es la duración de la salida. */
+    function preparaMusica(segTotal) {
+        detenerMusica();   // por si quedó algo de una grabación anterior
+        if (!musicaBuf) return false;
+        try {
+            if (!preparaCtxAudio()) return false;
+            if (audioCtx.state === 'suspended') {
+                var p = audioCtx.resume();
+                if (p && p.catch) p.catch(function () { });
+            }
+            var nodo = audioCtx.createBufferSource();
+            nodo.buffer = musicaBuf;
+            nodo.loop = musicaBuf.duration < segTotal;   // más corta ⇒ bucle
+            var gan = audioCtx.createGain();
+            gan.gain.value = parseInt(volMusica.value, 10) / 100;
+            nodo.connect(gan);
+            gan.connect(audioDest);   // al grabador, no a los altavoces
+            musicaNodo = nodo;
+            musicaGanancia = gan;
+            return true;
+        } catch (e) {
+            detenerMusica();
+            return false;
+        }
+    }
+
+    function iniciaMusica() {
+        if (!musicaNodo) return;
+        try { musicaNodo.start(0); } catch (e) { }
+    }
+
+    function detenerMusica() {
+        if (musicaNodo) {
+            try { musicaNodo.stop(); } catch (e) { }   // sin start() esto lanza
+            try { musicaNodo.disconnect(); } catch (e) { }
+        }
+        if (musicaGanancia) {
+            try { musicaGanancia.disconnect(); } catch (e) { }
+        }
+        musicaNodo = null;
+        musicaGanancia = null;
+    }
+
     /* ---------- E3 · recorte: regrabar el rango elegido ---------- */
     /* El sonido del propio vídeo pasa por Web Audio para que el grabador lo
        lleve al resultado. createMediaElementSource solo puede hacerse UNA vez
@@ -1999,11 +2155,10 @@
        usuario, así el AudioContext arranca despierto). */
     function conectarAudio() {
         try {
-            if (!audioCtx) {
-                var AC = window.AudioContext || window.webkitAudioContext;
-                if (!AC) return null;
-                audioCtx = new AC();
-                audioDest = audioCtx.createMediaStreamDestination();
+            // F6: el ctx/dest pueden existir ya por la música; el
+            // createMediaElementSource sigue siendo de UN solo uso
+            if (!preparaCtxAudio()) return null;
+            if (!fuenteAudio) {
                 fuenteAudio = audioCtx.createMediaElementSource(vidFuente);
                 fuenteAudio.connect(audioCtx.destination);  // seguimos oyendo el vídeo
                 fuenteAudio.connect(audioDest);            // pista para el grabador
@@ -2014,7 +2169,6 @@
             }
             return audioDest;
         } catch (e) {
-            audioCtx = null;
             return null;
         }
     }
@@ -2028,7 +2182,8 @@
 
     function crearVideoRecorte(r) {
         var audio = conectarAudio();
-        var mime = elegirMime(!!audio) || elegirMime(false);
+        var hayMusica = preparaMusica(r.fin - r.inicio);   // F6
+        var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
         if (!mime) {
             aviso('No hay códec de vídeo disponible en este navegador', 'danger');
             return;
@@ -2056,8 +2211,8 @@
         lienzo.height = d.h;
 
         var stream = lienzo.captureStream(FPS);
-        if (audio) {
-            audio.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
+        if ((audio || hayMusica) && audioDest) {
+            audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
         }
         var chunks = [];
         var mimeUsado = mime;
@@ -2071,7 +2226,9 @@
                 stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
                 rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: 8000000 });
                 mimeUsado = mv;
+                detenerMusica();                      // F6: no entra, no se inicia
             } catch (e2) {
+                detenerMusica();
                 return fallo('No se pudo iniciar la grabación en este navegador');
             }
         }
@@ -2112,6 +2269,7 @@
             if (!grabando) return;   // se canceló mientras buscaba la posición
             dibujarFrame(vidFuente);
             recAct.start(200);
+            iniciaMusica();   // F6: la música entra al empezar a grabar
             var p = vidFuente.play();
             if (p && p.catch) {
                 p.catch(function () {

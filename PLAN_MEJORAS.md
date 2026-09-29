@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅** · orden: F6 → F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅** · orden: F8 → F7 → E2 |
 
 ---
 
@@ -197,7 +197,7 @@ propia). Un commit por función.
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8;
 el 28/09, tras el feedback del usuario sobre las plantillas, F5 se extiende
 con F5d/F5e/F5f antes del audio):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f ✅ → F6 → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f ✅ → F6 ✅ → F8 → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -297,8 +297,30 @@ con F5d/F5e/F5f antes del audio):
   imágenes con pausa y reaparición del texto, 9 en vídeo con webm
   sintetizado de 4 s), consola 0, barrido 13/13; `?v=f5f` en `video.html`,
   `video.js` y `video.css`.
-- **F6 · Música de fondo**: audio subido → Web Audio → pista mezclada en el
-  MP4/WebM (loop si es más corto); prueba obligatoria en iOS.
+- **F6 · Música de fondo ✅** (bloque «Música de fondo (opcional)»: archivo
+  `audio/*`, fila con `nombre · duración`, deslizador de volumen 0–100 % con
+  etiqueta en vivo y papelera). El archivo se decodifica al elegirlo
+  (`decodeAudioData` con guardia anti-doble llamada y promesa de respaldo para
+  Safari); `preparaMusica(segTotal)` crea por cada grabación una fuente de
+  buffer (de un solo uso) con **loop si dura menos que la salida**, `gain` con
+  el volumen (también se puede mover en vivo) y salida **solo al `audioDest`
+  del grabador** (no suena en la previa ni en los altavoces). Comparte
+  AudioContext con el recorte: `conectarAudio` refactorizado para crear
+  `fuenteAudio` una sola vez aunque el ctx exista ya por la música. La música
+  arranca tras `rec.start` en `crearVideo` y en `arrancar()` del recorte, y se
+  corta en `limpiar()` (fin, fallo o cancelación) y en los fallbacks video-only
+  (`elegirMime(hay) || elegirMime(false)` en ambas rutas). E2E **16
+  comprobaciones**: fase A imágenes (10 — fila oculta de entrada, WAV
+  decodificado `tono.wav · 0:02`, volumen 100 %, stream con 1 pista y mime
+  `avc3…mp4a`, contenedor `soun`+`mp4a`, resultado ~2 s `readyState` 4, quitar
+  música, y control sin música: 0 pistas, `avc1` sin marcas, 1,96 s) y fase B
+  recorte (6 — webm sintetizado sin audio propio, recorte 1,5 s con música
+  `tono2.wav`, 1 pista, contenedor con audio, 1,51 s); consola 0, barrido 13/13,
+  `node --check` OK; `?v=f6` en `video.html`, `video.js` y `video.css`.
+  *Dato de futuros tests:* la CSP `connect-src 'self'` (S2) bloquea
+  `fetch(blob:)`; el análisis de los resultados se hace parcheando
+  `MediaRecorder` y leyendo los chunks con `Blob.arrayBuffer()` (en memoria,
+  sin red). **Prueba en iOS pendiente (obligatoria).**
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
   que el de `capas.js`.
 - **F8 · Grabar pestaña** (nuevo, solo ordenador): botón con `getDisplayMedia`
@@ -310,9 +332,10 @@ Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
 propio (✅), el fix del primer fotograma (✅), **F4** (✅) y **F5** (✅, en
 tres commits: animaciones, título arrastrable y plantilla Tet News —F5d,
-reemplazando el select de 9 plantillas—); antes del audio vienen **F5e**
-(lista de textos) y **F5f** (riel con cabezal), y después **F6** cierra la
-petición del usuario; **E2** cierra el bloque.
+reemplazando el select de 9 plantillas—); antes del audio vienen **F5e** ✅
+(lista de textos) y **F5f** ✅ (riel con cabezal), y **F6** ✅ cerró la
+petición del usuario (con la prueba en iOS pendiente); después quedan **F8**
+→ **F7** y **E2** cierra el bloque.
 
 ---
 
