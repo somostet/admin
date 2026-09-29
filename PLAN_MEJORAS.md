@@ -408,6 +408,14 @@ con F5d/F5e/F5f antes del audio):
   apagadas al terminar, cronómetro, bloqueos, cancelación del selector y
   regresión de subida de imágenes; consola 0, barrido 14/14, `node --check`
   OK; `?v=f8b` en `video.html`.
+  *Descarga directa de YouTube/otras redes (29/09, estudiado):* **no es
+  viable** en un PWA estático —YouTube no envía cabeceras CORS y cifra las
+  URL de sus streams (habría que interpretar su player JS, que cambia cada
+  pocos días, y unir audio/vídeo DASH—; en la práctica solo funciona con
+  servidor propio o extensiones con privilegios, contra el principio «sin
+  subir nada» de S1–S5, y además va contra los Términos de YouTube.
+  **Decisión del usuario: no añadir nada**; F8 «Grabar pestaña» es la vía
+  recomendada para llevar contenido de X/YouTube al editor.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
