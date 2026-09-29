@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=m2b">
+    <link rel="stylesheet" href="./public/css/video.css?v=f8b">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -82,6 +82,27 @@
                         <i class="fas fa-file-video" aria-hidden="true"></i> Agregar vídeo (para recortar)
                     </label>
                     <input type="file" id="vid-archivo-video" accept="video/*" class="d-none">
+
+                    <!-- F8 · grabar la pestaña donde se reproduce un vídeo (X, YouTube…)
+                         y usarla como fuente; solo si el navegador lo permite -->
+                    <button type="button" class="btn btn-outline-primary w-100 vid-cargar mt-2" id="vid-pestana"
+                        title="Graba otra pestaña con un vídeo y úsala como fuente para recortar"
+                        hidden>
+                        <i class="fas fa-desktop" aria-hidden="true"></i> Grabar pestaña (vídeo)
+                    </button>
+                    <div class="form-text" id="vid-pestana-ayuda" hidden>
+                        Elige la pestaña donde se reproduce el vídeo; en Chrome puedes marcar
+                        «Compartir audio de pestaña» para llevar también el sonido.
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1" id="vid-pestana-fila" role="status" hidden>
+                        <span class="badge text-bg-danger">
+                            <i class="fas fa-circle" aria-hidden="true" style="font-size:.65em"></i> Grabando pestaña
+                        </span>
+                        <strong id="vid-pestana-tiempo">0:00</strong>
+                        <button type="button" class="btn btn-outline-danger ms-auto" id="vid-pestana-parar">
+                            <i class="fas fa-stop" aria-hidden="true"></i> Detener
+                        </button>
+                    </div>
 
                     <div class="vid-tira-wrap" id="vid-tira-wrap" hidden>
                         <div class="vid-tira" id="vid-tira" aria-label="Imágenes del vídeo (selecciona una para reordenarla)"></div>
@@ -242,7 +263,7 @@
                                 <div class="col-12">
                                     <label class="form-label" for="vid-txt-contenido">Contenido</label>
                                     <textarea class="form-control" id="vid-txt-contenido" rows="2" maxlength="300"
-                                              placeholder="Ej.: Un día en Toledo" autocomplete="off"></textarea>
+                                              placeholder="Ingresa texto" autocomplete="off"></textarea>
                                 </div>
                                 <div class="col-6 col-lg-4">
                                     <label class="form-label" for="vid-txt-pos">Posición</label>
@@ -458,7 +479,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=m2b"></script>
+    <script src="./public/js/video.js?v=f8b"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

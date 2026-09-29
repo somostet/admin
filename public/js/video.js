@@ -39,6 +39,12 @@
     var musicaBuf = null;       // AudioBuffer decodificado del archivo subido
     var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
     var musicaGanancia = null;  // GainNode (el volumen también funciona en vivo)
+    /* F8 · captura de pestaña (getDisplayMedia) */
+    var capturando = false;     // hay una captura de pestaña en curso
+    var pidiendo = false;       // selector de pestaña abierto (evita doble clic)
+    var recPestana = null;      // MediaRecorder de la captura
+    var streamPestana = null;   // stream que compartió el usuario
+    var relojPestana = null;    // setInterval del cronómetro
 
     var input = document.getElementById('vid-archivos');
     var tiraWrap = document.getElementById('vid-tira-wrap');
@@ -90,6 +96,11 @@
     var btnImagenLabel = document.getElementById('vid-etiqueta-img');
     var inpVideo = document.getElementById('vid-archivo-video');
     var lblVideo = document.getElementById('vid-etiqueta-video');
+    var btnPestana = document.getElementById('vid-pestana');            // F8
+    var ayudaPestana = document.getElementById('vid-pestana-ayuda');    // F8
+    var filaPestana = document.getElementById('vid-pestana-fila');      // F8
+    var tiempoPestana = document.getElementById('vid-pestana-tiempo');  // F8
+    var btnPararPestana = document.getElementById('vid-pestana-parar'); // F8
     var recWrap = document.getElementById('vid-recorte');
     var recNombre = document.getElementById('vid-rec-nombre');
     var recDur = document.getElementById('vid-rec-duracion');
@@ -213,6 +224,10 @@
         var lista = Array.prototype.slice.call(input.files || []);
         input.value = '';
         if (!lista.length) return;
+        if (capturando || pidiendo) {   // F8: la pestaña manda mientras tanto
+            aviso('Espera a que termine la captura de la pestaña', 'info');
+            return;
+        }
         var cola = Promise.resolve();
         lista.forEach(function (f) {
             cola = cola.then(function () { return cargarImagen(f); });
@@ -269,6 +284,10 @@
         if (!f) return;
         if (grabando) {
             aviso('Espera a que termine la grabación', 'info');
+            return;
+        }
+        if (capturando || pidiendo) {   // F8
+            aviso('Espera a que termine la captura de la pestaña', 'info');
             return;
         }
         if (imagenes.length) {
@@ -372,6 +391,142 @@
     }
 
     recQuitar.addEventListener('click', function () { quitarVideo(); });
+
+    /* ---------- F8 · grabar pestaña (getDisplayMedia) ---------- */
+    /* El usuario comparte la pestaña donde se reproduce un vídeo (X,
+       YouTube…) con el selector del navegador; la captura se guarda como un
+       clip y entra por la misma puerta que un vídeo subido (cargarVideo):
+       bloque de recorte, riel, miniaturas y duración de E3. El audio de la
+       pestaña (si Chrome comparte «audio de pestaña») viaja dentro del clip
+       y al render se mezcla con la música en el audioDest de F6. El botón no
+       aparece sin getDisplayMedia (iOS) ni con puntero táctil, donde el
+       selector de pestañas no tiene sentido. */
+    var MAX_PESTANA_SEG = 120;   // mismo tope que la salida: 2 minutos
+
+    function hayDisplayMedia() {
+        return !!(soportado && navigator.mediaDevices &&
+            navigator.mediaDevices.getDisplayMedia &&
+            !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches));
+    }
+
+    function pintaBotonPestana() {
+        var hay = hayDisplayMedia();
+        btnPestana.hidden = !hay;
+        ayudaPestana.hidden = !hay;
+    }
+
+    btnPestana.addEventListener('click', function () {
+        if (capturando || pidiendo) return;
+        if (grabando) {
+            aviso('Espera a que termine la grabación', 'info');
+            return;
+        }
+        if (!hayDisplayMedia()) {
+            aviso('Tu navegador no permite grabar la pestaña', 'warning');
+            return;
+        }
+        if (imagenes.length) {
+            aviso('Quita las imágenes para grabar una pestaña', 'info');
+            return;
+        }
+        pidiendo = true;
+        navigator.mediaDevices.getDisplayMedia({ video: { frameRate: FPS }, audio: true })
+            .then(function (st) {
+                pidiendo = false;
+                iniciaCaptura(st);
+            })
+            .catch(function (e) {
+                pidiendo = false;
+                var n = e && e.name;
+                if (n === 'NotAllowedError' || n === 'AbortError') {
+                    aviso('Grabación de pestaña cancelada', 'info');
+                } else {
+                    aviso('No se pudo compartir la pestaña' + (n ? ' (' + n + ')' : ''), 'danger');
+                }
+            });
+    });
+
+    function descartaStream(st, msg) {
+        st.getTracks().forEach(function (t) { try { t.stop(); } catch (e) { } });
+        if (msg) aviso(msg, 'warning');
+    }
+
+    function iniciaCaptura(st) {
+        var pistaVideo = st.getVideoTracks()[0];
+        var conAudio = st.getAudioTracks().length > 0;
+        var mime = elegirMime(conAudio) || elegirMime(false);
+        if (grabando) return descartaStream(st, 'Espera a que termine la grabación');
+        if (imagenes.length) return descartaStream(st, 'Quita las imágenes para grabar una pestaña');
+        if (!pistaVideo || !mime) return descartaStream(st, 'Este navegador no puede grabar la pestaña');
+        var chunks = [];
+        var rec;
+        try {
+            rec = new MediaRecorder(st, { mimeType: mime });
+        } catch (e) {
+            try {
+                rec = new MediaRecorder(st);        // por defecto: con audio si lo hay
+                mime = rec.mimeType || 'video/webm';
+            } catch (e2) {
+                return descartaStream(st, 'No se pudo iniciar la grabación de la pestaña');
+            }
+        }
+        capturando = true;
+        recPestana = rec;
+        streamPestana = st;
+        btnCrear.disabled = true;
+        btnPestana.hidden = true;
+        filaPestana.hidden = false;
+        tiempoPestana.textContent = '0:00';
+        /* Chrome enseña «Dejar de compartir»: si lo pulsan, la pista acaba,
+           MediaRecorder para solo y onstop nos lleva a finCaptura */
+        pistaVideo.onended = paraCaptura;
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function () { finCaptura(chunks, mime); };
+        rec.start();
+        var t0 = Date.now();
+        relojPestana = setInterval(function () {
+            var s = Math.floor((Date.now() - t0) / 1000);
+            tiempoPestana.textContent = formatoAudio(s);
+            if (s >= MAX_PESTANA_SEG) {
+                paraCaptura();
+                aviso('Máximo 2 minutos de captura: el clip se corta ahí', 'info');
+            }
+        }, 250);
+        aviso('Grabando la pestaña… pulsa «Detener» cuando tengas el clip', 'info');
+    }
+
+    function paraCaptura() {
+        if (!capturando) return;
+        if (recPestana && recPestana.state !== 'inactive') recPestana.stop();
+    }
+
+    btnPararPestana.addEventListener('click', paraCaptura);
+
+    function finCaptura(chunks, mime) {
+        clearInterval(relojPestana);
+        relojPestana = null;
+        capturando = false;
+        recPestana = null;
+        filaPestana.hidden = true;
+        pintaBotonPestana();
+        if (streamPestana) {
+            streamPestana.getTracks().forEach(function (t) { try { t.stop(); } catch (e) { } });
+            streamPestana = null;
+        }
+        actualizaCrear();   // «Crear vídeo» vuelve a su estado
+        var tipo = (mime || 'video/webm').split(';')[0];
+        var blob = new Blob(chunks, { type: tipo });
+        if (!blob.size) return aviso('La grabación de la pestaña salió vacía', 'danger');
+        var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
+        var d = new Date();
+        var nombre = 'pestana-' + ('0' + d.getHours()).slice(-2) + '-' +
+            ('0' + d.getMinutes()).slice(-2) + '.' + ext;
+        cargarVideo(new File([blob], nombre, { type: tipo }));
+        aviso('Pestaña grabada: ' + Math.round(blob.size / 1024) +
+            ' KB · ya está como vídeo fuente: recórtala en el riel', 'success');
+    }
+
+    pintaBotonPestana();
 
     /* controles que no aplican en modo recorte (y etiquetas cruzadas) */
     function pintarModo() {
@@ -1333,7 +1488,7 @@
                 ? 'Recorte de ' + fmt(rr.fin - rr.inicio) + ' s de ' + fmt(durVideo) +
                   ' s · se graba en tiempo real'
                 : rr.msg;
-            btnCrear.disabled = grabando || !rr.ok;
+            btnCrear.disabled = grabando || capturando || !rr.ok;
             pintarRiel();
             return;
         }
@@ -1354,7 +1509,7 @@
                 fmt(d.porImagen) + ' s = ' + fmt(d.total) + ' s de vídeo · se graba en tiempo real' +
                 (d.total > MAX_TOTAL_SEG ? ' (máximo 2 minutos: reduce la duración o las imágenes)' : '');
         }
-        btnCrear.disabled = !n || grabando || excede;
+        btnCrear.disabled = !n || grabando || capturando || excede;
     }
 
     /* ---------- vista previa ciclando ---------- */
@@ -2088,6 +2243,10 @@
 
     btnCrear.addEventListener('click', function () {
         if (grabando) return;
+        if (capturando) {   // F8
+            aviso('Espera a que termine la captura de la pestaña', 'info');
+            return;
+        }
         if (!soportado) {
             aviso('Tu navegador no permite crear vídeos', 'danger');
             return;

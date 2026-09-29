@@ -33,6 +33,13 @@
     min-height: 44px;
 }
 
+/* F8 · la fila de captura usa `d-flex` (utilidad con !important) y eso gana
+   a `[hidden]` de Bootstrap: hay que reforzar el ocultado para que solo se
+   vea mientras se graba la pestaña */
+#vid-pestana-fila[hidden] {
+    display: none !important;
+}
+
 .vid-tira-wrap {
     margin-top: .75rem;
 }

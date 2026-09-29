@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅** · E2 grabar en directo ⬜ **al final** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅** · orden: F8 → F7 → E2 |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅** · orden: F7 → E2 |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅** |
 
 ---
@@ -198,7 +198,7 @@ propia). Un commit por función.
 **Orden acordado** (elección del usuario el 27/09: adelantar E3 + añadir F8;
 el 28/09, tras el feedback del usuario sobre las plantillas, F5 se extiende
 con F5d/F5e/F5f antes del audio):
-**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f ✅ → F6 ✅ → F8 → F7 → E2**. La lista de abajo va por número:
+**F3 ✅ → E3 ✅ → F4 ✅ → F5 ✅ → F5d ✅ → F5e ✅ → F5f ✅ → F6 ✅ → F8 ✅ → F7 → E2**. La lista de abajo va por número:
 
 - **F1 · Duración objetivo ✅** (validado en Chrome: el valor se convierte al
   cambiar de modo —3 s × 2 → 6 s totales y al revés—, el reparto se recalcula
@@ -372,10 +372,29 @@ con F5d/F5e/F5f antes del audio):
   `behavior: 'instant'` o esperar a que se asiente.
 - **F7 · Compartir**: botón «Compartir» con Web Share API (archivos), igual
   que el de `capas.js`.
-- **F8 · Grabar pestaña** (nuevo, solo ordenador): botón con `getDisplayMedia`
-  que graba la pestaña donde se reproduce un vídeo de X/YouTube/etc. (con audio
-  de pestaña en Chrome) como fuente más; si el navegador no lo soporta (móvil)
-  el botón no aparece. Va tras F6 porque reutiliza su mezcla de audio.
+- **F8 · Grabar pestaña ✅** (nuevo, solo ordenador): botón «Grabar pestaña»
+  con `getDisplayMedia` que captura la pestaña donde se reproduce un vídeo de
+  X/YouTube/etc. —en Chrome, con la casilla «Compartir audio de pestaña»— y el
+  clip resultante entra por la misma puerta que un vídeo subido
+  (`cargarVideo`): bloque de recorte, riel, miniaturas y duración de E3 (el
+  webm de MediaRecorder sin duración en cabecera ya lo sabía resolver E3; en
+  Chrome actual sale mp4 con códec `mp4a`). El sonido de la pestaña viaja
+  dentro del clip y al render se mezcla con la música en el `audioDest` de F6
+  (una única pista para el grabador). El botón no aparece sin
+  `getDisplayMedia` (iOS/móvil) ni con puntero táctil; mientras graba hay
+  fila con punto rojo, cronómetro y «Detener» (máximo 2 min; si pulsan
+  «Dejar de compartir» de Chrome, la pista se corta sola y el clip se carga
+  igual); la captura bloquea «Crear vídeo» y las cargas de archivos.
+  **Fix visual asociado:** `d-flex` (utilidad con `!important`) ganaba a
+  `[hidden]` y la fila de captura se veía siempre — regla
+  `#vid-pestana-fila[hidden]{display:none !important}`; ojo, el mismo
+  patrón afecta a `#vid-logo-estado` (F4/E4), pendiente de arreglar. E2E
+  **17 comprobaciones** con `getDisplayMedia` simulado (canvas animado +
+  pista de audio) y visibilidad real por `getComputedStyle`: constraints con
+  audio, códec con audio, clip `pestana-*` con duración leída, pistas
+  apagadas al terminar, cronómetro, bloqueos, cancelación del selector y
+  regresión de subida de imágenes; consola 0, barrido 14/14, `node --check`
+  OK; `?v=f8b` en `video.html`.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
@@ -383,8 +402,9 @@ propio (✅), el fix del primer fotograma (✅), **F4** (✅) y **F5** (✅, en
 tres commits: animaciones, título arrastrable y plantilla Tet News —F5d,
 reemplazando el select de 9 plantillas—); antes del audio vienen **F5e** ✅
 (lista de textos) y **F5f** ✅ (riel con cabezal), y **F6** ✅ cerró la
-petición del usuario (con la prueba en iOS pendiente); después quedan **F8**
-→ **F7** y **E2** cierra el bloque.
+petición del usuario (con la prueba en iOS pendiente); **F8** ✅ añadió la
+captura de pestaña como fuente; después quedan **F7** y **E2** cierra el
+bloque.
 
 ---
 
