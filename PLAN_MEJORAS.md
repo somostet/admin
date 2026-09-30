@@ -25,7 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅** · E4 duración hasta 5 min ⬜ · E5 varios vídeos (montaje) ⬜ |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅** · F9 color y tipografía de los textos ⬜ |
-| Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅** · M4 peso y grabación estable ⬜ |
+| Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
 
@@ -410,6 +410,33 @@ con F5d/F5e/F5f antes del audio):
   Share, descartar visible), C descartar (4 — bloque oculto, aviso, `src`
   limpio, registro borrado) y D recarga tras descartar (3 — no vuelve nada);
   consola 0, barrido 14/14, `node --check` OK; `?v=m3` en `video.html`.
+- **M4 · Peso del archivo y grabación estable ✅** (feedback del usuario desde
+  el móvil: «el peso del video es mucho» y «cuando dura el video bastante
+  demora y se pierde el video en celular y debo reiniciar»). Dos mejoras:
+  (1) **bitrate por fórmula y selector «Calidad del vídeo»** nuevo junto a
+  Fondo —Ligiana (0,03 bits/píxel), Equilibrada (0,06, por defecto) y Alta
+  (0,1)— en lugar de los **8 Mbps fijos** que traían los tres grabadores; la
+  tasa sale de `bitrateSalida(w, h, fps)` = píxeles × fotogramas × calidad con
+  suelo de 400 kbps (un minuto de 1080p a Equilibrada pasa de ~60 MB a ~16 MB;
+  la captura de pestaña F8, que iba a los defectos del navegador, ahora
+  también respeta la calidad con las dimensiones de `getSettings()`); (2)
+  **`navigator.wakeLock`**: `pantallaDespierta(true)` se pide en los cuatro
+  puntos de arranque (crear, directo, recorte y captura de pestaña) y se
+  libera en `limpiar()` y `finCaptura()` —con reaprovechamiento en
+  `visibilitychange`, porque el navegador suelta el lock al ocultar la pestaña—;
+  si la API no existe o el permiso falla, aviso «No se pudo mantener la
+  pantalla encendida…» y la app sigue. El check de blob vacío ya existía
+  (`La grabación salió vacía`). E2E **21 comprobaciones** en tres etapas:
+  A calidad (14 — selector con sus 3 opciones y valor por defecto, tasas
+  exactas para las tres calidades a 64², donde manda el suelo, y a 1080²:
+  1 049 760 / 2 099 520 / 3 499 200 bits, con regresión del resultado M3),
+  B wake lock (7 — API presente, `request` parcheado, pedido al empezar,
+  liberado al terminar y sin aviso de fallo) y validación final (consola 0,
+  barrido 14/14, `node --check` OK); `?v=m4` en `video.html`. *Dato de futuro
+  test:* el espía de `MediaRecorder` debe copiar los estáticos
+  (`isTypeSupported`) si no, `elegirMime()` revienta; y para probar las tasas
+  hace falta fijar el tamaño de salida (con «orig» y una imagen de 64 px el
+  lienzo baja a 64² y todo cae al suelo de 400 kbps).
 - **F7 · Compartir ✅**: botón «Compartir vídeo» con Web Share API (archivos),
   igual que el de `capas.js`: el blob del último resultado viaja como `File`
   (nombre `tet.mp4`/`tet.webm`, el mismo que usa Descargar) a la hoja de

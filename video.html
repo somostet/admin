@@ -201,6 +201,17 @@
                             <label class="form-label" for="vid-fondo">Fondo</label>
                             <input type="color" class="form-control form-control-color w-100" id="vid-fondo" value="#ffffff" title="Color de fondo">
                         </div>
+                        <!-- M4 · la calidad manda en la tasa de bits de las tres
+                             grabaciones (crear, directo y recorte) y de la
+                             captura de pestaña -->
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <label class="form-label" for="vid-calidad">Calidad del vídeo</label>
+                            <select class="form-select" id="vid-calidad">
+                                <option value="ligiana">Ligiana (archivo más pequeño)</option>
+                                <option value="media" selected>Equilibrada (recomendada)</option>
+                                <option value="alta">Alta (archivo más grande)</option>
+                            </select>
+                        </div>
                         <!-- F5d · plantilla Tet News: única plantilla, replicando el
                              canvas de noticias (barra + cuerpo) con el contenido dentro.
                              Tamaño y centrar del contenido viven JUNTO al lienzo (M1) -->
@@ -498,7 +509,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=m3"></script>
+    <script src="./public/js/video.js?v=m4"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

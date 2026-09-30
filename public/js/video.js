@@ -108,6 +108,7 @@
     var iconoDirecto = document.getElementById('vid-directo-icon');        // E2
     var txtDirecto = document.getElementById('vid-directo-txt');           // E2
     var btnDescartar = document.getElementById('vid-descartar');           // M3
+    var selCalidad = document.getElementById('vid-calidad');               // M4
     var recWrap = document.getElementById('vid-recorte');
     var recNombre = document.getElementById('vid-rec-nombre');
     var recDur = document.getElementById('vid-rec-duracion');
@@ -467,11 +468,17 @@
         if (!pistaVideo || !mime) return descartaStream(st, 'Este navegador no puede grabar la pestaña');
         var chunks = [];
         var rec;
+        var cfg = {};
+        try { cfg = pistaVideo.getSettings ? pistaVideo.getSettings() : {}; } catch (e0) { }
+        /* M4: la captura también respeta «Calidad del vídeo» (antes iba al
+           valor por defecto del navegador, sin tasa fijada) */
+        var bits = bitrateSalida(cfg.width || 1920, cfg.height || 1080,
+            cfg.frameRate || FPS);
         try {
-            rec = new MediaRecorder(st, { mimeType: mime });
+            rec = new MediaRecorder(st, { mimeType: mime, videoBitsPerSecond: bits });
         } catch (e) {
             try {
-                rec = new MediaRecorder(st);        // por defecto: con audio si lo hay
+                rec = new MediaRecorder(st, { videoBitsPerSecond: bits });
                 mime = rec.mimeType || 'video/webm';
             } catch (e2) {
                 return descartaStream(st, 'No se pudo iniciar la grabación de la pestaña');
@@ -491,6 +498,7 @@
         rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
         rec.onstop = function () { finCaptura(chunks, mime); };
         rec.start();
+        pantallaDespierta(true);   // M4: que no se apague la pantalla capturada
         var t0 = Date.now();
         relojPestana = setInterval(function () {
             var s = Math.floor((Date.now() - t0) / 1000);
@@ -513,6 +521,7 @@
     function finCaptura(chunks, mime) {
         clearInterval(relojPestana);
         relojPestana = null;
+        pantallaDespierta(false);   // M4: fin de la captura de pestaña
         capturando = false;
         recPestana = null;
         filaPestana.hidden = true;
@@ -2338,6 +2347,7 @@
 
     function limpiar() {
         detenerMusica();   // F6: corta la música al terminar, fallar o cancelar
+        pantallaDespierta(false);   // M4: termina cualquier grabación en marcha
         if (videoCargado) {
             vidFuente.pause();
             vidFuente.controls = true;
@@ -2454,6 +2464,54 @@
 
     recuperaUltimo();
 
+    /* ---------- M4 · peso del archivo y grabación estable ---------- */
+    /* Antes: 8 Mbps fijos para todo —un minuto de 1080p salía a ~60 MB—.
+       Ahora la tasa la da la fórmula bits = píxeles × fotogramas × calidad,
+       según el selector «Calidad del vídeo», con suelo de 400 kbps para
+       lienzos pequeños. Y con wake lock: si el móvil se apagaba en mitad de
+       la grabación en tiempo real, los rAF se congelaban y el vídeo se
+       perdía. Todo protegido: sin la API o sin permiso, se avisa y sigue. */
+    var BPP_CALIDAD = { ligiana: 0.03, media: 0.06, alta: 0.1 };
+    function bitrateSalida(ancho, alto, fps) {
+        var bpp = BPP_CALIDAD[selCalidad.value] || BPP_CALIDAD.media;
+        if (!(fps > 0)) fps = FPS;
+        return Math.max(400000, Math.round(ancho * alto * fps * bpp));
+    }
+
+    var wakeLock = null;
+    var quiereDespierta = false;
+    function pantallaDespierta(si) {
+        quiereDespierta = !!si;
+        if (!si) {
+            if (wakeLock) {
+                var w = wakeLock;
+                wakeLock = null;
+                try { w.release(); } catch (e) { }
+            }
+            return;
+        }
+        if (wakeLock) return;
+        var avisa = function () {
+            aviso('No se pudo mantener la pantalla encendida: no la apagues ' +
+                'hasta que termine la grabación', 'info');
+        };
+        if (!navigator.wakeLock) return avisa();
+        try {
+            navigator.wakeLock.request('screen').then(function (w) {
+                if (!quiereDespierta) { try { w.release(); } catch (e) { } return; }
+                wakeLock = w;
+                w.addEventListener('release', function () {
+                    if (wakeLock === w) wakeLock = null;
+                });
+            }).catch(avisa);
+        } catch (e) { avisa(); }
+    }
+    document.addEventListener('visibilitychange', function () {
+        /* el navegador suelta el wake lock al ocultar la pestaña: al volver,
+           si aún estamos grabando, hay que pedirlo otra vez */
+        if (document.visibilityState === 'visible' && quiereDespierta) pantallaDespierta(true);
+    });
+
     function crearVideo() {
         var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
             Math.round(calculoDuracion().porImagen * 1000));
@@ -2491,7 +2549,7 @@
         var chunks = [];
         var rec;
         try {
-            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: 8000000 });
+            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
         } catch (e) {
             var mv = elegirMime(false);
             if (!hayMusica || !mv) {
@@ -2500,7 +2558,7 @@
             }
             try {
                 stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
-                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: 8000000 });
+                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
                 mimeUsado = mv;
                 detenerMusica();                     // la música no entra: no iniciarla
                 hayMusica = false;
@@ -2535,6 +2593,7 @@
         var t0 = performance.now();
         rec.start(200);
         iniciaMusica();   // F6: la música entra al empezar a grabar
+        pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
 
         function tick() {
             if (!grabando) return;
@@ -2648,7 +2707,7 @@
         var chunks = [];
         var rec;
         try {
-            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: 8000000 });
+            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
         } catch (e) {
             var mv = elegirMime(false);
             if (!(audio || hayMusica) || !mv) {
@@ -2659,7 +2718,7 @@
             }
             try {
                 stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
-                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: 8000000 });
+                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
                 mimeUsado = mv;
                 detenerMusica();                      // la música no entra: no iniciarla
                 hayMusica = false;
@@ -2692,6 +2751,7 @@
         t0Directo = performance.now();
         rec.start(200);
         iniciaMusica();   // F6: la música entra al empezar a grabar
+        pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
         pintaBotonDirecto();
         aviso('Grabando el lienzo… pulsa «Detener» cuando quieras parar (máx. 2 min)', 'info');
 
@@ -2933,13 +2993,13 @@
         var mimeUsado = mime;
         var rec;
         try {
-            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: 8000000 });
+            rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
         } catch (e1) {
             var mv = elegirMime(false);
             if (!audio || !mv) return fallo('No se pudo iniciar la grabación en este navegador');
             try {
                 stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
-                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: 8000000 });
+                rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
                 mimeUsado = mv;
                 detenerMusica();                      // F6: no entra, no se inicia
             } catch (e2) {
@@ -2975,6 +3035,7 @@
             dibujarFrame(vidFuente);
             recAct.start(200);
             iniciaMusica();   // F6: la música entra al empezar a grabar
+            pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
             var p = vidFuente.play();
             if (p && p.catch) {
                 p.catch(function () {
