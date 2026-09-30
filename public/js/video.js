@@ -2643,9 +2643,22 @@
         repintarSuperp();
     }
 
+    /* N3b · con Tet News activo, añadir o quitar un texto vuelve a repartir
+       todos por igual por la duración de la salida (inicio = i·T/n); luego
+       cada uno se ajusta a mano desde «Inicio» o desde la línea de tiempo */
+    function redistribuyeTextos() {
+        if (!noticiaActiva || !textos.length) return;
+        var T = totalSalida();
+        for (var i = 0; i < textos.length; i++) {
+            textos[i].inicio = Math.round(i * T / textos.length * 10) / 10;
+        }
+        pintaRielSalida();   // la línea de tiempo refleja los nuevos inicios
+    }
+
     function quitaTexto(i) {
         textos.splice(i, 1);
         if (textoSel >= textos.length) textoSel = textos.length - 1;
+        redistribuyeTextos();   // N3b
         pintaListaTextos();
         cargaEditor();
         repintarSuperp();
@@ -2736,6 +2749,7 @@
 
     btnAddTexto.addEventListener('click', function () {
         textos.push(nuevoTexto('', textos.length));
+        redistribuyeTextos();   // N3b: en Tet News los textos se vuelven a repartir
         seleccionaTexto(textos.length - 1);
         inpTxtContenido.focus();
     });
@@ -2744,6 +2758,7 @@
        con su entrada) — un toque desde el móvil para encabezar el vídeo */
     btnAddTitulo.addEventListener('click', function () {
         textos.push(nuevoTexto('', textos.length, 'titulo'));
+        redistribuyeTextos();   // N3b
         seleccionaTexto(textos.length - 1);
         inpTxtContenido.focus();
     });

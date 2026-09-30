@@ -25,7 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
-| Lote N — Textos y noticias ágiles | 🔨 **N1 motor de texto (salto de líneas, ajuste y zona) ✅ · N2 tipos de texto y «Añadir título» ✅ · N3a centrado blindado ✅** · N3b reparto de textos ⬜ |
+| Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -681,6 +681,20 @@ con F5d/F5e/F5f antes del audio):
   secuestra el arrastre (escala 135 % intacta, manija 300→295 px), el botón
   limpia el gesto huérfano, `lostpointercapture` lo cierra y estado final
   centrado; consola 0, barrido 14/14, `node --check` OK; `?v=n3` en
+  `video.html`.
+- **N3b · Reparto automático de los textos al añadir o quitar ✅** («al añadir
+  o quitar»: los textos se reparten solos por la duración). Con **Tet News**
+  activo, cada alta o baja de texto vuelve a repartir todos por igual —
+  `inicio = i·T/n` sobre `totalSalida()` (el recorte de la salida en vídeo)
+  con 1 decimal— y después cualquier «Inicio» se ajusta a mano; sin
+  plantilla no se toca nada. `redistribuyeTextos()` se engancha en «Añadir
+  texto», «Añadir título» y «Quitar» y repinta la línea de tiempo F5f. E2E
+  **7 comprobaciones**: de 1 a 2 textos (0 y 0,5 s), de 2 a 3 (0 / 0,3 /
+  0,6 s), edición manual respetada —el campo sanea a 1 decimal, 0,15 →
+  0,2—, quitar el texto del medio devuelve exactamente el 0,5 s, sin
+  noticias el nuevo nace en 0 y el título conserva su tiempo, al volver a
+  noticias quitar reparte otra vez y render real con el título escalonado
+  (`tet-…mp4`); consola 0, barrido 14/14, `node --check` OK; `?v=n3b` en
   `video.html`.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
