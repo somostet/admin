@@ -1519,16 +1519,23 @@
     }
 
     /* fotograma del vídeo fuente compuesto en el lienzo (E3): mismo fondo,
-       ajuste y tamaño que la salida */
+       ajuste y tamaño que la salida. F10: mientras el vídeo fuente aún no
+       tiene fotogramas (readyState < 2: carga inicial o salto de clip de E5)
+       se pinta igualmente el fondo y los superpuestos en vez de no pintar
+       nada: captureStream necesita dibujos nuevos y sin ellos la grabación
+       puede salir sin pista de vídeo —«solo audio» al compartirla— */
     function dibujarFrame(v) {
-        if (!v || v.readyState < 2) return;
+        if (!v) return;
+        var tMs = Math.max(0, desfaseActivo + (v.currentTime || 0)
+            - rangoRecorte().inicio) * 1000;
         pintarFondo();
-        if (selAjuste.value === 'blur') pintarDesenfado(v);
-        dibujarCentrado(v, 1);
+        if (v.readyState >= 2) {
+            if (selAjuste.value === 'blur') pintarDesenfado(v);
+            dibujarCentrado(v, 1);
+        }
         // F5 · la animación del título cuenta desde el inicio del recorte;
         // E5: con varios clips la cuenta es sobre el montaje (desfaseActivo)
-        dibujarSuperposiciones(Math.max(0, desfaseActivo + (v.currentTime || 0)
-            - rangoRecorte().inicio) * 1000);
+        dibujarSuperposiciones(tMs);
     }
 
     /* ---------- F4/F5 · logotipo y línea de título superpuestos ---------- */
@@ -2516,9 +2523,11 @@
 
     /* ---------- grabación ---------- */
     /* conAudio: lista con códecs de sonido delante (el sonido del recorte
-       viaja en la pista añadida desde Web Audio). avc3 va primero porque
-       Chrome avisa de «the codec description is not supposed to change…»
-       al grabar avc1 con audio y él mismo recomienda avc3 (SPS/PPS en banda) */
+       viaja en la pista añadida desde Web Audio). F10: avc1 va primero y
+       avc3 queda de reserva —WhatsApp, Instagram y Facebook en el móvil
+       decodifican mejor el MP4 con los parámetros solo en avcC— y la
+       advertencia de Chrome que motivaba avc3 («the codec description is
+       not supposed to change…») ya no aparece al grabar avc1 con audio */
     function elegirMime(conAudio) {
         if (!soportado) return null;
         var video = [
@@ -2530,10 +2539,10 @@
             'video/webm'
         ];
         var candidatos = conAudio ? [
-            'video/mp4;codecs=avc3.42E01E,mp4a.40.2',
-            'video/mp4;codecs=avc3,mp4a.40.2',
             'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
             'video/mp4;codecs=avc1,mp4a.40.2',
+            'video/mp4;codecs=avc3.42E01E,mp4a.40.2',
+            'video/mp4;codecs=avc3,mp4a.40.2',
             'video/mp4',
             'video/webm;codecs=vp9,opus',
             'video/webm;codecs=vp8,opus'
@@ -2656,6 +2665,19 @@
         });
     }
 
+    /* F10 · nombre de archivo único con fecha y hora: en el móvil cada
+       render cae en Descargas y con «tet.mp4» fijo los archivos se pisan
+       (o el sistema le añade « (1)»); las apps sociales distinguen mejor
+       un nombre único. La comparte el botón «Compartir vídeo»: usa el
+       mismo aDesc.download */
+    function nombreConFecha(ext) {
+        var d = new Date();
+        var p = function (n) { return (n < 10 ? '0' : '') + n; };
+        return 'tet-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' +
+            p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) +
+            p(d.getSeconds()) + '.' + ext;
+    }
+
     /* pinta el bloque de resultado desde un blob (recién grabado o
        recuperado de IndexedDB); sinScroll = al restaurar al abrir */
     function muestraResultado(blob, tipo, sinScroll) {
@@ -2664,7 +2686,7 @@
         blobVideo = blob;
         var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
         aDesc.href = urlVideo;
-        aDesc.download = 'tet.' + ext;
+        aDesc.download = nombreConFecha(ext);
         txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
             ' (' + Math.round(blob.size / 1024) + ' KB)';
         repro.src = urlVideo;
@@ -2937,7 +2959,8 @@
             lienzo.width = d.w;
             lienzo.height = d.h;
             if (videoCargado) {
-                if (vidFuente.readyState >= 2) dibujarFrame(vidFuente);
+                dibujarFrame(vidFuente);   // F10: pinta aunque la fuente
+                                           // aún no tenga fotogramas
             } else {
                 dibujarEn(0, durMsPorImagen());   // fotograma semilla del stream
             }
@@ -3013,7 +3036,8 @@
                repintar cada fotograma mantiene el stream vivo (si el lienzo
                no cambia, captureStream deja de emitir y el clip sale corto) */
             if (videoCargado) {
-                if (vidFuente.readyState >= 2) dibujarFrame(vidFuente);
+                dibujarFrame(vidFuente);   // F10: el stream no se apaga si
+                                           // la fuente se queda sin datos
             } else if (imagenes.length) {
                 dibujarEn(t % (durMsPorImagen() * imagenes.length), durMsPorImagen());
             }

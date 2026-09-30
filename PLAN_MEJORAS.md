@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅** |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -572,6 +572,36 @@ con F5d/F5e/F5f antes del audio):
   **oculto** (`reiniciarPreview` muestra el estado vacío) y no pinta nada:
   los tests de dibujo necesitan contenido —y fijar el tamaño de salida, que
   con «orig» una imagen de 64 px encoge el lienzo a 64²—.
+- **F10 · Compartir y descargar en el móvil ✅** (feedback de campo: «al
+  compartir solo llega el audio» y «la descarga cae en
+  `content://media/externa` y no sirve para ponerla en las redes»). Tres
+  cambios en la salida: (1) `dibujarFrame` **no se salta ya el fotograma**
+  cuando el vídeo fuente está en `readyState < 2` —pinta el fondo y los
+  superpuestos para que `captureStream` siga recibiendo dibujos: sin ellos
+  la grabación puede quedar **sin pista de vídeo** (en WhatsApp solo
+  llega el audio)— y los dos ticks que lo llamaban con guard ya no lo
+  necesitan (así el **E2 directo** bombea el lienzo aunque la fuente se
+  quede sin datos, en vez de dejar el stream morir); (2) `elegirMime` con
+  audio prueba **avc1 antes que avc3** —WhatsApp, Instagram y Facebook
+  decodifican mejor el MP4 con los parámetros solo en avcC—, ya que la
+  «advertencia de codec description» que motivaba avc3 no aparece al
+  grabar avc1 con audio en Chrome 152; (3) nombre de archivo único
+  **`tet-AAAA-MM-DD-HHmmss.mp4`** para «Descargar» y «Compartir» —antes
+  `tet.mp4` fijo: en Descargas se pisaba con cada render o el sistema le
+  añadía « (1)»—. E2E **33 comprobaciones** en cuatro etapas: A (7 — clip
+  sintético de 1,2 s con música WAV cargada, botón habilitado y espía de
+  `MediaRecorder` con estáticos copiados), B (13 — render en tiempo real
+  de 1 239 ms con mimeType exacto `video/mp4;codecs=avc1.42E01E,mp4a.40.2`,
+  resultado 128×128 y 1,217 s con 93 % de píxeles rojos y 6 % de blancos
+  —pista de vídeo real—, nombre con fecha, «Descargar vídeo MP4 (22 KB)»,
+  solo el aviso esperado de wake lock), C (5 — con `navigator.share`
+  parcheado el `File` lleva el **mismo nombre** y tipo `video/mp4`) y D (7 —
+  con la fuente rota, `readyState` 0, un cambio de fondo **repinta el
+  lienzo de magenta**: antes se quedaba el fotograma anterior); consola 0,
+  barrido 14/14, `node --check` OK; `?v=f10` en `video.html`. *Dato de
+  futuro test:* el clip sintético se anima con **timers, no rAF** —con la
+  pestaña al fondo rAF está throttlada y el webm salía de 493 B sin
+  fotogramas—.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
@@ -582,7 +612,8 @@ reemplazando el select de 9 plantillas—); antes del audio vienen **F5e** ✅
 petición del usuario (la prueba en iOS queda anulada: el usuario no tiene
 iPhone); **F8** ✅ añadió la captura de pestaña como fuente, **F7** ✅ el
 botón «Compartir vídeo» y **E2** ✅ cerró el bloque con la grabación en
-directo del lienzo (57 comprobaciones E2E, consola 0, barrido 14/14).
+directo del lienzo (57 comprobaciones E2E, consola 0, barrido 14/14); **F10**
+✅ cerró después la queja de compartir/descarga en el móvil (33 comprobaciones).
 
 ---
 
