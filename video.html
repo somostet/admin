@@ -440,6 +440,13 @@
                             <i class="fas fa-share-alt" aria-hidden="true"></i> Compartir vídeo
                         </button>
                         <video id="vid-repro" class="vid-repro" controls playsinline hidden></video>
+                        <!-- M3 · dónde queda el archivo al guardarlo en el móvil y cómo
+                             descartar el resultado (también el recuperado de IDB al abrir) -->
+                        <p class="form-text mb-0 mt-1">Se guarda en «Descargas»; en el móvil,
+                            si no aparece, usa «Compartir vídeo».</p>
+                        <button type="button" class="btn btn-link w-100 vid-cargar mt-1" id="vid-descartar">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i> Descartar este vídeo
+                        </button>
                     </div>
                 </div>
             </div>
@@ -491,7 +498,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=e2"></script>
+    <script src="./public/js/video.js?v=m3"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

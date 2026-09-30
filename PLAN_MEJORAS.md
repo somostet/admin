@@ -23,9 +23,9 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅** |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅** · orden: E2 |
-| Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅** |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅** · E4 duración hasta 5 min ⬜ · E5 varios vídeos (montaje) ⬜ |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅** · F9 color y tipografía de los textos ⬜ |
+| Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅** · M4 peso y grabación estable ⬜ |
 
 ---
 
@@ -384,6 +384,32 @@ con F5d/F5e/F5f antes del audio):
   *Dato de futuro test:* Bootstrap trae `scroll-behavior: smooth` en `:root`,
   así que todo scroll programático se anima —los tests deben medir con
   `behavior: 'instant'` o esperar a que se asiente.
+- **M3 · El resultado no se pierde y se guarda ✅** (feedback del usuario desde
+  el móvil: «la descarga del vídeo no funciona, no se guarda en el celular y lo
+  pierdo» y «cuando dura el video bastante demora y se pierde el video en
+  celular y debo reiniciar»). Dos problemas distintos: el blob del resultado
+  solo vivía en la pestaña —si Chrome mataba la pestaña (frecuente en el móvil
+  con grabaciones largas) se perdía para siempre— y en el móvil no quedaba
+  claro dónde acaba el archivo. Tres mejoras: (1) **persistencia en IndexedDB**:
+  tras cada grabación (crear, directo y recorte) el último resultado se guarda
+  con `put(…, 'ultimo')` en la base `tet-video` y, al volver a abrir la
+  página, `recuperaUltimo()` lo restaura —blob, nombre, texto de KB y
+  previsualización— con el aviso «Recuperamos «tet.mp4»: seguía guardado en
+  este equipo», **sin scroll automático** al abrir (`sinScroll`); (2) **pista de
+  guardado** en el bloque de resultado («Se guarda en «Descargas»; en el móvil,
+  si no aparece, usa «Compartir vídeo»»); (3) **botón «Descartar este vídeo»**
+  (≥ 44 px) que oculta el bloque, vacía la previsualización (`src` + `load()`),
+  revoca la URL y borra el registro. De paso, el tramo común de los tres
+  `onstop` quedó unificado en `muestraResultado(blob, tipo)` —antes estaba
+  triplicado—, que pinta, baja al bloque y persiste. Todo con `try/catch`:
+  sin IndexedDB (`file://`, modo privado) la app sigue igual que siempre.
+  E2E **27 comprobaciones** en 4 etapas: A grabación (12 — IDB borrada de
+  partida, bloque oculto, imagen, directo ~1,6 s, resultado `tet.mp4` con KB y
+  blobs, registro IDB con tamaño/nombre/tipo), B recarga (8 — restauración,
+  aviso «Recuperamos», nombre/href/KB/blob nuevos, compartir oculto sin Web
+  Share, descartar visible), C descartar (4 — bloque oculto, aviso, `src`
+  limpio, registro borrado) y D recarga tras descartar (3 — no vuelve nada);
+  consola 0, barrido 14/14, `node --check` OK; `?v=m3` en `video.html`.
 - **F7 · Compartir ✅**: botón «Compartir vídeo» con Web Share API (archivos),
   igual que el de `capas.js`: el blob del último resultado viaja como `File`
   (nombre `tet.mp4`/`tet.webm`, el mismo que usa Descargar) a la hoja de

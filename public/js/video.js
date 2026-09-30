@@ -107,6 +107,7 @@
     var contDirecto = document.getElementById('vid-directo-controles');    // E2
     var iconoDirecto = document.getElementById('vid-directo-icon');        // E2
     var txtDirecto = document.getElementById('vid-directo-txt');           // E2
+    var btnDescartar = document.getElementById('vid-descartar');           // M3
     var recWrap = document.getElementById('vid-recorte');
     var recNombre = document.getElementById('vid-rec-nombre');
     var recDur = document.getElementById('vid-rec-duracion');
@@ -2358,6 +2359,101 @@
         limpiar();
     }
 
+    /* ---------- M3 · el resultado no se pierde ---------- */
+    /* Antes el blob solo vivía en la pestaña: si Chrome mataba la pestaña
+       (frecuente en el móvil) el vídeo se perdía sin más. Ahora el último
+       resultado se guarda en IndexedDB y se restaura al volver a abrir;
+       todo con try/catch para que sin IDB (file://, modo privado) la app
+       siga funcionando igual que siempre. */
+    function idbVideo(cb) {
+        var req;
+        try {
+            req = indexedDB.open('tet-video', 1);
+        } catch (e) { return cb(null); }
+        req.onupgradeneeded = function () {
+            var db = req.result;
+            if (!db.objectStoreNames.contains('resultados')) db.createObjectStore('resultados');
+        };
+        req.onsuccess = function () { cb(req.result); };
+        req.onerror = function () { cb(null); };
+        req.onblocked = function () { cb(null); };
+    }
+
+    function guardaUltimo(blob, nombre, tipo) {
+        idbVideo(function (db) {
+            if (!db) return;
+            try {
+                var tx = db.transaction('resultados', 'readwrite');
+                tx.objectStore('resultados').put(
+                    { blob: blob, nombre: nombre, tipo: tipo, fecha: Date.now() }, 'ultimo');
+                tx.oncomplete = function () { try { db.close(); } catch (e) { } };
+            } catch (e) { try { db.close(); } catch (e2) { } }
+        });
+    }
+
+    function borraUltimo() {
+        idbVideo(function (db) {
+            if (!db) return;
+            try {
+                var tx = db.transaction('resultados', 'readwrite');
+                tx.objectStore('resultados').delete('ultimo');
+                tx.oncomplete = function () { try { db.close(); } catch (e) { } };
+            } catch (e) { try { db.close(); } catch (e2) { } }
+        });
+    }
+
+    /* pinta el bloque de resultado desde un blob (recién grabado o
+       recuperado de IndexedDB); sinScroll = al restaurar al abrir */
+    function muestraResultado(blob, tipo, sinScroll) {
+        if (urlVideo) URL.revokeObjectURL(urlVideo);
+        urlVideo = URL.createObjectURL(blob);
+        blobVideo = blob;
+        var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
+        aDesc.href = urlVideo;
+        aDesc.download = 'tet.' + ext;
+        txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
+            ' (' + Math.round(blob.size / 1024) + ' KB)';
+        repro.src = urlVideo;
+        repro.hidden = false;
+        resWrap.hidden = false;
+        if (!sinScroll) resWrap.scrollIntoView({ block: 'nearest' });
+        guardaUltimo(blob, aDesc.download, tipo);
+    }
+
+    function recuperaUltimo() {
+        idbVideo(function (db) {
+            if (!db) return;
+            try {
+                var req = db.transaction('resultados', 'readonly')
+                    .objectStore('resultados').get('ultimo');
+                req.onsuccess = function () {
+                    try { db.close(); } catch (e) { }
+                    var reg = req.result;
+                    if (!reg || !reg.blob || !reg.blob.size || blobVideo) return;
+                    muestraResultado(reg.blob, reg.tipo || 'video/mp4', true);
+                    aviso('Recuperamos «' + (reg.nombre || 'tet') +
+                        '»: seguía guardado en este equipo', 'info');
+                };
+                req.onerror = function () { try { db.close(); } catch (e) { } };
+            } catch (e) { }
+        });
+    }
+
+    btnDescartar.addEventListener('click', function () {
+        repro.pause();
+        repro.removeAttribute('src');
+        repro.load();
+        if (urlVideo) URL.revokeObjectURL(urlVideo);
+        urlVideo = null;
+        blobVideo = null;
+        aDesc.href = '#';
+        resWrap.hidden = true;
+        borraUltimo();
+        aviso('Vídeo descartado', 'info');
+    });
+
+    recuperaUltimo();
+
     function crearVideo() {
         var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
             Math.round(calculoDuracion().porImagen * 1000));
@@ -2425,21 +2521,10 @@
             var tipo = mimeUsado.split(';')[0];
             var blob = new Blob(chunks, { type: tipo });
             if (!blob.size) return fallo('La grabación salió vacía');
-            if (urlVideo) URL.revokeObjectURL(urlVideo);
-            urlVideo = URL.createObjectURL(blob);
-            blobVideo = blob;
-            var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
-            aDesc.href = urlVideo;
-            aDesc.download = 'tet.' + ext;
-            txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
-                ' (' + Math.round(blob.size / 1024) + ' KB)';
-            repro.src = urlVideo;
-            repro.hidden = false;
-            resWrap.hidden = false;
+            muestraResultado(blob, tipo);   // M3: pinta el bloque y lo persiste en IDB
             aviso('Vídeo listo: ' + fmt(total / 1000) + ' s · ' +
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
-            resWrap.scrollIntoView({ block: 'nearest' });
         };
 
         progWrap.hidden = false;
@@ -2598,21 +2683,10 @@
             var tipo = mimeUsado.split(';')[0];
             var blob = new Blob(chunks, { type: tipo });
             if (!blob.size) return fallo('La grabación salió vacía');
-            if (urlVideo) URL.revokeObjectURL(urlVideo);
-            urlVideo = URL.createObjectURL(blob);
-            blobVideo = blob;
-            var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
-            aDesc.href = urlVideo;
-            aDesc.download = 'tet.' + ext;
-            txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
-                ' (' + Math.round(blob.size / 1024) + ' KB)';
-            repro.src = urlVideo;
-            repro.hidden = false;
-            resWrap.hidden = false;
+            muestraResultado(blob, tipo);   // M3: pinta el bloque y lo persiste en IDB
             aviso('Grabación directa: ' + fmt(segsDirecto) + ' s · ' +
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
-            resWrap.scrollIntoView({ block: 'nearest' });
         };
 
         t0Directo = performance.now();
@@ -2885,21 +2959,10 @@
             var tipo = mimeUsado.split(';')[0];
             var blob = new Blob(chunks, { type: tipo });
             if (!blob.size) return fallo('La grabación salió vacía');
-            if (urlVideo) URL.revokeObjectURL(urlVideo);
-            urlVideo = URL.createObjectURL(blob);
-            blobVideo = blob;
-            var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
-            aDesc.href = urlVideo;
-            aDesc.download = 'tet.' + ext;
-            txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
-                ' (' + Math.round(blob.size / 1024) + ' KB)';
-            repro.src = urlVideo;
-            repro.hidden = false;
-            resWrap.hidden = false;
+            muestraResultado(blob, tipo);   // M3: pinta el bloque y lo persiste en IDB
             aviso('Vídeo recortado: ' + fmt(total / 1000) + ' s · ' +
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
-            resWrap.scrollIntoView({ block: 'nearest' });
         };
 
         progWrap.hidden = false;
