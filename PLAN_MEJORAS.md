@@ -25,7 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
-| Lote N — Textos y noticias ágiles | 🔨 **N1 motor de texto (salto de líneas, ajuste y zona) ✅ · N2 tipos de texto y «Añadir título» ✅** · N3 rapidez al montar ⬜ |
+| Lote N — Textos y noticias ágiles | 🔨 **N1 motor de texto (salto de líneas, ajuste y zona) ✅ · N2 tipos de texto y «Añadir título» ✅ · N3a centrado blindado ✅** · N3b reparto de textos ⬜ |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -663,6 +663,25 @@ con F5d/F5e/F5f antes del audio):
   la fila 0 sigue en `cuerpo` con el editor visible y render real con el
   titular en escena (`tet-…mp4`); consola 0, barrido 14/14, `node --check`
   OK; `?v=n2` en `video.html`.
+- **N3a · «Centrar contenido» blindado contra gestos táctiles huérfanos ✅**
+  («un botón que independientemente de donde esté solo mueve al centro el
+  vídeo… porque el botón actual lo mueve en 0 0»). El E2E reproduce el
+  síntoma: arrastrando la manija al extremo el contenido queda pegado a la
+  esquina —x=0, tope del cuerpo— y el botón sí lo devolvía (la lógica era
+  correcta), pero en táctil un `pointercancel` perdido dejaba `contAsa` y
+  `contRedimBase` **huérfanos**: el siguiente toque reescalaba con la base
+  vieja y podía clavar el contenido en (0, 0) *después* de tocar el botón.
+  Tres blindajes: **1)** «Centrar contenido» anula cualquier gesto a medias
+  antes de centrar —el botón siempre gana—; **2)** cada `pointerdown` de la
+  manija arranca con estado limpio (cada rama declara lo suyo); **3)**
+  `lostpointercapture` cierra el gesto junto a `pointerup`/`pointercancel`.
+  E2E **8 comprobaciones** con punteros sintéticos `pointerType:'touch'`:
+  base centrada, arrastre a la esquina (centro blanco / borde verde),
+  «Centrar» recupera el centro con escala 100 %, un asa sin cerrar no
+  secuestra el arrastre (escala 135 % intacta, manija 300→295 px), el botón
+  limpia el gesto huérfano, `lostpointercapture` lo cierra y estado final
+  centrado; consola 0, barrido 14/14, `node --check` OK; `?v=n3` en
+  `video.html`.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit

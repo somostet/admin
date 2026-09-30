@@ -1520,6 +1520,12 @@
     });
 
     btnCentrarContenido.addEventListener('click', function () {
+        /* N3: el botón manda siempre: anula cualquier gesto táctil que no
+           haya cerrado (pointercancel perdido) y vuelve al centrado */
+        contArrastrando = false;
+        contAsa = null;
+        contArrastreBase = null;
+        contRedimBase = null;
         contPos = null;                 // vuelve al centrado automático del cuerpo
         contEsc = 1;
         inpEscContenido.value = '100';
@@ -2413,6 +2419,12 @@
     manijaContenido.addEventListener('pointerdown', function (e) {
         if (!noticiaActiva || grabando) return;
         desenfocaCampo();   // M2: el campo con foco no debe tirar de la página
+        /* N3: un gesto anterior que no cerró (pointercancel perdido en táctil)
+           no debe secuestrar este toque: cada rama vuelve a declarar su estado */
+        contArrastrando = false;
+        contAsa = null;
+        contArrastreBase = null;
+        contRedimBase = null;
         /* M2: agarrando una asa → escalar (la esquina opuesta se queda fija) */
         var esq = e.target && e.target.getAttribute ? e.target.getAttribute('data-esq') : null;
         if (esq) {
@@ -2459,7 +2471,7 @@
         redibujarArrastre();
         actualizaManijaContenido();
     });
-    ['pointerup', 'pointercancel'].forEach(function (ev) {
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) {   // N3: +cierre al soltar el puntero
         manijaContenido.addEventListener(ev, function (e) {
             if (!contArrastrando && !contAsa) return;
             contArrastrando = false;
