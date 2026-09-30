@@ -25,8 +25,12 @@
     var rafAct = null;
     var cancelado = false;
     var videoCargado = false;  // E3: hay un vídeo fuente cargado (modo recorte)
-    var urlFuente = null;      // objectURL del vídeo fuente
-    var durVideo = 0;          // duración del fuente (s)
+    var urlFuente = null;      // objectURL del vídeo fuente activo
+    var durVideo = 0;          // duración del fuente (s); E5 con varios clips, del montaje
+    /* E5 · cola de clips: se unen en orden en un solo vídeo de salida */
+    var colaVideos = [];       // { nombre, url, dur } — dur en segundos
+    var idxActivo = -1;        // clip mostrado en #vid-fuente (vista previa)
+    var desfaseActivo = 0;     // duración (s) de los clips anteriores al activo
     var marcoSucio = true;     // hay que redibujar el fotograma del vídeo en pausa
     var audioCtx = null;       // Web Audio: sonido del recorte hacia el grabador
     var audioDest = null;
@@ -127,6 +131,11 @@
     var rielTirIn = document.getElementById('riel-tirador-in');
     var rielTirOut = document.getElementById('riel-tirador-out');
     var rielCabezal = document.getElementById('riel-cabezal');
+    var colaWrap = document.getElementById('vid-cola');        // E5
+    var listaCola = document.getElementById('vid-cola-lista');// E5
+    var colaNota = document.getElementById('vid-cola-nota');  // E5
+    var rielCol = document.getElementById('vid-riel-col');    // E5 (wrapper del riel)
+    var lblFuente = document.getElementById('vid-lbl-fuente');// E5
     /* F4 · superposiciones */
     var supLogoArchivo = document.getElementById('vid-logo-archivo');
     var supLogoMini = document.getElementById('vid-logo-mini');
@@ -289,11 +298,14 @@
         }
     }
 
-    /* ---------- E3 · carga del vídeo fuente (modo recorte) ---------- */
+    /* ---------- E3/E5 · carga de vídeos: cola de montaje ---------- */
+    /* E5: el selector acepta varios archivos y todos entran en cola; se unen
+       en orden al crear el vídeo. Con un solo clip el comportamiento es el
+       mismo que siempre (recorte de E3 sobre ese clip). */
     inpVideo.addEventListener('change', function () {
-        var f = (inpVideo.files || [])[0];
+        var lista = Array.prototype.slice.call(inpVideo.files || []);
         inpVideo.value = '';
-        if (!f) return;
+        if (!lista.length) return;
         if (grabando) {
             aviso('Espera a que termine la grabación', 'info');
             return;
@@ -306,90 +318,256 @@
             aviso('Quita las imágenes para recortar un vídeo', 'info');
             return;
         }
-        var esVideo = /^video\//.test(f.type) || /\.(mp4|webm|m4v|mov|ogv)$/i.test(f.name);
-        if (!esVideo) {
-            aviso('«' + f.name + '» no es un vídeo', 'warning');
-            return;
-        }
-        cargarVideo(f);
+        cargarVideos(lista);
     });
 
+    /* F8: la captura de la pestaña entra por la misma puerta que un subido */
     function cargarVideo(f) {
-        quitarVideo(true);   // sustituye una carga anterior sin avisos
-        urlFuente = URL.createObjectURL(f);
-        recNombre.textContent = f.name;
-        var mia = urlFuente;
-        vidFuente.src = urlFuente;
-        var listo = function (d) {
-            durVideo = d;
-            recIn.value = '0';
-            /* E4: en vídeos de más de 5 minutos, el recorte por defecto son
-               los primeros MINUTOS_MAX —si no, «fin» arrancaba a duración
-               completa y «Crear vídeo» aparecía deshabilitado diciendo
-               «Máximo 5 minutos» sin saber por qué— */
-            recFin.value = String(fmt(Math.min(durVideo, MAX_TOTAL_SEG)));
-            recIn.max = String(fmt(Math.max(0, durVideo - 0.2)));
-            recFin.max = String(fmt(durVideo));
-            videoCargado = true;
-            if (durVideo > MAX_TOTAL_SEG) {
-                aviso('Vídeo de ' + fmt(durVideo) + ' s: por defecto recortamos los ' +
-                    'primeros ' + MINUTOS_MAX + ' minutos; mueve «fin» para elegir otra parte',
-                    'info');
-            }
-            recDur.textContent = fmt(durVideo) + ' s';
-            recWrap.hidden = false;
-            pintarModo();
-            actualizaCrear();
-            reiniciarPreview();
-            pintarRiel();
-            generarMiniaturas();
-            // Chrome no decodifica el primer fotograma hasta el primer «buscar»:
-            // sin este empujón la vista previa se queda en el color de fondo
-            if (!vidFuente.currentTime) vidFuente.currentTime = 0;
-        };
-        vidFuente.addEventListener('loadedmetadata', function oy() {
-            vidFuente.removeEventListener('loadedmetadata', oy);
-            if (!isFinite(vidFuente.duration)) {
-                // webm grabado sin duración en la cabecera (típico de
-                // MediaRecorder): busca al final para que el navegador la
-                // calcule y vuelve al principio
-                var cerrado = false;
-                var desenganchar = function () {
-                    vidFuente.removeEventListener('timeupdate', fin);
-                    vidFuente.removeEventListener('seeked', fin);
-                    vidFuente.removeEventListener('durationchange', fin);
-                };
-                var fin = function () {
-                    if (cerrado) return;
-                    var d = vidFuente.duration;
-                    if (!isFinite(d) || d <= 0) return;   // aún no la calculó
-                    cerrado = true;
-                    desenganchar();
-                    vidFuente.currentTime = 0;
-                    listo(d);
-                };
-                var reloj = setTimeout(function () {
-                    if (cerrado) return;
-                    if (vidFuente.getAttribute('src') !== mia) return;
-                    cerrado = true;
-                    desenganchar();
-                    aviso('No se pudo leer la duración de «' + f.name + '»', 'danger');
-                    quitarVideo();
-                }, 4000);
-                ['timeupdate', 'seeked', 'durationchange'].forEach(function (ev) {
-                    vidFuente.addEventListener(ev, fin);
+        cargarVideos([f]);
+    }
+
+    /* E5: añade archivos a la cola — lee cada duración con un <video> temporal
+       (misma danza del webm de MediaRecorder que usaba cargarVideo) y al
+       terminar refresca ventana, cola y vista previa */
+    function cargarVideos(lista) {
+        if (grabando || capturando || pidiendo) return;
+        if (imagenes.length) {
+            aviso('Quita las imágenes para recortar un vídeo', 'info');
+            return;
+        }
+        var validos = [];
+        lista.forEach(function (f) {
+            var ok = /^video\//.test(f.type) || /\.(mp4|webm|m4v|mov|ogv)$/i.test(f.name);
+            if (ok) validos.push(f);
+            else aviso('«' + f.name + '» no es un vídeo', 'warning');
+        });
+        if (!validos.length) return;
+        var eraVacio = colaVideos.length === 0;
+        var cola = Promise.resolve();
+        validos.forEach(function (f) {
+            cola = cola.then(function () {
+                return new Promise(function (resolver) {
+                    duraDe(f, function (d, url) {
+                        if (!d) {
+                            URL.revokeObjectURL(url);
+                            aviso('No se pudo leer la duración de «' + f.name + '»', 'danger');
+                        } else {
+                            colaVideos.push({ nombre: f.name, url: url, dur: d });
+                        }
+                        resolver();
+                    });
                 });
-                vidFuente.currentTime = 1e101;
-                return;
-            }
-            if (vidFuente.duration <= 0) {
-                aviso('No se pudo leer la duración de «' + f.name + '»', 'danger');
-                return quitarVideo();
-            }
-            listo(vidFuente.duration);
+            });
+        });
+        cola.then(function () {
+            if (!colaVideos.length) return;
+            if (eraVacio) idxActivo = 0;
+            if (idxActivo < 0 || idxActivo >= colaVideos.length) idxActivo = 0;
+            recargaCola();
+            activaClip(idxActivo);
+            trasActivaClip();
         });
     }
 
+    /* E5: duración de un archivo con un <video> temporal — sin tocar el
+       reproductor visible ni su raíl de miniaturas */
+    function duraDe(f, cb) {
+        var url = URL.createObjectURL(f);
+        var v = document.createElement('video');
+        v.preload = 'metadata';
+        v.muted = true;
+        v.playsInline = true;
+        var cerrado = false;
+        var cierra = function (d) {
+            if (cerrado) return;
+            cerrado = true;
+            cb(d > 0 && isFinite(d) ? d : 0, url);
+        };
+        v.addEventListener('loadedmetadata', function oy() {
+            v.removeEventListener('loadedmetadata', oy);
+            if (isFinite(v.duration) && v.duration > 0) return cierra(v.duration);
+            // webm grabado sin duración en la cabecera (típico de
+            // MediaRecorder): busca al final para que el navegador la calcule
+            var fin = function () {
+                if (isFinite(v.duration) && v.duration > 0) {
+                    try { v.currentTime = 0; } catch (e) { }
+                    cierra(v.duration);
+                }
+            };
+            ['timeupdate', 'seeked', 'durationchange'].forEach(function (ev) {
+                v.addEventListener(ev, fin);
+            });
+            setTimeout(function () { cierra(0); }, 4000);
+            try { v.currentTime = 1e101; } catch (e) { cierra(0); }
+        });
+        v.addEventListener('error', function () { cierra(0); });
+        v.src = url;
+    }
+
+    /* ---------- E5 · totales y piezas de la cola ---------- */
+    function totalCola() {
+        var t = 0;
+        for (var i = 0; i < colaVideos.length; i++) t += colaVideos[i].dur;
+        return t;
+    }
+
+    function acumuladoHasta(i) {
+        var t = 0;
+        for (var k = 0; k < i && k < colaVideos.length; k++) t += colaVideos[k].dur;
+        return t;
+    }
+
+    /* E5: la cola cambió (alta, baja o reordenación) → duración del montaje,
+       ventana de recorte por defecto y avisos */
+    function recargaCola() {
+        durVideo = totalCola();
+        recIn.value = '0';
+        /* E4: más de 5 minutos → por defecto los primeros MINUTOS_MAX;
+           E5 lo aplica también al montaje completo */
+        recFin.value = String(fmt(Math.min(durVideo, MAX_TOTAL_SEG)));
+        recIn.max = String(fmt(Math.max(0, durVideo - 0.2)));
+        recFin.max = String(fmt(durVideo));
+        videoCargado = colaVideos.length > 0;
+        if (videoCargado && durVideo > MAX_TOTAL_SEG) {
+            aviso((colaVideos.length > 1 ? 'Los vídeos suman ' + fmt(durVideo) + ' s'
+                                         : 'Vídeo de ' + fmt(durVideo) + ' s') +
+                ': por defecto recortamos los primeros ' + MINUTOS_MAX +
+                ' minutos; mueve «fin» para elegir otra parte', 'info');
+        }
+        recWrap.hidden = !videoCargado;
+        pintarModo();
+        pintaCola();
+        actualizaCrear();
+    }
+
+    /* E5: muestra el clip i en el reproductor visible (vista previa) */
+    function activaClip(i) {
+        if (grabando) return;   // nunca cambiar la fuente en mitad de una grabación
+        var c = colaVideos[i];
+        if (!c) return;
+        idxActivo = i;
+        desfaseActivo = acumuladoHasta(i);   // dibujarFrame cuenta el montaje
+        pintaCola();
+        if (urlFuente === c.url && vidFuente.readyState >= 1) return;
+        urlFuente = c.url;
+        vidFuente.src = c.url;
+        marcoSucio = true;
+        // Chrome no decodifica el primer fotograma hasta el primer «buscar»:
+        // sin este empujón la vista previa se queda en el color de fondo
+        vidFuente.addEventListener('loadedmetadata', function oy() {
+            vidFuente.removeEventListener('loadedmetadata', oy);
+            if (!vidFuente.currentTime) vidFuente.currentTime = 0;
+        });
+        reiniciarPreview();
+    }
+
+    /* E5: el riel de recorte y las miniaturas solo existen con un clip */
+    function trasActivaClip() {
+        if (colaVideos.length === 1) {
+            pintarRiel();
+            generarMiniaturas();
+        } else {
+            vidMini.removeAttribute('src');
+            rielFotos.textContent = '';
+        }
+        actualizaCrear();
+    }
+
+    function pintaCola() {
+        var n = colaVideos.length;
+        listaCola.textContent = '';
+        colaVideos.forEach(function (c, i) {
+            var fila = document.createElement('div');
+            fila.className = 'vid-texto-fila' + (i === idxActivo ? ' vid-texto-activa' : '');
+            fila.setAttribute('role', 'listitem');
+            var sel = document.createElement('button');
+            sel.type = 'button';
+            sel.className = 'vid-texto-sel';
+            sel.setAttribute('aria-pressed', i === idxActivo ? 'true' : 'false');
+            var nom = document.createElement('span');
+            nom.className = 'vid-texto-nombre';
+            nom.textContent = c.nombre;
+            var hora = document.createElement('span');
+            hora.className = 'vid-texto-tiempo';
+            hora.textContent = fmt(c.dur) + ' s';
+            sel.appendChild(nom);
+            sel.appendChild(hora);
+            sel.addEventListener('click', function () { activaClip(i); });
+            fila.appendChild(sel);
+            fila.appendChild(accionesCola(i));
+            listaCola.appendChild(fila);
+        });
+        colaWrap.hidden = n < 2;
+        colaNota.textContent = 'Se unen en el orden de la lista; inicio y fin del recorte ' +
+            'valen sobre el montaje completo (máximo ' + MINUTOS_MAX + ' minutos).';
+        if (n) {
+            recNombre.textContent = n === 1 ? colaVideos[0].nombre : n + ' vídeos en la cola';
+            recDur.textContent = fmt(totalCola()) + ' s';
+        }
+        var multi = n > 1;
+        rielCol.hidden = multi;
+        recMarcarIn.hidden = multi;
+        recMarcarFin.hidden = multi;
+        lblFuente.textContent = multi
+            ? 'Vídeo activo — toca uno de la cola para verlo'
+            : 'Vídeo original — arrástralo para elegir el punto';
+    }
+
+    function accionesCola(i) {
+        var caja = document.createElement('div');
+        caja.className = 'vid-texto-acciones';
+        [
+            { icono: 'fa-arrow-up', titulo: 'Mover el vídeo antes', accion: function () { mueveClip(i, -1); } },
+            { icono: 'fa-arrow-down', titulo: 'Mover el vídeo después', accion: function () { mueveClip(i, 1); } },
+            { icono: 'fa-trash', titulo: 'Quitar el vídeo', accion: function () { quitaClip(i); } }
+        ].forEach(function (b) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn';
+            btn.title = b.titulo;
+            btn.setAttribute('aria-label', b.titulo);
+            btn.innerHTML = '<i class="fas ' + b.icono + '" aria-hidden="true"></i>';
+            btn.addEventListener('click', b.accion);
+            caja.appendChild(btn);
+        });
+        return caja;
+    }
+
+    function quitaClip(i) {
+        if (grabando) { aviso('Espera a que termine la grabación', 'info'); return; }
+        var c = colaVideos[i];
+        if (!c) return;
+        colaVideos.splice(i, 1);
+        URL.revokeObjectURL(c.url);
+        if (!colaVideos.length) {
+            idxActivo = -1;
+            desfaseActivo = 0;
+            return quitarVideo();   // avisa «Vídeo quitado» y limpia del todo
+        }
+        if (i < idxActivo) idxActivo--;
+        else if (i === idxActivo) idxActivo = Math.min(i, colaVideos.length - 1);
+        recargaCola();
+        activaClip(idxActivo);
+        trasActivaClip();
+        aviso('Vídeo quitado', 'info');
+    }
+
+    function mueveClip(i, dir) {
+        if (grabando) { aviso('Espera a que termine la grabación', 'info'); return; }
+        var j = i + dir;
+        if (j < 0 || j >= colaVideos.length) return;
+        var activo = colaVideos[idxActivo];
+        var c = colaVideos[i];
+        colaVideos.splice(i, 1);
+        colaVideos.splice(j, 0, c);
+        idxActivo = colaVideos.indexOf(activo);
+        recargaCola();
+        activaClip(idxActivo);
+        trasActivaClip();
+    }
+
+    /* E5: vacía toda la cola («Quitar vídeo» quita el clip activo; si era el
+       último —o se vacía por dentro— se llega aquí) */
     function quitarVideo(silencio) {
         if (grabando) return;
         vidFuente.pause();
@@ -397,21 +575,29 @@
         vidFuente.load();
         vidMini.removeAttribute('src');
         rielFotos.textContent = '';
-        if (urlFuente) {
-            URL.revokeObjectURL(urlFuente);
-            urlFuente = null;
-        }
+        colaVideos.forEach(function (c) { URL.revokeObjectURL(c.url); });
+        colaVideos = [];
+        idxActivo = -1;
+        desfaseActivo = 0;
+        urlFuente = null;
         var estaba = videoCargado;
         videoCargado = false;
         durVideo = 0;
         recWrap.hidden = true;
+        colaWrap.hidden = true;
+        listaCola.textContent = '';
         pintarModo();
         if (estaba && !silencio) aviso('Vídeo quitado', 'info');
         actualizaCrear();
         reiniciarPreview();
     }
 
-    recQuitar.addEventListener('click', function () { quitarVideo(); });
+    /* E5: el botón quita el clip que se está viendo; al quitar el último la
+       cola se vacía entera (comportamiento de siempre) */
+    recQuitar.addEventListener('click', function () {
+        if (idxActivo >= 0) quitaClip(idxActivo);
+        else quitarVideo();
+    });
 
     /* ---------- F8 · grabar pestaña (getDisplayMedia) ---------- */
     /* El usuario comparte la pestaña donde se reproduce un vídeo (X,
@@ -551,9 +737,10 @@
         var d = new Date();
         var nombre = 'pestana-' + ('0' + d.getHours()).slice(-2) + '-' +
             ('0' + d.getMinutes()).slice(-2) + '.' + ext;
+        var sigueSolo = colaVideos.length === 0;   // E5: ¿quedará como único clip?
         cargarVideo(new File([blob], nombre, { type: tipo }));
-        aviso('Pestaña grabada: ' + Math.round(blob.size / 1024) +
-            ' KB · ya está como vídeo fuente: recórtala en el riel', 'success');
+        aviso('Pestaña grabada: ' + Math.round(blob.size / 1024) + ' KB · ya está como vídeo fuente' +
+            (sigueSolo ? ': recórtala en el riel' : ' (y en la cola de vídeos)'), 'success');
     }
 
     pintaBotonPestana();
@@ -1338,8 +1525,10 @@
         pintarFondo();
         if (selAjuste.value === 'blur') pintarDesenfado(v);
         dibujarCentrado(v, 1);
-        // F5 · la animación del título cuenta desde el inicio del recorte
-        dibujarSuperposiciones(Math.max(0, (v.currentTime || 0) - rangoRecorte().inicio) * 1000);
+        // F5 · la animación del título cuenta desde el inicio del recorte;
+        // E5: con varios clips la cuenta es sobre el montaje (desfaseActivo)
+        dibujarSuperposiciones(Math.max(0, desfaseActivo + (v.currentTime || 0)
+            - rangoRecorte().inicio) * 1000);
     }
 
     /* ---------- F4/F5 · logotipo y línea de título superpuestos ---------- */
@@ -1580,8 +1769,9 @@
         poneCabezalSalida(rielSalUltimoMs);
         if (videoCargado) {
             var rr = rangoRecorte();
+            var pref = colaVideos.length > 1 ? colaVideos.length + ' vídeos · ' : '';   // E5
             vidTotal.textContent = rr.ok
-                ? 'Recorte de ' + fmt(rr.fin - rr.inicio) + ' s de ' + fmt(durVideo) +
+                ? pref + 'Recorte de ' + fmt(rr.fin - rr.inicio) + ' s de ' + fmt(durVideo) +
                   ' s · se graba en tiempo real'
                 : rr.msg;
             btnCrear.disabled = grabando || capturando || !rr.ok;
@@ -2409,6 +2599,9 @@
         grabando = false;
         recAct = null;
         rafAct = null;
+        /* E5: la grabación pudo acabar cambiando de fuente (montaje); el
+           reproductor vuelve al clip resaltado de la cola */
+        if (videoCargado && colaVideos[idxActivo]) activaClip(idxActivo);
         actualizaCrear();
         actualizarBarra();
         reiniciarPreview();
@@ -3005,6 +3198,27 @@
         }
     });
 
+    /* E5: divide la ventana de recorte [inicio, fin] sobre el montaje en un
+       segmento por clip — a/b en tiempo del propio clip, desde = instante del
+       segmento medido desde el inicio de la ventana y desfase = duración
+       acumulada del clip dentro del montaje. Con un solo vídeo devuelve un
+       único segmento idéntico al recorte de siempre. */
+    function segmentosDeMontaje(r) {
+        var segs = [];
+        var acum = 0;
+        for (var i = 0; i < colaVideos.length; i++) {
+            var c = colaVideos[i];
+            var aG = Math.max(r.inicio, acum);
+            var bG = Math.min(r.fin, acum + c.dur);
+            if (bG - aG > 0.03) {
+                segs.push({ clip: c, a: aG - acum, b: bG - acum,
+                            desde: aG - r.inicio, desfase: acum });
+            }
+            acum += c.dur;
+        }
+        return segs;
+    }
+
     function crearVideoRecorte(r) {
         var audio = conectarAudio();
         var hayMusica = preparaMusica(r.fin - r.inicio);   // F6
@@ -3017,6 +3231,16 @@
         var inicio = r.inicio;
         var fin = r.fin;
         var total = Math.round((fin - inicio) * 1000);
+
+        /* E5: plan de segmentos — un tramo por clip dentro de la ventana */
+        var segmentos = segmentosDeMontaje(r);
+        if (!segmentos.length) {
+            aviso('No hay vídeo dentro del rango elegido', 'warning');
+            return;
+        }
+        var segIdx = 0;
+        var cambiando = false;   // E5: cambio de clip → el lienzo se congela
+        var primerSeg = true;
 
         grabando = true;
         cancelado = false;
@@ -3081,36 +3305,74 @@
         barra.textContent = '0%';
         estado.textContent = 'Preparando…';
 
-        var arrancar = function () {
+        /* E5: deja listo el segmento en marcha (fuente + posición) y
+           reproduce; el primer segmento además enciende el grabador, la
+           música y la pantalla despierta */
+        function preparaSeg() {
+            var s = segmentos[segIdx];
+            var busca = function () {
+                if (vidFuente.readyState >= 2 && Math.abs(vidFuente.currentTime - s.a) < 0.05) {
+                    return listoSeg();
+                }
+                var oy = function () {
+                    vidFuente.removeEventListener('seeked', oy);
+                    listoSeg();
+                };
+                vidFuente.addEventListener('seeked', oy);
+                vidFuente.currentTime = s.a;
+            };
+            if (urlFuente === s.clip.url && vidFuente.readyState >= 1) return busca();
+            // E5: el segmento es otro clip → cambiamos la fuente; mientras el
+            // navegador lo prepara el tick no pinta y el lienzo conserva el
+            // último fotograma (sin destello del color de fondo)
+            cambiando = true;
+            urlFuente = s.clip.url;
+            desfaseActivo = s.desfase;
+            vidFuente.src = s.clip.url;
+            var om = function () {
+                vidFuente.removeEventListener('loadedmetadata', om);
+                if (!grabando) return;
+                busca();
+            };
+            vidFuente.addEventListener('loadedmetadata', om);
+        }
+
+        function listoSeg() {
             if (!grabando) return;   // se canceló mientras buscaba la posición
-            dibujarFrame(vidFuente);
-            recAct.start(200);
-            iniciaMusica();   // F6: la música entra al empezar a grabar
-            pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
+            cambiando = false;
+            if (primerSeg) {
+                primerSeg = false;
+                dibujarFrame(vidFuente);
+                recAct.start(200);
+                iniciaMusica();   // F6: la música entra al empezar a grabar
+                pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
+                estado.textContent = 'Grabando…';
+            }
             var p = vidFuente.play();
             if (p && p.catch) {
                 p.catch(function () {
                     fallo('El navegador no dejó reproducir el vídeo: toca el vídeo una vez y reintenta');
                 });
             }
-            estado.textContent = 'Grabando…';
             rafAct = requestAnimationFrame(tickRec);
-        };
-
-        if (vidFuente.readyState >= 2 && Math.abs(vidFuente.currentTime - inicio) < 0.05) {
-            arrancar();
-        } else {
-            var oy = function () {
-                vidFuente.removeEventListener('seeked', oy);
-                arrancar();
-            };
-            vidFuente.addEventListener('seeked', oy);
-            vidFuente.currentTime = inicio;
         }
+
+        preparaSeg();
 
         function tickRec() {
             if (!grabando) return;
-            if (vidFuente.ended || vidFuente.currentTime >= fin) {
+            if (cambiando) {   // E5: esperando al siguiente clip, lienzo congelado
+                rafAct = requestAnimationFrame(tickRec);
+                return;
+            }
+            var s = segmentos[segIdx];
+            if (vidFuente.ended || vidFuente.currentTime >= s.b) {
+                if (segIdx < segmentos.length - 1) {   // E5: sigue con el clip siguiente
+                    segIdx++;
+                    preparaSeg();
+                    rafAct = requestAnimationFrame(tickRec);
+                    return;
+                }
                 dibujarFrame(vidFuente);
                 grabando = false;
                 vidFuente.pause();
@@ -3118,7 +3380,7 @@
                 return;
             }
             dibujarFrame(vidFuente);
-            var t = Math.max(0, vidFuente.currentTime - inicio);
+            var t = Math.max(0, s.desde + (vidFuente.currentTime - s.a));
             var pct = Math.max(0, Math.min(100, Math.round(t / (fin - inicio) * 100)));
             barra.style.width = pct + '%';
             barra.textContent = pct + '%';

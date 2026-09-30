@@ -79,9 +79,10 @@
                     <input type="file" id="vid-archivos" accept="image/*" multiple class="d-none">
 
                     <label class="btn btn-outline-primary w-100 vid-cargar mt-2" id="vid-etiqueta-video" for="vid-archivo-video">
-                        <i class="fas fa-file-video" aria-hidden="true"></i> Agregar vídeo (para recortar)
+                        <i class="fas fa-file-video" aria-hidden="true"></i> Agregar vídeos (se unen en orden)
                     </label>
-                    <input type="file" id="vid-archivo-video" accept="video/*" class="d-none">
+                    <!-- E5: se pueden elegir varios de una vez y se montan en cola -->
+                    <input type="file" id="vid-archivo-video" accept="video/*" multiple class="d-none">
 
                     <!-- F8 · grabar la pestaña donde se reproduce un vídeo (X, YouTube…)
                          y usarla como fuente; solo si el navegador lo permite -->
@@ -126,8 +127,17 @@
                                 </button>
                             </div>
                         </div>
+
+                        <!-- E5 · cola de clips: solo visible con más de un vídeo; cada fila
+                             se previsualiza, se reordena o se quita -->
+                        <div class="col-12" id="vid-cola" hidden>
+                            <div class="form-label">Cola de vídeos (se unen en orden)</div>
+                            <div class="vid-textos" id="vid-cola-lista" role="list"
+                                 aria-label="Cola de vídeos del montaje"></div>
+                            <div class="form-text mb-0" id="vid-cola-nota"></div>
+                        </div>
                         <div class="col-12 col-lg-6">
-                            <label class="form-label" for="vid-fuente">Vídeo original — arrástralo para elegir el punto</label>
+                            <label class="form-label" id="vid-lbl-fuente" for="vid-fuente">Vídeo original — arrástralo para elegir el punto</label>
                             <video id="vid-fuente" class="w-100" controls playsinline preload="metadata"></video>
                         </div>
                         <div class="col-12 col-sm-6 col-lg-3">
@@ -145,8 +155,9 @@
                             </div>
                         </div>
 
-                        <!-- riel tipo editor: filmstrip del original, tiradores y cabezal -->
-                        <div class="col-12">
+                        <!-- riel tipo editor: filmstrip del original, tiradores y cabezal
+                             (E5: oculto con más de un clip, el recorte va sobre el total) -->
+                        <div class="col-12" id="vid-riel-col">
                             <div class="form-label">Riel de recorte</div>
                             <div class="vid-riel" id="vid-riel" data-riel="riel" role="group"
                                  aria-label="Riel de recorte: arrastra los tiradores y toca para mover el cabezal">
@@ -534,7 +545,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f9"></script>
+    <script src="./public/js/video.js?v=e5"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

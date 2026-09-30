@@ -23,7 +23,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅** · E5 varios vídeos (montaje) ⬜ |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
@@ -227,6 +227,44 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   un test —se parchea `duration` en la instancia de `#vid-fuente` antes de
   cargar el archivo— y el aviso vive 4,5 s: hay que comprobarlo dentro del
   mismo script que dispara la carga.
+- **E5 · Varios vídeos en cola (montaje) ✅** (último pendiente del bloque
+  móvil; preguntado sobre «varios vídeos» el usuario respondió **Ambas**: poder
+  elegir varios de una vez Y montarlos secuencialmente en un solo vídeo). El
+  selector acepta ya `multiple` y **todos los archivos entran en cola** —se
+  añaden a la existente, igual que las imágenes—; cada clip lleva `nombre`,
+  `url` y `dur`, leídas una a una con un `<video>` temporal (`duraDe()`, con
+  la misma danza del webm de MediaRecorder que usaba la carga directa: buscar
+  al final para que el navegador calcule la duración). Con **1 clip nada
+  cambia** (recorte de E3 tal cual); con **≥2 clips** aparece la fila
+  «Cola de vídeos» con una fila por clip —toca para previsualizarlo, ↑↓ para
+  reordenar, × para quitar—, cambia la etiqueta del reproductor a «Vídeo
+  activo» y **se ocultan el riel de recorte y «Poner aquí»**, porque inicio y
+  fin pasan a valer sobre el **montaje completo**: `durVideo` es la suma y la
+  ventana por defecto es 0…min(total, 300 s) —se recalcula con cada cambio de
+  la cola, con el aviso de E4 si suma más de 5 min («Los vídeos suman…»)—. El
+  render (`crearVideoRecorte`) ahora calcula un **plan de segmentos**
+  (`segmentosDeMontaje`): un tramo por clip dentro de la ventana; al llegar
+  al final de uno se cambia la fuente (`preparaSeg`, esperando a
+  `loadedmetadata`+`seeked`) mientras el tick **congela el lienzo en el último
+  fotograma** —sin destello del color de fondo—, y el progreso/los textos
+  (F5) cuentan sobre el montaje gracias a `desfaseActivo` (duración acumulada
+  del clip activo, también al reordenar); `limpiar()` devuelve el reproductor
+  al clip resaltado tras grabar, fallar o cancelar. «Quitar vídeo» quita el
+  clip activo y al quitar el último se vacía todo; la captura de pestaña (F8)
+  se **añade a la cola** en lugar de sustituirla. E2E **57 comprobaciones** en
+  4 etapas: A carga de 2 clips (27 — cola/riel/etiquetas según el número de
+  clips, activar la fila 2 muestra el clip azul por píxeles, reordenar y
+  quitar vuelve al layout de E3 con aviso), B render de 1 clip (9 — duración
+  1,13 s ≈ 1,2 y frame azul: regresión del camino E3 por el nuevo plan de
+  segmentos), C append + montaje (12 — el clip azul se conserva al añadir
+  otro, duración del resultado 2,399 s ≈ badge 2,4, **inicio azul y final
+  rojo**: el orden se respeta) y D cancelar en mitad (9 — UI limpia, cola
+  intacta, «Grabación cancelada»); consola 0, barrido 14/14, `node --check`
+  OK; `?v=e5` en `video.html`. *Dato de futuro test:* los avisos de
+  éxito/cancelación se leen tras esperar a que el resultado aparezca (los
+  toasts viven 4,5 s y pueden apilarse con el de wakeLock) y **durante** el
+  render «Crear vídeo» está deshabilitado —es el indicador correcto de que
+  arrancó—.
 
 Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 **Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
