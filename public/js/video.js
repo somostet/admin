@@ -72,6 +72,8 @@
     var chkNews = document.getElementById('vid-news');                     // F5d
     var inpEscContenido = document.getElementById('vid-contenido-esc');    // F5d
     var btnCentrarContenido = document.getElementById('vid-contenido-centrar'); // F5d
+    var btnCentrarContH = document.getElementById('vid-contenido-centrar-h');   // N4
+    var btnCentrarContV = document.getElementById('vid-contenido-centrar-v');   // N4
     var wrapContenido = document.getElementById('vid-contenido-controles'); // M1: barra junto al lienzo
     var valContenido = document.getElementById('vid-contenido-valor');     // M1: lectura del deslizador
     var btnLlenar = document.getElementById('vid-contenido-llenar');       // M2: atajo «Llenar»
@@ -1499,6 +1501,8 @@
         noticiaActiva = chkNews.checked;
         inpEscContenido.disabled = !noticiaActiva;
         btnCentrarContenido.disabled = !noticiaActiva;
+        btnCentrarContH.disabled = !noticiaActiva;   // N4
+        btnCentrarContV.disabled = !noticiaActiva;   // N4
         inpEscContenido.value = String(Math.round(contEsc * 100));
         valContenido.textContent = inpEscContenido.value + ' %';   // M1
         wrapContenido.hidden = !noticiaActiva;   // M1: la barra vive junto al lienzo
@@ -1519,13 +1523,17 @@
         actualizaManijaContenido();
     });
 
-    btnCentrarContenido.addEventListener('click', function () {
-        /* N3: el botón manda siempre: anula cualquier gesto táctil que no
-           haya cerrado (pointercancel perdido) y vuelve al centrado */
+    /* N3a/N4 · anula cualquier gesto a medias que no haya cerrado
+       (pointercancel perdido): así el centrado siempre gana */
+    function anulaGestosContenido() {
         contArrastrando = false;
         contAsa = null;
         contArrastreBase = null;
         contRedimBase = null;
+    }
+
+    btnCentrarContenido.addEventListener('click', function () {
+        anulaGestosContenido();         // N3a: el botón siempre gana
         contPos = null;                 // vuelve al centrado automático del cuerpo
         contEsc = 1;
         inpEscContenido.value = '100';
@@ -1533,6 +1541,25 @@
         redibujarArrastre();
         actualizaManijaContenido();
     });
+
+    /* N4 · centrado por ejes: cada botón mueve SOLO su eje y respeta el
+       tamaño y la otra coordenada —como los botones de alinear del canvas— */
+    function centroCuerpoFracc() {
+        var z = zonaDibujo();
+        return { x: (z.x + z.w / 2) / lienzo.width,
+                 y: (z.y + z.h / 2) / lienzo.height };
+    }
+    function centrarPorEje(eje) {
+        anulaGestosContenido();   // N3a: igual de blindado que «Centrar contenido»
+        var c = centroCuerpoFracc();
+        var actual = contPos || c;   // en automático el centro ya es el del cuerpo
+        contPos = { x: eje === 'h' ? c.x : actual.x,
+                    y: eje === 'v' ? c.y : actual.y };
+        redibujarArrastre();
+        actualizaManijaContenido();
+    }
+    btnCentrarContH.addEventListener('click', function () { centrarPorEje('h'); });
+    btnCentrarContV.addEventListener('click', function () { centrarPorEje('v'); });
 
     /* M2 · atajos «Llenar»/«Ajustar» junto al lienzo (como la barra de
        acciones de tet1): reflejan el select de ajuste y lo cambian */

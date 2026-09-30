@@ -25,7 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
-| Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos** |
+| Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -696,6 +696,20 @@ con F5d/F5e/F5f antes del audio):
   noticias quitar reparte otra vez y render real con el título escalonado
   (`tet-…mp4`); consola 0, barrido 14/14, `node --check` OK; `?v=n3b` en
   `video.html`.
+- **N4 · Centrado por ejes adicional ✅** («el botón que centre en eje
+  vertical u horizontal»). Dos botones nuevos junto a «Centrar contenido»:
+  **«Centrar horizontal»** mueve solo la X al centro del cuerpo y **«Centrar
+  vertical»** mueve solo la Y —cada uno respeta la otra coordenada y el
+  tamaño—; comparten `anulaGestosContenido()` con el botón original, que
+  sigue devolviendo todo (posición + escala 100 %) y se apagan sin plantilla
+  de noticias. E2E **10 comprobaciones**: botones presentes y activos,
+  centrar horizontal no toca nada si ya está centrado, arrastre a la esquina
+  verificado por píxeles (centro blanco, borde y sup-izquierda verdes; la
+  manija recorta a la zona, por eso su `top` no baja), H centra solo X
+  dejando la Y intacta, V centra solo Y dejando la X intacta, escala 150 %
+  conservada tras centrar, el botón de siempre sigue reseteando todo y los
+  tres se apagan al quitar noticias; consola 0, barrido 14/14,
+  `node --check` OK; `?v=n4` en `video.html`.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit

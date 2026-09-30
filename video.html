@@ -454,6 +454,18 @@
                                 id="vid-contenido-centrar" disabled>
                             <i class="fas fa-crosshairs" aria-hidden="true"></i> Centrar contenido
                         </button>
+                        <!-- N4 · centrado por ejes: uno solo mueve en horizontal y
+                             el otro solo en vertical; no tocan el tamaño -->
+                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                id="vid-contenido-centrar-h" disabled
+                                title="Pone la columna en el centro; no toca el alto ni el tamaño">
+                            <i class="fas fa-arrows-alt-h" aria-hidden="true"></i> Centrar horizontal
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                id="vid-contenido-centrar-v" disabled
+                                title="Pone la fila en el centro; no toca el ancho ni el tamaño">
+                            <i class="fas fa-arrows-alt-v" aria-hidden="true"></i> Centrar vertical
+                        </button>
                         <!-- M2 · atajos de ajuste como la barra de tet1 -->
                         <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
                                 id="vid-contenido-llenar" aria-pressed="false">
@@ -563,8 +575,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=n3b obliga a traer la versión con reparto automático de textos en Tet News aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=n3b"></script>
+    <!-- ?v=n4 obliga a traer la versión con centrado por ejes aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=n4"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
