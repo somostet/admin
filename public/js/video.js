@@ -149,8 +149,10 @@
     var supLogoTam = document.getElementById('vid-logo-tam');
     var listaTextos = document.getElementById('vid-textos-lista');   // F5e
     var btnAddTexto = document.getElementById('vid-texto-add');      // F5e
+    var btnAddTitulo = document.getElementById('vid-texto-titulo-add');   // N2
     var editTexto = document.getElementById('vid-texto-edit');       // F5e
     var inpTxtContenido = document.getElementById('vid-txt-contenido');
+    var selTxtTipo = document.getElementById('vid-txt-tipo');        // N2
     var selTxtPos = document.getElementById('vid-txt-pos');
     var inpTxtTam = document.getElementById('vid-txt-tam');
     var selTxtAnim = document.getElementById('vid-txt-anim');
@@ -1813,6 +1815,11 @@
             tx = w / 2;
             ty = h - margen - fs / 2;
             anclaje = 'abajo';
+        } else if (tp === 'arriba-centro') {   // N2: el titular va arriba al centro
+            ctx.textAlign = 'center';
+            tx = w / 2;
+            ty = z.y + margen + fs / 2;   // bajo la barra de Tet News
+            anclaje = 'arriba';
         } else {
             ctx.textAlign = (tp === 'arriba-izquierda' || tp === 'abajo-izquierda') ? 'left' : 'right';
             tx = (ctx.textAlign === 'left') ? margen : w - margen;
@@ -2503,12 +2510,29 @@
     });
 
     /* ---------- F5e · lista de textos (título, descripción…) ---------- */
-    /* Cada texto guarda: contenido, posición (preset o x/y en fracciones),
-       tamaño (% del alto), animación de entrada y de salida, y su ventana
-       temporal (inicio y duración; dur = 0 → hasta el final del vídeo). */
-    function nuevoTexto(txt, n) {
-        return {
+    /* Cada texto guarda: contenido, tipo (N2: título/subtítulo/cuerpo),
+       posición (preset o x/y en fracciones), tamaño (% del alto), animación
+       de entrada y de salida, y su ventana temporal (inicio y duración;
+       dur = 0 → hasta el final del vídeo). */
+    /* N2 · tipos de texto: presets de un toque para montar rápido desde el
+       móvil. Solo tocan posición, tamaño y entrada: color, tipografía, tiempos
+       y contenido son del usuario y no se pisan. */
+    var TIPOS_TEXTO = {
+        titulo: { pos: 'arriba-centro', tam: 12, anim: 'deslizar', animDur: 0.7, x: 0.5, y: 0.14 },
+        subtitulo: { pos: 'personalizada', tam: 7, anim: 'aparecer', animDur: 0.6, x: 0.5, y: 0.26 },
+        cuerpo: { pos: 'abajo-centro', tam: 7, anim: 'ninguna', animDur: 1, x: 0.5, y: 0.9 }
+    };
+
+    function aplicaTipo(t) {
+        var pre = TIPOS_TEXTO[t.tipo];
+        if (!pre) return;
+        for (var k in pre) t[k] = pre[k];
+    }
+
+    function nuevoTexto(txt, n, tipo) {
+        var t = {
             txt: txt || '',
+            tipo: tipo || 'cuerpo',   // N2
             pos: n === 0 ? 'abajo-centro' : 'personalizada',
             x: 0.5,
             y: Math.max(0.12, 0.9 - n * 0.08),   // los nuevos se apilan
@@ -2523,6 +2547,8 @@
             fuente: 'sistema',  // F9
             peso: 'negrita'     // F9
         };
+        if (tipo) aplicaTipo(t);   // N2: el título/subtítulo nace donde debe
+        return t;
     }
 
     function fmtSeg(x) {
@@ -2618,6 +2644,7 @@
         editTexto.hidden = !t;
         if (!t) return;
         inpTxtContenido.value = t.txt;
+        selTxtTipo.value = TIPOS_TEXTO[t.tipo] ? t.tipo : 'cuerpo';   // N2
         selTxtPos.value = t.pos;
         inpTxtTam.value = String(t.tam);
         selTxtAnim.value = t.anim;
@@ -2654,6 +2681,18 @@
         });
     });
 
+    /* N2: cambiar de tipo aplica su preset al instante y refresca los
+       controles —posición, tamaño y entrada se mueven solos— */
+    selTxtTipo.addEventListener('change', function () {
+        var t = textoActual();
+        if (!t) return;
+        t.tipo = selTxtTipo.value;
+        aplicaTipo(t);
+        cargaEditor();
+        pintaListaTextos();
+        repintarSuperp();
+    });
+
     /* F9: el color se aplica en vivo mientras el selector está en pantalla */
     ['input', 'change'].forEach(function (ev) {
         inpTxtColor.addEventListener(ev, function () {
@@ -2685,6 +2724,14 @@
 
     btnAddTexto.addEventListener('click', function () {
         textos.push(nuevoTexto('', textos.length));
+        seleccionaTexto(textos.length - 1);
+        inpTxtContenido.focus();
+    });
+
+    /* N2 · «Añadir título»: el texto nace ya como titular (arriba al centro,
+       con su entrada) — un toque desde el móvil para encabezar el vídeo */
+    btnAddTitulo.addEventListener('click', function () {
+        textos.push(nuevoTexto('', textos.length, 'titulo'));
         seleccionaTexto(textos.length - 1);
         inpTxtContenido.focus();
     });

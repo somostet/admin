@@ -281,6 +281,11 @@
                             <button type="button" class="btn btn-outline-primary w-100 mt-2" id="vid-texto-add">
                                 <i class="fas fa-plus" aria-hidden="true"></i> Añadir texto
                             </button>
+                            <!-- N2 · un toque y el texto nace de titular: arriba al
+                                 centro (bajo la barra de Tet News) con entrada -->
+                            <button type="button" class="btn btn-outline-primary w-100 mt-2" id="vid-texto-titulo-add">
+                                <i class="fas fa-heading" aria-hidden="true"></i> Añadir título
+                            </button>
                         </div>
                         <div class="col-12" id="vid-texto-edit" hidden>
                             <div class="form-label mt-1">Editar texto</div>
@@ -290,9 +295,20 @@
                                     <textarea class="form-control" id="vid-txt-contenido" rows="2" maxlength="300"
                                               placeholder="Ingresa texto" autocomplete="off"></textarea>
                                 </div>
+                                <!-- N2 · tipo de texto: presets de un toque (el select
+                                     «Estilo» de abajo es el peso de la letra) -->
+                                <div class="col-6 col-lg-4">
+                                    <label class="form-label" for="vid-txt-tipo">Tipo de texto</label>
+                                    <select class="form-select" id="vid-txt-tipo">
+                                        <option value="cuerpo" selected>Cuerpo</option>
+                                        <option value="titulo">Título</option>
+                                        <option value="subtitulo">Subtítulo</option>
+                                    </select>
+                                </div>
                                 <div class="col-6 col-lg-4">
                                     <label class="form-label" for="vid-txt-pos">Posición</label>
                                     <select class="form-select" id="vid-txt-pos">
+                                        <option value="arriba-centro">Arriba al centro</option>
                                         <option value="arriba-izquierda">Arriba a la izquierda</option>
                                         <option value="arriba-derecha">Arriba a la derecha</option>
                                         <option value="abajo-izquierda">Abajo a la izquierda</option>
@@ -547,8 +563,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=n1 obliga a traer la versión con el motor de texto a varias líneas aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=n1"></script>
+    <!-- ?v=n2 obliga a traer la versión con tipos de texto (título/subtítulo) aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=n2"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

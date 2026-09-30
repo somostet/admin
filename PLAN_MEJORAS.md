@@ -25,7 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
-| Lote N — Textos y noticias ágiles | 🔨 **N1 motor de texto (salto de líneas, ajuste y zona) ✅** · N2 título ⬜ · N3 rapidez al montar ⬜ |
+| Lote N — Textos y noticias ágiles | 🔨 **N1 motor de texto (salto de líneas, ajuste y zona) ✅ · N2 tipos de texto y «Añadir título» ✅** · N3 rapidez al montar ⬜ |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -648,6 +648,21 @@ con F5d/F5e/F5f antes del audio):
   8, manija visible sobre el bloque, anclaje abajo en el pie y render real con
   texto activo (`tet-…mp4`); consola 0, barrido 14/14, `node --check` OK;
   `?v=n1` en `video.html`.
+- **N2 · Tipos de texto y «Añadir título» ✅** («no se puede tener un título»;
+  el usuario eligió **los dos**: botón y estilos). El botón **«Añadir título»**
+  —junto a «Añadir texto»— crea el texto ya de titular: arriba al centro con
+  entrada `deslizar`. El nuevo selector **«Tipo de texto»**
+  (Título/Subtítulo/Cuerpo) aplica su preset de un toque —posición, tamaño y
+  animación de entrada— sin tocar color, tipografía, tiempos ni contenido, y
+  refresca los controles al instante. Posición nueva **«Arriba al centro»**
+  (`arriba-centro`): centrada y, con Tet News, bajo la barra. E2E **10
+  comprobaciones** (lienzo 128²): el botón añade exactamente una fila con los
+  4 presets del titular, el titular cae bajo la barra centrado (banda 17–27,
+  x=63 de 128), «Subtítulo» → `personalizada` con `aparecer` (banda 28–36,
+  bajo la barra), «Cuerpo» → `abajo-centro` tam 7 (banda 110–118 en el pie),
+  la fila 0 sigue en `cuerpo` con el editor visible y render real con el
+  titular en escena (`tet-…mp4`); consola 0, barrido 14/14, `node --check`
+  OK; `?v=n2` en `video.html`.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
