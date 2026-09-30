@@ -25,6 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
+| Lote N — Textos y noticias ágiles | 🔨 **N1 motor de texto (salto de líneas, ajuste y zona) ✅** · N2 título ⬜ · N3 rapidez al montar ⬜ |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -626,6 +627,27 @@ con F5d/F5e/F5f antes del audio):
   futuro test:* el clip sintético se anima con **timers, no rAF** —con la
   pestaña al fondo rAF está throttlada y el webm salía de 493 B sin
   fotogramas—.
+- **N1 · Motor de texto: salto de líneas, ajuste y zona ✅** (primer pedido del
+  usuario del lote de noticias: «el texto no se adapta y no tiene salto de
+  líneas»). `dibujaTexto` dibujaba **un solo `fillText`**: los Enter del
+  textarea se colapsaban y un texto ancho se encogía entero hasta quedar
+  diminuto. Ahora `parteLineas` parte el texto en **varias líneas**
+  —respetando los Enter del autor y saltando por palabras dentro de cada
+  párrafo; una palabra más ancha que la línea se corta por caracteres— y el
+  bloque se **encoge en alto** hasta caber en su zona (parte, mide y reduce:
+  converge en pocas vueltas). El bloque se ancla arriba/abajo/centro según la
+  posición y la caja de la manija y de los toques pasa a ser la del **bloque
+  completo** —con una sola línea es exactamente la caja de antes—. Con **Tet
+  News** los textos viven en el **cuerpo** (`zonaDibujo`): los de arriba
+  empiezan bajo la barra y uno «personalizada» se recorta dentro del cuerpo,
+  nunca sobre la barra. El máquina de escribir revela sobre las líneas ya
+  partidas para que el bloque no salte mientras se escribe. E2E **7
+  comprobaciones** (lienzo 128², texto rojo sobre vídeo verde): `UNO\nDOS` →
+  exactamente 2 bandas de píxeles, línea larga → 5 bandas (salto por palabras),
+  ambas bajo la barra (≥ barH+2), sin plantilla el mismo texto sube a la fila
+  8, manija visible sobre el bloque, anclaje abajo en el pie y render real con
+  texto activo (`tet-…mp4`); consola 0, barrido 14/14, `node --check` OK;
+  `?v=n1` en `video.html`.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit

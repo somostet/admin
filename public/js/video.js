@@ -1665,8 +1665,9 @@
         // propios de cada texto)
         cajaTextoSel = null;
         cajasTextos = [];   // M1: se rellena con la caja de cada texto dibujado
+        var zSup = noticiaActiva ? zonaDibujo() : null;   // N1: textos en el cuerpo
         for (var i = 0; i < textos.length; i++) {
-            dibujaTexto(textos[i], tMs, w, h, margen, fuente, i === textoSel, i);
+            dibujaTexto(textos[i], tMs, w, h, margen, fuente, i === textoSel, i, zSup);
         }
         actualizaManija();   // F5b/F5e: coloca (o esconde) la manija sobre el texto
         actualizaManijaContenido();   // F5d: idem para el contenido de Tet News
@@ -1693,11 +1694,50 @@
         'negrita-cursiva': '700 italic'
     };
 
+    /* N1 · parte un texto en líneas que caben en maxW (con la fuente puesta en
+       el ctx): los Enter del autor se respetan y dentro de cada párrafo se
+       salta por palabras; una palabra más ancha que la línea se corta por
+       caracteres para no desbordar el lienzo */
+    function parteLineas(txt, maxW) {
+        var lineas = [];
+        var parrafos = txt.split(/\r?\n/);
+        for (var pi = 0; pi < parrafos.length; pi++) {
+            var pp = parrafos[pi].trim();
+            if (!pp) continue;
+            var palabras = pp.split(/\s+/);
+            var actual = '';
+            for (var wi = 0; wi < palabras.length; wi++) {
+                var cand = actual ? actual + ' ' + palabras[wi] : palabras[wi];
+                if (ctx.measureText(cand).width <= maxW) {
+                    actual = cand;
+                    continue;
+                }
+                if (actual) {
+                    lineas.push(actual);
+                    actual = '';
+                }
+                var palabra = palabras[wi];
+                while (palabra.length > 1 && ctx.measureText(palabra).width > maxW) {
+                    var corte = palabra.length - 1;
+                    while (corte > 1 && ctx.measureText(palabra.slice(0, corte)).width > maxW) corte--;
+                    lineas.push(palabra.slice(0, corte));
+                    palabra = palabra.slice(corte);
+                }
+                actual = palabra;
+            }
+            if (actual) lineas.push(actual);
+        }
+        return lineas;
+    }
+
     /* F5e · dibuja un texto de la lista en el instante tMs (ms desde el inicio
        del vídeo de salida). Ventana activa: [inicio, inicio+dur) con dur = 0
        significando «hasta el final». p recorre la entrada (0 → 1) y q la
-       salida (0 → 1); si no cabe, la fuente se encoge hasta el ancho. */
-    function dibujaTexto(t, tMs, w, h, margen, fuente, esSel, indice) {
+       salida (0 → 1). N1: el texto se parte en varias líneas —los Enter del
+       autor se respetan y además salta por palabras— y el bloque se encoge
+       hasta caber en su zona; con Tet News la zona es el cuerpo, nunca la
+       barra. */
+    function dibujaTexto(t, tMs, w, h, margen, fuente, esSel, indice, zona) {
         var txt = t.txt.trim();
         if (!txt) return;
         var iniMs = (t.inicio || 0) * 1000;
@@ -1727,13 +1767,28 @@
         var familia = FUENTES_VIDEO[t.fuente] || fuente;
         var peso = PESOS_VIDEO[t.peso] || '700';
         ctx.save();
-        ctx.font = peso + ' ' + fs + 'px ' + familia;
+        var z = zona || { x: 0, y: 0, w: w, h: h };
         var maxW = w - margen * 2;
-        var tw = ctx.measureText(txt).width;
-        if (tw > maxW && tw > 0) {
-            fs = Math.max(10, Math.round(fs * maxW / tw));
+        var maxH = Math.max(fs, z.h - margen * 2);
+        var lineas = [];
+        /* N1: se parte al ancho disponible y, si el bloque no cabe en alto,
+           se encoge la letra y se vuelve a partir (converge en pocas vueltas) */
+        for (var it = 0; it < 6; it++) {
             ctx.font = peso + ' ' + fs + 'px ' + familia;
-            tw = ctx.measureText(txt).width;   // F5b: ancho real tras encoger
+            lineas = parteLineas(txt, maxW);
+            if (!lineas.length) lineas = [txt];
+            var alto = (lineas.length - 1) * Math.round(fs * 1.25) + fs * 1.2;
+            if (alto <= maxH) break;
+            var menor = Math.floor(fs * maxH / alto);
+            if (menor >= fs) break;
+            fs = Math.max(10, menor);
+            if (fs <= 10) break;
+        }
+        ctx.font = peso + ' ' + fs + 'px ' + familia;
+        var lh = Math.round(fs * 1.25);
+        var maxTw = 1;
+        for (var i0 = 0; i0 < lineas.length; i0++) {
+            maxTw = Math.max(maxTw, ctx.measureText(lineas[i0]).width);
         }
         ctx.textBaseline = 'middle';
         ctx.fillStyle = t.color || '#fff';   // F9
@@ -1743,26 +1798,39 @@
         var tp = t.pos;
         var tx;
         var ty;
+        var anclaje;   // N1: dónde se ancla el bloque: arriba/abajo/centro
         if (tp === 'personalizada') {
             ctx.textAlign = 'center';
             tx = t.x * w;
             ty = t.y * h;
-            // F5b: el texto siempre cabe por completo dentro del lienzo
-            tx = Math.max(tw / 2, Math.min(w - tw / 2, tx));
-            ty = Math.max(fs / 2, Math.min(h - fs / 2, ty));
+            var media = (lineas.length - 1) * lh / 2 + fs * 0.6;
+            // F5b/N1: el bloque entero cabe en su zona (y en el lienzo)
+            tx = Math.max(maxTw / 2, Math.min(w - maxTw / 2, tx));
+            ty = Math.max(Math.max(fs / 2, z.y + media), Math.min(h - media, ty));
+            anclaje = 'centro';
         } else if (tp === 'abajo-centro') {
             ctx.textAlign = 'center';
             tx = w / 2;
             ty = h - margen - fs / 2;
+            anclaje = 'abajo';
         } else {
             ctx.textAlign = (tp === 'arriba-izquierda' || tp === 'abajo-izquierda') ? 'left' : 'right';
             tx = (ctx.textAlign === 'left') ? margen : w - margen;
-            ty = (tp.indexOf('arriba') === 0) ? margen + fs / 2 : h - margen - fs / 2;
+            if (tp.indexOf('arriba') === 0) {
+                ty = z.y + margen + fs / 2;   // N1: bajo la barra de Tet News
+                anclaje = 'arriba';
+            } else {
+                ty = h - margen - fs / 2;
+                anclaje = 'abajo';
+            }
         }
-        // F5e: caja de reposo del texto seleccionado para situar la manija;
-        // M1: la caja de TODOS los textos permite tocarlos sobre el lienzo
+        var n = lineas.length;
+        var centroBloque = (anclaje === 'centro') ? ty
+            : (anclaje === 'arriba') ? ty + lh * (n - 1) / 2
+            : ty - lh * (n - 1) / 2;
+        // F5e/N1: caja de reposo del bloque para situar la manija y los toques
         if (esSel || typeof indice === 'number') {
-            var caja = { x: tx, y: ty, w: tw, h: fs * 1.2 };
+            var caja = { x: tx, y: centroBloque, w: maxTw, h: (n - 1) * lh + fs * 1.2 };
             if (esSel) cajaTextoSel = caja;
             if (typeof indice === 'number') cajasTextos[indice] = caja;
         }
@@ -1771,16 +1839,33 @@
         var viaje = fs * 1.5;
         if (t.anim === 'aparecer') ctx.globalAlpha = p;        // fundido de entrada
         if (t.salida === 'fundido') ctx.globalAlpha *= (1 - q); // fundido de salida
-        if (p < 1) {
-            if (t.anim === 'deslizar') {
-                ty += (abajo ? viaje : -viaje) * (1 - p);       // entra desde su borde
-            } else if (t.anim === 'escribir') {
-                txt = txt.slice(0, Math.ceil(p * txt.length));  // máquina de escribir
-            }
-        } else if (q > 0 && t.salida === 'deslizar') {
-            ty += (abajo ? viaje : -viaje) * q;                 // sale por su borde
+        var dy = 0;
+        if (p < 1 && t.anim === 'deslizar') dy = (abajo ? viaje : -viaje) * (1 - p);
+        else if (q > 0 && t.salida === 'deslizar') dy = (abajo ? viaje : -viaje) * q;
+
+        /* máquina de escribir: se revela sobre las líneas ya partidas para que
+           el bloque no salte de sitio mientras se escribe */
+        var vis = Infinity;
+        if (p < 1 && t.anim === 'escribir') {
+            var totalCar = 0;
+            for (var i1 = 0; i1 < n; i1++) totalCar += lineas[i1].length;
+            vis = Math.ceil(p * totalCar);
         }
-        ctx.fillText(txt, tx, ty);
+        var acc = 0;
+        for (var li = 0; li < n; li++) {
+            var linea = lineas[li];
+            if (vis > acc) {
+                var salidaLinea = linea;
+                if (vis < acc + linea.length) salidaLinea = linea.slice(0, vis - acc);
+                if (salidaLinea) {
+                    var ly = (anclaje === 'arriba') ? ty + lh * li
+                        : (anclaje === 'abajo') ? ty - lh * (n - 1 - li)
+                        : ty + lh * (li - (n - 1) / 2);
+                    ctx.fillText(salidaLinea, tx, ly + dy);
+                }
+            }
+            acc += linea.length;
+        }
         ctx.restore();
     }
 
