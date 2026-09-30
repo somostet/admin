@@ -155,10 +155,13 @@
                             </div>
                         </div>
 
-                        <!-- riel tipo editor: filmstrip del original, tiradores y cabezal
-                             (E5: oculto con más de un clip, el recorte va sobre el total) -->
+                        <!-- riel tipo editor: filmstrip, tiradores y cabezal sobre el clip
+                             activo (E5b: con varios clips un sello dice cuál se recorta) -->
                         <div class="col-12" id="vid-riel-col">
-                            <div class="form-label">Riel de recorte</div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="form-label mb-0">Riel de recorte</span>
+                                <span class="badge text-bg-primary" id="vid-riel-lbl" hidden></span>
+                            </div>
                             <div class="vid-riel" id="vid-riel" data-riel="riel" role="group"
                                  aria-label="Riel de recorte: arrastra los tiradores y toca para mover el cabezal">
                                 <div class="vid-riel-fotos" id="vid-riel-fotos"></div>
@@ -544,8 +547,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=f10 obliga a traer la versión con la corrección de compartir/descarga aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=f10"></script>
+    <!-- ?v=e5b obliga a traer la versión con recorte por clip aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=e5b"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

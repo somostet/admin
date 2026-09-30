@@ -23,7 +23,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅** |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
@@ -238,7 +238,8 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   cambia** (recorte de E3 tal cual); con **≥2 clips** aparece la fila
   «Cola de vídeos» con una fila por clip —toca para previsualizarlo, ↑↓ para
   reordenar, × para quitar—, cambia la etiqueta del reproductor a «Vídeo
-  activo» y **se ocultan el riel de recorte y «Poner aquí»**, porque inicio y
+  activo» y **se ocultan el riel de recorte y «Poner aquí»** *(E5b: vuelven,
+  ahora sobre el clip activo —ver abajo—)*, porque inicio y
   fin pasan a valer sobre el **montaje completo**: `durVideo` es la suma y la
   ventana por defecto es 0…min(total, 300 s) —se recalcula con cada cambio de
   la cola, con el aviso de E4 si suma más de 5 min («Los vídeos suman…»)—. El
@@ -265,6 +266,29 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   toasts viven 4,5 s y pueden apilarse con el de wakeLock) y **durante** el
   render «Crear vídeo» está deshabilitado —es el indicador correcto de que
   arrancó—.
+- **E5b · Recorte por clip ✅** (siguiente paso tras F10, elegido por el
+  usuario). Cada clip de la cola pasa a guardar su propio recorte —`{nombre,
+  url, dur, ini, fin}`, por defecto 0…min(dur, 300 s)— y riel, «Poner aquí»,
+  cabezal y miniaturas actúan **sobre el clip activo** (la fila resaltada de
+  la cola), con el badge «Recortando «nombre» · clip i de n»: cambiar de clip
+  conserva el recorte de los demás (`ponRecorte` es el único escritor y
+  `recorteDeInputs` lo vuelca al clip activo). El plan de segmentos usa ya el
+  recorte de cada clip y la suma (`totalRecorte`) es lo que miden el badge, el
+  resumen —«Salida de X s (origen Y s)», solo si hay recorte— y la barra de
+  progreso; cada fila de la cola muestra «recortado / duración total». Durante
+  la grabación los inputs de recorte quedan inertes y `limpiar()` restaura el
+  clip que estaba activo. E2E en **5 etapas**: UI con 2 clips y badge/etiquetas,
+  recortar A 0,4–1,0 (fila «0,6 / 1,2 s», badge 1,6 s, resumen con origen),
+  cambiar de clip sin perder recortes, reordenar (el badge sigue al activo),
+  inputs/botón inertes y cancelación —más el **render real**: duración 1,66 s
+  ≈ plan 1,6 (sin recorte serían 2,3), azul desde 0,75 s —la cabeza roja
+  recortada no aparece—, nombre `tet-…mp4`, etiqueta MP4 y restauración de
+  inputs/clip tras grabar—; consola 0, barrido 14/14, `node --check` OK;
+  `?v=e5b` en `video.html`. *Dato de futuro test:* el render va con
+  `requestAnimationFrame` —si el navegador oculta la pestaña, rAF se para
+  pero el grabador sigue: la salida sale larga, con el lienzo congelado y el
+  primer fotograma negro (artefacto del entorno, no de la app); en pruebas
+  automatizadas hay que forzar visibilidad o bombear rAF con timers—.
 
 Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 **Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
@@ -613,7 +637,8 @@ petición del usuario (la prueba en iOS queda anulada: el usuario no tiene
 iPhone); **F8** ✅ añadió la captura de pestaña como fuente, **F7** ✅ el
 botón «Compartir vídeo» y **E2** ✅ cerró el bloque con la grabación en
 directo del lienzo (57 comprobaciones E2E, consola 0, barrido 14/14); **F10**
-✅ cerró después la queja de compartir/descarga en el móvil (33 comprobaciones).
+✅ cerró después la queja de compartir/descarga en el móvil (33 comprobaciones)
+y **E5b** ✅ añadió el recorte por clip (5 etapas de E2E, con el render real).
 
 ---
 
