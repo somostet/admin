@@ -330,6 +330,31 @@
                                            step="0.1" value="0" inputmode="decimal">
                                     <div class="form-text">0 = hasta el final del vídeo</div>
                                 </div>
+                                <!-- F9 · color, familia y peso de la letra -->
+                                <div class="col-6 col-lg-4">
+                                    <label class="form-label" for="vid-txt-color">Color de la letra</label>
+                                    <input type="color" class="form-control form-control-color w-100"
+                                           id="vid-txt-color" value="#ffffff" title="Color de la letra">
+                                </div>
+                                <div class="col-6 col-lg-5">
+                                    <label class="form-label" for="vid-txt-fuente">Tipografía</label>
+                                    <select class="form-select" id="vid-txt-fuente">
+                                        <option value="sistema" selected>Sistema (recomendada)</option>
+                                        <option value="sans">Sans clásica (Arial)</option>
+                                        <option value="serif">Serif (Georgia)</option>
+                                        <option value="redonda">Redonda (Verdana)</option>
+                                        <option value="mono">Monoespaciada (Courier)</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-lg-3">
+                                    <label class="form-label" for="vid-txt-peso">Estilo</label>
+                                    <select class="form-select" id="vid-txt-peso">
+                                        <option value="negrita" selected>Negrita</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="cursiva">Cursiva</option>
+                                        <option value="negrita-cursiva">Negrita + cursiva</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <!-- F6 · música de fondo: AudioBuffer mezclado con Web Audio
@@ -509,7 +534,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=f5 obliga a traer la versión con animaciones de entrada del título aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=e4b"></script>
+    <script src="./public/js/video.js?v=f9"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

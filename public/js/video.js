@@ -147,6 +147,9 @@
     var inpTxtSalidaDur = document.getElementById('vid-txt-salida-dur');
     var inpTxtInicio = document.getElementById('vid-txt-inicio');
     var inpTxtDur = document.getElementById('vid-txt-dur');
+    var inpTxtColor = document.getElementById('vid-txt-color');     // F9
+    var selTxtFuente = document.getElementById('vid-txt-fuente');   // F9
+    var selTxtPeso = document.getElementById('vid-txt-peso');       // F9
     var textos = [];         // F5e: un elemento por cada texto de la salida
     var textoSel = -1;       // F5e: índice del texto en edición
     var cajaTextoSel = null; // F5e: caja dibujada del seleccionado (para la manija)
@@ -1372,8 +1375,9 @@
         }
 
         // F5e: cada texto de la lista, dentro de su ventana temporal y con su
-        // animación de entrada y de salida; blanco en negrita con sombra para
-        // que se lea sobre cualquier fondo
+        // animación de entrada y de salida; por defecto blanco en negrita con
+        // sombra para que se lea sobre cualquier fondo (F9: color/fuente/peso
+        // propios de cada texto)
         cajaTextoSel = null;
         cajasTextos = [];   // M1: se rellena con la caja de cada texto dibujado
         for (var i = 0; i < textos.length; i++) {
@@ -1387,6 +1391,22 @@
             poneCabezalSalida(tMs);
         }
     }
+
+    /* F9 · familias y pesos disponibles para los textos (antes todo el mundo
+       salía blanco, en negrita y con la pila de sistema) */
+    var FUENTES_VIDEO = {
+        sistema: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
+        sans: 'Arial, Helvetica, sans-serif',
+        serif: 'Georgia, "Times New Roman", Times, serif',
+        redonda: 'Verdana, Tahoma, sans-serif',
+        mono: '"Courier New", Courier, monospace'
+    };
+    var PESOS_VIDEO = {
+        negrita: '700',
+        normal: '400',
+        cursiva: '400 italic',
+        'negrita-cursiva': '700 italic'
+    };
 
     /* F5e · dibuja un texto de la lista en el instante tMs (ms desde el inicio
        del vídeo de salida). Ventana activa: [inicio, inicio+dur) con dur = 0
@@ -1417,17 +1437,21 @@
         var pt = t.tam;
         if (!(pt >= 2 && pt <= 25)) pt = 7;
         var fs = Math.max(12, Math.round(h * pt / 100));
+        /* F9: familia y peso por texto; los textos antiguos (sin campos) caen
+           en la pila de sistema y la negrita de siempre */
+        var familia = FUENTES_VIDEO[t.fuente] || fuente;
+        var peso = PESOS_VIDEO[t.peso] || '700';
         ctx.save();
-        ctx.font = '700 ' + fs + 'px ' + fuente;
+        ctx.font = peso + ' ' + fs + 'px ' + familia;
         var maxW = w - margen * 2;
         var tw = ctx.measureText(txt).width;
         if (tw > maxW && tw > 0) {
             fs = Math.max(10, Math.round(fs * maxW / tw));
-            ctx.font = '700 ' + fs + 'px ' + fuente;
+            ctx.font = peso + ' ' + fs + 'px ' + familia;
             tw = ctx.measureText(txt).width;   // F5b: ancho real tras encoger
         }
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = t.color || '#fff';   // F9
         ctx.shadowColor = 'rgba(0, 0, 0, .75)';
         ctx.shadowBlur = Math.max(2, Math.round(fs / 5));
         ctx.shadowOffsetY = Math.max(1, Math.round(fs / 20));
@@ -2096,7 +2120,10 @@
             salida: 'ninguna',
             salidaDur: 0.5,
             inicio: 0,
-            dur: 0
+            dur: 0,
+            color: '#ffffff',   // F9
+            fuente: 'sistema',  // F9
+            peso: 'negrita'     // F9
         };
     }
 
@@ -2201,6 +2228,9 @@
         inpTxtSalidaDur.value = String(t.salidaDur);
         inpTxtInicio.value = String(t.inicio);
         inpTxtDur.value = String(t.dur);
+        inpTxtColor.value = t.color || '#ffffff';   // F9
+        selTxtFuente.value = FUENTES_VIDEO[t.fuente] ? t.fuente : 'sistema';
+        selTxtPeso.value = PESOS_VIDEO[t.peso] ? t.peso : 'negrita';
     }
 
     /* el texto se escribe directo en la lista: se repinta al escribir y se
@@ -2213,7 +2243,8 @@
         repintarSuperp();
     });
 
-    [[selTxtPos, 'pos'], [selTxtAnim, 'anim'], [selTxtSalida, 'salida']].forEach(function (par) {
+    [[selTxtPos, 'pos'], [selTxtAnim, 'anim'], [selTxtSalida, 'salida'],
+     [selTxtFuente, 'fuente'], [selTxtPeso, 'peso']].forEach(function (par) {   // F9: +fuente y peso
         par[0].addEventListener('change', function () {
             var t = textoActual();
             if (!t) return;
@@ -2221,6 +2252,16 @@
             if (par[1] === 'pos' && par[0].value === 'personalizada') {
                 aviso('Arrastra el texto en la vista previa para colocarlo donde quieras', 'info');
             }
+            repintarSuperp();
+        });
+    });
+
+    /* F9: el color se aplica en vivo mientras el selector está en pantalla */
+    ['input', 'change'].forEach(function (ev) {
+        inpTxtColor.addEventListener(ev, function () {
+            var t = textoActual();
+            if (!t) return;
+            t.color = inpTxtColor.value;
             repintarSuperp();
         });
     });

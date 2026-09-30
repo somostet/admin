@@ -24,7 +24,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅** · E5 varios vídeos (montaje) ⬜ |
-| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅** · F9 color y tipografía de los textos ⬜ |
+| Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -513,6 +513,27 @@ con F5d/F5e/F5f antes del audio):
   subir nada» de S1–S5, y además va contra los Términos de YouTube.
   **Decisión del usuario: no añadir nada**; F8 «Grabar pestaña» es la vía
   recomendada para llevar contenido de X/YouTube al editor.
+- **F9 · Color y tipografía de los textos ✅** (feedback del usuario: «no puedo
+  cambiar los colores o el formato de las letras» —en tet1/tet2 ya existía con
+  fabric: `fill`, `fontFamily`, `fontWeight`—). Los textos de `video.html` se
+  pintaban con **blanco fijo** y la pila de sistema en negrita. Ahora cada
+  texto lleva `color`, `fuente` y `peso` propios con tres controles nuevos en
+  el panel «Editar texto»: **color** (`input[type=color]`, se aplica en vivo
+  con `input`/`change`), **Tipografía** (5 opciones: sistema, Arial, Georgia,
+  Verdana, Courier) y **Estilo** (negrita, normal, cursiva, negrita+cursiva);
+  `nuevoTexto()` arranca con `#ffffff`/`sistema`/`negrita` (visualmente igual
+  que antes) y `dibujaTexto()` construye el `ctx.font` por texto con
+  `FUENTES_VIDEO`/`PESOS_VIDEO` —los textos antiguos sin campos caen en los
+  valores por defecto—. E2E **16 comprobaciones** en dos etapas: A (11 —
+  controles y defectos, texto en rojo verificado por píxeles —7 306 rojos—,
+  cambio de familia y de peso verificado por hash de píxeles, valores
+  conservados en los controles) y B (5 — un texto nuevo nace con los defectos,
+  volver al primero recupera `#ff0000`/`mono`/`normal` y grabación directa con
+  el texto estilado); consola 0, barrido 14/14, `node --check` OK; `?v=f9` en
+  `video.html`. *Dato de futuro test:* sin imágenes ni vídeo el lienzo está
+  **oculto** (`reiniciarPreview` muestra el estado vacío) y no pinta nada:
+  los tests de dibujo necesitan contenido —y fijar el tamaño de salida, que
+  con «orig» una imagen de 64 px encoge el lienzo a 64²—.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit
