@@ -2228,8 +2228,8 @@
     [[inpTxtTam, 'tam', 2, 25, 7],
      [inpTxtAnimDur, 'animDur', 0.2, 5, 1],
      [inpTxtSalidaDur, 'salidaDur', 0.2, 5, 0.5],
-     [inpTxtInicio, 'inicio', 0, 120, 0],
-     [inpTxtDur, 'dur', 0, 120, 0]].forEach(function (cfg) {
+     [inpTxtInicio, 'inicio', 0, MAX_TOTAL_SEG, 0],
+     [inpTxtDur, 'dur', 0, MAX_TOTAL_SEG, 0]].forEach(function (cfg) {
         cfg[0].addEventListener('change', function () {
             var t = textoActual();
             if (!t) return;

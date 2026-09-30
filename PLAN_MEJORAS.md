@@ -211,7 +211,11 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   con el aviso «Vídeo de 600 s: por defecto recortamos los primeros 5 minutos;
   mueve «fin» para elegir otra parte»; «fin» sigue pudiendo llegar hasta el
   final del archivo para elegir cualquier ventana de hasta 5 min dentro del
-  vídeo (el validador avisa si excedes). E2E **20 comprobaciones**: A imágenes
+  vídeo (el validador avisa si excedes). Fix posterior (**E4b**, commit
+  aparte): los topes en JS de `inicio`/`dur` de los textos seguían clavados en
+  120 → ahora `MAX_TOTAL_SEG` (`?v=e4b`); validado con 4 comprobaciones (250 s
+  se mantiene en los dos campos y la lista refleja 250–500 s) + consola 0 +
+  barrido 14/14. E2E **20 comprobaciones**: A imágenes
   (8 — topes de texto a 300, duración total a 300, aviso «máximo 5 minutos»
   con 400 s y Crear deshabilitado/habilitado según el caso), B vídeo «largo»
   de 600 s (9 — recorte por defecto 300 s con máximo 600, duración leída,
