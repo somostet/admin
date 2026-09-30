@@ -9,7 +9,8 @@
 
     var MAX_IMAGENES = 60;
     var MAX_LADO = 1920;          // tope de píxeles (los presets más grandes se reducen con aviso)
-    var MAX_TOTAL_SEG = 120;      // 2 minutos: se graba en tiempo real, no conviene más
+    var MAX_TOTAL_SEG = 300;      // 5 minutos: se graba en tiempo real, no conviene más (E4)
+    var MINUTOS_MAX = Math.round(MAX_TOTAL_SEG / 60);   // «5» para los avisos (E4)
     var MIN_POR_IMAGEN = 0.1;      // 10 fotogramas/s por imagen: menos no lo distingue el grabador
     var FPS = 30;
 
@@ -319,10 +320,19 @@
         var listo = function (d) {
             durVideo = d;
             recIn.value = '0';
-            recFin.value = String(fmt(durVideo));
+            /* E4: en vídeos de más de 5 minutos, el recorte por defecto son
+               los primeros MINUTOS_MAX —si no, «fin» arrancaba a duración
+               completa y «Crear vídeo» aparecía deshabilitado diciendo
+               «Máximo 5 minutos» sin saber por qué— */
+            recFin.value = String(fmt(Math.min(durVideo, MAX_TOTAL_SEG)));
             recIn.max = String(fmt(Math.max(0, durVideo - 0.2)));
             recFin.max = String(fmt(durVideo));
             videoCargado = true;
+            if (durVideo > MAX_TOTAL_SEG) {
+                aviso('Vídeo de ' + fmt(durVideo) + ' s: por defecto recortamos los ' +
+                    'primeros ' + MINUTOS_MAX + ' minutos; mueve «fin» para elegir otra parte',
+                    'info');
+            }
             recDur.textContent = fmt(durVideo) + ' s';
             recWrap.hidden = false;
             pintarModo();
@@ -409,7 +419,7 @@
        y al render se mezcla con la música en el audioDest de F6. El botón no
        aparece sin getDisplayMedia (iOS) ni con puntero táctil, donde el
        selector de pestañas no tiene sentido. */
-    var MAX_PESTANA_SEG = 120;   // mismo tope que la salida: 2 minutos
+    var MAX_PESTANA_SEG = MAX_TOTAL_SEG;   // mismo tope que la salida (E4)
 
     function hayDisplayMedia() {
         return !!(soportado && navigator.mediaDevices &&
@@ -505,7 +515,7 @@
             tiempoPestana.textContent = formatoAudio(s);
             if (s >= MAX_PESTANA_SEG) {
                 paraCaptura();
-                aviso('Máximo 2 minutos de captura: el clip se corta ahí', 'info');
+                aviso('Máximo ' + MINUTOS_MAX + ' minutos de captura: el clip se corta ahí', 'info');
             }
         }, 250);
         aviso('Grabando la pestaña… pulsa «Detener» cuando tengas el clip', 'info');
@@ -1533,7 +1543,7 @@
         }
         if (seg > MAX_TOTAL_SEG) {
             return { inicio: ini, fin: fin, ok: false,
-                msg: 'Máximo 2 minutos por grabación en tiempo real' };
+                msg: 'Máximo ' + MINUTOS_MAX + ' minutos por grabación en tiempo real' };
         }
         return { inicio: ini, fin: fin, ok: true, msg: '' };
     }
@@ -1563,13 +1573,13 @@
         } else if (selModoDur.value === 'total') {
             vidTotal.textContent = n + (n === 1 ? ' imagen repartida en ' : ' imágenes repartidas en ') +
                 fmt(d.total) + ' s (' + fmt(d.porImagen) + ' s cada una) · se graba en tiempo real' +
-                (d.total > MAX_TOTAL_SEG ? ' (máximo 2 minutos: reduce el total)' :
+                (d.total > MAX_TOTAL_SEG ? ' (máximo ' + MINUTOS_MAX + ' minutos: reduce el total)' :
                     totalCorto ? ' (con ' + n + ' imágenes hacen falta al menos ' +
                         fmt(n * MIN_POR_IMAGEN) + ' s)' : '');
         } else {
             vidTotal.textContent = n + (n === 1 ? ' imagen × ' : ' imágenes × ') +
                 fmt(d.porImagen) + ' s = ' + fmt(d.total) + ' s de vídeo · se graba en tiempo real' +
-                (d.total > MAX_TOTAL_SEG ? ' (máximo 2 minutos: reduce la duración o las imágenes)' : '');
+                (d.total > MAX_TOTAL_SEG ? ' (máximo ' + MINUTOS_MAX + ' minutos: reduce la duración o las imágenes)' : '');
         }
         btnCrear.disabled = !n || grabando || capturando || excede;
     }
@@ -2324,7 +2334,7 @@
         if (!imagenes.length) return;
         var d = calculoDuracion();
         if (d.total > MAX_TOTAL_SEG) {
-            aviso('Máximo 2 minutos: reduce la duración o el número de imágenes', 'warning');
+            aviso('Máximo ' + MINUTOS_MAX + ' minutos: reduce la duración o el número de imágenes', 'warning');
             return;
         }
         if (d.porImagen < MIN_POR_IMAGEN) {
@@ -2618,7 +2628,7 @@
     /* A diferencia de «Crear vídeo» (línea de tiempo fija), aquí se graba lo
        que el lienzo muestra ahora mismo —plantilla animada o edición en
        directo— hasta que se pulsa Detener. Misma tubería: captureStream +
-       MediaRecorder con autodetección de códec (máx. 2 minutos). */
+       MediaRecorder con autodetección de códec (máx. 5 minutos). */
     var grabandoDirecto = false;
     var t0Directo = 0;
     var segsDirecto = 0;
@@ -2647,7 +2657,7 @@
         btnDirecto.disabled = !libre;
         btnDirecto.title = !hayContenidoDirecto()
             ? 'Agrega imágenes o un vídeo para grabar el lienzo'
-            : libre ? 'Graba lo que se ve en el lienzo hasta que pulses Detener (máx. 2 min)'
+            : libre ? 'Graba lo que se ve en el lienzo hasta que pulses Detener (máx. ' + MINUTOS_MAX + ' min)'
                 : 'Espera a que termine lo que está en marcha';
     }
 
@@ -2753,7 +2763,7 @@
         iniciaMusica();   // F6: la música entra al empezar a grabar
         pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
         pintaBotonDirecto();
-        aviso('Grabando el lienzo… pulsa «Detener» cuando quieras parar (máx. 2 min)', 'info');
+        aviso('Grabando el lienzo… pulsa «Detener» cuando quieras parar (máx. ' + MINUTOS_MAX + ' min)', 'info');
 
         function tickDirecto() {
             if (!grabandoDirecto) return;
@@ -2762,7 +2772,7 @@
                 segsDirecto = MAX_TOTAL_SEG;
                 grabandoDirecto = false;
                 if (recAct && recAct.state !== 'inactive') recAct.stop();
-                aviso('Máximo 2 minutos: la grabación directa se corta ahí', 'info');
+                aviso('Máximo ' + MINUTOS_MAX + ' minutos: la grabación directa se corta ahí', 'info');
                 return;
             }
             /* con la previa detenida aquí se bombea el dibujo en ambos modos:

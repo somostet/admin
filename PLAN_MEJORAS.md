@@ -23,7 +23,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
-| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅** · E4 duración hasta 5 min ⬜ · E5 varios vídeos (montaje) ⬜ |
+| Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅** · E5 varios vídeos (montaje) ⬜ |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅** · F9 color y tipografía de los textos ⬜ |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
@@ -197,6 +197,32 @@ Nuevo editor para crear vídeos, 3 modos (mismo día/lote D, después del GIF).
   cargar un MP4 la vista previa se quedaba en el color de fondo —Chrome no
   decodifica el primer fotograma hasta el primer «buscar» y la ruta webm ya
   lo hacía—; `listo()` fuerza un buscar a 0.
+- **E4 · Duración hasta 5 minutos ✅** (feedback del usuario: «no puedo subir
+  un vídeo de más de 2 minutos»; preguntado sobre la duración que necesita,
+  respondió **5 minutos**). `MAX_TOTAL_SEG` 120 → **300**, con `MINUTOS_MAX`
+  derivado para los avisos; el tope de captura de pestaña pasa a compartir la
+  misma constante (`MAX_PESTANA_SEG = MAX_TOTAL_SEG`). Todos los textos de
+  tope leen la constante: recorte (`Máximo 5 minutos por grabación en tiempo
+  real`), totales de imágenes, aviso al pulsar Crear, título y avisos del
+  directo y el de la captura; los `max` de los tiempos de texto en el HTML
+  pasan de 120 a 300. Y el cambio de UX clave: al cargar un vídeo **largo**,
+  «fin» arranca ya en los primeros 5 minutos —antes era duración completa y
+  «Crear vídeo» salía deshabilitado con «Máximo 2 minutos» sin explicación—,
+  con el aviso «Vídeo de 600 s: por defecto recortamos los primeros 5 minutos;
+  mueve «fin» para elegir otra parte»; «fin» sigue pudiendo llegar hasta el
+  final del archivo para elegir cualquier ventana de hasta 5 min dentro del
+  vídeo (el validador avisa si excedes). E2E **20 comprobaciones**: A imágenes
+  (8 — topes de texto a 300, duración total a 300, aviso «máximo 5 minutos»
+  con 400 s y Crear deshabilitado/habilitado según el caso), B vídeo «largo»
+  de 600 s (9 — recorte por defecto 300 s con máximo 600, duración leída,
+  aviso de recarga, Crear habilitado, título del directo «máx. 5 min»,
+  recorte de 400 s → «Máximo 5 minutos por grabación en tiempo real» y botón
+  bloqueado) y 3 de regresión (E1 sigue creando el vídeo con el tope nuevo);
+  consola 0, barrido 14/14, `node --check` OK; `?v=e4` en `video.html`.
+  *Dato de futuro test:* la duración real de un vídeo no se puede alargar en
+  un test —se parchea `duration` en la instancia de `#vid-fuente` antes de
+  cargar el archivo— y el aviso vive 4,5 s: hay que comprobarlo dentro del
+  mismo script que dispara la carga.
 
 Notas: CSP + `referrer` iguales que en las 7 páginas, enlaces en el menú
 **Crear**, sin dependencias de red en runtime; si `MediaRecorder` no existe
