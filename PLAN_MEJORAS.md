@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -921,6 +921,21 @@ amigable y rápida». Un commit por pieza.
   cabezal avanzando del 36,98 % al 67,7 %, 17 repintados tras dar la
   vuelta al bucle**, deshacer sigue operativo; consola 0, barrido
   14/14, `node --check` OK; `?v=p5` en `video.html` (script y CSS).
+
+- **P6 · Barra de texto fuera del lienzo ✅**. La barra P2 (centrar
+  H/V, duplicar, quitar y color) estaba anclada dentro del marco del
+  lienzo (`position:absolute; bottom:.5rem` sobre `.vid-preview`), de
+  modo que tapaba la banda baja de la vista previa —justo donde suele
+  estar el texto— e interceptaba toques y arrastres de esa zona al
+  escribir o manipular. Ahora la barra **sale del marco** y vive como
+  fila centrada justo debajo (`width: fit-content; margin: .5rem
+  auto 0`): nunca cubre el canvas ni roba gestos, sigue naciendo y
+  muriendo con la manija (`flotTexto.hidden` en `actualizaManija`)
+  y conserva los mismos 44 px táctiles y el mismo aspecto. E2E: con
+  texto seleccionado la barra queda **por debajo del borde del marco
+  sin solaparse con el canvas**, se oculta al deseleccionar y
+  «duplicar» sigue añadiendo texto; consola 0, barrido 14/14,
+  `node --check` OK; `?v=p6` en `video.html` (script y CSS).
 
 ---
 

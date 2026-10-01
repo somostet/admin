@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=p5">
+    <link rel="stylesheet" href="./public/css/video.css?v=p6">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -93,30 +93,32 @@
                             <span class="vid-asa vid-asa-sw" data-esq="sw"></span>
                             <span class="vid-asa vid-asa-se" data-esq="se"></span>
                         </div>
-                        <!-- P2 · barra flotante con las acciones del texto seleccionado:
-                             nace y se apaga con la manija y repite los botones del
-                             formulario para no soltar el lienzo -->
-                        <div class="vid-txt-flot" id="vid-txt-flot" hidden>
-                            <button type="button" class="vid-txt-flot-btn" id="vid-flot-centrar-h"
-                                    title="Centrar horizontal" aria-label="Centrar horizontal">
-                                <i class="fas fa-arrows-alt-h" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="vid-txt-flot-btn" id="vid-flot-centrar-v"
-                                    title="Centrar vertical" aria-label="Centrar vertical">
-                                <i class="fas fa-arrows-alt-v" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="vid-txt-flot-btn" id="vid-flot-duplicar"
-                                    title="Duplicar el texto" aria-label="Duplicar el texto">
-                                <i class="fas fa-clone" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="vid-txt-flot-btn" id="vid-flot-quitar"
-                                    title="Quitar el texto" aria-label="Quitar el texto">
-                                <i class="fas fa-trash" aria-hidden="true"></i>
-                            </button>
-                            <input type="color" class="vid-txt-flot-color" id="vid-flot-color"
-                                   value="#ffffff" title="Color del texto" aria-label="Color del texto">
-                        </div>
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
+                    </div>
+
+                    <!-- P2/P6 · barra con las acciones del texto seleccionado: nace y
+                         se apaga con la manija y repite los botones del formulario,
+                         pero vive FUERA del marco del lienzo para no tapar la vista
+                         previa ni bloquear toques ni arrastres sobre el canvas -->
+                    <div class="vid-txt-flot" id="vid-txt-flot" hidden>
+                        <button type="button" class="vid-txt-flot-btn" id="vid-flot-centrar-h"
+                                title="Centrar horizontal" aria-label="Centrar horizontal">
+                            <i class="fas fa-arrows-alt-h" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="vid-txt-flot-btn" id="vid-flot-centrar-v"
+                                title="Centrar vertical" aria-label="Centrar vertical">
+                            <i class="fas fa-arrows-alt-v" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="vid-txt-flot-btn" id="vid-flot-duplicar"
+                                title="Duplicar el texto" aria-label="Duplicar el texto">
+                            <i class="fas fa-clone" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="vid-txt-flot-btn" id="vid-flot-quitar"
+                                title="Quitar el texto" aria-label="Quitar el texto">
+                            <i class="fas fa-trash" aria-hidden="true"></i>
+                        </button>
+                        <input type="color" class="vid-txt-flot-color" id="vid-flot-color"
+                               value="#ffffff" title="Color del texto" aria-label="Color del texto">
                     </div>
 
                     <!-- M1 · pista para móvil: tocar un texto lo selecciona -->
@@ -694,7 +696,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=p5"></script>
+    <script src="./public/js/video.js?v=p6"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
