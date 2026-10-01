@@ -236,6 +236,12 @@
         setTimeout(function () { el.remove(); }, 4500);
     }
 
+    /* P1d · respuesta háptica en acciones clave: Chrome la respeta en
+       Android y escritorio, iOS la ignora sin más (sin librerías) */
+    function vibra(ms) {
+        try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { }
+    }
+
     function fmt(x) {
         return String(Math.round(x * 10) / 10);
     }
@@ -2954,6 +2960,7 @@
                 aviso(r.msg, 'warning');
                 return;
             }
+            vibra(10);   // P1d: tiro hecho
             return crearVideoRecorte();
         }
         if (!imagenes.length) return;
@@ -2967,6 +2974,7 @@
                 fmt(imagenes.length * MIN_POR_IMAGEN) + ' s en total', 'warning');
             return;
         }
+        vibra(10);   // P1d: tiro hecho
         crearVideo();
     });
 
@@ -3039,7 +3047,11 @@
                 var tx = db.transaction('resultados', 'readwrite');
                 tx.objectStore('resultados').put(
                     { blob: blob, nombre: nombre, tipo: tipo, fecha: Date.now() }, 'ultimo');
-                tx.oncomplete = function () { try { db.close(); } catch (e) { } };
+                tx.oncomplete = function () {
+                    try { db.close(); } catch (e) { }
+                    var g = document.getElementById('vid-guardado');   // P1d
+                    if (g) g.hidden = false;
+                };
             } catch (e) { try { db.close(); } catch (e2) { } }
         });
     }
@@ -3082,7 +3094,10 @@
         repro.src = urlVideo;
         repro.hidden = false;
         resWrap.hidden = false;
-        if (!sinScroll) resWrap.scrollIntoView({ block: 'nearest' });
+        if (!sinScroll) {
+            resWrap.scrollIntoView({ block: 'nearest' });
+            vibra([15, 60, 15]);   // P1d: tiro hecho (no vibra al restaurar al abrir)
+        }
         guardaUltimo(blob, aDesc.download, tipo);
     }
 

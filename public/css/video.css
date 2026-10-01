@@ -330,6 +330,12 @@
     cursor: pointer;
 }
 
+/* P1d · respuesta táctil inmediata al pulsar (los .btn ya traen la suya de
+   Bootstrap; la fila de textos es transparente y necesita su tinte) */
+.vid-texto-sel:active {
+    background: rgba(128, 128, 128, .22);
+}
+
 .vid-texto-nombre {
     overflow: hidden;
     text-overflow: ellipsis;

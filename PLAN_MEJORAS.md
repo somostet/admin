@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ⬜ · P2 barra flotante sobre el texto ⬜ · P3 pestañas del formulario ⬜ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ⬜ · P3 pestañas del formulario ⬜ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -799,6 +799,21 @@ amigable y rápida». Un commit por pieza.
   deshacer repone el orden exacto [Borrable, Segundo]; el aviso caduca
   solo a los ~4,5 s sin restaurar nada; consola 0, barrido 14/14,
   `node --check` OK; `?v=p1c` en `video.html` (script y CSS).
+- **P1d · Feedback: «✓ guardado», tinte táctil y vibración ✅** («que se
+  note al tocar»). Tres piezas: (1) `#vid-guardado`, un distintivo verde
+  dentro del bloque de resultado que `guardaUltimo` enciende en el
+  `oncomplete` de IndexedDB —«Guardado en este dispositivo — se recupera
+  aunque cierres la pestaña»—; (2) `.vid-texto-sel:active` tiñe la fila
+  transparente al pulsar (los `.btn` ya traen el `:active` de Bootstrap);
+  (3) `vibra(ms)` —`navigator.vibrate` envuelto en try/catch, iOS la
+  ignora sin más—: 10 ms al arrancar «Crear vídeo» **tras** pasar todas las
+  validaciones (los dos caminos: clips E5b y montaje) y `[15, 60, 15]` al
+  terminar el render en `muestraResultado`, nunca al restaurar
+  (`sinScroll`). E2E **4 comprobaciones**: regla `:active` en la hoja,
+  `navigator.vibrate` espiado recibe `10` al pulsar «Crear», `[15, 60, 15]`
+  al completar un render real con clip sintético, y el distintivo visible
+  con su texto tras confirmar IDB; consola 0, barrido 14/14,
+  `node --check` OK; `?v=p1d` en `video.html` (script y CSS).
 
 ---
 
