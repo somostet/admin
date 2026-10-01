@@ -2896,6 +2896,12 @@
         return null;
     }
 
+    /* P1a · «Ver lienzo» de la barra inferior: sube a la vista previa sin
+       tener que buscarla por el formulario */
+    document.getElementById('vid-ver-lienzo').addEventListener('click', function () {
+        lienzo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
     btnCrear.addEventListener('click', function () {
         if (grabando) return;
         if (capturando) {   // F8

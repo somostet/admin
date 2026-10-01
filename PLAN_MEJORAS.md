@@ -26,6 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ⬜ · P1c quitar con deshacer ⬜ · P1d feedback («✓ guardado», táctil y vibración) ⬜ · P2 barra flotante sobre el texto ⬜ · P3 pestañas del formulario ⬜ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -737,6 +738,35 @@ botón «Compartir vídeo» y **E2** ✅ cerró el bloque con la grabación en
 directo del lienzo (57 comprobaciones E2E, consola 0, barrido 14/14); **F10**
 ✅ cerró después la queja de compartir/descarga en el móvil (33 comprobaciones)
 y **E5b** ✅ añadió el recorte por clip (5 etapas de E2E, con el render real).
+
+---
+
+## 🟢 Lote P — Interfaz amigable y rápida (`video.html`) 🆕
+
+Cinco piezas elegidas por el usuario el 01/10/2026 para «una interfaz más
+amigable y rápida». Un commit por pieza.
+
+- **P1a · Barra de acción pegajosa ✅** (arranque del lote: «Crear vídeo está
+  muy abajo y hay que ir a buscarlo»). El bloque final —progreso de la
+  grabación, **«Ver lienzo»** (nuevo) y los botones «Crear vídeo» y
+  «Cancelar»— pasa a `.vid-acciones-fijas` con `position: sticky;
+  bottom: 0`: mientras se recorre el formulario la barra queda pegada al
+  pie —a ras del borde de `.vid-caja` por margen negativo, fondo opaco y
+  `env(safe-area-inset-bottom)` para el gesto de iPhone— y se suelta sola
+  al llegar a su sitio, sin una línea de JS. «Ver lienzo» sube a la vista
+  previa con `scrollIntoView` suave; los dos botones comparten renglón
+  (`d-flex`, «Crear» crece) con objetivos de 44 px, y el progreso va dentro
+  de la barra para verse también mientras se graba. *Dato de test:*
+  Bootstrap trae `scroll-behavior: smooth` en `:root` y la pestaña oculta
+  congela esas animaciones —el primer E2E falló por el arnés, no por la
+  app—; el test usa `behavior: 'instant'` y un espía en `scrollIntoView`.
+  E2E **6 comprobaciones**: barra con los cuatro hijos y `position: sticky`,
+  los dos botones en el mismo renglón con «Crear» más ancho, pegada al pie
+  arriba del todo y a mitad del formulario (scroll real a 1200 px), «Ver
+  lienzo» llama a `scrollIntoView` de `#vid-lienzo` con
+  `block: 'center'` y aterriza centrado, «Crear» activo con el clip
+  cargado; consola 0, barrido 14/14, `node --check` OK; `?v=p1a` en
+  `video.html` (script y CSS).
 
 ---
 

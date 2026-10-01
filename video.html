@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=f7">
+    <link rel="stylesheet" href="./public/css/video.css?v=p1a">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -512,18 +512,24 @@
                             bordes recortan inicio y duración— y toca el riel para navegar con el cabezal.</p>
                     </div>
 
-                    <div class="vid-progreso" id="vid-progreso" hidden>
-                        <div class="progress" role="progressbar" aria-label="Grabando el vídeo" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar" id="vid-barra" style="width: 0%">0%</div>
+                    <!-- P1a · barra pegada abajo: progreso, «Ver lienzo» y la
+                         acción principal quedan al alcance del pulgar mientras
+                         se recorre el formulario (sticky, sin JS) y se sueltan
+                         solos al llegar a su sitio -->
+                    <div class="vid-acciones-fijas d-flex gap-2 flex-wrap mt-3">
+                        <div class="vid-progreso w-100" id="vid-progreso" hidden>
+                            <div class="progress" role="progressbar" aria-label="Grabando el vídeo" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar" id="vid-barra" style="width: 0%">0%</div>
+                            </div>
+                            <div class="form-text" id="vid-estado">Grabando…</div>
                         </div>
-                        <div class="form-text" id="vid-estado">Grabando…</div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-3">
-                        <button type="button" class="btn btn-success vid-crear" id="vid-crear" disabled>
+                        <button type="button" class="btn btn-outline-secondary vid-ver-lienzo" id="vid-ver-lienzo">
+                            <i class="fas fa-eye" aria-hidden="true"></i> Ver lienzo
+                        </button>
+                        <button type="button" class="btn btn-success vid-crear flex-grow-1" id="vid-crear" disabled>
                             <i class="fas fa-video" aria-hidden="true"></i> Crear vídeo
                         </button>
-                        <button type="button" class="btn btn-outline-danger vid-cancelar" id="vid-cancelar" hidden>
+                        <button type="button" class="btn btn-outline-danger vid-cancelar w-100" id="vid-cancelar" hidden>
                             <i class="fas fa-stop" aria-hidden="true"></i> Cancelar grabación
                         </button>
                     </div>
@@ -594,7 +600,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=n5"></script>
+    <script src="./public/js/video.js?v=p1a"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

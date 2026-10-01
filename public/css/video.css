@@ -572,8 +572,37 @@
 
 /* botones de acción principal: objetivo táctil de 44 px */
 .vid-crear,
-.vid-cancelar {
+.vid-cancelar,
+.vid-ver-lienzo {
     min-height: 44px;
+}
+
+/* P1a · barra de acción pegada abajo: la acción principal, «Ver lienzo» y el
+   progreso de la grabación quedan al alcance del pulgar mientras se recorre
+   el formulario y se sueltan solos al llegar a su sitio (sticky, sin JS); el
+   margen negativo la lleva a ras del borde de .vid-caja */
+.vid-acciones-fijas {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: .6rem 1rem calc(.6rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--sh-border);
+    background: var(--sh-panel);
+}
+
+.vid-acciones-fijas .vid-progreso {
+    margin-top: 0;
+}
+
+@media (max-width: 575.98px) {
+    .vid-acciones-fijas {
+        margin-left: -.75rem;
+        margin-right: -.75rem;
+        padding-left: .75rem;
+        padding-right: .75rem;
+    }
 }
 
 #vid-resultado a {
