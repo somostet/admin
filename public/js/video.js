@@ -102,6 +102,8 @@
     var aDesc = document.getElementById('vid-descargar');
     var txtDesc = document.getElementById('vid-descargar-texto');
     var resWrap = document.getElementById('vid-resultado');
+    var flotTexto = document.getElementById('vid-txt-flot');     // P2
+    var flotColor = document.getElementById('vid-flot-color');   // P2
     var btnCompartir = document.getElementById('vid-compartir');   // F7
     var repro = document.getElementById('vid-repro');
     var btnImagenLabel = document.getElementById('vid-etiqueta-img');
@@ -2232,6 +2234,7 @@
     function actualizaManija() {
         var activa = textoSel >= 0 && lienzo.style.display !== 'none' && !!cajaTextoSel;
         manijaTitulo.hidden = !activa;
+        flotTexto.hidden = !activa;   // P2: la barra vive y muere con la manija
         if (!activa) return;
         var f = lienzo.clientWidth / lienzo.width;
         var pad = 4;
@@ -2755,6 +2758,7 @@
         inpTxtInicio.value = String(t.inicio);
         inpTxtDur.value = String(t.dur);
         inpTxtColor.value = t.color || '#ffffff';   // F9
+        flotColor.value = t.color || '#ffffff';     // P2: el swatch de la barra sigue al texto
         selTxtFuente.value = FUENTES_VIDEO[t.fuente] ? t.fuente : 'sistema';
         selTxtPeso.value = PESOS_VIDEO[t.peso] ? t.peso : 'negrita';
     }
@@ -2834,6 +2838,7 @@
             var t = textoActual();
             if (!t) return;
             t.color = inpTxtColor.value;
+            flotColor.value = t.color;   // P2: el swatch de la barra se queda a la par
             repintarSuperp();
         });
     });
@@ -2942,6 +2947,29 @@
        tener que buscarla por el formulario */
     document.getElementById('vid-ver-lienzo').addEventListener('click', function () {
         lienzo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    /* P2 · acciones rápidas flotando sobre el lienzo: repiten los botones
+       del formulario (N4/N5, duplicar, quitar, color F9) para no soltar
+       la vista previa; la visibilidad la decide actualizaManija() */
+    document.getElementById('vid-flot-centrar-h').addEventListener('click', function () {
+        if (textoSel >= 0) centraTextoPorEje('h');
+    });
+    document.getElementById('vid-flot-centrar-v').addEventListener('click', function () {
+        if (textoSel >= 0) centraTextoPorEje('v');
+    });
+    document.getElementById('vid-flot-duplicar').addEventListener('click', function () {
+        if (textoSel >= 0) duplicaTexto(textoSel);
+    });
+    document.getElementById('vid-flot-quitar').addEventListener('click', function () {
+        if (textoSel >= 0) quitaTexto(textoSel);
+    });
+    flotColor.addEventListener('input', function () {
+        var t = textoActual();
+        if (!t) return;
+        t.color = flotColor.value;
+        inpTxtColor.value = t.color;   // el selector del formulario se queda a la par
+        repintarSuperp();
     });
 
     btnCrear.addEventListener('click', function () {

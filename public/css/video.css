@@ -560,6 +560,58 @@
     cursor: pointer;
 }
 
+/* P2 · barra flotante de las acciones del texto, al pie del lienzo: nace
+   y se apaga con la manija y deja el pulgar sobre el lienzo */
+.vid-txt-flot {
+    position: absolute;
+    left: 50%;
+    bottom: .5rem;
+    transform: translateX(-50%);
+    display: flex;
+    gap: .2rem;
+    padding: .3rem;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: .8rem;
+    background: rgba(18, 18, 18, .92);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .45);
+    z-index: 15;
+}
+
+.vid-txt-flot-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: .5rem;
+    background: transparent;
+    color: #fff;
+    font-size: 1.05rem;
+    cursor: pointer;
+}
+
+.vid-txt-flot-btn:active {
+    background: rgba(255, 255, 255, .18);
+}
+
+.vid-txt-flot-color {
+    width: 44px;
+    height: 44px;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: .5rem;
+    background: transparent;
+    cursor: pointer;
+}
+
+.vid-txt-flot-color::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.vid-txt-flot-color::-webkit-color-swatch {
+    border: 0;
+    border-radius: .3rem;
+}
+
 .vid-vacio {
     margin: 1rem 0;
     text-align: center;
