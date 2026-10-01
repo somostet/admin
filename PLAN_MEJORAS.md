@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ⬜ · P1d feedback («✓ guardado», táctil y vibración) ⬜ · P2 barra flotante sobre el texto ⬜ · P3 pestañas del formulario ⬜ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ⬜ · P2 barra flotante sobre el texto ⬜ · P3 pestañas del formulario ⬜ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -785,6 +785,20 @@ amigable y rápida». Un commit por pieza.
   «Original»/4 s—, y con Tet News duplicar da 3 filas repartidas
   0 / 0,2 / 0,3 s con el clon seleccionado; consola 0, barrido 14/14,
   `node --check` OK; `?v=p1b` en `video.html`.
+- **P1c · «Quitar texto» con «Deshacer» ✅** («que un toque erróneo no
+  pierda lo escrito»). `aviso()` gana una acción opcional —un botón junto a
+  la X, resuelto en el propio toast que la app ya usa (arriba a la derecha,
+  4,5 s)— y `quitaTexto` lo invoca guardando el objeto, su índice y la
+  selección previa: «Deshacer» devuelve el texto a su sitio con su
+  selección, vuelve a repartir en Tet News (N3b) y repinta lista, editor y
+  lienzo. Cada aviso cierra su propia cortina: dos quitar seguidos dejan
+  dos avisos y cada «Deshacer» repara el suyo. El botón mide 44 px
+  (`.vid-aviso-accion`). E2E **4 comprobaciones**: quitar deja 0 filas,
+  editor oculto y aviso con botón «Deshacer»; deshacer restaura contenido,
+  tiempo (4 s), selección y editor; con dos textos quitar el primero y
+  deshacer repone el orden exacto [Borrable, Segundo]; el aviso caduca
+  solo a los ~4,5 s sin restaurar nada; consola 0, barrido 14/14,
+  `node --check` OK; `?v=p1c` en `video.html` (script y CSS).
 
 ---
 

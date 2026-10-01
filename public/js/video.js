@@ -208,7 +208,9 @@
     })();
 
     /* ---------- avisos (mismo patrón que mostrarAviso de capas.js) ---------- */
-    function aviso(msg, tipo) {
+    /* P1c: puede llevar una acción opcional («Deshacer») resuelta con un
+       botón junto a la X; se quita al tocarla o al caducar el propio aviso */
+    function aviso(msg, tipo, accion, textoAccion) {
         var cont = document.getElementById('tet-toast-container');
         if (!cont) {
             cont = document.createElement('div');
@@ -221,9 +223,15 @@
         el.className = 'toast align-items-center text-bg-' + (tipo || 'warning') + ' border-0 show';
         el.setAttribute('role', 'alert');
         el.innerHTML = '<div class="d-flex"><div class="toast-body"></div>' +
+            (accion ? '<button type="button" class="btn btn-link vid-aviso-accion"></button>' : '') +
             '<button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Cerrar"></button></div>';
         el.querySelector('.toast-body').textContent = msg;
         cont.appendChild(el);
+        if (accion) {
+            var bAccion = el.querySelector('.vid-aviso-accion');
+            bAccion.textContent = textoAccion || 'Deshacer';
+            bAccion.addEventListener('click', function () { accion(); el.remove(); });
+        }
         el.querySelector('.btn-close').addEventListener('click', function () { el.remove(); });
         setTimeout(function () { el.remove(); }, 4500);
     }
@@ -2691,12 +2699,26 @@
     }
 
     function quitaTexto(i) {
+        var t = textos[i];
+        var selAntes = textoSel;
         textos.splice(i, 1);
         if (textoSel >= textos.length) textoSel = textos.length - 1;
         redistribuyeTextos();   // N3b
         pintaListaTextos();
         cargaEditor();
         repintarSuperp();
+        /* P1c · nada se pierde en silencio: el aviso ofrece «Deshacer» unos
+           segundos y devuelve el texto a su índice con su selección; cada
+           aviso guarda lo suyo, así que dos quitar seguidos se deshacen
+           cada uno por su lado */
+        aviso('Texto quitado', 'warning', function () {
+            textos.splice(Math.min(i, textos.length), 0, t);
+            textoSel = selAntes;
+            redistribuyeTextos();   // N3b: al volver, vuelve el reparto
+            pintaListaTextos();
+            cargaEditor();
+            repintarSuperp();
+        }, 'Deshacer');
     }
 
     /* P1b · duplicar un texto: copia todo —contenido, tipo, color, posición,

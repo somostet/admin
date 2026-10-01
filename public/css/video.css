@@ -577,6 +577,13 @@
     min-height: 44px;
 }
 
+/* P1c · el botón «Deshacer» del aviso también pide 44 px al tacto */
+.vid-aviso-accion {
+    min-height: 44px;
+    min-width: 44px;
+    text-decoration: underline;
+}
+
 /* P1a · barra de acción pegada abajo: la acción principal, «Ver lienzo» y el
    progreso de la grabación quedan al alcance del pulgar mientras se recorre
    el formulario y se sueltan solos al llegar a su sitio (sticky, sin JS); el
