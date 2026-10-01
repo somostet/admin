@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ⬜** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -862,6 +862,40 @@ amigable y rápida». Un commit por pieza.
   = 4 s»), vuelta a Contenido con la tira, **render real 4,2 s** con
   resultado visible y fuera de paneles; consola 0, barrido 14/14,
   `node --check` OK; `?v=p3` en `video.html` (script y CSS).
+
+- **P4 · Deshacer y rehacer ✅** (botones junto a las pestañas y
+  `Ctrl/Cmd+Z`). Historial con el mismo patrón que `capas.js`:
+  capturas del modelo —imágenes, textos, ajustes del formulario, logo,
+  música y cola de clips— con **tope de 40 estados**, marca con
+  **600 ms de retardo** dentro de los refrescos (`reiniciarPreview`,
+  `pintaListaTextos`, `redibujarArrastre`, `actualizaCrear`,
+  `pintaMusica` y el volumen/calidad) para que teclear o arrastrar
+  dejen una sola entrada, y **dedupe por clave** para no repetir
+  estados iguales (la clave ignora los objetos pesados: img, buffer y
+  Blob serializan como `{}`). Las urls de logo y clips se revocan al
+  sustituirlos o quitarlos, así que cada estado guarda el `File`/`Blob`
+  original y el historial las marca en `histRevocadas`: al rehacer se
+  recrean (vuelven a ser `blob:`). La restauración **reutiliza los
+  refrescos**: escribe los valores del formulario y lanza `change`
+  (con `modoAnterior` adelantado para que la conversión de duración
+  salga identidad), reinyenta el `File` de la música con `DataTransfer`
+  y recoloca la entrada para que el dedupe no marque cambios falsos.
+  Al deshacer se corta la cola de rehacer cuando hay un cambio nuevo;
+  el resultado M3 queda **fuera** del historial (se guarda aparte).
+  Botones `#vid-deshacer` / `#vid-rehacer` de **44 px** en la fila de
+  las pestañas (`.vid-pestanas-fila`, parten a dos filas antes que
+  esconderse), inertes durante grabación o captura; teclado
+  `Ctrl/Cmd+Z` y `Ctrl+Shift+Z` o `Ctrl+Y`, sin robar el deshacer
+  nativo de los campos. E2E **siete fases**: estructura (0 ids
+  duplicados, botones siempre visibles), imágenes (cargar → deshacer
+  a vacío → rehacer con centro verde), textos (cadena añadir/Hola/
+  Adios con ida y vuelta), tamaño + `Ctrl+Z` en página (surge) y en
+  el campo (no roba), calidad con corte de rehacer, **render real**
+  (botones inertes mientras graba, visibles tras el render y
+  deshacer no toca el resultado) y **clip webm grabado en la página**
+  (cargar → deshacer revoca la url → rehacer la recrea del blob);
+  consola 0, barrido 14/14, `node --check` OK; `?v=p4` en
+  `video.html` (script y CSS).
 
 ---
 

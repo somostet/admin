@@ -678,6 +678,27 @@
     align-items: center;
 }
 
+/* P4 · deshacer/rehacer en la misma fila que las pestañas: si no caben,
+   bajan a su propia fila y los botones conservan los 44 px táctiles */
+.vid-pestanas-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+.vid-historial {
+    display: flex;
+    gap: .35rem;
+}
+
+.vid-historial .btn {
+    min-width: 44px;
+    min-height: 44px;
+}
+
 #vid-resultado a {
     min-height: 44px;
 }

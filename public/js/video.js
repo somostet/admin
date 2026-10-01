@@ -45,6 +45,7 @@
     var volValor = document.getElementById('vid-audio-vol-valor');
     var btnQuitarMusica = document.getElementById('vid-audio-quitar');
     var musicaBuf = null;       // AudioBuffer decodificado del archivo subido
+    var musicaArchivo = null;   // P4: el File original (para reinyectarlo al deshacer)
     var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
     var musicaGanancia = null;  // GainNode (el volumen también funciona en vivo)
     /* F8 · captura de pestaña (getDisplayMedia) */
@@ -193,6 +194,7 @@
     var scrubVideoPausa = null;   // estado de reproducción del vídeo antes del scrub
     var logoImg = null;    // Image del logo cargado (null = sin logo)
     var logoUrl = null;    // blob URL del logo para poder revocarlo
+    var logoBlob = null;   // P4: el File del logo (para recrear la url si se revoca)
 
     var soportado = !!(window.MediaRecorder &&
         HTMLCanvasElement.prototype.captureStream &&
@@ -380,7 +382,7 @@
                             /* E5b: recorte por defecto = todo el clip, salvo el
                                tope de 5 min de E4 (se aplica por clip) */
                             colaVideos.push({ nombre: f.name, url: url, dur: d,
-                                ini: 0, fin: Math.min(d, MAX_TOTAL_SEG) });
+                                ini: 0, fin: Math.min(d, MAX_TOTAL_SEG), blob: f });
                         }
                         resolver();
                     });
@@ -652,6 +654,7 @@
         if (!c) return;
         colaVideos.splice(i, 1);
         URL.revokeObjectURL(c.url);
+        histRevocadas[c.url] = true;   // P4: el historial puede recrearla del blob
         if (!colaVideos.length) {
             idxActivo = -1;
             desfaseActivo = 0;
@@ -686,7 +689,10 @@
         vidFuente.load();
         vidMini.removeAttribute('src');
         rielFotos.textContent = '';
-        colaVideos.forEach(function (c) { URL.revokeObjectURL(c.url); });
+        colaVideos.forEach(function (c) {
+            URL.revokeObjectURL(c.url);
+            histRevocadas[c.url] = true;   // P4
+        });
         colaVideos = [];
         idxActivo = -1;
         desfaseActivo = 0;
@@ -1376,6 +1382,7 @@
     }
 
     function actualizarBarra() {
+        histBotones();   // P4: botones inertes mientras dura la grabación
         Array.prototype.forEach.call(tira.children, function (b, i) {
             b.setAttribute('aria-pressed', i === sel ? 'true' : 'false');
         });
@@ -2025,6 +2032,8 @@
     }
 
     function actualizaCrear() {
+        histBotones();   // P4: deshacer/rehacer al día con el estado global
+        histMarca();     // P4
         pintaBotonDirecto();   // E2: el botón de directo refleja el estado global
         /* F5f: el total de la salida cambia → barras, regla y cabezal se
            recolocan (vale para recorte de vídeo y duración de imágenes) */
@@ -2106,6 +2115,7 @@
     }
 
     function reiniciarPreview() {
+        histMarca();   // P4
         detenerPreview();
         if (videoCargado) {
             rielSalWrap.hidden = false;   // F5f: hay línea de tiempo de salida
@@ -2246,6 +2256,7 @@
     }
 
     function redibujarArrastre() {
+        histMarca();   // P4: al soltar, la posición nueva es historia
         if (grabando) return;
         if (videoCargado) { dibujarFrame(vidFuente); return; }
         if (!imagenes.length) return;
@@ -2538,8 +2549,12 @@
     supLogoArchivo.addEventListener('change', function () {
         var f = supLogoArchivo.files && supLogoArchivo.files[0];
         if (!f) return;
-        if (logoUrl) URL.revokeObjectURL(logoUrl);
+        if (logoUrl) {
+            URL.revokeObjectURL(logoUrl);
+            histRevocadas[logoUrl] = true;   // P4
+        }
         logoUrl = URL.createObjectURL(f);
+        logoBlob = f;   // P4: el File original por si el deshacer lo revoca
         var im = new Image();
         im.onload = function () {
             logoImg = im;
@@ -2558,8 +2573,12 @@
 
     supLogoQuitar.addEventListener('click', function () {
         supLogoArchivo.value = '';
-        if (logoUrl) URL.revokeObjectURL(logoUrl);
+        if (logoUrl) {
+            URL.revokeObjectURL(logoUrl);
+            histRevocadas[logoUrl] = true;   // P4
+        }
         logoUrl = null;
+        logoBlob = null;
         logoImg = null;
         supLogoMini.removeAttribute('src');
         supLogoEstado.hidden = true;
@@ -2629,6 +2648,7 @@
     }
 
     function pintaListaTextos() {
+        histMarca();   // P4
         listaTextos.innerHTML = '';
         textos.forEach(function (t, i) {
             var fila = document.createElement('div');
@@ -3520,6 +3540,7 @@
     }
 
     function pintaMusica() {
+        histMarca();   // P4
         var f = inpMusica.files && inpMusica.files[0];
         var hay = !!(f && musicaBuf);
         filaMusica.hidden = !hay;
@@ -3558,6 +3579,7 @@
 
     inpMusica.addEventListener('change', function () {
         var f = inpMusica.files && inpMusica.files[0];
+        musicaArchivo = f || null;   // P4
         musicaBuf = null;
         pintaMusica();
         if (!f) return;
@@ -3577,6 +3599,7 @@
 
     btnQuitarMusica.addEventListener('click', function () {
         inpMusica.value = '';
+        musicaArchivo = null;   // P4
         musicaBuf = null;
         pintaMusica();
     });
@@ -3858,4 +3881,228 @@
             rafAct = requestAnimationFrame(tickRec);
         }
     }
+
+    /* ---------- P4 · historial deshacer/rehacer (mismo patrón que capas.js) ---------- */
+    /* Capturas del modelo —imágenes, textos, ajustes, logo, música y cola de
+       clips— con tope de 40 estados. El marcado vive dentro de los refrescos
+       con 600 ms de retardo (teclear o arrastrar deja UNA entrada, no una por
+       píxel) y con comparación de clave, para no repetir estados iguales.
+       Cada entrada guarda además el File/Blob original: las urls de logo y
+       clips se revocan al sustituirlos o quitarlos y el deshacer necesita
+       recrearlas. El resultado M3 no toca el historial: se guarda aparte. */
+    var hist = [];
+    var histIdx = -1;
+    var histTemp = null;
+    var histRevocadas = Object.create(null);   // urls ya revocadas
+    var HIST_MAX = 40;
+    var btnDeshacer = null;
+    var btnRehacer = null;
+
+    function histCaptura() {
+        return {
+            imagenes: imagenes.slice(),
+            textos: JSON.parse(JSON.stringify(textos)),
+            textoSel: textoSel,
+            selTira: sel,
+            contPos: contPos ? JSON.parse(JSON.stringify(contPos)) : null,
+            contEsc: contEsc,
+            logoImg: logoImg, logoUrl: logoUrl, logoBlob: logoBlob,
+            logoNombre: supLogoNombre.textContent,
+            logoEstado: supLogoEstado.hidden,
+            musicaBuf: musicaBuf, musicaArchivo: musicaArchivo,
+            musicaVol: volMusica.value,
+            musicaId: musicaBuf
+                ? musicaBuf.length + '/' + musicaBuf.sampleRate + '/' +
+                  (musicaArchivo ? musicaArchivo.name : '')
+                : '',
+            videoCargado: videoCargado, durVideo: durVideo, idxActivo: idxActivo,
+            cola: colaVideos.map(function (c) {
+                return { nombre: c.nombre, url: c.url, dur: c.dur,
+                         ini: c.ini, fin: c.fin, blob: c.blob };
+            }),
+            form: {
+                tam: selTam.value, dur: inpDur.value, modoDur: selModoDur.value,
+                ajuste: selAjuste.value, trans: selTrans.value, fondo: inpFondo.value,
+                news: chkNews.checked, calidad: selCalidad.value,
+                esc: inpEscContenido.value, pos: supLogoPos.value,
+                tamLog: supLogoTam.value
+            }
+        };
+    }
+
+    /* Clave de comparación sin objetos pesados (Image, AudioBuffer, Blob…
+       serializan como {}): con ella el dedupe no guarda estados idénticos. */
+    function histClave(e) {
+        return JSON.stringify({
+            img: e.imagenes.map(function (i) { return i.url + '|' + i.nombre; }),
+            txt: e.textos, sel: e.textoSel, tira: e.selTira,
+            cp: e.contPos, ce: e.contEsc,
+            logo: e.logoUrl, logon: e.logoNombre, logoe: e.logoEstado,
+            mus: e.musicaId, musv: e.musicaVol,
+            vid: e.videoCargado, durv: e.durVideo, act: e.idxActivo,
+            cola: e.cola.map(function (c) {
+                return c.nombre + '|' + c.url + '|' + c.ini + '|' + c.fin;
+            }),
+            f: e.form
+        });
+    }
+
+    function histBotones() {
+        if (!btnDeshacer || !btnRehacer) return;   // aún no inicializados
+        btnDeshacer.disabled = grabando || capturando || histIdx <= 0;
+        btnRehacer.disabled = grabando || capturando || histIdx >= hist.length - 1;
+    }
+
+    /* Se programa y no se ejecuta en el acto: así teclear o arrastrar dejan
+       una sola entrada (la última) en el historial. */
+    function histMarca() {
+        if (!(histIdx >= 0) || grabando) return;
+        clearTimeout(histTemp);
+        histTemp = setTimeout(histCommit, 600);
+    }
+
+    function histCommit() {
+        clearTimeout(histTemp);
+        if (!(histIdx >= 0)) return;
+        if (grabando) {   // grabando: al terminar se retoma lo pendiente
+            histTemp = setTimeout(histCommit, 600);
+            return;
+        }
+        var e = histCaptura();
+        var j = histClave(e);
+        if (hist[histIdx] && hist[histIdx].j === j) return;   // sin cambios
+        hist.length = histIdx + 1;   // corta la cola de rehacer
+        hist.push({ j: j, e: e });
+        histIdx++;
+        if (hist.length > HIST_MAX) { hist.shift(); histIdx--; }
+        histBotones();
+    }
+
+    function histRestaura(e) {
+        clearTimeout(histTemp);
+        /* logo: si su url murió al sustituirlo o quitarlo, se recrea del File */
+        var logoVivo = e.logoUrl;
+        if (logoVivo && histRevocadas[logoVivo] && e.logoBlob) {
+            logoVivo = URL.createObjectURL(e.logoBlob);
+        }
+        logoImg = e.logoImg;
+        logoUrl = logoVivo;
+        supLogoNombre.textContent = e.logoNombre;
+        supLogoEstado.hidden = e.logoEstado;
+        if (logoUrl) supLogoMini.src = logoUrl;
+        else supLogoMini.removeAttribute('src');
+        /* música: el input solo vive del File real, se reinyenta */
+        musicaBuf = e.musicaBuf;
+        musicaArchivo = e.musicaArchivo;
+        if (musicaArchivo) {
+            try {
+                var dt = new DataTransfer();
+                dt.items.add(musicaArchivo);
+                inpMusica.files = dt.files;
+            } catch (err) { /* sin DataTransfer sigue el resto igual */ }
+        } else {
+            inpMusica.value = '';
+        }
+        volMusica.value = e.musicaVol;
+        volValor.textContent = e.musicaVol + ' %';
+        pintaMusica();
+        /* cola de clips: url recreada si murió («quitar» la revoca) */
+        var habiaClip = videoCargado;
+        if (e.videoCargado && e.cola.length) {
+            colaVideos = e.cola.map(function (c) {
+                var url = c.url;
+                if (histRevocadas[url] && c.blob) url = URL.createObjectURL(c.blob);
+                return { nombre: c.nombre, url: url, dur: c.dur,
+                         ini: c.ini, fin: c.fin, blob: c.blob };
+            });
+            durVideo = totalRecorte();
+            videoCargado = true;
+            recWrap.hidden = false;
+            idxActivo = Math.max(0, Math.min(e.idxActivo, colaVideos.length - 1));
+            pintarModo();
+            activaClip(idxActivo);   // recorte, cola, riel y miniaturas
+        } else if (habiaClip) {
+            quitarVideo(true);   // silencio: el aviso ya se dio la primera vez
+        }
+        /* imágenes, textos y selección */
+        imagenes = e.imagenes.slice();
+        sel = e.selTira;
+        textos = JSON.parse(JSON.stringify(e.textos));
+        textoSel = (e.textoSel >= 0 && e.textoSel < textos.length) ? e.textoSel : -1;
+        contPos = e.contPos ? JSON.parse(JSON.stringify(e.contPos)) : null;
+        contEsc = e.contEsc;
+        /* Formulario: se escriben los valores y se lanza «change» para que
+           cada control haga su refresco como si lo hubiera movido el usuario.
+           El selector de modo lleva modoAnterior atrás para que su conversión
+           de duración salga identidad (el valor ya va en el modo destino). */
+        selTam.value = e.form.tam;
+        inpDur.value = e.form.dur;
+        selModoDur.value = e.form.modoDur;
+        modoAnterior = e.form.modoDur;
+        selAjuste.value = e.form.ajuste;
+        selTrans.value = e.form.trans;
+        inpFondo.value = e.form.fondo;
+        selCalidad.value = e.form.calidad;
+        chkNews.checked = e.form.news;
+        supLogoPos.value = e.form.pos;
+        supLogoTam.value = e.form.tamLog;
+        inpEscContenido.value = e.form.esc;
+        [selTam, inpDur, selModoDur, selAjuste, selTrans, inpFondo, selCalidad,
+            chkNews, supLogoPos, supLogoTam].forEach(function (el) {
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        inpEscContenido.dispatchEvent(new Event('input', { bubbles: true }));
+        /* lista, editor y lienzo reflejan el estado restaurado */
+        pintarTira();
+        pintaListaTextos();
+        cargaEditor();
+        repintarSuperp();
+        actualizaCrear();
+        actualizaManija();
+        /* Algún handler normaliza valores (la duración al cambiar de modo):
+           se recoloca la entrada para que el dedupe no marque un falso cambio. */
+        var e2 = histCaptura();
+        hist[histIdx] = { j: histClave(e2), e: e2 };
+        histBotones();
+    }
+
+    function histDeshacer() {
+        if (grabando || capturando || histIdx <= 0) return;
+        histIdx--;
+        histRestaura(hist[histIdx].e);
+    }
+
+    function histRehacer() {
+        if (grabando || capturando || histIdx >= hist.length - 1) return;
+        histIdx++;
+        histRestaura(hist[histIdx].e);
+    }
+
+    btnDeshacer = document.getElementById('vid-deshacer');
+    btnRehacer = document.getElementById('vid-rehacer');
+    btnDeshacer.addEventListener('click', histDeshacer);
+    btnRehacer.addEventListener('click', histRehacer);
+    /* El deshacer del navegador se queda con los campos tecleados (allí hace
+       su efecto el del propio input); en el resto de la página manda el
+       historial, con Ctrl/Cmd+Z y Ctrl+Shift+Z o Ctrl/Cmd+Y. */
+    document.addEventListener('keydown', function (e) {
+        if (!(e.ctrlKey || e.metaKey)) return;
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' ||
+            t.tagName === 'SELECT' || t.isContentEditable)) return;
+        var k = (e.key || '').toLowerCase();
+        if (k === 'z' && !e.shiftKey) { e.preventDefault(); histDeshacer(); }
+        else if (k === 'z' || k === 'y') { e.preventDefault(); histRehacer(); }
+    });
+    /* Controles sin refresco propio: su cambio también es historia. */
+    volMusica.addEventListener('input', histMarca);
+    selCalidad.addEventListener('change', histMarca);
+
+    /* Línea base: el estado con el que se abre la página. */
+    (function () {
+        var e0 = histCaptura();
+        hist.push({ j: histClave(e0), e: e0 });
+        histIdx = 0;
+        histBotones();
+    })();
 })();

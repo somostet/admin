@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=p3">
+    <link rel="stylesheet" href="./public/css/video.css?v=p4">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -163,7 +163,8 @@
                          El orden físico de los paneles sigue el del formulario original
                          (Ajustes antes que Textos) y la barra los reordena por flujo:
                          Bootstrap los enlaza por id, no por posición -->
-                    <ul class="nav nav-tabs vid-pestanas mt-3" id="vid-pestanas" role="tablist">
+                    <div class="vid-pestanas-fila">
+                    <ul class="nav nav-tabs vid-pestanas" id="vid-pestanas" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="vid-tab-contenido" data-bs-toggle="tab"
                                     data-bs-target="#vid-pane-contenido" type="button" role="tab"
@@ -185,6 +186,19 @@
                                     aria-controls="vid-pane-exportar" aria-selected="false" tabindex="-1">Exportar</button>
                         </li>
                     </ul>
+                        <!-- P4 · deshacer/rehacer: siempre a la vista junto a las
+                             pestañas (mismo patrón que capas.js) -->
+                        <div class="vid-historial" role="group" aria-label="Historial">
+                            <button type="button" class="btn btn-outline-secondary" id="vid-deshacer" disabled
+                                    title="Deshacer (Ctrl+Z)" aria-label="Deshacer">
+                                <i class="fas fa-undo" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="vid-rehacer" disabled
+                                    title="Rehacer (Ctrl+Shift+Z)" aria-label="Rehacer">
+                                <i class="fas fa-redo" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="tab-content" id="vid-panes">
                         <div class="tab-pane fade show active" id="vid-pane-contenido" role="tabpanel"
                              aria-labelledby="vid-tab-contenido" tabindex="0">
@@ -680,7 +694,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=p3"></script>
+    <script src="./public/js/video.js?v=p4"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
