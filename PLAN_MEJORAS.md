@@ -25,7 +25,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
-| Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes** |
+| Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -710,6 +710,20 @@ con F5d/F5e/F5f antes del audio):
   conservada tras centrar, el botón de siempre sigue reseteando todo y los
   tres se apagan al quitar noticias; consola 0, barrido 14/14,
   `node --check` OK; `?v=n4` en `video.html`.
+- **N5 · Centrado por ejes de los textos ✅** («también para el texto»): los
+  mismos dos botones de N4 dentro de «Editar texto», bajo «Posición» —
+  **«Centrar horizontal»** y **«Centrar vertical»**. Cada botón convierte el
+  texto a «personalizada» moviendo SOLO su eje: el otro se recupera de la
+  última caja dibujada (`t.cajaDib`, que guarda el centro tal y como se ve y
+  sigue al objeto al reordenar o quitar) —los presets izquierda/derecha se
+  convierten desde su borde ± media anchura para no saltar de sitio— y, si
+  el texto aún no se ha visto, de `t.x/t.y` (fracciones→píxeles: el E2E cazó
+  justo ahí una mezcla de unidades, corregida en el acto). E2E **7
+  comprobaciones**: botones presentes, abajo-izquierda por píxeles, H centra
+  solo la X (alto intacto en la manija, select en «personalizada»), V centra
+  solo la Y (ancho intacto), V desde abajo-izquierda conserva la izquierda,
+  la reserva sin caja dibujada centra bien, y render real (`tet-…mp4`);
+  consola 0, barrido 14/14, `node --check` OK; `?v=n5` en `video.html`.
 
 Validación de cada uno: E2E en Chrome + consola limpia + barrido 200. **E3**
 se hizo justo después de F3 (✅), con el **riel de recorte** como commit

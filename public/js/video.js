@@ -152,6 +152,8 @@
     var listaTextos = document.getElementById('vid-textos-lista');   // F5e
     var btnAddTexto = document.getElementById('vid-texto-add');      // F5e
     var btnAddTitulo = document.getElementById('vid-texto-titulo-add');   // N2
+    var btnTxtCentrarH = document.getElementById('vid-txt-centrar-h');    // N5
+    var btnTxtCentrarV = document.getElementById('vid-txt-centrar-v');    // N5
     var editTexto = document.getElementById('vid-texto-edit');       // F5e
     var inpTxtContenido = document.getElementById('vid-txt-contenido');
     var selTxtTipo = document.getElementById('vid-txt-tipo');        // N2
@@ -1872,7 +1874,12 @@
         if (esSel || typeof indice === 'number') {
             var caja = { x: tx, y: centroBloque, w: maxTw, h: (n - 1) * lh + fs * 1.2 };
             if (esSel) cajaTextoSel = caja;
-            if (typeof indice === 'number') cajasTextos[indice] = caja;
+            if (typeof indice === 'number') {
+                cajasTextos[indice] = caja;
+                t.cajaDib = caja;   // N5: última caja conocida del texto (sigue al
+                                    // objeto al reordenar/quitar; el centrado por
+                                    // ejes la usa aunque no se esté viendo ahora)
+            }
         }
 
         var abajo = ty > h / 2;   // el texto entra y sale por su propio borde
@@ -2744,6 +2751,40 @@
         pintaListaTextos();
         repintarSuperp();
     });
+
+    /* N5 · centrado por ejes del texto seleccionado: los mismos dos botones
+       que «Centrar contenido»; cada eje mueve SOLO lo suyo y respeta el otro
+       y el tamaño. El origen es la última caja dibujada —el centro tal y como
+       se ve—; al pasar a «personalizada» se conserva el centro visual (los
+       presets izquierda/derecha se anclan en su borde ± media anchura, para
+       que no salten de sitio). Si el texto aún no se ha visto se parte de
+       t.x/t.y, donde los textos nuevos y los arrastrados guardan su centro. */
+    function centraTextoPorEje(eje) {
+        var t = textoActual();
+        if (!t) return;
+        var w = lienzo.width;
+        var h = lienzo.height;
+        var c = t.cajaDib;
+        var cx = w / 2;
+        var cy = h / 2;
+        if (c) {
+            cx = c.x;
+            cy = c.y;
+            if (t.pos === 'arriba-izquierda' || t.pos === 'abajo-izquierda') cx = c.x + c.w / 2;
+            else if (t.pos === 'arriba-derecha' || t.pos === 'abajo-derecha') cx = c.x - c.w / 2;
+        } else if (typeof t.x === 'number' && typeof t.y === 'number') {
+            cx = t.x * w;   // aquí se trabaja en píxeles: t.x/t.y son fracciones
+            cy = t.y * h;
+        }
+        var z = zonaDibujo();
+        t.pos = 'personalizada';
+        t.x = (eje === 'h') ? 0.5 : cx / w;
+        t.y = (eje === 'v') ? (z.y + z.h / 2) / h : cy / h;
+        if (selTxtPos.value !== 'personalizada') selTxtPos.value = 'personalizada';
+        repintarSuperp();   // repinta el marco y mueve la manija
+    }
+    btnTxtCentrarH.addEventListener('click', function () { centraTextoPorEje('h'); });
+    btnTxtCentrarV.addEventListener('click', function () { centraTextoPorEje('v'); });
 
     /* F9: el color se aplica en vivo mientras el selector está en pantalla */
     ['input', 'change'].forEach(function (ev) {

@@ -317,6 +317,24 @@
                                         <option value="personalizada">Personalizada (arrastra el texto)</option>
                                     </select>
                                 </div>
+                                <!-- N5 · centrado por ejes del texto: cada botón mueve
+                                     solo su eje y respeta el otro y el tamaño (los
+                                     mismos dos de «Centrar contenido», en el texto) -->
+                                <div class="col-12">
+                                    <div class="form-label mt-1">Centrar el texto</div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                                id="vid-txt-centrar-h"
+                                                title="Pone la columna del texto en el centro; no toca el alto">
+                                            <i class="fas fa-arrows-alt-h" aria-hidden="true"></i> Centrar horizontal
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                                id="vid-txt-centrar-v"
+                                                title="Pone la fila del texto en el centro; no toca el ancho">
+                                            <i class="fas fa-arrows-alt-v" aria-hidden="true"></i> Centrar vertical
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="col-6 col-lg-2">
                                     <label class="form-label" for="vid-txt-tam">Tamaño (% del alto)</label>
                                     <input type="number" class="form-control" id="vid-txt-tam" min="2" max="25"
@@ -575,8 +593,8 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
-    <!-- ?v=n4 obliga a traer la versión con centrado por ejes aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=n4"></script>
+    <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
+    <script src="./public/js/video.js?v=n5"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
