@@ -2644,6 +2644,7 @@
         [
             { icono: 'fa-arrow-up', titulo: 'Subir el texto', accion: function () { mueveTexto(i, -1); } },
             { icono: 'fa-arrow-down', titulo: 'Bajar el texto', accion: function () { mueveTexto(i, 1); } },
+            { icono: 'fa-clone', titulo: 'Duplicar el texto', accion: function () { duplicaTexto(i); } },   // P1b
             { icono: 'fa-trash', titulo: 'Quitar el texto', accion: function () { quitaTexto(i); } }
         ].forEach(function (b) {
             var btn = document.createElement('button');
@@ -2696,6 +2697,19 @@
         pintaListaTextos();
         cargaEditor();
         repintarSuperp();
+    }
+
+    /* P1b · duplicar un texto: copia todo —contenido, tipo, color, posición,
+       tamaño, animaciones, fuente, tiempos y cajaDib— justo debajo, deja el
+       editor encima del clon para retocarlo y, con Tet News activo, reparte
+       los inicios como al añadir (N3b); sin plantilla la copia conserva la
+       ventana exacta del original */
+    function duplicaTexto(i) {
+        if (!textos[i]) return;
+        var copia = JSON.parse(JSON.stringify(textos[i]));   // campos planos: copia profunda barata
+        textos.splice(i + 1, 0, copia);
+        redistribuyeTextos();   // N3b
+        seleccionaTexto(i + 1); // el clon queda seleccionado y pintado
     }
 
     function cargaEditor() {
