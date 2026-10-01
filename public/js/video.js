@@ -2114,6 +2114,46 @@
         return animar || hayTextoAnimado() || imagenes.length > 1;
     }
 
+    /* P5 · firma del fotograma: todo lo que el dibujo depende del reloj —
+       imagen en curso, kenburns, fundido/deslizar y las ventanas y
+       animaciones de los textos—. Si la firma no cambia, el lienzo ya es
+       correcto y no hace falta repintar: la vista previa descansa de
+       verdad. El cabezal del riel sigue avanzando por su cuenta. */
+    function firmaFotograma(t, durMs) {
+        var n = imagenes.length;
+        var idx = Math.floor(t / durMs);
+        if (idx >= n) idx = n - 1;
+        if (idx < 0) idx = 0;
+        var s = 'i' + idx;
+        var modo = selTrans.value;
+        if (modo === 'kenburns') return s + 'k' + Math.round(t);   // encuadre siempre en movimiento
+        if (modo !== 'ninguna' && idx > 0 && (t - idx * durMs) < durTransicion(durMs)) {
+            s += 't' + Math.round(t);   // fundido o deslizar entre imágenes
+        }
+        for (var i = 0; i < textos.length; i++) {
+            var tx = textos[i];
+            if (!tx.txt.trim()) continue;
+            var iniMs = (tx.inicio || 0) * 1000;
+            var finMs = (tx.dur > 0) ? iniMs + tx.dur * 1000 : Infinity;
+            var dentro = t >= iniMs && t < finMs;
+            s += dentro ? 'v' : '-';   // entrar o salir de la ventana redibuja
+            if (!dentro) continue;
+            var anima = false;
+            if (tx.anim && tx.anim !== 'ninguna') {
+                var seg = tx.animDur;
+                if (!(seg >= 0.2 && seg <= 5)) seg = 1;
+                anima = t < iniMs + seg * 1000;   // entrada en curso
+            }
+            if (!anima && tx.salida && tx.salida !== 'ninguna' && isFinite(finMs)) {
+                var segOut = tx.salidaDur;
+                if (!(segOut >= 0.2 && segOut <= 5)) segOut = 0.5;
+                anima = t >= finMs - segOut * 1000;   // salida en curso
+            }
+            if (anima) s += 'a' + Math.round(t);
+        }
+        return s;
+    }
+
     function reiniciarPreview() {
         histMarca();   // P4
         detenerPreview();
@@ -2161,14 +2201,15 @@
         var animaTexto = hayTextoAnimado();
         if (!animar && !animaTexto && imagenes.length < 2) return;
         var t0 = performance.now();
-        var ultimo = -1;
+        var firma = firmaFotograma(fase, durMs);
         function paso() {
             var t = (fase + performance.now() - t0) % total;
-            var idx = Math.floor(t / durMs);
-            if (animar || animaTexto || idx !== ultimo) {   // sin transiciones solo se redibuja al cambiar de imagen
+            var f = firmaFotograma(t, durMs);
+            if (f !== firma) {   // P5: firma igual → el lienzo ya vale: en reposo no se repinta
                 dibujarEn(t, durMs);
-                ultimo = idx;
+                firma = f;
             }
+            poneCabezalSalida(t);   // el cabezal sigue el reloj aunque el lienzo no se mueva
             preview = requestAnimationFrame(paso);
         }
         preview = requestAnimationFrame(paso);

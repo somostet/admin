@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ⬜** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -896,6 +896,31 @@ amigable y rápida». Un commit por pieza.
   (cargar → deshacer revoca la url → rehacer la recrea del blob);
   consola 0, barrido 14/14, `node --check` OK; `?v=p4` en
   `video.html` (script y CSS).
+
+- **P5 · Vista previa sin repintados en reposo ✅**. El bucle de la
+  previa (F5e) repintaba el lienzo a 60 fps mientras hubiera «algo
+  animado» en la escena, aunque en ese instante no se moviera nada:
+  cualquier texto con entrada, salida o ventana temporal dejaba el
+  canvas dibujando eternamente en hueco. Ahora cada fotograma lleva
+  una **firma** (`firmaFotograma`): imagen en curso, kenburns
+  (siempre en movimiento), fundido o deslizar
+  (`local < durTransicion(durMs)`) y, por texto, su visibilidad en
+  la ventana `inicio`/`dur` más la animación de entrada (primeros
+  `animDur` s) y la de salida (últimos `salidaDur` s) —las mismas
+  fórmulas que usa `dibujaTexto`, donde `p`/`q` no se mueven fuera
+  de su tramo—. **Firma igual → no se repinta**: el lienzo ya es el
+  correcto. La firma cambia en cada frontera (cambio de imagen,
+  entrar o salir de un fundido, de una ventana o de una animación),
+  así que el fotograma que abre o cierra cada tramo se dibuja igual
+  que siempre y no se pierde ni un fotograma de transición. El
+  **cabezal del riel sigue el reloj** por su cuenta
+  (`poneCabezalSalida` en cada tick), para que la línea de tiempo no
+  se congele mientras el lienzo descansa. E2E con espía de
+  `ctx.drawImage`: 1 imagen × 4 s + texto con entrada de 1 s → **24
+  repintados en la animación, 0 (cero) en los 1,2 s de reposo con el
+  cabezal avanzando del 36,98 % al 67,7 %, 17 repintados tras dar la
+  vuelta al bucle**, deshacer sigue operativo; consola 0, barrido
+  14/14, `node --check` OK; `?v=p5` en `video.html` (script y CSS).
 
 ---
 
