@@ -670,6 +670,14 @@
     }
 }
 
+/* P3 · pestañas del formulario: objetivo táctil de 44 px como el resto
+   de controles; se parten en dos filas antes que en scroll oculto */
+.vid-pestanas .nav-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
 #vid-resultado a {
     min-height: 44px;
 }

@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ⬜ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ⬜ · P5 vista previa en reposo ⬜** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -833,6 +833,35 @@ amigable y rápida». Un commit por pieza.
   «Deshacer» y sin textos se apaga con la manija; consola 0,
   barrido 14/14, `node --check` OK; `?v=p2` en `video.html` (script y
   CSS).
+
+- **P3 · Pestañas del formulario ✅** («menos scroll, el lienzo siempre
+  visible»). La barra `#vid-pestanas` (Bootstrap `nav-tabs`, enlazadas
+  por `data-bs-target`) parte el formulario en **Contenido · Textos ·
+  Ajustes · Exportar** y el scroll de móvil queda en cuatro pantallas
+  cortas. El **lienzo, su pista, los controles M1/M2 y la barra P1a se
+  quedan fuera** de los paneles: se ven desde cualquiera, y el
+  resultado M3 también (fuera, para que siga viéndose al terminar el
+  render sin cambiar de pestaña). Reordenado sin romper ids: el bloque
+  del lienzo sube tras la cabecera, la **música F6** se muda junto al
+  logo dentro de `#vid-superp` (la fila original se parte en dos:
+  `#vid-superp` + `#vid-textos-fila`), la **línea de tiempo F5f** baja
+  al final de Textos y el **total** va a Exportar con «Grabar en
+  directo» E2. El orden físico de los paneles sigue el del formulario
+  original (Ajustes antes que Textos) y la barra los reordena por
+  flujo —Bootstrap resuelve por id, no por posición—. Al mostrarse
+  una pestaña (`shown.bs.tab`) se repintan `pintarRiel()`,
+  `pintaRielSalida()` y `actualizaManija()` por si estaban midiendo
+  con el contenedor oculto (las posiciones de los rieles van en %,
+  pero las miniaturas miden). Objetivo táctil de **44 px** en
+  `.vid-pestanas .nav-link`. E2E **estructura + pestañas + render**:
+  0 ids duplicados, 4 paneles con su membresía, cambio de pestaña con
+  `aria-selected` y los demás ocultos, lienzo/barra/resultado siempre
+  fuera, añadir texto desde Textos (1→2 filas) con manija y barra P2
+  vivas, barras del riel con ancho real (924 px), Ajustes con
+  fondo/calidad/logo/música, Exportar con el total («2 imágenes × 2 s
+  = 4 s»), vuelta a Contenido con la tira, **render real 4,2 s** con
+  resultado visible y fuera de paneles; consola 0, barrido 14/14,
+  `node --check` OK; `?v=p3` en `video.html` (script y CSS).
 
 ---
 

@@ -2972,6 +2972,15 @@
         repintarSuperp();
     });
 
+    /* P3 · al mostrarse una pestaña se repinta lo que hubiera estado oculto
+       midiendo (miniaturas del riel de recorte y manija); las posiciones de
+       los rieles van en % y no dependen del ancho */
+    document.getElementById('vid-pestanas').addEventListener('shown.bs.tab', function () {
+        pintarRiel();
+        pintaRielSalida();
+        actualizaManija();
+    });
+
     btnCrear.addEventListener('click', function () {
         if (grabando) return;
         if (capturando) {   // F8
