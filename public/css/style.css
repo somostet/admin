@@ -152,6 +152,24 @@ body {
     box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
 }
 
+/* Tarjetas de la portada · botón «Crear»: a la derecha del texto en
+   escritorio y a todo el ancho en móvil (las tarjetas se apilan desde
+   768 px y allí el botón flotante suelto se veía pequeño y raro) */
+.btn-crear {
+    float: right;
+}
+
+@media (max-width: 767.98px) {
+    .card-body .btn-crear {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        float: none;
+        width: 100%;
+        margin-top: .5rem;
+    }
+}
+
 /* Foco visible accesible para teclado */
 a:focus-visible,
 button:focus-visible,

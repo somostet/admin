@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>disparo gif (temporal, borrar)</title>
+    <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; background: #595959; }
+        iframe { border: 0; display: block; width: 1000px; height: 700px; }
+    </style>
+</head>
+<body>
+    <!-- sandbox sin allow-top-navigation anula el frame-buster de gif.html -->
+    <iframe id="f" src="./gif.html" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+    <script>
+        (function () {
+            var inyectado = false;
+            function pinta(c1, c2, figura) {
+                var c = document.createElement('canvas');
+                c.width = c.height = 512;
+                var g = c.getContext('2d');
+                var d = g.createLinearGradient(0, 0, 512, 512);
+                d.addColorStop(0, c1);
+                d.addColorStop(1, c2);
+                g.fillStyle = d;
+                g.fillRect(0, 0, 512, 512);
+                g.fillStyle = 'rgba(255,255,255,.92)';
+                if (figura === 0) {
+                    g.beginPath(); g.arc(256, 256, 120, 0, 7); g.fill();
+                } else if (figura === 1) {
+                    g.beginPath(); g.moveTo(256, 130); g.lineTo(390, 380); g.lineTo(122, 380); g.closePath(); g.fill();
+                } else {
+                    g.beginPath(); g.roundRect(140, 140, 232, 232, 40); g.fill();
+                    g.fillStyle = c2;
+                    g.beginPath(); g.arc(256, 256, 60, 0, 7); g.fill();
+                }
+                return c;
+            }
+            function intenta() {
+                if (inyectado) return;
+                var f = document.getElementById('f');
+                var d = null;
+                try { d = f.contentDocument; } catch (e) { return; }
+                if (!d || !d.getElementById('gif-archivos')) return;
+                inyectado = true;
+                var W = f.contentWindow;
+                var nav = d.querySelector('nav');
+                if (nav) nav.style.display = 'none';
+                var colores = [['#ff9a3c', '#d92b2b', 0], ['#3c7dff', '#122b6b', 1], ['#2fbf71', '#146b3c', 2]];
+                var dt = new W.DataTransfer();
+                var i = 0;
+                (function siguiente() {
+                    if (i >= colores.length) {
+                        var inp = d.getElementById('gif-archivos');
+                        inp.files = dt.files;
+                        inp.dispatchEvent(new W.Event('change', { bubbles: true }));
+                        return;
+                    }
+                    var col = colores[i];
+                    i++;
+                    pinta(col[0], col[1], col[2]).toBlob(function (b) {
+                        dt.items.add(new W.File([b], 'foto' + i + '.png', { type: 'image/png' }));
+                        siguiente();
+                    }, 'image/png');
+                })();
+            }
+            setInterval(intenta, 100);
+        })();
+    </script>
+</body>
+</html>

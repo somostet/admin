@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>disparo video (temporal, borrar)</title>
+    <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; background: #595959; }
+        iframe { border: 0; display: block; width: 1000px; height: 700px; }
+    </style>
+</head>
+<body>
+    <!-- sandbox sin allow-top-navigation anula el frame-buster de video.html -->
+    <iframe id="f" src="./video.html" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+    <script>
+        (function () {
+            var inyectado = false;
+            function pinta(c1, c2, figura) {
+                var c = document.createElement('canvas');
+                c.width = c.height = 512;
+                var g = c.getContext('2d');
+                var d = g.createLinearGradient(0, 0, 512, 512);
+                d.addColorStop(0, c1);
+                d.addColorStop(1, c2);
+                g.fillStyle = d;
+                g.fillRect(0, 0, 512, 512);
+                g.fillStyle = 'rgba(255,255,255,.92)';
+                if (figura === 0) {
+                    g.beginPath(); g.arc(256, 256, 120, 0, 7); g.fill();
+                } else {
+                    g.beginPath(); g.moveTo(256, 130); g.lineTo(390, 380); g.lineTo(122, 380); g.closePath(); g.fill();
+                }
+                return c;
+            }
+            function intenta() {
+                if (inyectado) return;
+                var f = document.getElementById('f');
+                var d = null;
+                try { d = f.contentDocument; } catch (e) { return; }
+                if (!d || !d.getElementById('vid-archivos')) return;
+                inyectado = true;
+                var W = f.contentWindow;
+                var nav = d.querySelector('nav');
+                if (nav) nav.style.display = 'none';
+                var colores = [['#7c4dff', '#2b146b', 0], ['#ff4d9a', '#6b1440', 1]];
+                var dt = new W.DataTransfer();
+                var i = 0;
+                (function siguiente() {
+                    if (i >= colores.length) {
+                        var inp = d.getElementById('vid-archivos');
+                        inp.files = dt.files;
+                        inp.dispatchEvent(new W.Event('change', { bubbles: true }));
+                        return;
+                    }
+                    var col = colores[i];
+                    i++;
+                    pinta(col[0], col[1], col[2]).toBlob(function (b) {
+                        dt.items.add(new W.File([b], 'foto' + i + '.png', { type: 'image/png' }));
+                        siguiente();
+                    }, 'image/png');
+                })();
+            }
+            setInterval(intenta, 100);
+        })();
+    </script>
+</body>
+</html>
