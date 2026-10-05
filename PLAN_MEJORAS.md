@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -936,6 +936,25 @@ amigable y rápida». Un commit por pieza.
   sin solaparse con el canvas**, se oculta al deseleccionar y
   «duplicar» sigue añadiendo texto; consola 0, barrido 14/14,
   `node --check` OK; `?v=p6` en `video.html` (script y CSS).
+- **P7 · Calidad del vídeo a la vista ✅**. El selector «Calidad del
+  vídeo» solo ponía palabras (Ligiana/Equilibrada/Alta): imposible saber
+  qué bitrate implicaba ni qué había salido al final. Ahora: **(a)** bajo
+  el selector corre una línea en vivo con el bitrate estimado, la
+  resolución de salida y los fps (`≈ 5,25 Mbit/s · 1080×1080 · 30 fps`),
+  que se refresca al cambiar la calidad, el tamaño o las imágenes — usa
+  `dimsSalida()` y la misma `bitrateSalida()` que después aplicará la
+  grabación, con el suelo de 400 kbit/s visible en lienzos pequeños;
+  **(b)** nuevo nivel **«Máxima»** (0,15 bits/píxel/fotograma, un 50 %
+  por encima de «Alta») en `BPP_CALIDAD`; **(c)** al terminar la
+  grabación, línea «Archivo» con lo que de verdad salió: códec
+  (MP4/WebM), resolución real (`videoWidth`), duración, peso y bitrate
+  medio real (`peso × 8 ÷ duración`), p. ej. `Archivo: MP4 · 1080×1080 ·
+  5 KB · 1,0 s · ≈ 41 kbit/s de media`; se apaga al descartar. E2E:
+  info correcta en 1280×720 y 1080×1080 con los 4 niveles, render real
+  de 1 s con «Máxima» (2,8 s, consola 0, barrido 17/17), `node --check`
+  OK; `?v=p7` en `video.html` (script y CSS). *Observación preexistente
+  (no tocada aquí): con la pestaña oculta el rAF se congela y la
+  grabación no termina — grabad con la pestaña visible.*
 
 ---
 

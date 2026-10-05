@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=p6">
+    <link rel="stylesheet" href="./public/css/video.css?v=p7">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -360,7 +360,11 @@
                                 <option value="ligiana">Ligiana (archivo más pequeño)</option>
                                 <option value="media" selected>Equilibrada (recomendada)</option>
                                 <option value="alta">Alta (archivo más grande)</option>
+                                <option value="maxima">Máxima (calidad y peso máximos)</option>
                             </select>
+                            <!-- Q · lo que significa la elección: bitrate estimado,
+                                 resolución de salida y fps, en vivo -->
+                            <p class="form-text mb-0" id="vid-calidad-info" aria-live="polite"></p>
                         </div>
                         <!-- F5d · plantilla Tet News: única plantilla, replicando el
                              canvas de noticias (barra + cuerpo) con el contenido dentro.
@@ -633,6 +637,9 @@
                             <i class="fas fa-share-alt" aria-hidden="true"></i> Compartir vídeo
                         </button>
                         <video id="vid-repro" class="vid-repro" controls playsinline hidden></video>
+                        <!-- Q · stats reales del archivo: códec, resolución,
+                             duración, peso y bitrate medio -->
+                        <p class="form-text mb-0 mt-1" id="vid-resultado-stats" hidden></p>
                         <!-- M3 · dónde queda el archivo al guardarlo en el móvil y cómo
                              descartar el resultado (también el recuperado de IDB al abrir) -->
                         <p class="form-text mb-0 mt-1">Se guarda en «Descargas»; en el móvil,
@@ -696,7 +703,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=p6"></script>
+    <script src="./public/js/video.js?v=p7"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

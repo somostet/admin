@@ -103,6 +103,7 @@
     var aDesc = document.getElementById('vid-descargar');
     var txtDesc = document.getElementById('vid-descargar-texto');
     var resWrap = document.getElementById('vid-resultado');
+    var lineaStats = document.getElementById('vid-resultado-stats');   // Q
     var flotTexto = document.getElementById('vid-txt-flot');     // P2
     var flotColor = document.getElementById('vid-flot-color');   // P2
     var btnCompartir = document.getElementById('vid-compartir');   // F7
@@ -121,6 +122,7 @@
     var txtDirecto = document.getElementById('vid-directo-txt');           // E2
     var btnDescartar = document.getElementById('vid-descartar');           // M3
     var selCalidad = document.getElementById('vid-calidad');               // M4
+    var lineaCalidad = document.getElementById('vid-calidad-info');        // Q
     var recWrap = document.getElementById('vid-recorte');
     var recNombre = document.getElementById('vid-rec-nombre');
     var recDur = document.getElementById('vid-rec-duracion');
@@ -2034,6 +2036,7 @@
     function actualizaCrear() {
         histBotones();   // P4: deshacer/rehacer al día con el estado global
         histMarca();     // P4
+        actualizaInfoCalidad();   // Q: el bitrate a la vista con cada cambio
         pintaBotonDirecto();   // E2: el botón de directo refleja el estado global
         /* F5f: el total de la salida cambia → barras, regla y cabezal se
            recolocan (vale para recorte de vídeo y duración de imágenes) */
@@ -3192,11 +3195,39 @@
         repro.src = urlVideo;
         repro.hidden = false;
         resWrap.hidden = false;
+        pintaStatsResultado(blob, tipo);   // Q: qué salió realmente
         if (!sinScroll) {
             resWrap.scrollIntoView({ block: 'nearest' });
             vibra([15, 60, 15]);   // P1d: tiro hecho (no vibra al restaurar al abrir)
         }
         guardaUltimo(blob, aDesc.download, tipo);
+    }
+
+    /* Q · stats reales del archivo (recién grabado o recuperado de IDB):
+       códec, resolución del vídeo, duración, peso y bitrate medio real
+       (peso × 8 ÷ duración). La duración llega con los metadatos. */
+    function pintaStatsResultado(blob, tipo) {
+        if (!lineaStats) return;
+        var peso = blob.size >= 1048576
+            ? (blob.size / 1048576).toFixed(1).replace('.', ',') + ' MB'
+            : Math.max(1, Math.round(blob.size / 1024)) + ' KB';
+        var pinta = function () {
+            var res = (repro.videoWidth && repro.videoHeight)
+                ? repro.videoWidth + '×' + repro.videoHeight
+                : lienzo.width + '×' + lienzo.height;
+            var txt = 'Archivo: ' + (tipo === 'video/mp4' ? 'MP4' : 'WebM') +
+                ' · ' + res + ' · ' + peso;
+            var dur = repro.duration;
+            if (dur > 0 && isFinite(dur)) {
+                txt += ' · ' + dur.toFixed(1).replace('.', ',') + ' s · ≈ ' +
+                    formatoBitrate(blob.size * 8 / dur) + ' de media';
+            }
+            lineaStats.textContent = txt;
+            lineaStats.hidden = false;
+        };
+        lineaStats.hidden = true;
+        repro.onloadedmetadata = pinta;
+        if (repro.duration > 0 && isFinite(repro.duration)) pinta();
     }
 
     function recuperaUltimo() {
@@ -3227,6 +3258,8 @@
         blobVideo = null;
         aDesc.href = '#';
         resWrap.hidden = true;
+        lineaStats.hidden = true;   // Q
+        lineaStats.textContent = '';
         borraUltimo();
         aviso('Vídeo descartado', 'info');
     });
@@ -3240,12 +3273,31 @@
        lienzos pequeños. Y con wake lock: si el móvil se apagaba en mitad de
        la grabación en tiempo real, los rAF se congelaban y el vídeo se
        perdía. Todo protegido: sin la API o sin permiso, se avisa y sigue. */
-    var BPP_CALIDAD = { ligiana: 0.03, media: 0.06, alta: 0.1 };
+    var BPP_CALIDAD = { ligiana: 0.03, media: 0.06, alta: 0.1, maxima: 0.15 };
     function bitrateSalida(ancho, alto, fps) {
         var bpp = BPP_CALIDAD[selCalidad.value] || BPP_CALIDAD.media;
         if (!(fps > 0)) fps = FPS;
         return Math.max(400000, Math.round(ancho * alto * fps * bpp));
     }
+
+    /* Q · la calidad a la vista: bajo el selector se ve el bitrate que va
+       a usar la grabación con la resolución y los fps reales de la salida.
+       Se refresca con cualquier cambio que altere la tasa o las dimensiones
+       (el propio selector, el tamaño de salida y las imágenes, vía
+       actualizaCrear). */
+    function formatoBitrate(bps) {
+        if (bps >= 1000000) return (bps / 1000000).toFixed(2).replace('.', ',') + ' Mbit/s';
+        return Math.max(1, Math.round(bps / 1000)) + ' kbit/s';
+    }
+
+    function actualizaInfoCalidad() {
+        if (!BPP_CALIDAD || !lineaCalidad) return;   // antes de M4, nada que ver
+        var d = dimsSalida();
+        lineaCalidad.textContent = '≈ ' + formatoBitrate(bitrateSalida(d.w, d.h, FPS)) +
+            ' · ' + d.w + '×' + d.h + ' · ' + FPS + ' fps';
+    }
+    selCalidad.addEventListener('change', actualizaInfoCalidad);
+    actualizaInfoCalidad();
 
     var wakeLock = null;
     var quiereDespierta = false;
