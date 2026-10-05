@@ -684,7 +684,7 @@
     gap: .5rem;
     align-items: center;
     justify-content: space-between;
-    margin-top: 1rem;
+    margin-top: 1.5rem;   /* P8: aire con la vista previa de encima */
 }
 
 .vid-historial {
@@ -695,6 +695,12 @@
 .vid-historial .btn {
     min-width: 44px;
     min-height: 44px;
+}
+
+/* P8 · aire: el contenido de cada panel no empieza pegado al borde
+   inferior de las pestañas (vale para los cuatro paneles) */
+.tab-content {
+    margin-top: 1rem;
 }
 
 #vid-resultado a {
