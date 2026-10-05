@@ -171,6 +171,9 @@
     var inpTxtInicio = document.getElementById('vid-txt-inicio');
     var inpTxtDur = document.getElementById('vid-txt-dur');
     var inpTxtColor = document.getElementById('vid-txt-color');     // F9
+    var selTxtSombra = document.getElementById('vid-txt-sombra');       // P9
+    var inpTxtSombra = document.getElementById('vid-txt-sombra-int');   // P9
+    var valTxtSombra = document.getElementById('vid-txt-sombra-val');   // P9
     var selTxtFuente = document.getElementById('vid-txt-fuente');   // F9
     var selTxtPeso = document.getElementById('vid-txt-peso');       // F9
     var textos = [];         // F5e: un elemento por cada texto de la salida
@@ -1756,6 +1759,10 @@
         'negrita-cursiva': '700 italic'
     };
 
+    /* P9 · niveles de sombra: la barra admite de 0 a 100 y el selector
+       solo ofrece estos presets (60 = el dibujo de siempre) */
+    var SOMBRAS_PRESET = { sin: 0, suave: 30, normal: 60, fuerte: 90 };
+
     /* N1 · parte un texto en líneas que caben en maxW (con la fuente puesta en
        el ctx): los Enter del autor se respetan y dentro de cada párrafo se
        salta por palabras; una palabra más ancha que la línea se corta por
@@ -1854,9 +1861,19 @@
         }
         ctx.textBaseline = 'middle';
         ctx.fillStyle = t.color || '#fff';   // F9
-        ctx.shadowColor = 'rgba(0, 0, 0, .75)';
-        ctx.shadowBlur = Math.max(2, Math.round(fs / 5));
-        ctx.shadowOffsetY = Math.max(1, Math.round(fs / 20));
+        /* P9 · sombra por texto, 0–100 (60 = el dibujo histórico; 0 la
+           apaga). Alfa, desenfoque y caída se mueven con la misma barra. */
+        var nivelSombra = (typeof t.sombra === 'number')
+            ? Math.max(0, Math.min(100, t.sombra)) : 60;
+        if (nivelSombra > 0) {
+            ctx.shadowColor = 'rgba(0, 0, 0, ' + Math.min(1, nivelSombra / 80) + ')';
+            ctx.shadowBlur = Math.max(2, Math.round(fs * nivelSombra / 300));
+            ctx.shadowOffsetY = Math.max(1, Math.round(fs * nivelSombra / 1200));
+        } else {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0)';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        }
         var tp = t.pos;
         var tx;
         var ty;
@@ -2671,7 +2688,8 @@
             dur: 0,
             color: '#ffffff',   // F9
             fuente: 'sistema',  // F9
-            peso: 'negrita'     // F9
+            peso: 'negrita',    // F9
+            sombra: 60          // P9: 0–100; 60 es el dibujo histórico
         };
         if (tipo) aplicaTipo(t);   // N2: el título/subtítulo nace donde debe
         return t;
@@ -2825,6 +2843,7 @@
         flotColor.value = t.color || '#ffffff';     // P2: el swatch de la barra sigue al texto
         selTxtFuente.value = FUENTES_VIDEO[t.fuente] ? t.fuente : 'sistema';
         selTxtPeso.value = PESOS_VIDEO[t.peso] ? t.peso : 'negrita';
+        pintaSombraEditor(t);   // P9
     }
 
     /* el texto se escribe directo en la lista: se repinta al escribir y se
@@ -2905,6 +2924,42 @@
             flotColor.value = t.color;   // P2: el swatch de la barra se queda a la par
             repintarSuperp();
         });
+    });
+
+    /* P9 · el editor refleja la sombra: preset si encaja con uno y
+       «Personalizada» si es un valor a antojo de la barra */
+    function presetSombra(v) {
+        for (var k in SOMBRAS_PRESET) {
+            if (SOMBRAS_PRESET[k] === v) return k;
+        }
+        return 'personalizada';
+    }
+
+    function pintaSombraEditor(t) {
+        var v = (typeof t.sombra === 'number') ? t.sombra : SOMBRAS_PRESET.normal;
+        inpTxtSombra.value = String(v);
+        valTxtSombra.textContent = String(v);
+        selTxtSombra.value = presetSombra(v);
+    }
+
+    /* P9 · niveles por select; la barra deja cualquier valor y el select
+       pasa a «Personalizada» — si luego se elige nivel, manda el select */
+    selTxtSombra.addEventListener('change', function () {
+        var t = textoActual();
+        if (!t) return;
+        if (!Object.prototype.hasOwnProperty.call(SOMBRAS_PRESET, selTxtSombra.value)) return;
+        t.sombra = SOMBRAS_PRESET[selTxtSombra.value];
+        pintaSombraEditor(t);
+        repintarSuperp();
+    });
+    inpTxtSombra.addEventListener('input', function () {
+        var t = textoActual();
+        if (!t) return;
+        var v = parseInt(inpTxtSombra.value, 10);
+        if (!isFinite(v)) v = SOMBRAS_PRESET.normal;
+        t.sombra = Math.max(0, Math.min(100, v));
+        pintaSombraEditor(t);
+        repintarSuperp();
     });
 
     [[inpTxtTam, 'tam', 2, 25, 7],

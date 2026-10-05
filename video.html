@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=p8">
+    <link rel="stylesheet" href="./public/css/video.css?v=p9">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -568,6 +568,25 @@
                                         <option value="negrita-cursiva">Negrita + cursiva</option>
                                     </select>
                                 </div>
+                                <!-- P9 · sombra: niveles rápidos + barra para el gusto personal -->
+                                <div class="col-6 col-lg-4">
+                                    <label class="form-label" for="vid-txt-sombra">Sombra</label>
+                                    <select class="form-select" id="vid-txt-sombra">
+                                        <option value="sin">Sin sombra</option>
+                                        <option value="suave">Suave</option>
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="fuerte">Fuerte</option>
+                                        <option value="personalizada" disabled>Personalizada</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-lg-8">
+                                    <label class="form-label" for="vid-txt-sombra-int">Intensidad de la sombra</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="range" class="form-range flex-grow-1" id="vid-txt-sombra-int"
+                                               min="0" max="100" step="1" value="60">
+                                        <span class="vid-contenido-valor" id="vid-txt-sombra-val">60</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -703,7 +722,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=p8"></script>
+    <script src="./public/js/video.js?v=p9"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

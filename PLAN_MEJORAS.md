@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -965,6 +965,23 @@ amigable y rápida». Un commit por pieza.
   vista previa→pestañas, 16 px pestañas→Contenido y 16 px
   pestañas→Ajustes; consola 0, barrido 17/17; `?v=p8` en `video.html`
   (script y CSS).
+- **P9 · Sombra del texto a medida ✅**. La sombra era código fijo
+  (`rgba(0,0,0,.75)` con blur automático en `dibujaTexto`): ni quitarla
+  ni tocarla. Ahora cada texto guarda `sombra` (0–100, por defecto 60 =
+  el dibujo de siempre) y el panel Textos estrena dos controles: un
+  selector de niveles **Sin sombra / Suave (30) / Normal (60) / Fuerte
+  (90)** y una **barra de intensidad 0–100** que deja cualquier valor —
+  al moverla el selector pasa a «Personalizada» y si después se elige
+  nivel, manda el nivel. La alfa (`min(1, v/80)`), el desenfoque
+  (`fs·v/300`) y la caída (`fs·v/1200`) se mueven con la misma barra; a
+  60 dan exactamente el sombreado histórico. Va por el mismo camino que
+  color/fuente/peso (F9): campo por texto, deshacer/rehacer y «el
+  último» de IndexedDB por JSON, y se pinta igual en la vista previa y
+  en la grabación (una sola ruta `dibujaTexto`). E2E: estados del editor
+  coherentes en todos los niveles y con la barra en 47 («Personalizada»),
+  diff de píxeles real entre «Sin sombra» y los niveles, consola 0,
+  barrido 17/17, `node --check` OK; `?v=p9` en `video.html` (script y
+  CSS).
 
 ---
 
