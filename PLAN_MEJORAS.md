@@ -14,7 +14,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | P0 — Bugs visibles | ✅ Completada (`06a93d5`) |
 | P1 — Móvil | ✅ Completada (`253e453`) |
 | P1 — Seguridad / infra | ✅ Completada (`0eb5dc5`) |
-| P2 — UI + capas extendidas | ✅ Completada (`4922297`) + fix `59ca606` |
+| P2 — UI + capas extendidas | ✅ Completada (`4922297`) + fix `59ca606` + fix `dab0f67` (tarjetas GIF/Vídeo y «Crear» a todo el ancho en móvil) |
 | P3 — Formatos sociales | ✅ Completada (`a0b89ff`) |
 | P4 — Repo y calidad | ✅ Completada |
 | UI estilo Inkscape | ✅ En los 6 editores (`32f238e`, `da1b520` piloto tet1; `bf68993`–`e685bba` fixes y rollout): barra superior, rail, reglas, dock Propiedades|Capas, paleta en dock, colores arriba, atajos en chips, tema oscuro/claro |
