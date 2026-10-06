@@ -26,7 +26,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
-| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅** |
+| Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -982,6 +982,25 @@ amigable y rápida». Un commit por pieza.
   diff de píxeles real entre «Sin sombra» y los niveles, consola 0,
   barrido 17/17, `node --check` OK; `?v=p9` en `video.html` (script y
   CSS).
+- **P10 · Duración real en los metadatos del MP4 ✅**. En el móvil
+  la página reproducía 19 s pero la galería y la subida a Meta solo
+  veían 3–4 s: el MP4 fragmentado que escribe `MediaRecorder` guarda
+  `mvhd`/`tkhd`/`mdhd` con duración 0 o basura y sin `mehd`, así que
+  Chrome reproduce bien (él infiere la duración de los fragmentos)
+  pero la galería del móvil y los transcodedores de las redes leen
+  los campos oficiales y ven «0–3 s». `preparaDescarga` reescribe
+  esos tres campos con la duración real —solo bytes en su sitio, sin
+  mover cajas ni romper offsets— al cargar los metadados del
+  resultado, y el botón «Descargar» (y «Compartir», que usa
+  `blobVideo`) pasan a servir el blob arreglado; el reproductor de
+  la página sigue con el original y, si algo falla, se descarga tal
+  cual. Los segundos planificados (`total/1000` o `segsDirecto`)
+  viajan por `muestraResultado` como respaldo por si Chrome tampoco
+  calcula la duración. WebM queda fuera (Meta no lo admite). E2E:
+  blob original `mvhd=0` → parcheado `mvhd=4,021 s` con `tkhd` y
+  `mdhd` iguales, mismo tamaño, reproduce 4,0209 s, botón ≠
+  reproductor, consola 0, barrido 17/17, `node --check` OK;
+  `?v=p10` en `video.html` (script y CSS).
 
 ---
 

@@ -19,6 +19,7 @@
     var sel = -1;         // índice de la imagen seleccionada
     var urlVideo = null;  // objectURL del último vídeo
     var blobVideo = null; // F7: blob del último vídeo (para compartirlo)
+    var urlDesc = null;   // P10: objectURL del MP4 con la duración arreglada
     var preview = null;   // id de requestAnimationFrame de la vista previa
     var grabando = false;
     var recAct = null;
@@ -3238,8 +3239,9 @@
 
     /* pinta el bloque de resultado desde un blob (recién grabado o
        recuperado de IndexedDB); sinScroll = al restaurar al abrir */
-    function muestraResultado(blob, tipo, sinScroll) {
+    function muestraResultado(blob, tipo, sinScroll, segs) {
         if (urlVideo) URL.revokeObjectURL(urlVideo);
+        if (urlDesc) { URL.revokeObjectURL(urlDesc); urlDesc = null; }
         urlVideo = URL.createObjectURL(blob);
         blobVideo = blob;
         var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
@@ -3250,7 +3252,7 @@
         repro.src = urlVideo;
         repro.hidden = false;
         resWrap.hidden = false;
-        pintaStatsResultado(blob, tipo);   // Q: qué salió realmente
+        pintaStatsResultado(blob, tipo, segs);   // Q: qué salió realmente
         if (!sinScroll) {
             resWrap.scrollIntoView({ block: 'nearest' });
             vibra([15, 60, 15]);   // P1d: tiro hecho (no vibra al restaurar al abrir)
@@ -3261,7 +3263,7 @@
     /* Q · stats reales del archivo (recién grabado o recuperado de IDB):
        códec, resolución del vídeo, duración, peso y bitrate medio real
        (peso × 8 ÷ duración). La duración llega con los metadatos. */
-    function pintaStatsResultado(blob, tipo) {
+    function pintaStatsResultado(blob, tipo, segs) {
         if (!lineaStats) return;
         var peso = blob.size >= 1048576
             ? (blob.size / 1048576).toFixed(1).replace('.', ',') + ' MB'
@@ -3279,10 +3281,99 @@
             }
             lineaStats.textContent = txt;
             lineaStats.hidden = false;
+            /* P10: con la duración ya conocida, la descarga y la
+               comparsión salen con los metadatos arreglados */
+            preparaDescarga(blob, (dur > 0 && isFinite(dur)) ? dur : segs);
         };
         lineaStats.hidden = true;
         repro.onloadedmetadata = pinta;
         if (repro.duration > 0 && isFinite(repro.duration)) pinta();
+    }
+
+    /* P10 · el MP4 fragmentado que escribe MediaRecorder guarda la
+       duración en 0 (mvhd/tkhd/mdhd): la galería del móvil y las
+       subidas (Meta) leen «0–3 s» mientras Chrome reproduce bien porque
+       la infiere de los fragmentos. Al preparar la descarga reescribimos
+       esos campos con la duración real —solo bytes en su sitio, sin
+       mover cajas— para que todo el mundo lea lo mismo. Si algo falla,
+       se descarga el blob original tal cual. */
+    function preparaDescarga(blob, segs) {
+        if (!blob || !/mp4/.test(blob.type || '')) return;   // WebM: fuera de aquí
+        if (!(segs > 0) || !isFinite(segs)) return;
+        var esperado = urlVideo;   // si llega otro resultado, no estropear el nuevo
+        blob.arrayBuffer().then(function (buf) {
+            if (urlVideo !== esperado) return;
+            var parcheado = escribeDuracionMp4(buf, segs);
+            if (!parcheado) return;
+            var limpio = new Blob([parcheado], { type: blob.type });
+            if (urlDesc) URL.revokeObjectURL(urlDesc);
+            urlDesc = URL.createObjectURL(limpio);
+            aDesc.href = urlDesc;
+            blobVideo = limpio;   // compartir/mostrar también con la duración arreglada
+        }).catch(function () { /* nada: se queda el original */ });
+    }
+
+    function escribeDuracionMp4(buf, segs) {
+        try {
+            var b = new Uint8Array(buf);
+            var dv = new DataView(buf);
+            var nom = function (i) { return String.fromCharCode(b[i], b[i + 1], b[i + 2], b[i + 3]); };
+            var leer = function (desde, hasta) {
+                var out = [], off = desde;
+                while (off + 8 <= hasta) {
+                    var size = dv.getUint32(off);
+                    var type = nom(off + 4);
+                    var hdr = 8;
+                    if (size === 1) { size = Number(dv.getBigUint64(off + 8)); hdr = 16; }
+                    if (size < 8 || off + size > hasta) break;
+                    out.push({ type: type, off: off, size: size, hdr: hdr });
+                    off += size;
+                }
+                return out;
+            };
+            var moov = leer(0, b.length).filter(function (x) { return x.type === 'moov'; })[0];
+            if (!moov) return null;
+            var partes = leer(moov.off + moov.hdr, moov.off + moov.size);
+            /* 1ª pasada: timescale de la película (tkhd la comparte con mvhd) */
+            var tsPelicula = 0;
+            partes.forEach(function (h) {
+                if (h.type !== 'mvhd') return;
+                var i = h.off + 4;
+                tsPelicula = dv.getUint32(i + (b[i + 4] === 1 ? 24 : 16));
+            });
+            if (!tsPelicula) return null;
+            var tocado = false;
+            var pon = function (i, v1, posV1, posV0, segundos, ts) {
+                var n = Math.round(segundos * ts);
+                if (v1) {
+                    if (Number(dv.getBigUint64(posV1)) !== n) {
+                        dv.setBigUint64(posV1, BigInt(n));
+                        tocado = true;
+                    }
+                } else {
+                    var m = Math.min(4294967295, n);
+                    if (dv.getUint32(posV0) !== m) { dv.setUint32(posV0, m); tocado = true; }
+                }
+            };
+            partes.forEach(function (h) {
+                var i = h.off + 4;
+                if (h.type === 'mvhd') pon(i, b[i + 4] === 1, i + 28, i + 20, segs, tsPelicula);
+                if (h.type !== 'trak') return;
+                leer(h.off + h.hdr, h.off + h.size).forEach(function (t) {
+                    var j = t.off + 4;
+                    if (t.type === 'tkhd') pon(j, b[j + 4] === 1, j + 32, j + 24, segs, tsPelicula);
+                    if (t.type !== 'mdia') return;
+                    leer(t.off + t.hdr, t.off + t.size).forEach(function (m) {
+                        var k = m.off + 4;
+                        if (m.type !== 'mdhd') return;
+                        var v = b[k + 4];
+                        var ts = dv.getUint32(k + (v === 1 ? 24 : 16));
+                        if (ts) pon(k, v === 1, k + 28, k + 20, segs, ts);
+                    });
+                });
+            });
+            return tocado ? b : null;
+        } catch (e) { return null; }
     }
 
     function recuperaUltimo() {
@@ -3312,6 +3403,7 @@
         urlVideo = null;
         blobVideo = null;
         aDesc.href = '#';
+        if (urlDesc) { URL.revokeObjectURL(urlDesc); urlDesc = null; }   // P10
         resWrap.hidden = true;
         lineaStats.hidden = true;   // Q
         lineaStats.textContent = '';
@@ -3455,7 +3547,7 @@
             var tipo = mimeUsado.split(';')[0];
             var blob = new Blob(chunks, { type: tipo });
             if (!blob.size) return fallo('La grabación salió vacía');
-            muestraResultado(blob, tipo);   // M3: pinta el bloque y lo persiste en IDB
+            muestraResultado(blob, tipo, false, total / 1000);   // M3: pinta el bloque y lo persiste en IDB (P10: segs de respaldo)
             aviso('Vídeo listo: ' + fmt(total / 1000) + ' s · ' +
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
@@ -3619,7 +3711,7 @@
             var tipo = mimeUsado.split(';')[0];
             var blob = new Blob(chunks, { type: tipo });
             if (!blob.size) return fallo('La grabación salió vacía');
-            muestraResultado(blob, tipo);   // M3: pinta el bloque y lo persiste en IDB
+            muestraResultado(blob, tipo, false, segsDirecto);   // M3: pinta el bloque y lo persiste en IDB (P10: segs de respaldo)
             aviso('Grabación directa: ' + fmt(segsDirecto) + ' s · ' +
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
@@ -3929,7 +4021,7 @@
             var tipo = mimeUsado.split(';')[0];
             var blob = new Blob(chunks, { type: tipo });
             if (!blob.size) return fallo('La grabación salió vacía');
-            muestraResultado(blob, tipo);   // M3: pinta el bloque y lo persiste en IDB
+            muestraResultado(blob, tipo, false, total / 1000);   // M3: pinta el bloque y lo persiste en IDB (P10: segs de respaldo)
             aviso('Vídeo recortado: ' + fmt(total / 1000) + ' s · ' +
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
