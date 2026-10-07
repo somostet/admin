@@ -16,3 +16,6 @@ package-lock.json
 *.log
 _tmp*.ps1
 ~$*
+
+# Música: los MP3 no viajan en el repo (se embeben con tools/embed-audio.js)
+public/audio/*.mp3
