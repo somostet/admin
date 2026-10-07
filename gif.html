@@ -7,7 +7,7 @@
         if (location.protocol === 'http:' || location.protocol === 'https:') {
             var csp = document.createElement('meta');
             csp.setAttribute('http-equiv', 'Content-Security-Policy');
-            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
             document.head.appendChild(csp);
             /* frame-buster: en http/https el admin no se deja embeber en un iframe */
             if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/gif.css">
+    <link rel="stylesheet" href="./public/css/gif.css?v=d2">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea GIFs animados a partir de tus imágenes, un vídeo o el lienzo. Todo se procesa en tu dispositivo.">
@@ -69,13 +69,78 @@
                 <div class="gif-caja">
                     <div class="gif-caja-cab">
                         <h1 class="gif-titulo"><i class="fas fa-file-image" aria-hidden="true"></i> Crear GIF</h1>
-                        <p class="gif-subtitulo">Varías imágenes → un GIF animado. Todo se procesa en tu dispositivo, sin subir nada a ningún servidor.</p>
+                        <p class="gif-subtitulo">Imágenes o un vídeo → un GIF animado. Todo se procesa en tu dispositivo, sin subir nada a ningún servidor.</p>
                     </div>
 
                     <label class="btn btn-primary w-100 gif-cargar" for="gif-archivos">
                         <i class="fas fa-plus" aria-hidden="true"></i> Agregar imágenes
                     </label>
                     <input type="file" id="gif-archivos" accept="image/*" multiple class="d-none">
+
+                    <!-- D2 · vídeo → GIF: el rango elegido se extrae a fotogramas
+                         que caen en la MISMA tira que las imágenes (misma tubería) -->
+                    <div class="gif-separador"><span>o un vídeo</span></div>
+
+                    <label class="btn btn-outline-secondary w-100 gif-cargar" for="gif-video">
+                        <i class="fas fa-film" aria-hidden="true"></i> Elegir vídeo (MP4, WebM…)
+                    </label>
+                    <input type="file" id="gif-video" accept="video/*" class="d-none">
+
+                    <div class="gif-video-wrap" id="gif-video-wrap" hidden>
+                        <video id="gif-video-el" class="gif-video-el" controls playsinline preload="metadata"></video>
+                        <div class="row g-3">
+                            <div class="col-6 col-lg-3">
+                                <label class="form-label" for="gif-inicio">Desde (s)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="gif-inicio" min="0" step="0.1"
+                                           value="0" inputmode="decimal">
+                                    <button type="button" class="btn btn-outline-secondary gif-pos" id="gif-inicio-pos"
+                                            title="Usar la posición actual del vídeo"
+                                            aria-label="Usar la posición actual del vídeo como inicio">
+                                        <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <label class="form-label" for="gif-fin">Hasta (s)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="gif-fin" min="0" step="0.1"
+                                           value="0" inputmode="decimal">
+                                    <button type="button" class="btn btn-outline-secondary gif-pos" id="gif-fin-pos"
+                                            title="Usar la posición actual del vídeo"
+                                            aria-label="Usar la posición actual del vídeo como fin">
+                                        <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label" for="gif-fps">Fotogramas/s</label>
+                                <select class="form-select" id="gif-fps">
+                                    <option value="5">5</option>
+                                    <option value="8">8</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="12">12</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                    <option value="25">25</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg-4 d-flex align-items-end">
+                                <button type="button" class="btn btn-outline-primary w-100 gif-cargar" id="gif-extraer"
+                                        disabled>
+                                    <i class="fas fa-cut" aria-hidden="true"></i> Extraer fotogramas
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-text gif-video-estado" id="gif-video-estado"></div>
+                        <div class="gif-progreso" id="gif-extraer-progreso" hidden>
+                            <div class="progress" role="progressbar" aria-label="Extrayendo fotogramas"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar" id="gif-extraer-barra" style="width: 0%">0%</div>
+                            </div>
+                            <div class="form-text" id="gif-extraer-estado">Extrayendo…</div>
+                        </div>
+                    </div>
 
                     <div class="gif-tira-wrap" id="gif-tira-wrap" hidden>
                         <div class="gif-tira" id="gif-tira" aria-label="Fotogramas del GIF (selecciona uno para reordenarlo o quitarlo)"></div>
@@ -118,7 +183,7 @@
 
                     <div class="gif-preview" id="gif-preview">
                         <canvas id="gif-lienzo" width="1080" height="1080" aria-label="Vista previa del GIF"></canvas>
-                        <p class="gif-vacio" id="gif-vacio">Agrega imágenes para ver la vista previa</p>
+                        <p class="gif-vacio" id="gif-vacio">Agrega imágenes o un vídeo para ver la vista previa</p>
                     </div>
 
                     <div class="gif-progreso" id="gif-progreso" hidden>
@@ -187,7 +252,7 @@
     <script src="./public/vendor/gifenc/gifenc.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=d1"></script>
-    <script src="./public/js/gif.js"></script>
+    <script src="./public/js/gif.js?v=d2"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

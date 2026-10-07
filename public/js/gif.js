@@ -173,6 +173,7 @@
         btnBajar.disabled = sel < 0 || sel >= fotos.length - 1;
         btnDuplicar.disabled = sel < 0 || fotos.length >= MAX_FOTOS;
         btnQuitar.disabled = sel < 0;
+        actualizaExtraer();   // D2: el botón de extraer sigue el mismo ritmo
     }
 
     function mover(desde, hasta) {
@@ -365,6 +366,277 @@
         }
 
         estado.textContent = 'Codificando…';
+        setTimeout(paso, 0);
+    }
+
+    /* ---------- D2 · vídeo existente → fotogramas ----------
+       El vídeo se recorre con currentTime + «seeked» y cada fotograma se
+       dibuja en un lienzo auxiliar, se convierte en Image (data: URL
+       JPEG) y entra en fotos[]: a partir de ahí manda la MISMA tubería
+       que las imágenes —tira, reordenar, tamaño, codificación—.
+       Todo con blob: y canvas propio, así funciona igual en doble clic
+       (file://) que en GitHub Pages. */
+    var inVideo = document.getElementById('gif-video');
+    var wrapVideo = document.getElementById('gif-video-wrap');
+    var vEl = document.getElementById('gif-video-el');
+    var inInicio = document.getElementById('gif-inicio');
+    var inFin = document.getElementById('gif-fin');
+    var selFps = document.getElementById('gif-fps');
+    var btnExtraer = document.getElementById('gif-extraer');
+    var estVideo = document.getElementById('gif-video-estado');
+    var progExtr = document.getElementById('gif-extraer-progreso');
+    var barraExtr = document.getElementById('gif-extraer-barra');
+    var estExtr = document.getElementById('gif-extraer-estado');
+    var urlVideo = null;
+    var durVideo = 0;
+    var MAX_EXTRAE_LADO = 1080;   // tope de píxeles: un GIF no usa más y el móvil lo agradece
+
+    inVideo.addEventListener('change', function () {
+        var f = inVideo.files && inVideo.files[0];
+        inVideo.value = ''; // permite volver a elegir el mismo archivo
+        if (!f) return;
+        if (creando) {
+            aviso('Espera a que termine el trabajo actual', 'info');
+            return;
+        }
+        if (!/^video\//.test(f.type) && !/\.(mp4|webm|mov|m4v)$/i.test(f.name)) {
+            aviso('«' + f.name + '» no es un vídeo', 'warning');
+            return;
+        }
+        if (urlVideo) URL.revokeObjectURL(urlVideo);
+        urlVideo = URL.createObjectURL(f);
+        vEl.onerror = function () {
+            wrapVideo.hidden = true;
+            aviso('No se pudo leer «' + f.name + '»', 'danger');
+        };
+        vEl.src = urlVideo;
+        wrapVideo.hidden = false;
+        estVideo.className = 'form-text gif-video-estado';
+        estVideo.textContent = 'Leyendo el vídeo…';
+        var alCargar = function () {
+            conDuracion(vEl).then(function () {
+                durVideo = (isFinite(vEl.duration) && vEl.duration > 0) ? vEl.duration : 0;
+                if (!durVideo) {
+                    wrapVideo.hidden = true;
+                    aviso('No se pudo leer la duración de «' + f.name + '»', 'danger');
+                    return;
+                }
+                // rango por defecto: lo que quepa en MAX_FOTOS al fps por defecto
+                var fps0 = parseInt(selFps.value, 10) || 10;
+                inInicio.value = '0';
+                inFin.value = Math.min(durVideo, (MAX_FOTOS - 1) / fps0).toFixed(1);
+                try { vEl.currentTime = 0; } catch (e) { }
+                recalcRango();
+                actualizarBarra();
+            });
+        };
+        if (vEl.readyState >= 1) alCargar();
+        else vEl.addEventListener('loadedmetadata', alCargar, { once: true });
+    });
+
+    /* Duración fiable: los webm de MediaRecorder (grabaciones de
+       pantalla) traen «Infinity» en la cabecera hasta que se salta al
+       final — el mismo truco que E3 de video.html. */
+    function conDuracion(v) {
+        return new Promise(function (ok) {
+            if (isFinite(v.duration) && v.duration > 0) return ok();
+            var hecho = false;
+            var fin = function () {
+                if (hecho) return;
+                hecho = true;
+                v.removeEventListener('timeupdate', mira);
+                clearTimeout(to);
+                ok();
+            };
+            var mira = function () {
+                if (isFinite(v.duration) && v.duration > 0) fin();
+            };
+            v.addEventListener('timeupdate', mira);
+            var to = setTimeout(fin, 4000);
+            try { v.currentTime = 1e6; } catch (e) { fin(); }
+        });
+    }
+
+    /* Salta a un instante y espera a que el fotograma esté pintado.
+       Si ya se está en ese instante (y hay dato), no hay nada que
+       esperar: sin esto, el primer fotograma se quedaría colgado. */
+    function buscarFotograma(v, t) {
+        return new Promise(function (ok) {
+            var limite = (isFinite(v.duration) && v.duration > 0) ? v.duration : t;
+            var obj = Math.max(0, Math.min(t, limite - 0.001));
+            var yaEsta = Math.abs(v.currentTime - obj) < 0.001;
+            if (yaEsta && v.readyState >= 2) return ok();
+            var hecho = false;
+            var fin = function () {
+                if (hecho) return;
+                hecho = true;
+                v.removeEventListener('seeked', fin);
+                v.removeEventListener('loadeddata', fin);
+                clearTimeout(to);
+                ok();
+            };
+            var to = setTimeout(fin, 3000); // no colgarse ante un archivo raro
+            v.addEventListener('seeked', fin);
+            if (yaEsta) {
+                v.addEventListener('loadeddata', fin);
+            } else {
+                try { v.currentTime = obj; } catch (e) { fin(); }
+            }
+        });
+    }
+
+    /* Rango elegido → fotogramas, con recorte honrado a MAX_FOTOS */
+    function rangoFotos() {
+        var fps = parseInt(selFps.value, 10) || 10;
+        var ini = Math.max(0, parseFloat(inInicio.value) || 0);
+        if (ini > durVideo - 0.1) ini = Math.max(0, durVideo - 0.1);
+        var fin = parseFloat(inFin.value);
+        if (!isFinite(fin)) fin = durVideo;
+        if (fin > durVideo) fin = durVideo;
+        if (fin <= ini) fin = Math.min(durVideo, ini + 0.1);
+        // 1e-6 de margen: 1.2−0.4 da 7,999… y sin él se comería el último fotograma
+        var n = Math.floor((fin - ini) * fps + 1e-6) + 1;
+        var corto = false;
+        if (n > MAX_FOTOS) {
+            n = MAX_FOTOS;
+            fin = ini + (MAX_FOTOS - 1) / fps;
+            corto = true;
+        }
+        return { ini: ini, fin: fin, fps: fps, n: n, corto: corto };
+    }
+
+    function recalcRango() {
+        if (!durVideo) return;
+        var g = rangoFotos();
+        inInicio.value = g.ini.toFixed(1);
+        inFin.value = g.fin.toFixed(1);
+        actualizarEstadoVideo();
+    }
+
+    function actualizarEstadoVideo() {
+        if (!durVideo) {
+            estVideo.textContent = '';
+            actualizaExtraer();
+            return;
+        }
+        var g = rangoFotos();
+        var txt = 'De ' + g.ini.toFixed(1) + ' a ' + g.fin.toFixed(1) + ' s → ' +
+            g.n + (g.n === 1 ? ' fotograma' : ' fotogramas') + ' a ' + g.fps + ' fps';
+        estVideo.classList.toggle('text-warning', g.corto);
+        estVideo.textContent = g.corto
+            ? txt + ' (máximo ' + MAX_FOTOS + ': se recorta el rango)'
+            : txt;
+        actualizaExtraer();
+    }
+
+    function actualizaExtraer() {
+        if (!btnExtraer) return;
+        btnExtraer.disabled = creando || !urlVideo || !durVideo || rangoFotos().n < 2;
+    }
+
+    [inInicio, inFin, selFps].forEach(function (el) {
+        el.addEventListener('change', recalcRango);
+    });
+
+    document.getElementById('gif-inicio-pos').addEventListener('click', function () {
+        if (!durVideo) return;
+        inInicio.value = Math.max(0, vEl.currentTime).toFixed(1);
+        recalcRango();
+    });
+
+    document.getElementById('gif-fin-pos').addEventListener('click', function () {
+        if (!durVideo) return;
+        inFin.value = Math.max(0, vEl.currentTime).toFixed(1);
+        recalcRango();
+    });
+
+    btnExtraer.addEventListener('click', function () {
+        if (creando || !urlVideo || !durVideo) return;
+        var g = rangoFotos();
+        if (g.n < 2) {
+            aviso('El rango es demasiado corto: amplía «Desde» o «Hasta»', 'warning');
+            return;
+        }
+        creando = true;
+        resWrap.hidden = true;
+        vEl.pause();
+        vEl.controls = false;   // que nadie mueva el cabezal mientras se extrae
+        actualizarBarra();
+        progExtr.hidden = false;
+        barraExtr.style.width = '0%';
+        barraExtr.textContent = '0%';
+        estExtr.textContent = 'Extrayendo…';
+        extraerFotos(g);
+    });
+
+    function extraerFotos(g) {
+        var w = vEl.videoWidth;
+        var h = vEl.videoHeight;
+        if (!w || !h) return falloExtraccion(new Error('sin dimensiones'));
+        var esc = Math.min(1, MAX_EXTRAE_LADO / Math.max(w, h));
+        w = Math.max(1, Math.round(w * esc));
+        h = Math.max(1, Math.round(h * esc));
+        var tmp = document.createElement('canvas');
+        tmp.width = w;
+        tmp.height = h;
+        var tctx = tmp.getContext('2d');
+        var nuevas = [];
+        var i = 0;
+
+        function paso() {
+            if (i >= g.n) return terminar();
+            buscarFotograma(vEl, g.ini + i / g.fps).then(function () {
+                var data;
+                try {
+                    tctx.drawImage(vEl, 0, 0, w, h);
+                    data = tmp.toDataURL('image/jpeg', 0.9);
+                } catch (e) { return falloExtraccion(e); }
+                var img = new Image();
+                img.onload = function () {
+                    nuevas.push({ url: data, img: img, nombre: 'vídeo ' + (i + 1) });
+                    i++;
+                    var pct = Math.round(i / g.n * 100);
+                    barraExtr.style.width = pct + '%';
+                    barraExtr.textContent = pct + '%';
+                    estExtr.textContent = 'Extrayendo fotograma ' + i + ' de ' + g.n + '…';
+                    setTimeout(paso, 0);
+                };
+                img.onerror = function () { falloExtraccion(new Error('fotograma ilegible')); };
+                img.src = data;
+            }, falloExtraccion);
+        }
+
+        function limpiar() {
+            progExtr.hidden = true;
+            vEl.controls = true;
+            creando = false;
+            actualizaExtraer();
+        }
+
+        function falloExtraccion(e) {
+            console.warn('gif: no se pudo extraer el vídeo', e);
+            aviso('No se pudieron extraer los fotogramas del vídeo', 'danger');
+            limpiar();
+            actualizarBarra();
+        }
+
+        function terminar() {
+            // sustituye lo que hubiera (los blob: de imágenes sueltos se revocan)
+            fotos.forEach(function (f) {
+                if (f.url.indexOf('blob:') === 0) soltarUrl(f.url);
+            });
+            fotos = nuevas;
+            sel = -1;
+            // el GIF va a la velocidad del vídeo
+            inpDelay.value = String(Math.max(20, Math.round(1000 / g.fps)));
+            limpiar();
+            pintarTira();
+            aviso(g.n + ' fotogramas extraídos' +
+                (g.corto ? ' (rango recortado a ' + MAX_FOTOS + ')' : '') +
+                ' · ' + w + '×' + h + ' px', 'success');
+            tiraWrap.scrollIntoView({ block: 'nearest' });
+        }
+
         setTimeout(paso, 0);
     }
 })();

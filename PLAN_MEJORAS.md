@@ -22,7 +22,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
-| Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅** · D2 vídeo→GIF ⬜ · D3 grabar lienzo ⬜ |
+| Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅ · D2 vídeo→GIF ✅** · D3 grabar lienzo ⬜ |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
@@ -140,9 +140,24 @@ de npm es CommonJS sin `require()`, así que se envuelve en IIFE y se usa como
   bucle; previsualización ciclando y botón **Crear GIF** con progreso →
   descarga `tet.gif`. Toces de fotogramas/px con aviso y codificación por
   lotes (`setTimeout`) para no congelar la UI en el móvil.
-- **D2 · Vídeo existente → GIF**: input mp4/webm con `<video>` de preview,
-  recorte de rango (inicio/fin) y fps → fotogramas extraídos con
-  `currentTime` + `drawImage` → misma tubería de D1.
+- **D2 · Vídeo existente → GIF ✅** (validado en Chrome: webm de
+  `MediaRecorder` con duración ilegible en la cabecera —truco de E3—, rango
+  0,4–1,2 s → 9 fotogramas, crosshairs «usar posición», recorte honrado a
+  60 con aviso, extracción que sustituye la tira y re-extracción, GIF89a de
+  7 fotogramas contrastado con el parser interno **y con ffprobe**
+  —320×240 · 10 fps · 7 frames—, regresión D1, consola 0 y barrido 17/17):
+  input mp4/webm con `<video controls>` nativo (la CSP de `gif.html` gana
+  `media-src 'self' blob:`), «Desde/Hasta» en segundos con botones de
+  crosshairs que toman la posición actual, selector de fps (5–25) y aviso
+  en vivo «De X a Y s → N fotogramas a Z fps» (tope 60 → recorta el rango
+  con `.text-warning`); **Extraer fotogramas** recorre el rango con
+  `currentTime` + `seeked` (guardas de «ya estoy ahí» y de colgado a los
+  3 s, controles del vídeo bloqueados mientras) y cada fotograma pasa por
+  un lienzo auxiliar (tope 1080 px) → `Image` JPEG que entra en `fotos[]`:
+  a partir de ahí manda la MISMA tubería de D1 —tira, reordenar, tamaño,
+  codificación— y el delay se pone solo a `1000/fps` para que el GIF vaya
+  a la velocidad del vídeo. *Lección:* `1.2 − 0.4` da `7,999…` y el
+  `floor` se comía el último fotograma → `+1e-6` de margen.
 - **D3 · Grabar el lienzo → GIF**: lienzo fabric en la propia página (con la
   rotación de plantillas de la shell) + duración/fps → captura de fotogramas
   del canvas → misma tubería.
