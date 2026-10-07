@@ -1981,6 +1981,15 @@
     function dibujarEn(t, durMs) {
         tUltimo = t;   // F5b: lo guarda para redibujar durante el arrastre
         var n = imagenes.length;
+        /* Sin imágenes (p. ej. deshacer hasta el estado inicial) el preview
+           no puede componer: se pinta el fondo —con sus barras— y los
+           superpuestos; antes el índice 0 vacío rompía el bucle de vista
+           previa con un TypeError en cada fotograma. */
+        if (!n) {
+            pintarFondo();
+            dibujarSuperposiciones(t);
+            return;
+        }
         var modo = selTrans.value;
         var idx = Math.floor(t / durMs);
         if (idx >= n) idx = n - 1;
