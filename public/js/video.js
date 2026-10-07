@@ -45,6 +45,7 @@
     var volMusica = document.getElementById('vid-audio-vol');
     var volValor = document.getElementById('vid-audio-vol-valor');
     var btnQuitarMusica = document.getElementById('vid-audio-quitar');
+    var listaMusica = document.getElementById('vid-musica-lista');   // Q4
     var musicaBuf = null;       // AudioBuffer decodificado del archivo subido
     var musicaArchivo = null;   // P4: el File original (para reinyectarlo al deshacer)
     var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
@@ -4136,6 +4137,7 @@
         var hay = !!(f && musicaBuf);
         filaMusica.hidden = !hay;
         nombreMusica.textContent = hay ? f.name + ' · ' + formatoAudio(musicaBuf.duration) : '';
+        sincListaMusica();   // Q4: el radio de la lista acompaña al archivo activo
     }
 
     function preparaCtxAudio() {
@@ -4147,16 +4149,18 @@
         return true;
     }
 
+    var decMusicaToken = 0;   // Q4: con dos decodificaciones seguidas gana la última
     function decodificaMusica(datos, nombre) {
+        var yo = ++decMusicaToken;
         var hecho = false;
         var ok = function (buf) {
-            if (hecho) return;
+            if (hecho || yo !== decMusicaToken) return;
             hecho = true;
             musicaBuf = buf;
             pintaMusica();
         };
         var mal = function () {
-            if (hecho) return;
+            if (hecho || yo !== decMusicaToken) return;
             hecho = true;
             aviso('No se pudo decodificar «' + nombre + '»: prueba con MP3 o WAV', 'danger');
         };
@@ -4198,13 +4202,181 @@
     volMusica.addEventListener('input', function () {
         volValor.textContent = volMusica.value + ' %';
         if (musicaGanancia) musicaGanancia.gain.value = parseInt(volMusica.value, 10) / 100;
+        if (prevAudio) prevAudio.volume = parseInt(volMusica.value, 10) / 100;   // Q4: el ▶ al mismo nivel
     });
+
+    /* ---------- Q4 · lista de música incluida ---------- */
+    /* Cuatro pistas libres que viajan embebidas en audio-data.js (generado
+       por tools/embed-audio.js): el embed solo se pide al primer uso porque
+       pesa MB, y una vez como data: URL funciona igual a doble clic
+       (file://, sin fetch de binarios) que con servidor. Elegir una pista
+       la convierte en File y pasa por el MISMO camino que un archivo
+       subido: validación, historial, «Quitar» y volumen incluidos. */
+    var LISTA_MUSICA = [
+        { id: 'driving-ambition', titulo: 'Driving Ambition', autor: 'Ahjay Stelino', dur: 60 },
+        { id: 'tech-house-vibes', titulo: 'Tech House vibes', autor: 'Alejandro Magana (A. M.)', dur: 60 },
+        { id: 'hip-hop-02', titulo: 'Hip Hop 02', autor: 'Lily J', dur: 60 },
+        { id: 'epical-drums-01', titulo: 'Epical Drums 01', autor: 'Grigoriy Nuzhny', dur: 60 }
+    ];
+
+    function pintaListaMusica() {
+        if (!listaMusica) return;
+        LISTA_MUSICA.forEach(function (p, i) {
+            var item = document.createElement('div');
+            item.className = 'vid-musica-item';
+            item.innerHTML =
+                '<input type="radio" class="btn-check" name="vid-musica-pista" data-idx="' + i + '"' +
+                ' id="vid-musica-pista-' + i + '" value="' + p.titulo + '" autocomplete="off">' +
+                '<label class="btn btn-outline-primary vid-musica-nombre" for="vid-musica-pista-' + i + '">' +
+                '<span>' + p.titulo + '</span>' +
+                '<span class="vid-musica-meta">' + p.autor + ' · ' + formatoAudio(p.dur) + '</span></label>' +
+                '<button type="button" class="btn btn-outline-secondary vid-musica-play" data-idx="' + i + '"' +
+                ' aria-pressed="false" aria-label="Escuchar ' + p.titulo + '">' +
+                '<i class="fas fa-play" aria-hidden="true"></i></button>';
+            listaMusica.appendChild(item);
+        });
+    }
+
+    /* el audio embebido entra solo cuando se toca la música */
+    var audioPend = [];
+    var audioCargando = false;
+
+    function pideAudioData(fn) {
+        if (window.TET_AUDIO) { fn(true); return; }
+        audioPend.push(fn);
+        if (audioCargando) return;
+        audioCargando = true;
+        var sc = document.createElement('script');
+        sc.src = './public/js/audio-data.js?v=q4a';
+        sc.async = true;
+        sc.onload = function () {
+            audioCargando = false;
+            var ok = !!window.TET_AUDIO;
+            audioPend.splice(0).forEach(function (f) { f(ok); });
+        };
+        sc.onerror = function () {
+            audioCargando = false;   // quedamos a cero y se puede reintentar
+            audioPend.splice(0).forEach(function (f) { f(false); });
+        };
+        document.head.appendChild(sc);
+    }
+
+    function eligeMusicaLista(p) {
+        detenPreviewMusica();
+        pideAudioData(function (ok) {
+            if (!ok || !window.TET_AUDIO || !window.TET_AUDIO[p.id]) {
+                aviso('No se pudo cargar «' + p.titulo + '»', 'danger');
+                sincListaMusica();
+                return;
+            }
+            var dt = new DataTransfer();
+            dt.items.add(new File([dataURLaBlob(window.TET_AUDIO[p.id])], p.titulo,
+                { type: 'audio/mpeg' }));
+            inpMusica.files = dt.files;
+            // el camino de siempre: validación + decodificación + historial
+            inpMusica.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    }
+
+    /* el data: URL del embed sirve para traer los bytes, pero Chrome no
+       deja poner data: en un <audio> («URL safety check»): se convierte
+       en blob: al instante (file:// no permite fetch, por eso no se pide
+       el MP3 a la red) */
+    function dataURLaBlob(du) {
+        var sep = du.indexOf(',');
+        var mime = du.slice(du.indexOf(':') + 1, du.indexOf(';'));
+        var bin = atob(du.slice(sep + 1));
+        var u8 = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        return new Blob([u8], { type: mime });
+    }
+
+    function sincListaMusica() {
+        if (!listaMusica) return;
+        var f = inpMusica.files && inpMusica.files[0];
+        var nombre = f ? f.name : '';
+        var radios = listaMusica.querySelectorAll('input[name="vid-musica-pista"]');
+        for (var i = 0; i < radios.length; i++) radios[i].checked = (radios[i].value === nombre);
+    }
+
+    listaMusica.addEventListener('change', function (e) {
+        var t = e.target;
+        if (!t || t.name !== 'vid-musica-pista') return;
+        var p = LISTA_MUSICA[parseInt(t.getAttribute('data-idx'), 10)];
+        if (p) eligeMusicaLista(p);
+    });
+
+    /* preview: un <audio> suelto por el altavoz; no entra en la grabación */
+    var prevAudio = null;
+    var prevIdx = -1;
+    var prevCarga = 0;   // invalida cargas en vuelo al pulsar otra cosa
+
+    function detenPreviewMusica() {
+        prevCarga++;
+        if (prevAudio) {
+            try { prevAudio.pause(); } catch (e) { }
+            var src = prevAudio.src;
+            prevAudio.removeAttribute('src');
+            if (src.indexOf('blob:') === 0) {
+                try { URL.revokeObjectURL(src); } catch (e) { }
+            }
+            try { prevAudio.remove(); } catch (e) { }
+        }
+        prevAudio = null;
+        prevIdx = -1;
+        pintaPreviewMusica();
+    }
+
+    function pintaPreviewMusica() {
+        if (!listaMusica) return;
+        var bs = listaMusica.querySelectorAll('.vid-musica-play');
+        for (var i = 0; i < bs.length; i++) {
+            var on = !!(prevAudio && prevIdx === i);
+            bs[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+            bs[i].setAttribute('aria-label', (on ? 'Pausar ' : 'Escuchar ') + LISTA_MUSICA[i].titulo);
+            var ic = bs[i].querySelector('i');
+            if (ic) ic.className = on ? 'fas fa-pause' : 'fas fa-play';
+        }
+    }
+
+    listaMusica.addEventListener('click', function (e) {
+        var b = e.target.closest ? e.target.closest('.vid-musica-play') : null;
+        if (!b) return;
+        var i = parseInt(b.getAttribute('data-idx'), 10);
+        if (prevAudio && prevIdx === i) { detenPreviewMusica(); return; }
+        detenPreviewMusica();
+        var yo = prevCarga;
+        pideAudioData(function (ok) {
+            if (yo !== prevCarga) return;   // ya se pulsó otra cosa
+            if (!ok || !window.TET_AUDIO || !window.TET_AUDIO[LISTA_MUSICA[i].id]) {
+                aviso('No se pudo reproducir «' + LISTA_MUSICA[i].titulo + '»', 'danger');
+                return;
+            }
+            var a = new Audio(URL.createObjectURL(dataURLaBlob(window.TET_AUDIO[LISTA_MUSICA[i].id])));
+            a.volume = parseInt(volMusica.value, 10) / 100;
+            a.addEventListener('ended', function () {
+                if (prevAudio === a) detenPreviewMusica();
+            });
+            prevAudio = a;
+            prevIdx = i;
+            a.style.display = 'none';
+            document.body.appendChild(a);   // medible y fuera del flujo
+            pintaPreviewMusica();
+            var prom = a.play();
+            if (prom && prom.catch) prom.catch(function () {
+                if (prevAudio === a) detenPreviewMusica();
+            });
+        });
+    });
+
+    pintaListaMusica();
 
     /* Prepara la música para la grabación que va a empezar y devuelve si hay.
        Se llama desde el clic de «Crear vídeo» (gesto del usuario ⇒ contexto
        despierto en iOS). La fuente de buffer sirve una sola vez: cada
        grabación crea la suya. segTotal es la duración de la salida. */
     function preparaMusica(segTotal) {
+        detenPreviewMusica();   // Q4: que no suene el ▶ mientras se graba
         detenerMusica();   // por si quedó algo de una grabación anterior
         if (!musicaBuf) return false;
         try {

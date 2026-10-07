@@ -560,6 +560,46 @@
     cursor: pointer;
 }
 
+/* Q4 · lista de música incluida: fila con el título (elige) y ▶ (escucha) */
+.vid-musica-lista {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-bottom: .75rem;
+}
+
+.vid-musica-item {
+    display: flex;
+    align-items: stretch;
+    gap: .5rem;
+}
+
+.vid-musica-nombre {
+    flex: 1 1 auto;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: .1rem;
+    padding: .35rem .85rem;
+    text-align: left;
+    overflow: hidden;
+}
+
+.vid-musica-meta {
+    font-size: .8rem;
+    font-weight: normal;
+    opacity: .75;
+}
+
+.vid-musica-play {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
 /* P2/P6 · barra de las acciones del texto: nace y se apaga con la manija,
    pero se ancla FUERA del marco del lienzo (fila centrada debajo) para no
    tapar la vista previa ni tapar toques o arrastres sobre el canvas */

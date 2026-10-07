@@ -27,7 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
-| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ⏳ (pendiente de audios) · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -1099,8 +1099,32 @@ amigable y rápida». Un commit por pieza.
   casilla), fila de 44 px medida, barrido 17/17, mapa con 22 claves e
   `./public/img/Logotet.png`, consola 0, `node --check`; `?v=q3a` en
   `video.html` (script y CSS).
-- **Q4 · Lista de música ⏳**. Bloqueada: hace falta que lleguen los
-  audios a `public/audio/` («yo te la paso»).
+- **Q4 · Lista de música ✅**. Cuatro pistas libres de Mixkit
+  (licencia sin atribución), recodificadas a 60 s/112 kbps y embebidas
+  en `public/js/audio-data.js` con la nueva `tools/embed-audio.js`:
+  los MP3 no viajan al repo (`.gitignore`), solo queda
+  `public/audio/LEEME.md` con créditos, enlaces y cómo regenerar el
+  embed —porque en `file://` no se puede hacer *fetch* de binarios
+  (origen null) y así el editor funciona igual a doble clic que con
+  servidor—; el embed (4,28 MB) solo se inyecta **al primer uso** de
+  la música. En **Ajustes → Música de fondo**, la lista pinta cada
+  tema con autor y duración: un ▶ de 58 px lo suena en el altavoz
+  (Chrome no acepta `data:` en `<audio>`, así que el data: URL del
+  embed se convierte en `blob:` al momento) al volumen del
+  deslizador, y un clic en el título lo **elige**: se materializa como
+  `File` y recorre el MISMO camino que un archivo subido (validación,
+  decodificación, historial P4, «Quitar»), con el radio siempre en
+  sintonía con el archivo activo; elegir otra pista corta el ▶ y
+  «Crear vídeo» lo corta antes de grabar. E2E: filas y ▶ a 58 px,
+  embed perezoso (1 script, 4 claves), reproducción real con clic
+  auténtico (avanza y sin silenciar), deslizador 40 % → volumen 0.4,
+  cambio de pista, embed idéntico byte a byte a los MP3 servidos
+  (4/4), elegir → fila «Hip Hop 02 · 1:00» con el ▶ cortado,
+  deshacer → pista anterior, «Quitar», subida WAV propia con los
+  radios desmarcados, render con música →
+  `original-2026-10-07-180333.mp4` decodificado con **pico 0.171**
+  (música real en la salida) y el ▶ detenido, consola 0, barrido
+  17/17, `node --check`; `?v=q4a` en `video.html` (script y CSS).
 - **Q5 · Exportar por plataforma ✅**. La plataforma también vive en
   el panel **Exportar**: fila de chips —Original, TikTok, Reel, Short,
   YouTube, IG 1:1, IG 4:5 y A mano— de 44 px junto a «Crear vídeo»,
