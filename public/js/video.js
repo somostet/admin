@@ -161,6 +161,7 @@
     var supLogoQuitar = document.getElementById('vid-logo-quitar');
     var supLogoPos = document.getElementById('vid-logo-pos');
     var supLogoTam = document.getElementById('vid-logo-tam');
+    var supLogoAuto = document.getElementById('vid-logo-auto');   // Q3
     var listaTextos = document.getElementById('vid-textos-lista');   // F5e
     var btnAddTexto = document.getElementById('vid-texto-add');      // F5e
     var btnAddTitulo = document.getElementById('vid-texto-titulo-add');   // N2
@@ -208,6 +209,7 @@
     var logoImg = null;    // Image del logo cargado (null = sin logo)
     var logoUrl = null;    // blob URL del logo para poder revocarlo
     var logoBlob = null;   // P4: el File del logo (para recrear la url si se revoca)
+    var logoAutoTok = 0;   // Q3: nº de carga de logo en curso (descarta las viejas)
 
     var soportado = !!(window.MediaRecorder &&
         HTMLCanvasElement.prototype.captureStream &&
@@ -1567,6 +1569,7 @@
        La barra mide lo mismo que en tet1.html: la imagen 1200×93 escalada
        al ancho de la salida. */
     var RUTA_BARRA_NEWS = './public/img/bars/tetnews.png';
+    var RUTA_LOGO_DEFECTO = './public/img/Logotet.png';   // Q3: logo de tet
     var BARRA_RATIO = 93 / 1200;
 
     function altoBarraNews() {
@@ -1617,17 +1620,35 @@
         barraNews.src = urlRecurso(RUTA_BARRA_NEWS);
     }
 
+    /* Q3 · el mapa de plantillas data: puede llegar tarde (en file:// se
+       inyecta aquí): lo que necesite una ruta data: —la barra y el logo
+       automático— se anota y sale cuando el mapa esté (o haya fallado) */
+    var plantillasListas = false;
+    var plantillasPend = [];
+
+    function cuandoPlantillasListas(fn) {
+        if (plantillasListas) { fn(); return; }
+        plantillasPend.push(fn);
+    }
+
+    function marcaPlantillasListas() {
+        if (plantillasListas) return;
+        plantillasListas = true;
+        plantillasPend.splice(0).forEach(function (f) { f(); });
+    }
+
     if (location.protocol === 'file:') {
         // en doble clic no hay servidor: los data: URL evitan el lienzo
         // «tainted», que rompería la grabación y las descargas
         var scPlantillas = document.createElement('script');
-        scPlantillas.src = './public/js/plantillas-data.js?v=f5d';
+        scPlantillas.src = './public/js/plantillas-data.js?v=q3a';
         scPlantillas.async = true;
-        scPlantillas.onload = cargarBarraNews;
-        scPlantillas.onerror = cargarBarraNews;
+        scPlantillas.onload = function () { cargarBarraNews(); marcaPlantillasListas(); };
+        scPlantillas.onerror = function () { cargarBarraNews(); marcaPlantillasListas(); };
         document.head.appendChild(scPlantillas);
     } else {
         cargarBarraNews();
+        marcaPlantillasListas();
     }
 
     /* F5d · interruptor de la plantilla: el contenido pasa a vivir dentro del
@@ -2726,32 +2747,88 @@
         });
     });
 
-    supLogoArchivo.addEventListener('change', function () {
-        var f = supLogoArchivo.files && supLogoArchivo.files[0];
-        if (!f) return;
-        if (logoUrl) {
-            URL.revokeObjectURL(logoUrl);
-            histRevocadas[logoUrl] = true;   // P4
-        }
-        logoUrl = URL.createObjectURL(f);
-        logoBlob = f;   // P4: el File original por si el deshacer lo revoca
+    /* ---------- Q3 · logo automático ---------- */
+    /* Al abrir la página el logo vuelve solo: el último que subiste (guardado
+       como data: URL en localStorage —un PNG normal entra de sobra—) o, si
+       aún no has subido ninguno, el de tet. La casilla decide si va o no y
+       se recuerda; «Quitar logo» la apaga para que no vuelva. */
+    var CLAVE_LOGO = 'tetLogoVideo';
+
+    function leeLogoCfg() {
+        try {
+            var j = JSON.parse(localStorage.getItem(CLAVE_LOGO) || '{}');
+            return (j && typeof j === 'object') ? j : {};
+        } catch (e) { return {}; }   // modo privado: sin recordar, lo demás igual
+    }
+
+    function guardaLogoCfg(datos) {
+        try {
+            var cfg = leeLogoCfg();
+            for (var k in datos) cfg[k] = datos[k];
+            localStorage.setItem(CLAVE_LOGO, JSON.stringify(cfg));
+        } catch (e) { /* lleno o bloqueado: solo no se recuerda */ }
+    }
+
+    /* Recuerda el archivo subido como data: URL; si es gigante, solo la
+       configuración (el límite defensivo está en ~4 M de caracteres) */
+    function guardaLogoData(f, tok) {
+        var fr = new FileReader();
+        fr.onload = function () {
+            if (tok !== logoAutoTok) return;   // se subió otro logo después
+            var d = String(fr.result || '');
+            if (d.length <= 4e6) guardaLogoCfg({ data: d, nombre: f.name });
+        };
+        try { fr.readAsDataURL(f); } catch (e) { /* sin lectura no se recuerda */ }
+    }
+
+    /* Pone una imagen de logo en su sitio; el token descarta las cargas que
+       quedaron viejas (subida manual, quitar o casilla) */
+    function ponLogoAuto(url, nombre) {
+        var tok = ++logoAutoTok;
         var im = new Image();
         im.onload = function () {
+            if (tok !== logoAutoTok || !supLogoAuto.checked) return;
+            if (logoUrl && logoUrl !== url) {
+                URL.revokeObjectURL(logoUrl);
+                histRevocadas[logoUrl] = true;   // P4
+            }
             logoImg = im;
-            supLogoMini.src = logoUrl;
-            supLogoNombre.textContent = f.name;
+            logoUrl = url;   // data: o ruta del repo: nunca se revoca
+            logoBlob = null;
+            supLogoMini.src = url;
+            supLogoNombre.textContent = nombre;
             supLogoEstado.hidden = false;
             repintarSuperp();
+            /* El logo automático es parte del estado inicial: la línea base
+               del historial se refresca para que la primera pulsación de
+               deshacer no se lo coma */
+            refrescaLineaBaseLogo();
         };
         im.onerror = function () {
-            logoImg = null;
-            supLogoEstado.hidden = true;
-            aviso('No se pudo leer «' + f.name + '» como imagen: prueba con un PNG', 'danger');
+            if (tok !== logoAutoTok) return;
+            aviso('No se pudo cargar el logo automático («' + nombre + '»)', 'danger');
         };
-        im.src = logoUrl;
-    });
+        im.src = url;
+    }
 
-    supLogoQuitar.addEventListener('click', function () {
+    function cargaLogoAutomatico() {
+        if (!supLogoAuto.checked) return;
+        var cfg = leeLogoCfg();
+        if (cfg.data) ponLogoAuto(cfg.data, cfg.nombre || 'Logo guardado');
+        else ponLogoAuto(urlRecurso(RUTA_LOGO_DEFECTO), 'Logotet.png');
+    }
+
+    function refrescaLineaBaseLogo() {
+        if (!hist.length) return;
+        if (histIdx > 0) { histMarca(); return; }   // pasó algo antes: cambio normal
+        var e0 = histCaptura();
+        hist[0] = { j: histClave(e0), e: e0 };
+        histBotones();
+    }
+
+    /* El mismo «quitar» de sesión, para el botón y para la casilla */
+    function quitaLogoSesion() {
+        logoAutoTok++;
         supLogoArchivo.value = '';
         if (logoUrl) {
             URL.revokeObjectURL(logoUrl);
@@ -2763,13 +2840,78 @@
         supLogoMini.removeAttribute('src');
         supLogoEstado.hidden = true;
         repintarSuperp();
+    }
+
+    supLogoArchivo.addEventListener('change', function () {
+        var f = supLogoArchivo.files && supLogoArchivo.files[0];
+        if (!f) return;
+        if (logoUrl) {
+            URL.revokeObjectURL(logoUrl);
+            histRevocadas[logoUrl] = true;   // P4
+        }
+        var tok = ++logoAutoTok;   // Q3: manda el logo elegido a mano
+        logoUrl = URL.createObjectURL(f);
+        logoBlob = f;   // P4: el File original por si el deshacer lo revoca
+        var im = new Image();
+        im.onload = function () {
+            if (tok !== logoAutoTok) return;   // ya hay otro logo más nuevo
+            logoImg = im;
+            supLogoMini.src = logoUrl;
+            supLogoNombre.textContent = f.name;
+            supLogoEstado.hidden = false;
+            repintarSuperp();
+            /* Q3: el logo que subes vuelve al abrir */
+            supLogoAuto.checked = true;
+            guardaLogoCfg({ auto: true });
+            guardaLogoData(f, tok);
+            histMarca();   // Q3: subir logo también es historia
+        };
+        im.onerror = function () {
+            if (tok !== logoAutoTok) return;
+            logoImg = null;
+            supLogoEstado.hidden = true;
+            aviso('No se pudo leer «' + f.name + '» como imagen: prueba con un PNG', 'danger');
+        };
+        im.src = logoUrl;
+    });
+
+    supLogoQuitar.addEventListener('click', function () {
+        quitaLogoSesion();
+        /* Q3: sin logo y sin que vuelva al abrir; el archivo recordado se
+           queda por si vuelves a activar la casilla */
+        supLogoAuto.checked = false;
+        guardaLogoCfg({ auto: false });
+        histMarca();
+    });
+
+    /* Q3: la casilla manda sobre el logo de la sesión y se recuerda:
+       activa → vuelve el último logo subido (o el de tet), apaga → sin logo */
+    supLogoAuto.addEventListener('change', function () {
+        guardaLogoCfg({ auto: supLogoAuto.checked });
+        if (supLogoAuto.checked) cargaLogoAutomatico();
+        else quitaLogoSesion();
+        histMarca();
     });
 
     [supLogoPos, supLogoTam].forEach(function (el) {
         el.addEventListener('change', function () {
+            /* Q3: la posición/tamaño también se recuerdan y son historia */
+            guardaLogoCfg(el === supLogoPos ? { pos: supLogoPos.value }
+                : { tam: supLogoTam.value });
             repintarSuperp();
+            histMarca();
         });
     });
+
+    /* Q3 · arranque: preferencias recordadas (posición, tamaño y casilla) y
+       el logo en cuanto el mapa de plantillas esté listo */
+    (function () {
+        var cfg = leeLogoCfg();
+        supLogoAuto.checked = cfg.auto !== false;   // por defecto, activo
+        if (cfg.pos) supLogoPos.value = cfg.pos;
+        if (cfg.tam) supLogoTam.value = cfg.tam;
+        cuandoPlantillasListas(cargaLogoAutomatico);
+    })();
 
     /* ---------- F5e · lista de textos (título, descripción…) ---------- */
     /* Cada texto guarda: contenido, tipo (N2: título/subtítulo/cuerpo),
@@ -4321,7 +4463,7 @@
                 ajuste: selAjuste.value, trans: selTrans.value, fondo: inpFondo.value,
                 news: chkNews.checked, calidad: selCalidad.value,
                 esc: inpEscContenido.value, pos: supLogoPos.value,
-                tamLog: supLogoTam.value
+                tamLog: supLogoTam.value, logoAuto: supLogoAuto.checked   // Q3
             }
         };
     }
@@ -4383,6 +4525,7 @@
         }
         logoImg = e.logoImg;
         logoUrl = logoVivo;
+        logoBlob = e.logoBlob;   // Q3: el File también se restaura (P4: recrear la url)
         supLogoNombre.textContent = e.logoNombre;
         supLogoEstado.hidden = e.logoEstado;
         if (logoUrl) supLogoMini.src = logoUrl;
@@ -4442,6 +4585,10 @@
         chkNews.checked = e.form.news;
         supLogoPos.value = e.form.pos;
         supLogoTam.value = e.form.tamLog;
+        /* Q3: la casilla va con el snapshot, pero sin lanzar «change» —
+           el logo de la sesión ya viene en el snapshot y no hay que
+           recargarlo ni quitarlo otra vez */
+        supLogoAuto.checked = (e.form.logoAuto !== false);
         inpEscContenido.value = e.form.esc;
         [selTam, inpDur, selModoDur, selAjuste, selTrans, inpFondo, selCalidad,
             chkNews, supLogoPos, supLogoTam].forEach(function (el) {

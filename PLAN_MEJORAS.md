@@ -27,7 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
-| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -1070,6 +1070,35 @@ amigable y rápida». Un commit por pieza.
   toggle OFF/ON de la plantilla, deshacer de plataforma (short ←
   tiktok), quitar la última imagen sin errores, consola 0,
   `node --check`, barrido 17/17; `?v=q2a` en `video.html`.
+- **Q3 · Logo automático ✅**. El logo de `video.html` vuelve **solo al
+  abrir la página**: el último que subiste —guardado en `localStorage`
+  como data: URL; un PNG normal cabe de sobra y si pesara demasiado se
+  recuerda solo la configuración— o, si aún no has subido ninguno, el
+  de tet (`Logotet.png`, que ahora viaja también embebido en
+  `plantillas-data.js`, ya con **22 claves**, para que en `file://` el
+  lienzo no quede «tainted»). Nueva casilla **«Logo automático»** en
+  fila de 44 px que decide si va o no **y se recuerda**: activa →
+  carga el último logo o el de tet; apaga → sin logo. **«Quitar
+  logo»** la apaga para que no vuelva (el archivo guardado se
+  conserva por si la vuelves a encender) y subir un logo la enciende;
+  posición y tamaño también se recuerdan. El logo pasa a ser
+  **historia** —subir, quitar, posición, tamaño y la casilla marcan
+  deshacer—, la **línea base se refresca** cuando entra el logo
+  automático (la primera pulsación de deshacer no se lo come) y
+  `histRestaura` restaura ya también `logoBlob` (antes se capturaba y
+  no se devolvía: tras un deshacer el File del logo se perdía). La
+  inyección de `plantillas-data.js` en `file://` quedó con cadena de
+  espera (`cuandoPlantillasListas`) para que la barra y el logo
+  compartan el mismo punto de arranque. E2E: primer arranque con el
+  logo de tet (23.467 px abajo-derecha), casilla OFF/ON (0 ↔ 23.467),
+  subir `rojo.png` (53.361 px abajo-derecha + data URL guardada),
+  posición `arriba-izquierda` al 20 % (147.456 px arriba), recarga
+  con todo restaurado, auto apagado → sin logo y reactivación con el
+  rojo guardado, deshacer/rehacer con el logo en la línea base (20 ↔
+  12 % sin perderlo), quitar deshacible (vuelve `rojo.png` y su
+  casilla), fila de 44 px medida, barrido 17/17, mapa con 22 claves e
+  `./public/img/Logotet.png`, consola 0, `node --check`; `?v=q3a` en
+  `video.html` (script y CSS).
 
 ---
 

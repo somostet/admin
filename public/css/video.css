@@ -861,3 +861,19 @@
     border-radius: 4px;
     background: repeating-conic-gradient(#e9ecef 0% 25%, #fff 0% 50%) 50% / 16px 16px;
 }
+
+/* Q3 · casilla de logo automático: fila de 44px para el dedo y el switch
+   en el flujo del flex (sin el margen negativo de Bootstrap, que en esta
+   fila lo sacaría de sitio) */
+.vid-logofila {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.vid-logofila .form-check-input {
+    float: none;
+    margin: 0 .6em 0 0;
+}

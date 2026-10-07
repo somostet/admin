@@ -18,6 +18,7 @@ var raiz = path.join(__dirname, '..');
 /* Rutas EXACTAS tal como aparecen en los editores (clave del mapa) */
 var plantillas = [
     './public/img/Plantilla3.png',
+    './public/img/Logotet.png',   // Q3: el logo automático de video.html
     './public/img/bars/tetnews.png',
     './public/img/bars/somostetCuri.png',
     './public/img/bars/somostetR.png',
