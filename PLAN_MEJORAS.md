@@ -27,7 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
-| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -1039,6 +1039,37 @@ amigable y rápida». Un commit por pieza.
   (N3b). E2E: campos iniciales 10/0/negro/5/fundido/90, cadena
   0→10, reparto 30 s en 0–15 + 15–15, consola 0, `node --check`,
   barrido 17/17; `?v=q1c` en `video.html` (script y CSS).
+
+- **Q2 · Plantillas por plataforma ✅**. Selector **«Plataforma»** en
+  Ajustes —TikTok, Reel, Short, YouTube (16:9), Feed de IG (1:1 y
+  4:5), Original y **Personalizado** con ancho y alto a mano (160–
+  1920 px)— que fija la resolución de salida y manda sobre la lista
+  detallada de tamaños (ahora oculta para no duplicar controles en
+  móvil; sigue viva como fuente de verdad y se crea la opción
+  «1920×1080» al vuelo, que faltaba). El historial guarda también la
+  plataforma (`plat`), así el deshacer distingue Reel de TikTok
+  aunque midan lo mismo. La plantilla Tet News pasa a **dos barras —
+  cabecera y pie— como en las capturas de tet1**: el cuerpo es el
+  medio y todo se adapta al tamaño elegido —fondo, contenido
+  recortado a la zona, anclajes «abajo» y posición personalizada de
+  los textos calculados contra el pie (antes contra el borde del
+  lienzo) y logo en posiciones inferiores. Nitidez de `tetnews.png`
+  (1200×93): a 1080 px se reduce ×0.9 (nítida); a 1920 (YouTube) se
+  amplía ×1.6 con `imageSmoothingQuality='high'` — si se quiere
+  perfección, hace falta un PNG de 1920 px. De paso, el test destapó
+  un agujero previo: **`dibujarEn` no contemplaba `imagenes` vacío**
+  (deshacer hasta el estado inicial o quitar la última imagen
+  reventaba el bucle de vista previa con `TypeError` en cada
+  fotograma); ahora pinta fondo y superpuestos (commit aparte). E2E:
+  las 7 plataformas miden su lienzo (1080×1920, 1920×1080,
+  1080×1080, 1080×1350, 800×600), personalizado 700×1500 y tope
+  3000→1920, doble barra con 0 px de fondo en cabecera y pie, texto
+  abajo-centro con centroide 1749 (esperado ≈1756) y estrés
+  personalizada y=0.95 con centroide 1772 (clamped al cuerpo,
+  ≈1778) sin invadir el pie, logo abajo-derecha sin tocar el pie,
+  toggle OFF/ON de la plantilla, deshacer de plataforma (short ←
+  tiktok), quitar la última imagen sin errores, consola 0,
+  `node --check`, barrido 17/17; `?v=q2a` en `video.html`.
 
 ---
 

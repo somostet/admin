@@ -317,6 +317,37 @@
 
                     <div class="row g-3 vid-ajustes mt-1">
                         <div class="col-12 col-sm-6 col-lg-4">
+                            <label class="form-label" for="vid-plataforma">Plataforma</label>
+                            <select class="form-select" id="vid-plataforma">
+                                <option value="orig" selected>Original (primera imagen o vídeo)</option>
+                                <option value="tiktok">TikTok — 1080×1920</option>
+                                <option value="reel">Reel (Instagram) — 1080×1920</option>
+                                <option value="short">Short (YouTube) — 1080×1920</option>
+                                <option value="youtube">YouTube (16:9) — 1920×1080</option>
+                                <option value="ig1">Feed de IG (1:1) — 1080×1080</option>
+                                <option value="ig45">Feed de IG (4:5) — 1080×1350</option>
+                                <option value="custom">Personalizado (a mano)…</option>
+                            </select>
+                            <!-- Q2 · control manual del tamaño cuando hace falta -->
+                            <div id="vid-plat-custom" hidden>
+                                <div class="d-flex gap-2 mt-1">
+                                    <div class="flex-fill">
+                                        <label class="form-label mb-1" for="vid-plat-ancho">Ancho (px)</label>
+                                        <input type="number" class="form-control" id="vid-plat-ancho"
+                                               min="160" max="1920" step="2" value="1080" inputmode="numeric">
+                                    </div>
+                                    <div class="flex-fill">
+                                        <label class="form-label mb-1" for="vid-plat-alto">Alto (px)</label>
+                                        <input type="number" class="form-control" id="vid-plat-alto"
+                                               min="160" max="1920" step="2" value="1920" inputmode="numeric">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Q2 · la lista detallada de tamaños sigue viva detrás
+                             (es la fuente de verdad del valor) pero la oculta en
+                             la interfaz para no duplicar controles en móvil -->
+                        <div class="col-12 col-sm-6 col-lg-4 d-none">
                             <label class="form-label" for="vid-tamano">Tamaño de salida</label>
                             <select class="form-select" id="vid-tamano"></select>
                         </div>
@@ -727,7 +758,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=q1c"></script>
+    <script src="./public/js/video.js?v=q2a"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

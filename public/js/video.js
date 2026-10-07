@@ -66,6 +66,12 @@
     var btnQuitar = document.getElementById('vid-quitar');
     var conteo = document.getElementById('vid-conteo');
     var selTam = document.getElementById('vid-tamano');
+    /* Q2 · selector de plataforma: elige el tamaño de salida y manda sobre
+       el selector detallado de arriba (que en la interfaz queda oculto) */
+    var selPlat = document.getElementById('vid-plataforma');
+    var wrapPlatCustom = document.getElementById('vid-plat-custom');
+    var inpPlatAncho = document.getElementById('vid-plat-ancho');
+    var inpPlatAlto = document.getElementById('vid-plat-alto');
     var inpDur = document.getElementById('vid-duracion');
     var selModoDur = document.getElementById('vid-modo-dur');
     var selAjuste = document.getElementById('vid-ajuste');
@@ -273,6 +279,89 @@
         });
         selTam.innerHTML = html;
     })();
+
+    /* ---------- Q2 · selector de plataforma (tamaño + plantilla) ----------
+       Cada plataforma fija la resolución de salida y «Personalizado» deja
+       escribir ancho y alto a mano (control del lienzo vertical cuando
+       hace falta). El valor se vuelca en #vid-tamano, que sigue siendo la
+       fuente de verdad para el render y el historial. */
+    var PLATAFORMAS_VIDEO = {
+        orig: { nombre: 'Original', tam: 'orig' },
+        tiktok: { nombre: 'TikTok', tam: '1080x1920' },
+        reel: { nombre: 'Reel (Instagram)', tam: '1080x1920' },
+        short: { nombre: 'Short (YouTube)', tam: '1080x1920' },
+        youtube: { nombre: 'YouTube (16:9)', tam: '1920x1080' },
+        ig1: { nombre: 'Feed de IG (1:1)', tam: '1080x1080' },
+        ig45: { nombre: 'Feed de IG (4:5)', tam: '1080x1350' },
+        custom: { nombre: 'Personalizado', tam: null }
+    };
+
+    /* el selector detallado no trae todos los tamaños (p. ej. 1920×1080):
+       se crea la opción sobre la marcha y ya no falta */
+    function aseguraOpcionTam(valor, etiqueta) {
+        if (selTam.querySelector('option[value="' + valor + '"]')) return;
+        var op = document.createElement('option');
+        op.value = valor;
+        op.textContent = etiqueta || (valor.replace('x', '×') + ' px');
+        selTam.appendChild(op);
+    }
+
+    /* escribe en #vid-tamano el tamaño de la plataforma elegida (o el de
+       los inputs personalizados) y lanza «change» para que todo lo que
+       escucha el tamaño —lienzo, vista previa, historial— se refresque */
+    function aplicaPlataforma() {
+        if (!selPlat) return;
+        var p = PLATAFORMAS_VIDEO[selPlat.value] || PLATAFORMAS_VIDEO.custom;
+        var custom = (selPlat.value === 'custom');
+        wrapPlatCustom.hidden = !custom;
+        if (custom) {
+            var w = Math.max(160, Math.min(MAX_LADO, parseInt(inpPlatAncho.value, 10) || 1080));
+            var h = Math.max(160, Math.min(MAX_LADO, parseInt(inpPlatAlto.value, 10) || 1920));
+            inpPlatAncho.value = String(w);
+            inpPlatAlto.value = String(h);
+            var v = w + 'x' + h;
+            aseguraOpcionTam(v, 'Personalizado — ' + w + '×' + h);
+            selTam.value = v;
+        } else {
+            aseguraOpcionTam(p.tam, p.nombre + ' — ' + p.tam.replace('x', '×'));
+            selTam.value = p.tam;
+        }
+        sincPlatSilencioso = true;   // el valor ya está; que no nos reetiquete
+        selTam.dispatchEvent(new Event('change', { bubbles: true }));
+        sincPlatSilencioso = false;
+    }
+
+    /* reflejo inverso: si el tamaño cambia por otro camino (historial o la
+       lista detallada oculta), la plataforma que se muestra es la que le
+       corresponda; lo que no encaje cae en «Personalizado» con esos píxeles */
+    function sincronizaPlataforma() {
+        if (!selPlat) return;
+        var v = selTam.value;
+        var id = 'custom';
+        for (var k in PLATAFORMAS_VIDEO) {
+            if (PLATAFORMAS_VIDEO[k].tam === v) { id = k; break; }
+        }
+        selPlat.value = id;
+        wrapPlatCustom.hidden = (id !== 'custom');
+        var m = /^(\d+)x(\d+)$/.exec(v);
+        if (m) { inpPlatAncho.value = m[1]; inpPlatAlto.value = m[2]; }
+    }
+
+    /* evita bucle: aplicaPlataforma ya dejó la plataforma bien puesta */
+    var sincPlatSilencioso = false;
+
+    if (selPlat) {
+        selPlat.addEventListener('change', function () { aplicaPlataforma(); });
+        [inpPlatAncho, inpPlatAlto].forEach(function (el) {
+            el.addEventListener('change', function () {
+                if (selPlat.value !== 'custom') selPlat.value = 'custom';
+                aplicaPlataforma();
+            });
+        });
+    }
+    selTam.addEventListener('change', function () {
+        if (!sincPlatSilencioso) sincronizaPlataforma();
+    });
 
     /* ---------- carga de archivos (en cadena para respetar el orden) ---------- */
     input.addEventListener('change', function () {
@@ -925,6 +1014,12 @@
             selTam.options[0].textContent = v ?
                 'Tamaño original del vídeo' : 'Tamaño de la primera imagen';
         }
+        /* Q2: la opción «Original» del selector de plataforma se ajusta igual */
+        var opPlatOrigen = selPlat && selPlat.querySelector('option[value="orig"]');
+        if (opPlatOrigen) {
+            opPlatOrigen.textContent = v ?
+                'Original (tamaño del vídeo)' : 'Original (primera imagen o vídeo)';
+        }
     }
 
     /* ---------- E3 · riel de recorte (estilo editor) ---------- */
@@ -1466,10 +1561,11 @@
     }
 
     /* ---------- dibujo (cover/contain sobre fondo) ---------- */
-    /* F5d · zona útil del dibujo: con la plantilla Tet News activa es el
-       cuerpo del canvas de noticias (debajo de la barra); sin ella, el lienzo
-       entero, igual que siempre. La barra mide lo mismo que en tet1.html:
-       la imagen 1200×93 escalada al ancho de la salida. */
+    /* F5d/Q2 · zona útil del dibujo: con la plantilla Tet News activa es el
+       cuerpo del canvas entre las DOS barras (cabecera y pie, como en las
+       capturas de tet1); sin ella, el lienzo entero, igual que siempre.
+       La barra mide lo mismo que en tet1.html: la imagen 1200×93 escalada
+       al ancho de la salida. */
     var RUTA_BARRA_NEWS = './public/img/bars/tetnews.png';
     var BARRA_RATIO = 93 / 1200;
 
@@ -1479,19 +1575,26 @@
         return bh;
     }
 
+    /* Q2 · con la plantilla activa hay DOS barras (cabecera y pie, como en
+       las capturas de tet1): el cuerpo es el medio y todo lo que se dibuje
+       dentro —fondo, contenido, textos y manijas— se adapta al tamaño
+       elegido sin perder el marco de Tet News */
     function zonaDibujo() {
         if (!noticiaActiva) return { x: 0, y: 0, w: lienzo.width, h: lienzo.height };
         var barH = altoBarraNews();
-        return { x: 0, y: barH, w: lienzo.width, h: Math.max(1, lienzo.height - barH) };
+        return { x: 0, y: barH, w: lienzo.width, h: Math.max(1, lienzo.height - barH * 2) };
     }
 
     function pintarFondo() {
         ctx.fillStyle = inpFondo.value;
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
-        // F5d: plantilla Tet News = barra azul arriba + cuerpo de color
+        // F5d/Q2: plantilla Tet News = barra azul arriba y abajo + cuerpo
         // (blanco por defecto, igual que el editor de noticias)
         if (noticiaActiva && barraNewsLista && barraNews.naturalWidth) {
-            ctx.drawImage(barraNews, 0, 0, lienzo.width, altoBarraNews());
+            var bh = altoBarraNews();
+            ctx.imageSmoothingQuality = 'high';   // Q2: la barra a la mayor nitidez
+            ctx.drawImage(barraNews, 0, 0, lienzo.width, bh);              // cabecera
+            ctx.drawImage(barraNews, 0, lienzo.height - bh, lienzo.width, bh);   // pie
         }
     }
 
@@ -1719,10 +1822,14 @@
             var pl = supLogoPos.value;
             var x = margen;
             var y = margen;
+            /* Q2: con Tet News las posiciones «abajo» se anclan al pie del
+               cuerpo para que el logo no pise la barra inferior */
+            var zLogo = noticiaActiva ? zonaDibujo() : null;
+            var bajo = zLogo ? zLogo.y + zLogo.h : h;
             if (pl === 'arriba-derecha') x = w - margen - lw;
-            else if (pl === 'abajo-izquierda') y = h - margen - lh;
-            else if (pl === 'abajo-derecha') { x = w - margen - lw; y = h - margen - lh; }
-            else if (pl === 'abajo-centro') { x = (w - lw) / 2; y = h - margen - lh; }
+            else if (pl === 'abajo-izquierda') y = bajo - margen - lh;
+            else if (pl === 'abajo-derecha') { x = w - margen - lw; y = bajo - margen - lh; }
+            else if (pl === 'abajo-centro') { x = (w - lw) / 2; y = bajo - margen - lh; }
             ctx.drawImage(logoImg, x, y, lw, lh);
         }
 
@@ -1885,14 +1992,15 @@
             tx = t.x * w;
             ty = t.y * h;
             var media = (lineas.length - 1) * lh / 2 + fs * 0.6;
-            // F5b/N1: el bloque entero cabe en su zona (y en el lienzo)
+            // F5b/N1/Q2: el bloque entero cabe en su zona (con Tet News,
+            // el cuerpo entre las dos barras; sin ella, el lienzo completo)
             tx = Math.max(maxTw / 2, Math.min(w - maxTw / 2, tx));
-            ty = Math.max(Math.max(fs / 2, z.y + media), Math.min(h - media, ty));
+            ty = Math.max(Math.max(fs / 2, z.y + media), Math.min(z.y + z.h - media, ty));
             anclaje = 'centro';
         } else if (tp === 'abajo-centro') {
             ctx.textAlign = 'center';
             tx = w / 2;
-            ty = h - margen - fs / 2;
+            ty = z.y + z.h - margen - fs / 2;
             anclaje = 'abajo';
         } else if (tp === 'arriba-centro') {   // N2: el titular va arriba al centro
             ctx.textAlign = 'center';
@@ -1906,7 +2014,7 @@
                 ty = z.y + margen + fs / 2;   // N1: bajo la barra de Tet News
                 anclaje = 'arriba';
             } else {
-                ty = h - margen - fs / 2;
+                ty = z.y + z.h - margen - fs / 2;
                 anclaje = 'abajo';
             }
         }
@@ -4208,7 +4316,8 @@
                          ini: c.ini, fin: c.fin, blob: c.blob };
             }),
             form: {
-                tam: selTam.value, dur: inpDur.value, modoDur: selModoDur.value,
+                tam: selTam.value, plat: (selPlat ? selPlat.value : ''),
+                dur: inpDur.value, modoDur: selModoDur.value,
                 ajuste: selAjuste.value, trans: selTrans.value, fondo: inpFondo.value,
                 news: chkNews.checked, calidad: selCalidad.value,
                 esc: inpEscContenido.value, pos: supLogoPos.value,
@@ -4339,6 +4448,13 @@
                 el.dispatchEvent(new Event('change', { bubbles: true }));
             });
         inpEscContenido.dispatchEvent(new Event('input', { bubbles: true }));
+        /* Q2: la plataforma refleja el tamaño restaurado; si el snapshot
+           guardó plataforma (Reel, Short…), esa manda, porque del tamaño
+           solo se deduciría la primera coincidencia (TikTok) */
+        if (selPlat && e.form.plat && PLATAFORMAS_VIDEO[e.form.plat]) {
+            selPlat.value = e.form.plat;
+            wrapPlatCustom.hidden = (selPlat.value !== 'custom');
+        }
         /* lista, editor y lienzo reflejan el estado restaurado */
         pintarTira();
         pintaListaTextos();
