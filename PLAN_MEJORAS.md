@@ -27,7 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
-| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -1026,6 +1026,19 @@ amigable y rápida». Un commit por pieza.
   algún día tiene `source` válido, se serializa y restaura tal cual.
   E2E: añadir → Ctrl+Z (1→0) → Ctrl+Mayús+Z (0→1), consola 0,
   `node --check`, barrido 17/17; `?v=q1b` en `tet1.html`.
+- **Q1c · Textos fáciles en móvil ✅**. Los textos nuevos nacen ya
+  con lo pedido —**10 s, negro, tamaño 5, fundido de entrada y de
+  salida, sombra fuerte (90)**— y **empiezan cuando termina el
+  anterior** (encadenado: si el anterior dura «hasta el final»,
+  +10 s). El título sigue naciendo con su tamaño grande (12) y los
+  presets de tipo (N2) siguen mandando en posición/tamaño/entrada,
+  ahora con entrada «aparecer» también en cuerpo. Botón nuevo
+  **«Repartir textos en el vídeo»**: reparte inicio y duración de
+  todos por igual (el último cierra exactamente en el final); con
+  Tet News sigue mandando además el reparto automático de inicios
+  (N3b). E2E: campos iniciales 10/0/negro/5/fundido/90, cadena
+  0→10, reparto 30 s en 0–15 + 15–15, consola 0, `node --check`,
+  barrido 17/17; `?v=q1c` en `video.html` (script y CSS).
 
 ---
 

@@ -158,6 +158,7 @@
     var listaTextos = document.getElementById('vid-textos-lista');   // F5e
     var btnAddTexto = document.getElementById('vid-texto-add');      // F5e
     var btnAddTitulo = document.getElementById('vid-texto-titulo-add');   // N2
+    var btnRepartirTexto = document.getElementById('vid-texto-repartir'); // Q1c
     var btnTxtCentrarH = document.getElementById('vid-txt-centrar-h');    // N5
     var btnTxtCentrarV = document.getElementById('vid-txt-centrar-v');    // N5
     var editTexto = document.getElementById('vid-texto-edit');       // F5e
@@ -2660,11 +2661,12 @@
        dur = 0 → hasta el final del vídeo). */
     /* N2 · tipos de texto: presets de un toque para montar rápido desde el
        móvil. Solo tocan posición, tamaño y entrada: color, tipografía, tiempos
-       y contenido son del usuario y no se pisan. */
+       y contenido son del usuario y no se pisan. Q1c: la entrada por defecto
+       es fundido en todos y cuerpo/subtítulo nacen en tamaño 5 */
     var TIPOS_TEXTO = {
-        titulo: { pos: 'arriba-centro', tam: 12, anim: 'deslizar', animDur: 0.7, x: 0.5, y: 0.14 },
-        subtitulo: { pos: 'personalizada', tam: 7, anim: 'aparecer', animDur: 0.6, x: 0.5, y: 0.26 },
-        cuerpo: { pos: 'abajo-centro', tam: 7, anim: 'ninguna', animDur: 1, x: 0.5, y: 0.9 }
+        titulo: { pos: 'arriba-centro', tam: 12, anim: 'aparecer', animDur: 0.7, x: 0.5, y: 0.14 },
+        subtitulo: { pos: 'personalizada', tam: 5, anim: 'aparecer', animDur: 0.6, x: 0.5, y: 0.26 },
+        cuerpo: { pos: 'abajo-centro', tam: 5, anim: 'aparecer', animDur: 1, x: 0.5, y: 0.9 }
     };
 
     function aplicaTipo(t) {
@@ -2674,23 +2676,33 @@
     }
 
     function nuevoTexto(txt, n, tipo) {
+        /* Q1c · «texto fácil en móvil»: el nuevo nace con 10 s, negro,
+           tamaño 5, fundido de entrada y salida y sombra fuerte (90), y
+           EMPIEZA cuando termina el anterior (si el anterior dura «hasta
+           el final», +10 s). El título conserva su tamaño grande */
+        var ini = 0;
+        if (n > 0 && textos[n - 1]) {
+            var prev = textos[n - 1];
+            ini = (prev.dur > 0) ? prev.inicio + prev.dur : prev.inicio + 10;
+            ini = Math.round(ini * 10) / 10;
+        }
         var t = {
             txt: txt || '',
             tipo: tipo || 'cuerpo',   // N2
             pos: n === 0 ? 'abajo-centro' : 'personalizada',
             x: 0.5,
             y: Math.max(0.12, 0.9 - n * 0.08),   // los nuevos se apilan
-            tam: 7,
-            anim: 'ninguna',
+            tam: 5,
+            anim: 'aparecer',
             animDur: 1,
-            salida: 'ninguna',
+            salida: 'fundido',
             salidaDur: 0.5,
-            inicio: 0,
-            dur: 0,
-            color: '#ffffff',   // F9
+            inicio: ini,
+            dur: 10,
+            color: '#000000',   // F9 · Q1c: negro por defecto
             fuente: 'sistema',  // F9
             peso: 'negrita',    // F9
-            sombra: 60          // P9: 0–100; 60 es el dibujo histórico
+            sombra: 90          // P9 · Q1c: sombra fuerte
         };
         if (tipo) aplicaTipo(t);   // N2: el título/subtítulo nace donde debe
         return t;
@@ -2996,6 +3008,32 @@
         redistribuyeTextos();   // N3b
         seleccionaTexto(textos.length - 1);
         inpTxtContenido.focus();
+    });
+
+    /* Q1c · «Repartir textos en el vídeo»: cada texto ocupa su trozo,
+       seguido y sin solapes; el último cierra exactamente en el final */
+    btnRepartirTexto.addEventListener('click', function () {
+        if (!textos.length) {
+            aviso('No hay textos que repartir', 'info');
+            return;
+        }
+        var T = totalSalida();
+        if (!(T > 0)) {
+            aviso('Añade imágenes o vídeos para saber la duración', 'info');
+            return;
+        }
+        var seg = Math.round(T / textos.length * 10) / 10;
+        for (var i = 0; i < textos.length; i++) {
+            textos[i].inicio = Math.round(i * seg * 10) / 10;
+            textos[i].dur = (i === textos.length - 1)
+                ? Math.round((T - textos[i].inicio) * 10) / 10
+                : seg;
+        }
+        pintaListaTextos();
+        pintaRielSalida();
+        cargaEditor();
+        repintarSuperp();
+        aviso('Textos repartidos: ' + fmtSeg(seg) + ' s por texto', 'success');
     });
 
     /* arranca con un texto listo para escribir (abajo al centro) */

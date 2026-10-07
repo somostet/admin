@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=p10">
+    <link rel="stylesheet" href="./public/css/video.css?v=q1c">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -451,6 +451,11 @@
                             <button type="button" class="btn btn-outline-primary w-100 mt-2" id="vid-texto-titulo-add">
                                 <i class="fas fa-heading" aria-hidden="true"></i> Añadir título
                             </button>
+                            <!-- Q1c · reparte inicio y duración de todos los
+                                 textos a lo largo del vídeo -->
+                            <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="vid-texto-repartir">
+                                <i class="fas fa-arrows-alt-h" aria-hidden="true"></i> Repartir textos en el vídeo
+                            </button>
                         </div>
                         <div class="col-12" id="vid-texto-edit" hidden>
                             <div class="form-label mt-1">Editar texto</div>
@@ -722,7 +727,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=p10"></script>
+    <script src="./public/js/video.js?v=q1c"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
