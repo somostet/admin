@@ -203,14 +203,33 @@
     padding: 0;
 }
 
-.gif-video-estado {
+.gif-video-estado,
+.gif-lienzo-estado {
     margin-top: .5rem;
     color: var(--sh-text);
     opacity: .8;
 }
 
-.gif-video-estado.text-warning {
+.gif-video-estado.text-warning,
+.gif-lienzo-estado.text-warning {
     opacity: 1;
+}
+
+/* ---------- D3 · grabar el lienzo ---------- */
+.gif-lienzo-wrap {
+    margin-top: .25rem;
+    padding: .5rem;
+    border: 1px dashed var(--sh-border);
+    border-radius: .55rem;
+    background: rgba(127, 127, 127, .12);
+    text-align: center;
+    overflow-x: auto;
+}
+
+/* Fabric envuelve el canvas en .canvas-container: centrarlo como bloque */
+.gif-lienzo-wrap .canvas-container {
+    display: inline-block;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .35);
 }
 
 /* móvil: los ajustes que caben en dos columnas se quedan legibles */

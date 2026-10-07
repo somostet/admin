@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/gif.css?v=d2">
+    <link rel="stylesheet" href="./public/css/gif.css?v=d3">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea GIFs animados a partir de tus imágenes, un vídeo o el lienzo. Todo se procesa en tu dispositivo.">
@@ -69,7 +69,7 @@
                 <div class="gif-caja">
                     <div class="gif-caja-cab">
                         <h1 class="gif-titulo"><i class="fas fa-file-image" aria-hidden="true"></i> Crear GIF</h1>
-                        <p class="gif-subtitulo">Imágenes o un vídeo → un GIF animado. Todo se procesa en tu dispositivo, sin subir nada a ningún servidor.</p>
+                        <p class="gif-subtitulo">Imágenes, un vídeo o el lienzo → un GIF animado. Todo se procesa en tu dispositivo, sin subir nada a ningún servidor.</p>
                     </div>
 
                     <label class="btn btn-primary w-100 gif-cargar" for="gif-archivos">
@@ -142,6 +142,55 @@
                         </div>
                     </div>
 
+                    <!-- D3 · grabar el lienzo: plantillas de Fabric con la
+                         rotación automática de la shell → fotogramas -->
+                    <div class="gif-separador"><span>o el lienzo</span></div>
+
+                    <div class="gif-lienzo-wrap" id="gif-lienzo-wrap">
+                        <canvas id="gif-lienzo-fab" width="640" height="360"
+                                aria-label="Lienzo con la plantilla seleccionada"></canvas>
+                    </div>
+
+                    <div class="row g-3 mt-0">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="gif-lienzo-plantilla">Plantilla</label>
+                            <select class="form-select" id="gif-lienzo-plantilla"></select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" for="gif-lienzo-duracion">Segundos</label>
+                            <input type="number" class="form-control" id="gif-lienzo-duracion" min="1" max="600"
+                                   step="1" value="3" inputmode="numeric">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" for="gif-lienzo-fps">Fotogramas/s</label>
+                            <select class="form-select" id="gif-lienzo-fps">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="15">15</option>
+                                <option value="20">20</option>
+                                <option value="25">25</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary w-100 gif-cargar" id="gif-lienzo-rotar"
+                                    aria-label="Rotar plantillas automáticamente" title="Rotar plantillas automáticamente">
+                                <i class="fas fa-play" aria-hidden="true"></i> Rotar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-text gif-lienzo-estado" id="gif-lienzo-estado"></div>
+
+                    <button type="button" class="btn btn-outline-primary w-100 gif-cargar mt-2" id="gif-grabar" disabled>
+                        <i class="fas fa-record-vinyl" aria-hidden="true"></i> Grabar lienzo
+                    </button>
+                    <div class="gif-progreso" id="gif-grabar-progreso" hidden>
+                        <div class="progress" role="progressbar" aria-label="Grabando el lienzo"
+                             aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" id="gif-grabar-barra" style="width: 0%">0%</div>
+                        </div>
+                        <div class="form-text" id="gif-grabar-estado">Grabando…</div>
+                    </div>
+
                     <div class="gif-tira-wrap" id="gif-tira-wrap" hidden>
                         <div class="gif-tira" id="gif-tira" aria-label="Fotogramas del GIF (selecciona uno para reordenarlo o quitarlo)"></div>
                         <div class="sh-barra gif-acciones" id="gif-acciones">
@@ -183,7 +232,7 @@
 
                     <div class="gif-preview" id="gif-preview">
                         <canvas id="gif-lienzo" width="1080" height="1080" aria-label="Vista previa del GIF"></canvas>
-                        <p class="gif-vacio" id="gif-vacio">Agrega imágenes o un vídeo para ver la vista previa</p>
+                        <p class="gif-vacio" id="gif-vacio">Agrega imágenes, un vídeo o graba el lienzo para ver la vista previa</p>
                     </div>
 
                     <div class="gif-progreso" id="gif-progreso" hidden>
@@ -249,10 +298,11 @@
 
     <!-- Scripts -->
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/vendor/gifenc/gifenc.js"></script>
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=d1"></script>
-    <script src="./public/js/gif.js?v=d2"></script>
+    <script src="./public/js/gif.js?v=d3"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

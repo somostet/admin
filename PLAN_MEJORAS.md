@@ -22,7 +22,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | UX 2026 — chrome, portapapeles, formato arriba, navbar ▶ | ✅ Completada (`6bd2f45`, `9fe8fbb`, `da1b520`, `c467604`) |
 | Diferidos (pendiente de prueba visual) | 🅿️ Offcanvas, plantilla común, catálogo de elementos |
 | Seguridad | 📋 Plan propio en [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md) (S1 quitar jQuery · S2 CSP · S3 validar .json · S4 deps · S5 higiene) · **S1–S5 ✅ Hechos** (`ef790f0`, `2ecdd54`, `0f0d9d6`, `d53a510`, `b15bf6d`) |
-| Lote D — GIF (`gif.html`) | 🔨 **D1 imágenes→GIF ✅ · D2 vídeo→GIF ✅** · D3 grabar lienzo ⬜ |
+| Lote D — GIF (`gif.html`) | ✅ **Completada** (`D1 imágenes→GIF`, `D2 vídeo→GIF`, `D3 grabar lienzo`) |
 | Lote E — Vídeo (`video.html`) | 🔨 **E1 imágenes→vídeo ✅ · E3 subir/recortar ✅ · E2 grabar en directo ✅ · E4 duración hasta 5 min ✅ · E5 varios vídeos (montaje) ✅ · E5b recorte por clip ✅** |
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
@@ -158,9 +158,26 @@ de npm es CommonJS sin `require()`, así que se envuelve en IIFE y se usa como
   codificación— y el delay se pone solo a `1000/fps` para que el GIF vaya
   a la velocidad del vídeo. *Lección:* `1.2 − 0.4` da `7,999…` y el
   `floor` se comía el último fotograma → `+1e-6` de margen.
-- **D3 · Grabar el lienzo → GIF**: lienzo fabric en la propia página (con la
-  rotación de plantillas de la shell) + duración/fps → captura de fotogramas
-  del canvas → misma tubería.
+- **D3 · Grabar el lienzo → GIF ✅** (validado en Chrome: 19 plantillas en el
+  selector, lienzo pintado de fábrica —265 colores, ya sin el gris de
+  `Plantilla3`—, «Segundos»/fps con recorte a 60, rotación ▶ cada 1400 ms
+  arrancando/parando y elección manual que la detiene, grabación de 2 s →
+  20 fotogramas con dos plantillas distintas en la tira —la rotación quedó
+  capturada—, delay 100 ms, GIF89a 520×520 contrastado con ffprobe
+  —30 frames en la prueba de 3 s—, regresiones D1 (2 fotogramas) y D2 (9
+  fotogramas con el `terminar` refactorizado), consola 0 y barrido 17/17):
+  lienzo de Fabric (`fabric.min.js` ya vendorizado) en la propia página que
+  pinta la plantilla elegida ajustada al contenedor (máx. 520 px de alto,
+  fondo blanco), selector con las **19 plantillas con contenido** —fuera
+  `Plantilla3` y `miniaturaYouTube`, PNGs planos de un solo color que
+  darían fotogramas vacíos—, **Rotar** con el mismo ritmo de 1400 ms de la
+  shell, «Segundos» y fps con aviso en vivo «X s a Y fps → N fotogramas» y
+  **Grabar lienzo** que captura en tiempo real con `toDataURL('jpeg')` →
+  `Image` → `fotos[]` (misma tubería; delay `1000/fps`). En `file://` se
+  carga `plantillas-data.js` como en video.html para no teñir el lienzo.
+  *Lecciones:* el cambio de plantilla a mano debe **repintar** (solo
+  paraba la rotación) y las cargas concurrentes se resuelven con un
+  testigo (`pintaToken`): gana lo último pedido, no lo último en cargar.
 
 **Validación**: abrir el `.gif` resultante en Chrome y móvil, doble clic
 `file://`, barrido HTTP 200.

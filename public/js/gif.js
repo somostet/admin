@@ -174,6 +174,7 @@
         btnDuplicar.disabled = sel < 0 || fotos.length >= MAX_FOTOS;
         btnQuitar.disabled = sel < 0;
         actualizaExtraer();   // D2: el botón de extraer sigue el mismo ritmo
+        actualizaGrabar();    // D3: idem con «Grabar lienzo»
     }
 
     function mover(desde, hasta) {
@@ -621,22 +622,255 @@
         }
 
         function terminar() {
-            // sustituye lo que hubiera (los blob: de imágenes sueltos se revocan)
-            fotos.forEach(function (f) {
-                if (f.url.indexOf('blob:') === 0) soltarUrl(f.url);
-            });
-            fotos = nuevas;
-            sel = -1;
-            // el GIF va a la velocidad del vídeo
-            inpDelay.value = String(Math.max(20, Math.round(1000 / g.fps)));
             limpiar();
-            pintarTira();
-            aviso(g.n + ' fotogramas extraídos' +
+            instalaFotogramas(nuevas, g.fps,
+                g.n + ' fotogramas extraídos' +
                 (g.corto ? ' (rango recortado a ' + MAX_FOTOS + ')' : '') +
-                ' · ' + w + '×' + h + ' px', 'success');
-            tiraWrap.scrollIntoView({ block: 'nearest' });
+                ' · ' + w + '×' + h + ' px');
         }
 
         setTimeout(paso, 0);
     }
+
+    /* Fotogramas ya convertidos en Image → sustituyen la tira, dejan el
+       delay a la velocidad pedida y lo cuentan (compartido por D2 vídeo y
+       D3 lienzo; los blob: de las imágenes sueltas se revocan). */
+    function instalaFotogramas(nuevas, fps, mensaje) {
+        fotos.forEach(function (f) {
+            if (f.url.indexOf('blob:') === 0) soltarUrl(f.url);
+        });
+        fotos = nuevas;
+        sel = -1;
+        inpDelay.value = String(Math.max(20, Math.round(1000 / fps)));
+        pintarTira();
+        aviso(mensaje, 'success');
+        tiraWrap.scrollIntoView({ block: 'nearest' });
+    }
+
+    /* ---------- D3 · grabar el lienzo → fotogramas ----------
+       Lienzo de Fabric en la propia página con el selector de plantillas y
+       la rotación automática de la shell (▶ cada 1400 ms). Se graba lo que
+       se ve a la fps y duración pedidas: cada fotograma pasa por
+       toDataURL('jpeg') → Image → fotos[] y manda la MISMA tubería que
+       D1/D2. Todo con canvas propio, así funciona en file:// y Pages (en
+       doble clic se carga plantillas-data.js, como en video.html, para no
+       teñir el lienzo). */
+    var PLANTILLAS_GIF = [
+        // completas (1200×1200 con contenido). Fuera Plantilla3 y
+        // miniaturaYouTube: PNGs planos de un solo color, solo sirven de
+        // fondo en sus editores y en el GIF darían fotogramas vacíos.
+        ['./public/img/Plantillas/mh.png', 'acontecimientos históricos'],
+        ['./public/img/Plantillas/tet2/P_GNU_LINUX.png', 'comandos Linux'],
+        ['./public/img/Plantillas/tet2/P_html.png', 'HTML 5'],
+        ['./public/img/Plantillas/tet2/P_css.png', 'CSS'],
+        ['./public/img/Plantillas/tet2/P_js.png', 'JS'],
+        ['./public/img/dictec/code.png', 'Code'],
+        ['./public/img/dictec/tech.png', 'Tech'],
+        ['./public/img/dictec/game.png', 'Game'],
+        ['./public/img/Plantillas/tet1/TBtet.png', 'TBtet 1'],
+        ['./public/img/Plantillas/tet1/TBtet2.png', 'TBtet 2'],
+        ['./public/img/Plantillas/tet1/creadores.png', 'creadores tet'],
+        // barras (finas, 1200×93): se ven como tira
+        ['./public/img/bars/tetnews.png', 'tet news (barras)'],
+        ['./public/img/bars/somostetCuri.png', 'curiosidades'],
+        ['./public/img/bars/somostetR.png', 'reseñas'],
+        ['./public/img/bars/somostetMB.png', 'mentes brillantes'],
+        ['./public/img/bars/somostetTT.png', 'tecnología a través del tiempo'],
+        ['./public/img/bars/somostetTF2079.png', '2079: tecnología del futuro'],
+        ['./public/img/bars/somostetArt.png', 'artículo'],
+        ['./public/img/bars/somostetBlanco.png', 'blanco']
+    ];
+    var selTplGif = document.getElementById('gif-lienzo-plantilla');
+    var btnRotar = document.getElementById('gif-lienzo-rotar');
+    var inpDur = document.getElementById('gif-lienzo-duracion');
+    var selFpsLi = document.getElementById('gif-lienzo-fps');
+    var btnGrabar = document.getElementById('gif-grabar');
+    var estLi = document.getElementById('gif-lienzo-estado');
+    var progLi = document.getElementById('gif-grabar-progreso');
+    var barraLi = document.getElementById('gif-grabar-barra');
+    var estGrab = document.getElementById('gif-grabar-estado');
+    var wrapLi = document.getElementById('gif-lienzo-wrap');
+    var lienzoFab = null;
+    var lienzoListo = false;
+    var timerRot = null;
+    var pintaToken = 0;
+
+    function actualizaGrabar() {
+        if (!btnGrabar) return;
+        btnGrabar.disabled = creando || !lienzoListo;
+    }
+
+    function rangoGrabado() {
+        var fps = parseInt(selFpsLi.value, 10) || 10;
+        var dur = Math.max(1, parseFloat(inpDur.value) || 1);
+        var n = Math.round(dur * fps);
+        var corto = false;
+        if (n > MAX_FOTOS) {
+            n = MAX_FOTOS;
+            dur = MAX_FOTOS / fps;
+            corto = true;
+        }
+        if (n < 2) { n = 2; dur = 2 / fps; }
+        return { dur: dur, fps: fps, n: n, corto: corto };
+    }
+
+    function actualizaEstadoLi() {
+        var g = rangoGrabado();
+        var txt = g.dur.toFixed(1) + ' s a ' + g.fps + ' fps → ' +
+            g.n + (g.n === 1 ? ' fotograma' : ' fotogramas');
+        estLi.classList.toggle('text-warning', g.corto);
+        estLi.textContent = (g.corto ? txt + ' (máximo ' + MAX_FOTOS + ': se recorta)' : txt) +
+            ' · pulsa ▶ para que las plantillas roten mientras graba';
+        actualizaGrabar();
+    }
+
+    function pararRot() {
+        if (timerRot) { clearInterval(timerRot); timerRot = null; }
+        btnRotar.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i> Rotar';
+        btnRotar.setAttribute('aria-label', 'Rotar plantillas automáticamente');
+        btnRotar.setAttribute('title', 'Rotar plantillas automáticamente');
+    }
+
+    [inpDur, selFpsLi].forEach(function (el) {
+        el.addEventListener('change', actualizaEstadoLi);
+    });
+
+    if (typeof fabric === 'undefined') {
+        estLi.textContent = 'El lienzo no está disponible: no se cargó Fabric';
+        aviso('El lienzo no está disponible: no se cargó Fabric', 'warning');
+    } else {
+        if (location.protocol === 'file:' && !window.TET_PLANTILLAS) {
+            var scPl = document.createElement('script');
+            scPl.src = './public/js/plantillas-data.js?v=d3';
+            scPl.async = true;
+            document.head.appendChild(scPl);
+        }
+
+        PLANTILLAS_GIF.forEach(function (p, i) {
+            var o = document.createElement('option');
+            o.value = String(i);
+            o.textContent = p[1];
+            selTplGif.appendChild(o);
+        });
+
+        lienzoFab = new fabric.Canvas('gif-lienzo-fab', {
+            selection: false,
+            backgroundColor: '#ffffff'
+        });
+
+        function rutaPlantilla() {
+            var ruta = PLANTILLAS_GIF[parseInt(selTplGif.value, 10) || 0][0];
+            return (location.protocol === 'file:' && window.TET_PLANTILLAS && window.TET_PLANTILLAS[ruta]) || ruta;
+        }
+
+        function pintaPlantilla() {
+            var token = ++pintaToken;   // si cambia antes de cargar, se descarta
+            var ruta = rutaPlantilla();
+            var nombre = PLANTILLAS_GIF[parseInt(selTplGif.value, 10) || 0][1];
+            var img = new Image();
+            img.onload = function () {
+                if (token !== pintaToken) return;
+                var maxW = Math.max(200, wrapLi.clientWidth - 14);
+                var maxH = 520;
+                var esc = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+                var w = Math.max(1, Math.round(img.naturalWidth * esc));
+                var h = Math.max(1, Math.round(img.naturalHeight * esc));
+                lienzoFab.setDimensions({ width: w, height: h });
+                lienzoFab.backgroundColor = '#ffffff';
+                lienzoFab.setBackgroundImage(ruta, lienzoFab.renderAll.bind(lienzoFab), {
+                    originX: 'left', originY: 'top', width: w, height: h
+                });
+                lienzoListo = true;
+                actualizaGrabar();
+            };
+            img.onerror = function () {
+                if (token !== pintaToken) return;
+                lienzoListo = false;
+                actualizaGrabar();
+                aviso('No se pudo cargar la plantilla «' + nombre + '»', 'danger');
+            };
+            img.src = ruta;
+        }
+
+        btnRotar.addEventListener('click', function () {
+            if (timerRot) { pararRot(); return; }
+            btnRotar.innerHTML = '<i class="fas fa-pause" aria-hidden="true"></i> Parar';
+            btnRotar.setAttribute('aria-label', 'Detener rotación de plantillas');
+            btnRotar.setAttribute('title', 'Detener rotación de plantillas');
+            timerRot = setInterval(function () {
+                var n = selTplGif.options.length;
+                selTplGif.value = String((parseInt(selTplGif.value, 10) + 1) % n);
+                pintaPlantilla();
+            }, 1400);
+        });
+        // una elección manual detiene la rotación y repinta (como en la shell)
+        selTplGif.addEventListener('change', function () {
+            pararRot();
+            pintaPlantilla();
+        });
+
+        pintaPlantilla();
+    }
+
+    btnGrabar.addEventListener('click', function () {
+        if (creando || !lienzoListo) return;
+        var g = rangoGrabado();
+        creando = true;
+        resWrap.hidden = true;
+        actualizarBarra();
+        progLi.hidden = false;
+        barraLi.style.width = '0%';
+        barraLi.textContent = '0%';
+        estGrab.textContent = 'Grabando…';
+        var nuevas = [];
+        var capturas = 0;
+        var cerrado = false;
+        var iv = null;
+
+        function terminar() {
+            if (cerrado) return;
+            cerrado = true;
+            if (iv) clearInterval(iv);
+            progLi.hidden = true;
+            creando = false;
+            instalaFotogramas(nuevas, g.fps,
+                g.n + ' fotogramas del lienzo · ' + lienzoFab.width + '×' + lienzoFab.height + ' px');
+        }
+
+        function falloGrab(e) {
+            if (cerrado) return;
+            cerrado = true;
+            if (iv) clearInterval(iv);
+            console.warn('gif: no se pudo grabar el lienzo', e);
+            aviso('No se pudo grabar el lienzo', 'danger');
+            progLi.hidden = true;
+            creando = false;
+            actualizarBarra();
+        }
+
+        function paso() {
+            if (capturas >= g.n || cerrado) return;
+            capturas++;
+            var data;
+            try {
+                data = lienzoFab.toDataURL({ format: 'jpeg', quality: 0.92 });
+            } catch (e) { return falloGrab(e); }
+            var img = new Image();
+            img.onload = function () {
+                nuevas.push({ url: data, img: img, nombre: 'lienzo ' + nuevas.length });
+                var pct = Math.round(nuevas.length / g.n * 100);
+                barraLi.style.width = pct + '%';
+                barraLi.textContent = pct + '%';
+                estGrab.textContent = 'Grabando ' + nuevas.length + ' de ' + g.n + '…';
+                if (nuevas.length >= g.n) terminar();
+            };
+            img.onerror = function () { falloGrab(new Error('fotograma ilegible')); };
+            img.src = data;
+        }
+
+        iv = setInterval(paso, Math.max(20, Math.round(1000 / g.fps)));
+        paso();
+    });
+
+    actualizaEstadoLi();
 })();
