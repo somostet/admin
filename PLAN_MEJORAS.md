@@ -27,6 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -1001,6 +1002,21 @@ amigable y rápida». Un commit por pieza.
   `mdhd` iguales, mismo tamaño, reproduce 4,0209 s, botón ≠
   reproductor, consola 0, barrido 17/17, `node --check` OK;
   `?v=p10` en `video.html` (script y CSS).
+
+---
+
+## 🟢 Lote Q — Móvil, plantillas y exportación (`tet1` · `video.html`) 🆕
+
+- **Q1a · Titular sin cortar en «Noticias» ✅**. Los titulares de
+  `tet1` se insertaban con `fabric.IText` sin ancho: IText no parte
+  líneas nunca y, centrado, se salía por los dos bordes del lienzo
+  (se comían letras de los lados en las capturas). Ahora es
+  `Textbox` con el mismo ancho que el detalle (`canvas.width − 100`)
+  y, si el bloque no cabe en el hueco hasta el detalle (130 px), la
+  letra encoge de 4 en 4 (mínimo 24) antes de insertarlo. E2E:
+  titular de 87 caracteres a 44 px —dentro del lienzo y sin invadir
+  el detalle—, consola 0, `node --check`, barrido 17/17; `?v=q1a`
+  en `tet1.html`.
 
 ---
 

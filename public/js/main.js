@@ -227,14 +227,36 @@ function picload() {
 function set_title() {
     var col = colorT.value;
     var titulo = titular.value;
-    var size = font_size.value;
+    var size = parseInt(font_size.value, 10);
+    var maxW = canvas.width - 100;   // igual que el detalle
+    var maxH = 130;                  // hueco entre el titular (730) y el detalle (870)
 
-    canvas.add(new fabric.IText(titulo, {
+    /* Q1a · el titular se parte en líneas y encoge si no cabe: antes era
+       IText sin ancho —no partía nunca— y centrado se salía por los dos
+       bordes del lienzo (se comían letras de los lados) */
+    var tmp = document.createElement('canvas').getContext('2d');
+    function parteTitulo(s) {
+        tmp.font = 'bold ' + s + 'px sans-serif';
+        var palabras = titulo.split(/\s+/).filter(Boolean);
+        if (!palabras.length) return [''];
+        var lineas = [], actual = palabras[0];
+        for (var i = 1; i < palabras.length; i++) {
+            var prueba = actual + ' ' + palabras[i];
+            if (tmp.measureText(prueba).width <= maxW) actual = prueba;
+            else { lineas.push(actual); actual = palabras[i]; }
+        }
+        lineas.push(actual);
+        return lineas;
+    }
+    while (size > 24 && parteTitulo(size).length * size * 1.16 > maxH) size -= 4;
+
+    canvas.add(new fabric.Textbox(titulo, {
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
         textAlign: 'center',
         fill: col,
         fontSize: size,
+        width: maxW,
         top: 730,
         hasControls: false,
         cornerColor: 'black',
