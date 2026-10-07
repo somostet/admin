@@ -27,7 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
-| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ⏳ (pendiente de audios) · Q5 exportar por plataforma ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -1099,6 +1099,30 @@ amigable y rápida». Un commit por pieza.
   casilla), fila de 44 px medida, barrido 17/17, mapa con 22 claves e
   `./public/img/Logotet.png`, consola 0, `node --check`; `?v=q3a` en
   `video.html` (script y CSS).
+- **Q4 · Lista de música ⏳**. Bloqueada: hace falta que lleguen los
+  audios a `public/audio/` («yo te la paso»).
+- **Q5 · Exportar por plataforma ✅**. La plataforma también vive en
+  el panel **Exportar**: fila de chips —Original, TikTok, Reel, Short,
+  YouTube, IG 1:1, IG 4:5 y A mano— de 44 px junto a «Crear vídeo»,
+  sincronizados en los dos sentidos con el selector de Ajustes (al
+  tocar un chip se dispara la misma `aplicaPlataforma` de Q2, con su
+  historial; cuando el tamaño o el deshacer cambian la plataforma «a
+  ciegas», el chip la sigue). Bajo los chips se ve el tamaño de
+  salida («700×1500 px (a mano)», «la de la imagen original»…). El
+  nombre del archivo pasa a ser **plataforma + fecha y hora** —
+  `short-2026-10-07-172739.mp4`, `personalizado-700x1500-…`— y
+  «Compartir vídeo» usa el mismo nombre; al recuperar un resultado
+  de IndexedDB manda el nombre guardado, porque la plataforma activa
+  al abrir no tiene por qué ser la del render. E2E: 8 chips a 44 px,
+  chip→Ajustes (TikTok 1080×1920) y Ajustes→chip (YouTube
+  1920×1080), deshacer short←tiktok —mismo tamaño, manda la
+  plataforma del snapshot—, render real con shim de rAF →
+  `short-2026-10-07-172739.mp4`, recarga conservando ese nombre con
+  la plataforma ya en «Original», render a mano →
+  `personalizado-700x1500-2026-10-07-172931.mp4`, sin imagen el
+  botón crear queda bloqueado (la prueba falló primero por eso),
+  consola 0, barrido 17/17, `node --check`; `?v=q5a` en `video.html`
+  (script y CSS).
 
 ---
 

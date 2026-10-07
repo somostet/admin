@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=q3a">
+    <link rel="stylesheet" href="./public/css/video.css?v=q5a">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -659,6 +659,42 @@
                     </div>
                     <div class="tab-pane fade" id="vid-pane-exportar" role="tabpanel"
                          aria-labelledby="vid-tab-exportar" tabindex="0">
+                    <!-- Q5 · la plataforma al lado de «Crear vídeo»: lo mismo que
+                         Ajustes, aquí a un toque; la activa manda en el tamaño
+                         de salida y en el nombre del archivo -->
+                    <div class="mt-2">
+                        <div class="form-label mb-1">Plataforma de salida</div>
+                        <div class="vid-plat-chips" id="vid-plat-chips" role="radiogroup"
+                             aria-label="Plataforma de salida">
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-orig" value="orig" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="vid-chip-orig">Original</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-tiktok" value="tiktok" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-tiktok">TikTok</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-reel" value="reel" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-reel">Reel</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-short" value="short" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-short">Short</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-youtube" value="youtube" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-youtube">YouTube</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-ig1" value="ig1" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-ig1">IG 1:1</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-ig45" value="ig45" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-ig45">IG 4:5</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-custom" value="custom" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-custom">A mano</label>
+                        </div>
+                        <div class="form-text">Tamaño de salida: <span id="vid-plat-res"></span>.
+                            El personalizado se cambia en Ajustes; la plataforma también
+                            se usa en el nombre del archivo.</div>
+                    </div>
                     <div class="form-text mt-2" id="vid-total"></div>
 
                     <!-- E2 · grabar el lienzo en directo: el par Grabar/Parar vive bajo
@@ -770,7 +806,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=n5 obliga a traer la versión con centrado por ejes de los textos aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=q3a"></script>
+    <script src="./public/js/video.js?v=q5a"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

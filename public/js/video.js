@@ -331,6 +331,7 @@
         sincPlatSilencioso = true;   // el valor ya está; que no nos reetiquete
         selTam.dispatchEvent(new Event('change', { bubbles: true }));
         sincPlatSilencioso = false;
+        pintaChipsPlat();   // Q5: el chip de «Exportar» va con la plataforma
     }
 
     /* reflejo inverso: si el tamaño cambia por otro camino (historial o la
@@ -347,6 +348,7 @@
         wrapPlatCustom.hidden = (id !== 'custom');
         var m = /^(\d+)x(\d+)$/.exec(v);
         if (m) { inpPlatAncho.value = m[1]; inpPlatAlto.value = m[2]; }
+        pintaChipsPlat();   // Q5: el tamaño manda y el chip lo sigue
     }
 
     /* evita bucle: aplicaPlataforma ya dejó la plataforma bien puesta */
@@ -364,6 +366,39 @@
     selTam.addEventListener('change', function () {
         if (!sincPlatSilencioso) sincronizaPlataforma();
     });
+
+    /* ---------- Q5 · la plataforma también vive en «Exportar» ---------- */
+    /* Los mismos tamaños que Ajustes, al lado del botón de crear: el chip
+       activo se pinta desde la plataforma viva (también cuando la cambia
+       el reflejo inverso o el historial, que a veces no lanzan «change») */
+    function pintaChipsPlat() {
+        var wrap = document.getElementById('vid-plat-chips');
+        if (!wrap || !selPlat) return;
+        var chip = document.getElementById('vid-chip-' + selPlat.value);
+        if (chip && !chip.checked) chip.checked = true;
+        var res = document.getElementById('vid-plat-res');
+        if (res) {
+            if (selPlat.value === 'orig') {
+                res.textContent = 'la de la imagen original';
+            } else if (selPlat.value === 'custom') {
+                res.textContent = selTam.value.replace('x', '×') + ' px (a mano)';
+            } else {
+                var p = PLATAFORMAS_VIDEO[selPlat.value];
+                res.textContent = p.tam.replace('x', '×') + ' px';
+            }
+        }
+    }
+
+    var wrapChipsPlat = document.getElementById('vid-plat-chips');
+    if (wrapChipsPlat) {
+        wrapChipsPlat.addEventListener('change', function (e) {
+            var t = e.target;
+            if (!t || !t.classList.contains('btn-check')) return;
+            selPlat.value = t.value;
+            selPlat.dispatchEvent(new Event('change', { bubbles: true }));   // → aplicaPlataforma + historial
+        });
+    }
+    pintaChipsPlat();
 
     /* ---------- carga de archivos (en cadena para respetar el orden) ---------- */
     input.addEventListener('change', function () {
@@ -3524,26 +3559,42 @@
     /* F10 · nombre de archivo único con fecha y hora: en el móvil cada
        render cae en Descargas y con «tet.mp4» fijo los archivos se pisan
        (o el sistema le añade « (1)»); las apps sociales distinguen mejor
-       un nombre único. La comparte el botón «Compartir vídeo»: usa el
-       mismo aDesc.download */
+       un nombre único. Q5: además de la hora, el nombre lleva la
+       plataforma para la que se renderizó («tiktok-2026-10-07-153045»),
+       que es lo que pediste para no confundir subidas. La comparte el
+       botón «Compartir vídeo»: usa el mismo aDesc.download */
+    var SLUGS_PLATAFORMA = {
+        orig: 'original', tiktok: 'tiktok', reel: 'reel', short: 'short',
+        youtube: 'youtube', ig1: 'ig-1x1', ig45: 'ig-4x5', custom: 'personalizado'
+    };
+
     function nombreConFecha(ext) {
         var d = new Date();
         var p = function (n) { return (n < 10 ? '0' : '') + n; };
-        return 'tet-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' +
+        var slug = 'tet';
+        if (selPlat) {
+            slug = SLUGS_PLATAFORMA[selPlat.value] || selPlat.value || 'tet';
+            if (selPlat.value === 'custom' && selTam && /^\d+x\d+$/.test(selTam.value)) {
+                slug += '-' + selTam.value;   // p. ej. personalizado-700x1500
+            }
+        }
+        return slug + '-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' +
             p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) +
             p(d.getSeconds()) + '.' + ext;
     }
 
     /* pinta el bloque de resultado desde un blob (recién grabado o
-       recuperado de IndexedDB); sinScroll = al restaurar al abrir */
-    function muestraResultado(blob, tipo, sinScroll, segs) {
+       recuperado de IndexedDB); sinScroll = al restaurar al abrir.
+       Q5: nombre opcional —al recuperar manda el guardado, porque la
+       plataforma activa al abrir no tiene por qué ser la del render— */
+    function muestraResultado(blob, tipo, sinScroll, segs, nombre) {
         if (urlVideo) URL.revokeObjectURL(urlVideo);
         if (urlDesc) { URL.revokeObjectURL(urlDesc); urlDesc = null; }
         urlVideo = URL.createObjectURL(blob);
         blobVideo = blob;
         var ext = (tipo === 'video/mp4') ? 'mp4' : 'webm';
         aDesc.href = urlVideo;
-        aDesc.download = nombreConFecha(ext);
+        aDesc.download = nombre || nombreConFecha(ext);
         txtDesc.textContent = 'Descargar vídeo ' + ext.toUpperCase() +
             ' (' + Math.round(blob.size / 1024) + ' KB)';
         repro.src = urlVideo;
@@ -3683,7 +3734,10 @@
                     try { db.close(); } catch (e) { }
                     var reg = req.result;
                     if (!reg || !reg.blob || !reg.blob.size || blobVideo) return;
-                    muestraResultado(reg.blob, reg.tipo || 'video/mp4', true);
+                    /* Q5: el nombre guardado manda —la plataforma activa
+                       al abrir no tiene por qué ser la del render */
+                    muestraResultado(reg.blob, reg.tipo || 'video/mp4', true,
+                        undefined, reg.nombre);
                     aviso('Recuperamos «' + (reg.nombre || 'tet') +
                         '»: seguía guardado en este equipo', 'info');
                 };
@@ -4602,6 +4656,7 @@
             selPlat.value = e.form.plat;
             wrapPlatCustom.hidden = (selPlat.value !== 'custom');
         }
+        pintaChipsPlat();   // Q5: el chip refleja la plataforma restaurada
         /* lista, editor y lienzo reflejan el estado restaurado */
         pintarTira();
         pintaListaTextos();

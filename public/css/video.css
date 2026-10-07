@@ -877,3 +877,17 @@
     float: none;
     margin: 0 .6em 0 0;
 }
+
+/* Q5 · chips de plataforma en «Exportar»: fila que envuelve y botones
+   de 44 px para el dedo */
+.vid-plat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.vid-plat-chips .btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
