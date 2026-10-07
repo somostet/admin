@@ -284,13 +284,21 @@
 
     function guardarEstado() {
         if (restaurando) return;
+        /* Q1b · el overlay de color de tet1 es un patrón con source nulo y su
+           toObject() truena leyendo null.src: se despega solo durante la
+           serialización (y si el source está bien, se conserva y restaura) */
+        var oc = canvas.overlayColor;
+        var ocRoto = oc && !oc.source;
+        if (ocRoto) canvas.overlayColor = null;
         try {
             var estado = JSON.stringify(canvas.toJSON());
         } catch (err) {
             // p.ej. canvas "tainted" al abrir como file://: sin historial, pero visible en consola
             console.warn('tet: no se pudo guardar el historial', err);
+            if (ocRoto) canvas.overlayColor = oc;
             return;
         }
+        if (ocRoto) canvas.overlayColor = oc;
         if (histIdx >= 0 && historial[histIdx] === estado) return;
         historial = historial.slice(0, histIdx + 1);
         historial.push(estado);

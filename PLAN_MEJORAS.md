@@ -27,7 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
-| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 
 ---
@@ -1017,6 +1017,15 @@ amigable y rápida». Un commit por pieza.
   titular de 87 caracteres a 44 px —dentro del lienzo y sin invadir
   el detalle—, consola 0, `node --check`, barrido 17/17; `?v=q1a`
   en `tet1.html`.
+- **Q1b · Deshacer de «Noticias» arreglado ✅**. El overlay de color
+  que fija `set_front_bar` quedaba como patrón con `source` nulo y su
+  `toObject()` truena (`null.src`) al serializar: `guardarEstado`
+  fallaba en **cada** guardado, el historial no avanzaba y Ctrl+Z no
+  hacía nada (solo un warning en consola). Ahora el overlay roto se
+  despega durante la serialización y se restaura al terminar; si
+  algún día tiene `source` válido, se serializa y restaura tal cual.
+  E2E: añadir → Ctrl+Z (1→0) → Ctrl+Mayús+Z (0→1), consola 0,
+  `node --check`, barrido 17/17; `?v=q1b` en `tet1.html`.
 
 ---
 
