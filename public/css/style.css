@@ -606,14 +606,46 @@ textarea:focus-visible,
         display: none;
     }
 
-    /* R7 · el desplegable «Crear» ocupa todo el ancho de la barra: antes
-       (min-width 232 px anclado a «Crear») se salía por la derecha y
-       provocaba scroll horizontal —«el menú mata el responsive» */
+    /* R7/R8 · en móvil el desplegable «Crear» ocupa todo el ancho de la
+       barra: antes (232 px anclado a «Crear») se salía por la derecha y
+       provocaba scroll horizontal —«el menú mata el responsive».  Se
+       clava a .tet-nav (relative) con el <li> en static y !important
+       para que mande sobre los estilos inline de Popper */
+    .tet-nav .navbar-nav .dropdown {
+        position: static;
+    }
+
     .tet-nav .navbar-nav .dropdown-menu {
-        left: 0;
-        right: 0;
-        width: 100%;
-        min-width: 0;
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin-top: 0 !important;
+        border-radius: 0 0 10px 10px;
+    }
+
+    /* R8 · el toggle «Crear» se convierte en hamburguesa (44 px táctiles) */
+    .tet-nav-menu .dropdown-toggle {
+        font-size: 0;   /* oculta el texto «Crear», sigue accesible */
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tet-nav-menu .dropdown-toggle::before {
+        content: '\\f0c9';   /* fa-bars */
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        font-size: 1.25rem;
+    }
+
+    .tet-nav-menu .dropdown-toggle::after {
+        display: none;   /* oculta la flechita del dropdown */
     }
 }
 
