@@ -33,6 +33,29 @@
     min-height: 44px;
 }
 
+/* R3 · textos de ayuda («form-text»): Bootstrap los pinta #6c757d y sobre
+   el fondo oscuro casi no se leían («el texto aquí no se ve»). Aquí no hay
+   contenedor .shell, así que mandan los tokens: blanco en tema oscuro y
+   gris de siempre en claro */
+.form-text {
+    color: var(--sh-text);
+}
+
+/* R3 · botones «outline-secondary»: mismo color #6c757d pensado para
+   fondo blanco — «Ver lienzo», «Rotar»… quedaban casi invisibles sobre
+   el panel oscuro (los deshabilitados siguen mandando los suyos) */
+.btn-outline-secondary {
+    color: var(--sh-text);
+    border-color: rgba(255, 255, 255, .42);
+}
+
+.btn-outline-secondary:not(:disabled):hover,
+.btn-outline-secondary:not(:disabled):focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .75);
+}
+
 /* F8 · la fila de captura usa `d-flex` (utilidad con !important) y eso gana
    a `[hidden]` de Bootstrap: hay que reforzar el ocultado para que solo se
    vea mientras se graba la pestaña */

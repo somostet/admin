@@ -1891,9 +1891,8 @@
         }
 
         // F5e: cada texto de la lista, dentro de su ventana temporal y con su
-        // animación de entrada y de salida; por defecto blanco en negrita con
-        // sombra para que se lea sobre cualquier fondo (F9: color/fuente/peso
-        // propios de cada texto)
+        // animación de entrada y de salida; color, familia y peso propios de
+        // cada texto (F9) y sombra opcional (P9: los nuevos salen sin ella)
         cajaTextoSel = null;
         cajasTextos = [];   // M1: se rellena con la caja de cada texto dibujado
         var zSup = noticiaActiva ? zonaDibujo() : null;   // N1: textos en el cuerpo
@@ -2939,11 +2938,12 @@
         });
     });
 
-    /* Q3 · arranque: preferencias recordadas (posición, tamaño y casilla) y
-       el logo en cuanto el mapa de plantillas esté listo */
+    /* Q3/R4 · arranque: preferencias recordadas (posición, tamaño y casilla)
+       y el logo solo si la casilla está activa — R4: por defecto NO se
+       añade ningún logo al lienzo */
     (function () {
         var cfg = leeLogoCfg();
-        supLogoAuto.checked = cfg.auto !== false;   // por defecto, activo
+        supLogoAuto.checked = (cfg.auto === true);   // R4: por defecto, apagado
         if (cfg.pos) supLogoPos.value = cfg.pos;
         if (cfg.tam) supLogoTam.value = cfg.tam;
         cuandoPlantillasListas(cargaLogoAutomatico);
@@ -2971,10 +2971,11 @@
     }
 
     function nuevoTexto(txt, n, tipo) {
-        /* Q1c · «texto fácil en móvil»: el nuevo nace con 10 s, negro,
-           tamaño 5, fundido de entrada y salida y sombra fuerte (90), y
-           EMPIEZA cuando termina el anterior (si el anterior dura «hasta
-           el final», +10 s). El título conserva su tamaño grande */
+        /* Q1c/R4 · «texto fácil en móvil»: el nuevo nace con 10 s, negro,
+           tamaño 5, fundido de entrada y salida y SIN sombra (antes fuerte:
+           90; R4: por defecto ninguna), y EMPIEZA cuando termina el
+           anterior (si el anterior dura «hasta el final», +10 s). El título
+           conserva su tamaño grande */
         var ini = 0;
         if (n > 0 && textos[n - 1]) {
             var prev = textos[n - 1];
@@ -2997,7 +2998,7 @@
             color: '#000000',   // F9 · Q1c: negro por defecto
             fuente: 'sistema',  // F9
             peso: 'negrita',    // F9
-            sombra: 90          // P9 · Q1c: sombra fuerte
+            sombra: 0           // P9/R4: sin sombra por defecto
         };
         if (tipo) aplicaTipo(t);   // N2: el título/subtítulo nace donde debe
         return t;
@@ -4811,10 +4812,10 @@
         chkNews.checked = e.form.news;
         supLogoPos.value = e.form.pos;
         supLogoTam.value = e.form.tamLog;
-        /* Q3: la casilla va con el snapshot, pero sin lanzar «change» —
+        /* Q3/R4: la casilla va con el snapshot, pero sin lanzar «change» —
            el logo de la sesión ya viene en el snapshot y no hay que
-           recargarlo ni quitarlo otra vez */
-        supLogoAuto.checked = (e.form.logoAuto !== false);
+           recargarlo ni quitarlo otra vez; R4: sin dato, apagada */
+        supLogoAuto.checked = (e.form.logoAuto === true);
         inpEscContenido.value = e.form.esc;
         [selTam, inpDur, selModoDur, selAjuste, selTrans, inpFondo, selCalidad,
             chkNews, supLogoPos, supLogoTam].forEach(function (el) {

@@ -33,6 +33,27 @@
     min-height: 44px;
 }
 
+/* R3 · textos de ayuda («form-text»): Bootstrap los pinta #6c757d y sobre
+   el fondo oscuro casi no se leían (mismo arreglo que en video.css) */
+.form-text {
+    color: var(--sh-text);
+}
+
+/* R3 · botones «outline-secondary»: mismo color #6c757d pensado para
+   fondo blanco — «Rotar», «Elegir vídeo»… casi invisibles sobre el panel
+   oscuro (los deshabilitados siguen mandando los suyos) */
+.btn-outline-secondary {
+    color: var(--sh-text);
+    border-color: rgba(255, 255, 255, .42);
+}
+
+.btn-outline-secondary:not(:disabled):hover,
+.btn-outline-secondary:not(:disabled):focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .75);
+}
+
 .gif-tira-wrap {
     margin-top: .75rem;
 }
