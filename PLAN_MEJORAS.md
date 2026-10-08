@@ -29,7 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
-| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas → Diferidos** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas → Diferidos · R6 plantilla somostet + posición ✅** |
 
 ---
 
@@ -1234,6 +1234,17 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
   añadir texto refleja Sin sombra/0 y la recarga mantiene los defaults.
 - **R5 · Mezclar imágenes y texto como en un editor moderno** → pedido en
   abierto, ver «Diferidos» (capas mixtas).
+- **R6 · Plantilla «somostet» y posición de la barra ✅** («sale 2 veces…
+  quiero una que solo salga somostet… otra opción»): el interruptor «Tet
+  News» pasa a un **selector de plantilla** —Sin plantilla / Tet News /
+  **somostet** (segunda opción, debajo de Tet News)— con la barra
+  `bars/somostet.png` (407×93: franja negra con «somostet.com» a la
+  izquierda). Nuevo selector **«Posición de la barra»**: Arriba y abajo
+  (como antes) / Solo arriba / Solo abajo. `somostet.png` también se
+  añade al mapa `file://` (`tools/embed-plantillas.js`, 23 plantillas).
+  E2E: píxeles del lienzo (franja negra arriba/abajo según posición),
+  Tet News intacto, snapshot con plantilla+posición, consola 0,
+  barrido 21/21, `node --check`.
 
 ---
 

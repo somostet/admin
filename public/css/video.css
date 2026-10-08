@@ -268,13 +268,6 @@
     }
 }
 
-/* F5d · controles de la plantilla Tet News: filas de 44px para el dedo */
-.vid-news-fila {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-}
-
 #vid-contenido-esc {
     height: 44px;   /* el recorrido completo del input es zona de toque */
 }

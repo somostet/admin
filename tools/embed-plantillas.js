@@ -20,6 +20,7 @@ var plantillas = [
     './public/img/Plantilla3.png',
     './public/img/Logotet.png',   // Q3: el logo automático de video.html
     './public/img/bars/tetnews.png',
+    './public/img/bars/somostet.png',   // R6: barra «solo somostet» de video.html
     './public/img/bars/somostetCuri.png',
     './public/img/bars/somostetR.png',
     './public/img/bars/somostetMB.png',

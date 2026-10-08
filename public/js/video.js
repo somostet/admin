@@ -78,7 +78,8 @@
     var selAjuste = document.getElementById('vid-ajuste');
     var selTrans = document.getElementById('vid-transicion');
     var inpFondo = document.getElementById('vid-fondo');
-    var chkNews = document.getElementById('vid-news');                     // F5d
+    var selPlantilla = document.getElementById('vid-plantilla');      // R6
+    var selBarraPos = document.getElementById('vid-barra-pos');        // R6
     var inpEscContenido = document.getElementById('vid-contenido-esc');    // F5d
     var btnCentrarContenido = document.getElementById('vid-contenido-centrar'); // F5d
     var btnCentrarContH = document.getElementById('vid-contenido-centrar-h');   // N4
@@ -88,7 +89,7 @@
     var btnLlenar = document.getElementById('vid-contenido-llenar');       // M2: atajo «Llenar»
     var btnAjustar = document.getElementById('vid-contenido-ajustar');     // M2: atajo «Ajustar»
     var manijaContenido = document.getElementById('vid-manija-contenido'); // F5d
-    var noticiaActiva = false;   // F5d: plantilla Tet News activa
+    var noticiaActiva = false;   // F5d/R6: hay plantilla con barra (Tet News o somostet)
     var contPos = null;          // F5d: centro del contenido en fracciones (null = automático)
     var contEsc = 1;             // F5d: multiplicador del ajuste automático (1 = auto)
     var cajaContenido = null;    // F5d: última caja dibujada del contenido
@@ -99,6 +100,8 @@
     var contRedimBase = null;     // M2: estado del escalado al empezar
     var barraNews = new Image(); // F5d: barra «tet news» (1200×93)
     var barraNewsLista = false;
+    var barraSomostet = new Image(); // R6: barra «somostet» (407×93)
+    var barraSomostetLista = false;
     var vidTotal = document.getElementById('vid-total');
     var lienzo = document.getElementById('vid-lienzo');
     var ctx = lienzo.getContext('2d', { willReadFrequently: false });
@@ -1605,8 +1608,11 @@
        La barra mide lo mismo que en tet1.html: la imagen 1200×93 escalada
        al ancho de la salida. */
     var RUTA_BARRA_NEWS = './public/img/bars/tetnews.png';
+    var RUTA_BARRA_SOMOSTET = './public/img/bars/somostet.png';   // R6
     var RUTA_LOGO_DEFECTO = './public/img/Logotet.png';   // Q3: logo de tet
     var BARRA_RATIO = 93 / 1200;
+    var plantillaActiva = 'ninguna';   // R6: 'news' | 'somostet'
+    var barraPos = 'ambas';            // R6: 'arriba' | 'abajo' | 'ambas'
 
     function altoBarraNews() {
         var bh = Math.round(lienzo.width * BARRA_RATIO);
@@ -1619,22 +1625,37 @@
        dentro —fondo, contenido, textos y manijas— se adapta al tamaño
        elegido sin perder el marco de Tet News */
     function zonaDibujo() {
-        if (!noticiaActiva) return { x: 0, y: 0, w: lienzo.width, h: lienzo.height };
+        if (plantillaActiva === 'ninguna') return { x: 0, y: 0, w: lienzo.width, h: lienzo.height };
         var barH = altoBarraNews();
-        return { x: 0, y: barH, w: lienzo.width, h: Math.max(1, lienzo.height - barH * 2) };
+        var nBarras = (barraPos === 'ambas') ? 2 : 1;   // R6: posición elegida
+        var y0 = (barraPos === 'abajo') ? 0 : barH;
+        return { x: 0, y: y0, w: lienzo.width, h: Math.max(1, lienzo.height - barH * nBarras) };
     }
 
     function pintarFondo() {
         ctx.fillStyle = inpFondo.value;
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
-        // F5d/Q2: plantilla Tet News = barra azul arriba y abajo + cuerpo
-        // (blanco por defecto, igual que el editor de noticias)
-        if (noticiaActiva && barraNewsLista && barraNews.naturalWidth) {
-            var bh = altoBarraNews();
-            ctx.imageSmoothingQuality = 'high';   // Q2: la barra a la mayor nitidez
-            ctx.drawImage(barraNews, 0, 0, lienzo.width, bh);              // cabecera
-            ctx.drawImage(barraNews, 0, lienzo.height - bh, lienzo.width, bh);   // pie
+        // F5d/Q2/R6: plantilla = barra arriba y/o abajo + cuerpo (blanco
+        // por defecto, igual que el editor de noticias)
+        if (plantillaActiva === 'ninguna') return;
+        var img = (plantillaActiva === 'news') ? barraNews : barraSomostet;
+        var lista = (plantillaActiva === 'news') ? barraNewsLista : barraSomostetLista;
+        if (!lista || !img.naturalWidth) return;
+        var bh = altoBarraNews();
+        ctx.imageSmoothingQuality = 'high';   // Q2: la barra a la mayor nitidez
+        if (plantillaActiva === 'somostet') {
+            // R6: la imagen es un segmento (407×93): franja negra con la
+            // marca a la izquierda (su fondo ya es negro opaco)
+            ctx.fillStyle = '#000';
+            if (barraPos !== 'abajo') ctx.fillRect(0, 0, lienzo.width, bh);
+            if (barraPos !== 'arriba') ctx.fillRect(0, lienzo.height - bh, lienzo.width, bh);
+            var esc = bh / 93;
+            if (barraPos !== 'abajo') ctx.drawImage(img, 0, 0, Math.round(407 * esc), bh);
+            if (barraPos !== 'arriba') ctx.drawImage(img, 0, lienzo.height - bh, Math.round(407 * esc), bh);
+            return;
         }
+        if (barraPos !== 'abajo') ctx.drawImage(img, 0, 0, lienzo.width, bh);              // cabecera
+        if (barraPos !== 'arriba') ctx.drawImage(img, 0, lienzo.height - bh, lienzo.width, bh);   // pie
     }
 
     /* F5d · la barra se sirve como data: URL en doble clic (mismo motivo que
@@ -1651,9 +1672,18 @@
         };
         barraNews.onerror = function () {
             barraNewsLista = false;
-            if (noticiaActiva) aviso('No se pudo cargar la barra de Tet News', 'danger');
+            if (plantillaActiva === 'news') aviso('No se pudo cargar la barra de Tet News', 'danger');
         };
         barraNews.src = urlRecurso(RUTA_BARRA_NEWS);
+        barraSomostet.onload = function () {
+            barraSomostetLista = true;
+            repintarSuperp();
+        };
+        barraSomostet.onerror = function () {
+            barraSomostetLista = false;
+            if (plantillaActiva === 'somostet') aviso('No se pudo cargar la barra de somostet', 'danger');
+        };
+        barraSomostet.src = urlRecurso(RUTA_BARRA_SOMOSTET);
     }
 
     /* Q3 · el mapa de plantillas data: puede llegar tarde (en file:// se
@@ -1677,7 +1707,7 @@
         // en doble clic no hay servidor: los data: URL evitan el lienzo
         // «tainted», que rompería la grabación y las descargas
         var scPlantillas = document.createElement('script');
-        scPlantillas.src = './public/js/plantillas-data.js?v=q3a';
+        scPlantillas.src = './public/js/plantillas-data.js?v=r2';
         scPlantillas.async = true;
         scPlantillas.onload = function () { cargarBarraNews(); marcaPlantillasListas(); };
         scPlantillas.onerror = function () { cargarBarraNews(); marcaPlantillasListas(); };
@@ -1687,10 +1717,11 @@
         marcaPlantillasListas();
     }
 
-    /* F5d · interruptor de la plantilla: el contenido pasa a vivir dentro del
+    /* F5d/R6 · selector de plantilla: el contenido pasa a vivir dentro del
        cuerpo, contenido y centrado (como en el canvas de imágenes) */
-    chkNews.addEventListener('change', function () {
-        noticiaActiva = chkNews.checked;
+    function aplicaPlantilla() {
+        plantillaActiva = selPlantilla.value;
+        noticiaActiva = (plantillaActiva !== 'ninguna');
         inpEscContenido.disabled = !noticiaActiva;
         btnCentrarContenido.disabled = !noticiaActiva;
         btnCentrarContH.disabled = !noticiaActiva;   // N4
@@ -1704,6 +1735,14 @@
             aviso('Ajuste cambiado a «contener» para que se vea el contenido en la plantilla', 'info');
         }
         pintaAjusteRapido();   // M2: resalta el atajo tras el posible cambio a «contener»
+        repintarSuperp();
+        actualizaManijaContenido();
+    }
+    selPlantilla.addEventListener('change', aplicaPlantilla);
+
+    /* R6 · posición de la barra: arriba, abajo o ambas */
+    selBarraPos.addEventListener('change', function () {
+        barraPos = selBarraPos.value;
         repintarSuperp();
         actualizaManijaContenido();
     });
@@ -4688,7 +4727,7 @@
                 tam: selTam.value, plat: (selPlat ? selPlat.value : ''),
                 dur: inpDur.value, modoDur: selModoDur.value,
                 ajuste: selAjuste.value, trans: selTrans.value, fondo: inpFondo.value,
-                news: chkNews.checked, calidad: selCalidad.value,
+                plantilla: selPlantilla.value, barraPos: selBarraPos.value, calidad: selCalidad.value,
                 esc: inpEscContenido.value, pos: supLogoPos.value,
                 tamLog: supLogoTam.value, logoAuto: supLogoAuto.checked   // Q3
             }
@@ -4809,16 +4848,19 @@
         selTrans.value = e.form.trans;
         inpFondo.value = e.form.fondo;
         selCalidad.value = e.form.calidad;
-        chkNews.checked = e.form.news;
         supLogoPos.value = e.form.pos;
         supLogoTam.value = e.form.tamLog;
         /* Q3/R4: la casilla va con el snapshot, pero sin lanzar «change» —
            el logo de la sesión ya viene en el snapshot y no hay que
            recargarlo ni quitarlo otra vez; R4: sin dato, apagada */
         supLogoAuto.checked = (e.form.logoAuto === true);
+        /* R6: plantilla y posición de la barra van con el snapshot */
+        selPlantilla.value = e.form.plantilla || 'ninguna';
+        selBarraPos.value = e.form.barraPos || 'ambas';
+        aplicaPlantilla();
         inpEscContenido.value = e.form.esc;
         [selTam, inpDur, selModoDur, selAjuste, selTrans, inpFondo, selCalidad,
-            chkNews, supLogoPos, supLogoTam].forEach(function (el) {
+            supLogoPos, supLogoTam].forEach(function (el) {
                 el.dispatchEvent(new Event('change', { bubbles: true }));
             });
         inpEscContenido.dispatchEvent(new Event('input', { bubbles: true }));
