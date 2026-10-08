@@ -1247,11 +1247,10 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
   barrido 21/21, `node --check`.
 - **R2b · Iconos con fondo azul de marca ✅** («el icono se sigue viendo
   horrible… solo pon la versión transparente y fondo azul»): los iconos
-  pasan de navy `#1d2b43` a **azul de marca `#0055d4`** con el símbolo
-  circular transparente (`tetlogoFondo.png`, esquinas transparentes) —
-  la versión transparente sobre azul. `VERSION` → `tet-admin-v4` (las
-  imágenes van con CacheFirst: sin versión nueva el móvil seguiría con
-  los iconos viejos).
+  usan la imagen del header (`Logotet.png`, el símbolo circular con
+  esquinas transparentes) sobre **azul de marca `#0055d4`**.
+  `VERSION` → `tet-admin-v5` (las imágenes van con CacheFirst: sin
+  versión nueva el móvil seguiría con los iconos viejos).
 - **R7 · Desplegable «Crear» a todo ancho en móvil ✅** («el menú sigue
   matando el responsive»): el desplegable (232 px anclado a «Crear») se
   salía por la derecha y provocaba scroll horizontal → en ≤575.98 px
@@ -1269,7 +1268,9 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
   los snapshots antiguos con `ambas` se normalizan a «Solo arriba» al
   restaurar y la variable se sanea en todos los repintados. E2E: píxeles
   (somostet/Tet News arriba o abajo), opciones del select, CSSOM con las
-  reglas, consola 0, `node --check`.
+  reglas, consola 0, `node --check`. Corregido el escape del hamburguesa
+  (`content: '\\f0c9'` con UNA barra: con la doble se mostraba el texto
+  `\foc9`) y subido el token a `style.css?v=r3` para invalidar la caché.
 - **R9 · Portada de la vista previa ✅** («el primer fotograma empieza en
   negro»): nuevo bloque en «Recorte/fuente» con (a) **subir imagen** —se
   pone como `poster` del `<video>` y como portada del lienzo (fondo →
