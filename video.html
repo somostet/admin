@@ -277,6 +277,28 @@
                             <label class="form-label" id="vid-lbl-fuente" for="vid-fuente">Vídeo original — arrástralo para elegir el punto</label>
                             <video id="vid-fuente" class="w-100" controls playsinline preload="metadata"></video>
                         </div>
+
+                        <!-- R9 · portada de la vista previa: imagen o instante
+                             que se muestra antes de reproducir -->
+                        <div class="col-12" id="vid-portada-wrap">
+                            <div class="form-label mt-1" for="vid-portada-img">Portada de la vista previa
+                                <small class="text-body-secondary">(antes de reproducir)</small></div>
+                            <input type="file" class="form-control" id="vid-portada-img" accept="image/*">
+                            <div class="form-text">Sube una imagen o elige el instante actual como
+                                portada —así el vídeo no arranca en negro—</div>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                <button type="button" class="btn btn-outline-secondary text-nowrap"
+                                        id="vid-portada-instante">
+                                    <i class="fas fa-camera" aria-hidden="true"></i> Usar este instante
+                                </button>
+                                <button type="button" class="btn btn-outline-danger text-nowrap"
+                                        id="vid-portada-quitar">
+                                    <i class="fas fa-trash" aria-hidden="true"></i> Quitar
+                                </button>
+                            </div>
+                            <div class="form-text mb-0 mt-1" id="vid-portada-estado">Sin portada: se ve el primer fotograma.</div>
+                        </div>
+
                         <div class="col-12 col-sm-6 col-lg-3">
                             <label class="form-label" for="vid-rec-in">Inicio del recorte (s)</label>
                             <div class="d-flex gap-2">
@@ -840,7 +862,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r3"></script>
+    <script src="./public/js/video.js?v=r4"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

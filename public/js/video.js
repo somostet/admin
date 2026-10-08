@@ -143,6 +143,15 @@
     var recMarcarIn = document.getElementById('vid-rec-marcar-in');
     var recMarcarFin = document.getElementById('vid-rec-marcar-fin');
     var vidFuente = document.getElementById('vid-fuente');
+    var portadaImgInp = document.getElementById('vid-portada-img');   // R9
+    var portadaInstBtn = document.getElementById('vid-portada-instante');
+    var portadaQuitarBtn = document.getElementById('vid-portada-quitar');
+    var portadaEstado = document.getElementById('vid-portada-estado');
+    var portadaImg = null;      // R9: Image con la portada subida (null = sin portada)
+    var portadaObjUrl = null;   // R9: object URL de la portada (para revocar)
+    var portadaT = null;        // R9: instante (s) si se eligió «este instante»
+    var portadaVer = false;     // R9: true mientras el lienzo muestra la portada
+    var MARCA_TEXTO_PORTADA = 'Sin portada: se ve el primer fotograma.';
     var vidMini = document.getElementById('vid-mini');        // vídeo oculto para las miniaturas
     var riel = document.getElementById('vid-riel');
     var rielFotos = document.getElementById('vid-riel-fotos');
@@ -699,7 +708,8 @@
         // sin este empujón la vista previa se queda en el color de fondo
         vidFuente.addEventListener('loadedmetadata', function oy() {
             vidFuente.removeEventListener('loadedmetadata', oy);
-            if (!vidFuente.currentTime) vidFuente.currentTime = 0;
+            if (portadaImg) return;   // R9: con portada de imagen no se busca (taparía el poster)
+            if (!vidFuente.currentTime) vidFuente.currentTime = (portadaT != null) ? portadaT : 0;
         });
         reiniciarPreview();
         trasActivaClip();   // E5b: riel y miniaturas del clip que acaba de entrar
@@ -711,6 +721,62 @@
         generarMiniaturas();
         actualizaCrear();
     }
+
+    /* R9 · portada de la vista previa: imagen o instante antes de reproducir */
+    vidFuente.addEventListener('play', function () {   // al reproducir manda el vídeo
+        if (portadaVer) { portadaVer = false; marcoSucio = true; dibujarFrame(vidFuente); }
+    });
+
+    function quitaPortada() {
+        portadaImg = null;
+        portadaT = null;
+        portadaVer = false;
+        if (portadaObjUrl) { URL.revokeObjectURL(portadaObjUrl); portadaObjUrl = null; }
+        vidFuente.removeAttribute('poster');
+        portadaEstado.textContent = MARCA_TEXTO_PORTADA;
+    }
+
+    portadaImgInp.addEventListener('change', function () {
+        var f = portadaImgInp.files && portadaImgInp.files[0];
+        if (!f) return;
+        var url = URL.createObjectURL(f);
+        var im = new Image();
+        im.onload = function () {
+            portadaImg = im;
+            portadaT = null;   // la imagen tapa al instante
+            portadaVer = true;
+            if (portadaObjUrl) URL.revokeObjectURL(portadaObjUrl);
+            portadaObjUrl = url;
+            vidFuente.poster = url;   // el <video> también muestra la portada
+            portadaEstado.textContent = 'Portada: ' + f.name;
+            marcoSucio = true;
+            dibujarFrame(vidFuente);
+        };
+        im.onerror = function () {
+            URL.revokeObjectURL(url);
+            aviso('No se pudo leer «' + f.name + '» como imagen', 'danger');
+        };
+        im.src = url;
+    });
+
+    portadaInstBtn.addEventListener('click', function () {
+        if (!videoCargado) return;
+        portadaT = vidFuente.currentTime || 0;
+        portadaImg = null;
+        portadaVer = false;   // el vídeo ya muestra ese fotograma
+        if (portadaObjUrl) { URL.revokeObjectURL(portadaObjUrl); portadaObjUrl = null; }
+        vidFuente.removeAttribute('poster');
+        try { vidFuente.currentTime = portadaT; } catch (e) {}
+        portadaEstado.textContent = 'Portada: instante ' + fmt(portadaT) + ' s';
+        marcoSucio = true;
+        dibujarFrame(vidFuente);
+    });
+
+    portadaQuitarBtn.addEventListener('click', function () {
+        quitaPortada();
+        marcoSucio = true;
+        reiniciarPreview();
+    });
 
     function pintaCola() {
         var n = colaVideos.length;
@@ -821,6 +887,7 @@
        último —o se vacía por dentro— se llega aquí) */
     function quitarVideo(silencio) {
         if (grabando) return;
+        quitaPortada();   // R9: la portada era del vídeo que se quita
         vidFuente.pause();
         vidFuente.removeAttribute('src');
         vidFuente.load();
@@ -1884,6 +1951,11 @@
         if (!v) return;
         var tMs = Math.max(0, desfaseActivo + (v.currentTime || 0)
             - rangoRecorte().inicio) * 1000;
+        if (portadaVer && portadaImg) {
+            dibujar(portadaImg, 1);   // R9: la portada tapa al vídeo hasta «play»
+            dibujarSuperposiciones(tMs);
+            return;
+        }
         pintarFondo();
         if (v.readyState >= 2) {
             if (selAjuste.value === 'blur') pintarDesenfado(v);
