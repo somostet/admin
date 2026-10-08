@@ -677,6 +677,20 @@
                                         <span class="vid-contenido-valor" id="vid-txt-sombra-val">0</span>
                                     </div>
                                 </div>
+                                <!-- P3.2 · borde de la letra: barra 0–10 + color -->
+                                <div class="col-6 col-lg-8">
+                                    <label class="form-label" for="vid-txt-borde">Borde de la letra</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="range" class="form-range flex-grow-1" id="vid-txt-borde"
+                                               min="0" max="10" step="1" value="0">
+                                        <span class="vid-contenido-valor" id="vid-txt-borde-val">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-4">
+                                    <label class="form-label" for="vid-txt-borde-color">Color del borde</label>
+                                    <input type="color" class="form-control form-control-color" id="vid-txt-borde-color"
+                                           value="#000000" title="Color del borde">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -862,7 +876,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r4"></script>
+    <script src="./public/js/video.js?v=r6"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

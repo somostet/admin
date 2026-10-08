@@ -114,7 +114,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
    - **Export en px exactos**: canvas offscreen con recorte **cover centrado** (`m = max(W/sw, H/sh)`) desde el backstore → no redimensiona el lienzo ni rompe plantillas. Fichero `tet_<w>x<h>.png`.
    - **Guía de recorte** sobre el lienzo (zona recortada atenuada + etiqueta con px) y **zona segura** cuando el preset la define; conmutable.
    - Preset **Origen** (tamaño original del lienzo, por defecto) y bloque de formato integrado en la **barra superior** de la shell (tet1), con botón de descarga compacto.
-2. ⬜ **Textos con borde/sombra** con controles en la UI.
+2. ✅ **Textos con borde/sombra** con controles en la UI. La sombra ya está en P9 (Lote P); ahora se añade el **borde**: barra 0–10 + color, aplicado al dibujo (strokeText antes del relleno, ancho a escala de la letra, lineJoin=round), en nuevoTexto y en histCaptura/histRestaura vía JSON de textos, con espejo del editor (pintaBordeEditor, mismo patrón que pintaSombraEditor). E2E: texto con borde rojo visible en el lienzo (PNG + píxeles), consola 0.
 3. ⬜ **Panel de capas extendido**: miniaturas de preview, drag & drop, bloquear capa.
 4. ⬜ **Galería de plantillas** con previews generadas.
 5. ✅ **PWA instalable**: manifest completo (iconos 192/512 + maskable desde `Logotet.png`, `start_url`/`scope` relativos, `display: standalone`) + `apple-touch-icon` (180) y metas iOS/Android en las 9 páginas. Sw: se arregló el cacheo de html/js (`clone()` diferido → nunca guardaba → sin offline real), fallback 5xx→caché (el proxy sin red devuelve 502, que es respuesta y no error), fuentes en CacheFirst y `limitar()` a 40 entradas. Probado con servidor apagado: `gif.html` renderiza completo desde caché (19 plantillas + fabric); sweep 21/21. Lección: tras cambiar `sw.js`, en pruebas lanzar `registration.update()` explícito (la recarga sola no basta).
@@ -1325,7 +1325,7 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
 - P1.7 offcanvas del formulario en móvil.
 - P2.15 guía de estado vacío.
 - **Lote S — seguridad** (quitar jQuery, CSP, validar `.json`): ver [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md).
-- P3.2–P3.4 textos con borde/sombra, capas con preview/lock, galería de plantillas.
+- P3.3–P3.4 panel de capas con preview/lock, galería de plantillas. (P3.2 → ✅ Lote P3.2.)
 - P4.8 plantilla común de HTML.
 
 Todos ellos requieren **prueba visual en el navegador** antes de darlos por buenos.

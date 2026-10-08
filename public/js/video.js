@@ -195,6 +195,9 @@
     var inpTxtColor = document.getElementById('vid-txt-color');     // F9
     var selTxtSombra = document.getElementById('vid-txt-sombra');       // P9
     var inpTxtSombra = document.getElementById('vid-txt-sombra-int');   // P9
+    var inpTxtBorde = document.getElementById('vid-txt-borde');           // P3.2
+    var valTxtBorde = document.getElementById('vid-txt-borde-val');       // P3.2
+    var inpTxtBordeColor = document.getElementById('vid-txt-borde-color'); // P3.2
     var valTxtSombra = document.getElementById('vid-txt-sombra-val');   // P9
     var selTxtFuente = document.getElementById('vid-txt-fuente');   // F9
     var selTxtPeso = document.getElementById('vid-txt-peso');       // F9
@@ -2151,6 +2154,13 @@
             ctx.shadowBlur = 0;
             ctx.shadowOffsetY = 0;
         }
+        /* P3.2 · borde de la letra: ancho a escala del tamaño + color propio */
+        var tieneBorde = (typeof t.borde === 'number') && t.borde > 0;
+        if (tieneBorde) {
+            ctx.strokeStyle = t.bordeColor || '#000000';
+            ctx.lineWidth = Math.max(1, Math.round(fs * t.borde * 0.02));
+            ctx.lineJoin = 'round';   // esquinas suaves en letras gruesas
+        }
         var tp = t.pos;
         var tx;
         var ty;
@@ -2228,6 +2238,7 @@
                     var ly = (anclaje === 'arriba') ? ty + lh * li
                         : (anclaje === 'abajo') ? ty - lh * (n - 1 - li)
                         : ty + lh * (li - (n - 1) / 2);
+                    if (tieneBorde) ctx.strokeText(salidaLinea, tx, ly + dy);
                     ctx.fillText(salidaLinea, tx, ly + dy);
                 }
             }
@@ -3110,7 +3121,9 @@
             color: '#000000',   // F9 · Q1c: negro por defecto
             fuente: 'sistema',  // F9
             peso: 'negrita',    // F9
-            sombra: 0           // P9/R4: sin sombra por defecto
+            sombra: 0,               // P9/R4: sin sombra por defecto
+            borde: 0,                // P3.2: sin borde por defecto
+            bordeColor: '#000000'    // P3.2
         };
         if (tipo) aplicaTipo(t);   // N2: el título/subtítulo nace donde debe
         return t;
@@ -3265,6 +3278,7 @@
         selTxtFuente.value = FUENTES_VIDEO[t.fuente] ? t.fuente : 'sistema';
         selTxtPeso.value = PESOS_VIDEO[t.peso] ? t.peso : 'negrita';
         pintaSombraEditor(t);   // P9
+        pintaBordeEditor(t);    // P3.2
     }
 
     /* el texto se escribe directo en la lista: se repinta al escribir y se
@@ -3380,6 +3394,30 @@
         if (!isFinite(v)) v = SOMBRAS_PRESET.normal;
         t.sombra = Math.max(0, Math.min(100, v));
         pintaSombraEditor(t);
+        repintarSuperp();
+    });
+
+    /* P3.2 · el editor refleja el borde: barra 0–10 + color; 0 = sin borde */
+    function pintaBordeEditor(t) {
+        var v = (typeof t.borde === 'number') ? t.borde : 0;
+        inpTxtBorde.value = String(v);
+        valTxtBorde.textContent = String(v);
+        inpTxtBordeColor.value = t.bordeColor || '#000000';
+    }
+
+    inpTxtBorde.addEventListener('input', function () {
+        var t = textoActual();
+        if (!t) return;
+        var v = parseInt(inpTxtBorde.value, 10);
+        if (!isFinite(v)) v = 0;
+        t.borde = Math.max(0, Math.min(10, v));
+        pintaBordeEditor(t);
+        repintarSuperp();
+    });
+    inpTxtBordeColor.addEventListener('input', function () {
+        var t = textoActual();
+        if (!t) return;
+        t.bordeColor = inpTxtBordeColor.value;
         repintarSuperp();
     });
 
