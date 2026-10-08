@@ -1,7 +1,8 @@
 /* Service Worker de tet admin — vanilla (sin Workbox ni CDN en runtime)
    Estrategias equivalentes al sw.js anterior:
-   - html/js: NetworkFirst   - css: StaleWhileRevalidate   - imágenes: CacheFirst (máx 20, 7 días) */
-const VERSION = 'tet-admin-v1';
+   - html/js: NetworkFirst (y 5xx -> copia en caché)   - css: StaleWhileRevalidate
+   - imágenes y fuentes: CacheFirst (máx 20, 7 días) */
+const VERSION = 'tet-admin-v2';
 
 const CACHE_HTML = 'tet-html-' + VERSION;
 const CACHE_JS = 'tet-js-' + VERSION;
@@ -35,8 +36,20 @@ self.addEventListener('activate', function (event) {
 function networkFirst(request, cacheName) {
     return fetch(request).then(function (response) {
         if (response && response.ok) {
-            var cache = caches.open(cacheName);
-            cache.then(function (c) { c.put(request, response.clone()); });
+            // El clon se hace ANTES de devolver la respuesta: si se difiere, el
+            // navegador ya se ha llevado el body y clone() revienta en silencio
+            // (html y js nunca se cacheaban y no había modo offline real).
+            var copia = response.clone();
+            caches.open(cacheName).then(function (c) {
+                return c.put(request, copia).then(function () { return limitar(c, 40); });
+            }).catch(function (e) {
+                console.warn('[sw] no se pudo guardar ' + request.url + ': ' + e);
+            });
+        }
+        // 5xx (p. ej. sin red el proxy responde 502, que es una respuesta y no
+        // un error): si hay copia en caché se sirve esa; sin copia, la respuesta.
+        if (response && response.status >= 500) {
+            return caches.match(request).then(function (guardada) { return guardada || response; });
         }
         return response;
     }).catch(function () {
@@ -44,6 +57,15 @@ function networkFirst(request, cacheName) {
             if (cached) return cached;
             throw new Error('sin red ni caché: ' + request.url);
         });
+    });
+}
+
+function limitar(cache, maximo) {
+    // las urls con ?t= de cada recarga se acumulan: nos quedamos con las últimas
+    return cache.keys().then(function (claves) {
+        if (claves.length > maximo) {
+            return cache.delete(claves[0]).then(function () { return limitar(cache, maximo); });
+        }
     });
 }
 
@@ -108,7 +130,7 @@ self.addEventListener('fetch', function (event) {
         event.respondWith(networkFirst(request, CACHE_JS));
     } else if (ruta.slice(-4) === '.css') {
         event.respondWith(staleWhileRevalidate(request, CACHE_CSS));
-    } else if (/\.(png|jpg|jpeg|svg|gif|webp|ico)$/i.test(ruta)) {
+    } else if (/\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|eot)$/i.test(ruta)) {
         event.respondWith(cacheFirst(request, CACHE_IMG));
     }
 });

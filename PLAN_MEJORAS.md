@@ -116,7 +116,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 2. ⬜ **Textos con borde/sombra** con controles en la UI.
 3. ⬜ **Panel de capas extendido**: miniaturas de preview, drag & drop, bloquear capa.
 4. ⬜ **Galería de plantillas** con previews generadas.
-5. ⬜ **PWA instalable**: icons en `manifest.webmanifest` + apple-touch-icon (revisar).
+5. ✅ **PWA instalable**: manifest completo (iconos 192/512 + maskable desde `Logotet.png`, `start_url`/`scope` relativos, `display: standalone`) + `apple-touch-icon` (180) y metas iOS/Android en las 9 páginas. Sw: se arregló el cacheo de html/js (`clone()` diferido → nunca guardaba → sin offline real), fallback 5xx→caché (el proxy sin red devuelve 502, que es respuesta y no error), fuentes en CacheFirst y `limitar()` a 40 entradas. Probado con servidor apagado: `gif.html` renderiza completo desde caché (19 plantillas + fabric); sweep 21/21. Lección: tras cambiar `sw.js`, en pruebas lanzar `registration.update()` explícito (la recarga sola no basta).
 
 ---
 

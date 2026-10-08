@@ -1,8 +1,16 @@
 {
     "name": "tet admin",
     "short_name": "tet admin",
+    "lang": "es",
+    "description": "Editores locales de imagenes, textos, GIF y video: nada sale de tu equipo.",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
     "theme_color": "#1d2b43",
     "background_color": "#d9d9d9",
-    "display": "minimal-ui",
-    "start_url": "/admin/index.html"
+    "icons": [
+        { "src": "./public/img/pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "./public/img/pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "./public/img/pwa-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
 }
