@@ -29,6 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas → Diferidos** |
 
 ---
 
@@ -1192,6 +1193,50 @@ amigable y rápida». Un commit por pieza.
 
 ---
 
+## 🐞 Lote R — Bugs de campo (lista del usuario con capturas, 07/10/2026)
+
+Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
+
+- **R1 · Navbar móvil sin iconos de redes ✅**. «La lista desplegable mata
+  el responsive»: a ≤575.98 px los 4 iconos sociales + «Crear» apretaban la
+  barra → `.navbar-social { display: none }` en la media query de
+  `style.css` (en pantallas grandes la base no cambia); las 9 páginas
+  comparten barra, así que una sola regla. Las reglas que encogían los
+  iconos a 30/27 px en ese ancho quedaron muertas y se quitaron.
+- **R2 · Iconos PWA con el símbolo circular ✅**. Los iconos usaban el logo
+  horizontal completo («tet admin.» + cursor) dentro del cuadrado: en el
+  launcher salía una caja blanca fea. Regenerados los 4 con
+  `tetlogoFondo.png` (símbolo circular con esquinas transparentes) sobre
+  fondo navy `#1d2b43` a sangre vía ffmpeg (`color` + `overlay`): pwa-192
+  al 66 %, pwa-512 al 66 %, maskable-512 al 75 % (dentro de la zona segura
+  del 80 %) y apple-touch-icon 180 al 66 %; verificados leyendo los PNG.
+  Como las imágenes van con CacheFirst en el SW, `VERSION` sube a
+  `tet-admin-v3` —sin versión nueva el móvil seguiría con los iconos
+  viejos—.
+- **R3 · Texto visible en tema oscuro ✅** («el texto aquí no se ve, ponlo
+  blanco y revisa si pasa en más lados»): `.form-text` hereda `#6c757d` de
+  Bootstrap y en vídeo/gif —que no llevan contenedor `.shell`— no les
+  llegaba la regla oscura del shell → casi invisibles sobre `#232323`.
+  Ahora `color: var(--sh-text)` en `video.css` y `gif.css`, e idem para los
+  botones `btn-outline-secondary` («Ver lienzo», «Rotar», «Elegir vídeo»…)
+  que usaban el mismo gris con el borde casi invisible. Revisión amplia
+  pedida: barrida de contraste WCAG por los selectores de ayuda en las 9
+  páginas + barrida de cualquier texto visible con ratio <3 → **0 fallos**
+  en las 9; consola 0 en vídeo y gif.
+- **R4 · Defaults: sin logo ni sombra ✅**. «Por defecto no debe estar el
+  logo añadido al canvas»: la casilla «Logo automático» arranca apagada
+  (arranque `cfg.auto === true` y restauración `logoAuto === true`; antes
+  `!== false` = activa). Q3 intacto: subir un PNG o activar la casilla se
+  recuerda y el logo vuelve al abrir. «Las sombras por defecto ninguna»:
+  los textos nuevos nacen con `sombra: 0` (antes 90), el selector empieza
+  en «Sin sombra» y la intensidad en 0 (antes Normal/60 en el HTML y
+  Fuerte/90 al añadir). E2E: casilla apagada, `#vid-logo-estado` oculto,
+  añadir texto refleja Sin sombra/0 y la recarga mantiene los defaults.
+- **R5 · Mezclar imágenes y texto como en un editor moderno** → pedido en
+  abierto, ver «Diferidos» (capas mixtas).
+
+---
+
 ## ⚪ P4 — Repo y calidad
 
 > ✅ **Completado**. Punto 8 **diferido**.
@@ -1222,6 +1267,13 @@ amigable y rápida». Un commit por pieza.
   prueba visual.
 - **Catálogo de elementos** (nuevo): biblioteca de formas, iconos, marcos y plantillas base
   para componer imágenes — siguiente bloque grande tras validar la UI.
+- **R5 · Capas mixtas imágenes+textos** (pedido: «¿por qué no puedo mezclar
+  imágenes y texto como un editor moderno?»): en el editor de vídeo los textos
+  ya se superponen al contenido, pero imagen y textos viven en pestañas
+  distintas y la imagen es UNA capa «contenido» que se escala como bloque —
+  no se pueden colocar varias imágenes sueltas con libertad junto a los
+  textos. Propuesta: panel único de capas (arrastrar, reordenar y mezclar
+  fotos/vídeos/textos) apoyado en P3.3 (capas con preview/lock) + catálogo.
 - P1.7 offcanvas del formulario en móvil.
 - P2.15 guía de estado vacío.
 - **Lote S — seguridad** (quitar jQuery, CSP, validar `.json`): ver [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md).
