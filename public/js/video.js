@@ -1612,7 +1612,7 @@
     var RUTA_LOGO_DEFECTO = './public/img/Logotet.png';   // Q3: logo de tet
     var BARRA_RATIO = 93 / 1200;
     var plantillaActiva = 'ninguna';   // R6: 'news' | 'somostet'
-    var barraPos = 'ambas';            // R6: 'arriba' | 'abajo' | 'ambas'
+    var barraPos = 'arriba';            // R8: 'arriba' | 'abajo' (sin «ambas»)
 
     function altoBarraNews() {
         var bh = Math.round(lienzo.width * BARRA_RATIO);
@@ -1627,7 +1627,7 @@
     function zonaDibujo() {
         if (plantillaActiva === 'ninguna') return { x: 0, y: 0, w: lienzo.width, h: lienzo.height };
         var barH = altoBarraNews();
-        var nBarras = (barraPos === 'ambas') ? 2 : 1;   // R6: posición elegida
+        var nBarras = 1;   // R8: ya no existe la posición «ambas»
         var y0 = (barraPos === 'abajo') ? 0 : barH;
         return { x: 0, y: y0, w: lienzo.width, h: Math.max(1, lienzo.height - barH * nBarras) };
     }
@@ -1722,6 +1722,7 @@
     function aplicaPlantilla() {
         plantillaActiva = selPlantilla.value;
         noticiaActiva = (plantillaActiva !== 'ninguna');
+        barraPos = (selBarraPos.value === 'abajo') ? 'abajo' : 'arriba';   // R8
         inpEscContenido.disabled = !noticiaActiva;
         btnCentrarContenido.disabled = !noticiaActiva;
         btnCentrarContH.disabled = !noticiaActiva;   // N4
@@ -1742,7 +1743,7 @@
 
     /* R6 · posición de la barra: arriba, abajo o ambas */
     selBarraPos.addEventListener('change', function () {
-        barraPos = selBarraPos.value;
+        barraPos = (selBarraPos.value === 'abajo') ? 'abajo' : 'arriba';   // R8
         repintarSuperp();
         actualizaManijaContenido();
     });
@@ -4856,7 +4857,7 @@
         supLogoAuto.checked = (e.form.logoAuto === true);
         /* R6: plantilla y posición de la barra van con el snapshot */
         selPlantilla.value = e.form.plantilla || 'ninguna';
-        selBarraPos.value = e.form.barraPos || 'ambas';
+        selBarraPos.value = (e.form.barraPos === 'abajo') ? 'abajo' : 'arriba';   // R8: sin «ambas»
         aplicaPlantilla();
         inpEscContenido.value = e.form.esc;
         [selTam, inpDur, selModoDur, selAjuste, selTrans, inpFondo, selCalidad,
