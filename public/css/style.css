@@ -598,15 +598,12 @@ textarea:focus-visible,
     transform: translateY(-1px);
 }
 
+/* R1 · en móvil los iconos de redes apretaban la barra junto al
+   desplegable «Crear» («la lista desplegable mata el responsive»):
+   en ese ancho se ocultan (decidido por el usuario) */
 @media (max-width: 575.98px) {
     .navbar-social {
-        gap: .3rem;
-    }
-
-    .navbar-social a {
-        width: 30px;
-        height: 30px;
-        font-size: .85rem;
+        display: none;
     }
 }
 
@@ -735,15 +732,5 @@ textarea:focus-visible,
     .tet-nav-menu .nav-link {
         padding: .4rem .6rem;
         font-size: .86rem;
-    }
-
-    .navbar-social {
-        gap: .25rem;
-    }
-
-    .navbar-social a {
-        width: 27px;
-        height: 27px;
-        font-size: .82rem;
     }
 }
