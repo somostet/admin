@@ -29,7 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
-| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas → Diferidos · R6 plantilla somostet + posición ✅** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas → Diferidos · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅** |
 
 ---
 
@@ -1245,6 +1245,19 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
   E2E: píxeles del lienzo (franja negra arriba/abajo según posición),
   Tet News intacto, snapshot con plantilla+posición, consola 0,
   barrido 21/21, `node --check`.
+- **R2b · Iconos con fondo azul de marca ✅** («el icono se sigue viendo
+  horrible… solo pon la versión transparente y fondo azul»): los iconos
+  pasan de navy `#1d2b43` a **azul de marca `#0055d4`** con el símbolo
+  circular transparente (`tetlogoFondo.png`, esquinas transparentes) —
+  la versión transparente sobre azul. `VERSION` → `tet-admin-v4` (las
+  imágenes van con CacheFirst: sin versión nueva el móvil seguiría con
+  los iconos viejos).
+- **R7 · Desplegable «Crear» a todo ancho en móvil ✅** («el menú sigue
+  matando el responsive»): el desplegable (232 px anclado a «Crear») se
+  salía por la derecha y provocaba scroll horizontal → en ≤575.98 px
+  ocupa **todo el ancho de la barra** (`left/right: 0`, `min-width: 0`)
+  y `.tet-nav` pasa a `position: relative` para anclarlo. Verificado en
+  el CSSOM (regla dentro de la media query) + `tet-admin-v4` activo.
 
 ---
 

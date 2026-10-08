@@ -605,10 +605,21 @@ textarea:focus-visible,
     .navbar-social {
         display: none;
     }
+
+    /* R7 · el desplegable «Crear» ocupa todo el ancho de la barra: antes
+       (min-width 232 px anclado a «Crear») se salía por la derecha y
+       provocaba scroll horizontal —«el menú mata el responsive» */
+    .tet-nav .navbar-nav .dropdown-menu {
+        left: 0;
+        right: 0;
+        width: 100%;
+        min-width: 0;
+    }
 }
 
 /* ===== Navbar rediseñado: barra única sin hamburguesa ===== */
 .tet-nav {
+    position: relative;   /* R7: el desplegable se ancla a la barra */
     padding: .45rem .9rem;
     row-gap: .2rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
