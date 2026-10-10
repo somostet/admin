@@ -188,6 +188,9 @@
         row.dataset.idx = idx;
         if (obj === active) row.classList.add('active');
         if (obj.visible === false) row.classList.add('oculta');
+        var bloq = obj.capaBloqueada === true;   // P3.3
+        if (bloq) row.classList.add('bloqueada');
+        row.setAttribute('draggable', bloq ? 'false' : 'true');   // P3.3
 
         var select = document.createElement('button');
         select.type = 'button';
@@ -195,9 +198,29 @@
         select.dataset.action = 'select';
         select.title = 'Seleccionar en el lienzo';
         select.setAttribute('aria-label', 'Seleccionar capa ' + nameFor(obj));
-        select.innerHTML = '<i class="' + iconFor(obj) + '" aria-hidden="true"></i>' +
-            '<span class="capa-name"></span>';
-        select.querySelector('.capa-name').textContent = nameFor(obj);
+        /* P3.3 · miniatura de preview real de la capa (captura diminuta del
+           propio objeto); si falla (lienzo tainted) queda el icono */
+        var miniatura = null;
+        try {
+            var urlMin = obj.toDataURL({ format: 'png', multiplier: 0.08, quality: 0.7 });
+            if (typeof urlMin === 'string' && urlMin.length > 24) miniatura = urlMin;
+        } catch (e) { miniatura = null; }
+        if (miniatura) {
+            var imgT = document.createElement('img');
+            imgT.className = 'capa-thumb';
+            imgT.alt = '';
+            imgT.src = miniatura;
+            select.appendChild(imgT);
+        } else {
+            var ic2 = document.createElement('i');
+            ic2.className = iconFor(obj);
+            ic2.setAttribute('aria-hidden', 'true');
+            select.appendChild(ic2);
+        }
+        var sp2 = document.createElement('span');
+        sp2.className = 'capa-name';
+        sp2.textContent = nameFor(obj);
+        select.appendChild(sp2);
 
         var actions = document.createElement('div');
         actions.className = 'capa-actions';
@@ -205,6 +228,8 @@
         actions.appendChild(actionBtn('down', 'fas fa-angle-down', 'Bajar una capa'));
         actions.appendChild(actionBtn('eye', obj.visible === false ? 'fas fa-eye-slash' : 'fas fa-eye',
             obj.visible === false ? 'Mostrar capa' : 'Ocultar capa'));
+        actions.appendChild(actionBtn('lock', bloq ? 'fas fa-lock' : 'fas fa-lock-open',
+            bloq ? 'Desbloquear capa' : 'Bloquear capa'));   // P3.3
         actions.appendChild(actionBtn('remove', 'fas fa-trash-alt', 'Eliminar capa'));
 
         row.appendChild(select);
@@ -241,10 +266,12 @@
                 canvas.renderAll();
                 break;
             case 'up':
+                if (obj.capaBloqueada) { aviso('La capa está bloqueada: desbloquéala para reordenar'); break; }
                 canvas.bringForward(obj);
                 canvas.renderAll();
                 break;
             case 'down':
+                if (obj.capaBloqueada) { aviso('La capa está bloqueada: desbloquéala para reordenar'); break; }
                 canvas.sendBackwards(obj);
                 canvas.renderAll();
                 break;
@@ -256,8 +283,24 @@
                 canvas.renderAll();
                 break;
             case 'remove':
+                if (obj.capaBloqueada) { aviso('La capa está bloqueada: desbloquéala para eliminarla'); break; }
                 canvas.remove(obj);
                 canvas.renderAll();
+                break;
+            case 'lock':   // P3.3
+                var eraBloqueada = obj.capaBloqueada === true;
+                obj.capaBloqueada = !eraBloqueada;
+                obj.set({
+                    lockMovementX: !eraBloqueada,
+                    lockMovementY: !eraBloqueada,
+                    lockScalingX: !eraBloqueada,
+                    lockScalingY: !eraBloqueada,
+                    lockRotation: !eraBloqueada,
+                    editable: eraBloqueada   // si se bloquea deja de ser editable
+                });
+                obj.setCoords();
+                canvas.renderAll();
+                aviso(eraBloqueada ? 'Capa desbloqueada' : 'Capa bloqueada', 'info');
                 break;
         }
         render();
@@ -266,6 +309,57 @@
     // Evita que los botones del panel quiten el foco del lienzo
     list.addEventListener('mousedown', function (e) {
         e.preventDefault();
+    });
+
+    /* P3.3 · reordenar ARRASTRANDO las filas: se mueve el objeto real por su
+       índice de Fabric (los botones ↑/↓ siguen como alternativa); las
+       filas bloqueadas ni se arrastran ni reciben suelta */
+    var arrastrandoIdx = -1;
+    list.addEventListener('dragstart', function (e) {
+        var row = e.target.closest('.capa-row');
+        if (!row || row.getAttribute('draggable') === 'false') { e.preventDefault(); return; }
+        arrastrandoIdx = parseInt(row.dataset.idx, 10);
+        row.classList.add('capa-dragging');
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(arrastrandoIdx));
+        }
+    });
+    list.addEventListener('dragover', function (e) {
+        var row = e.target.closest('.capa-row');
+        if (!row || row.getAttribute('draggable') === 'false') return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        row.classList.add('capa-drop-target');
+    });
+    list.addEventListener('dragleave', function (e) {
+        var row = e.target.closest('.capa-row');
+        if (row) row.classList.remove('capa-drop-target');
+    });
+    list.addEventListener('drop', function (e) {
+        var row = e.target.closest('.capa-row');
+        e.preventDefault();
+        var src = arrastrandoIdx;
+        arrastrandoIdx = -1;
+        var obj = src >= 0 ? canvas.getObjects()[src] : null;
+        var dst = row ? parseInt(row.dataset.idx, 10) : -1;
+        if (obj && dst >= 0 && src !== dst) {
+            canvas.moveTo(obj, dst);   // API propia de Fabric para reordenar z-índice
+            canvas.renderAll();
+            guardarEstado();
+            render();
+        }
+        Array.prototype.forEach.call(
+            list.querySelectorAll('.capa-drop-target, .capa-dragging'), function (el) {
+                el.classList.remove('capa-drop-target', 'capa-dragging');
+            });
+    });
+    list.addEventListener('dragend', function () {
+        arrastrandoIdx = -1;
+        Array.prototype.forEach.call(
+            list.querySelectorAll('.capa-drop-target, .capa-dragging'), function (el) {
+                el.classList.remove('capa-drop-target', 'capa-dragging');
+            });
     });
 
     /* ---------- diagnóstico de exportación (canvas "tainted") ---------- */

@@ -377,6 +377,27 @@ textarea:focus-visible,
     color: #fff;
 }
 
+/* P3.3 · miniatura real de cada capa */
+.capa-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: .375rem;
+    flex: 0 0 40px;
+    background: #e9ecef;
+    border: 1px solid rgba(0, 0, 0, .08);
+}
+
+/* P3.3 · reordenar arrastrando: fila arrastrada + destino */
+.capa-row[draggable="true"] { cursor: grab; }
+.capa-row.capa-dragging { opacity: .4; }
+.capa-row.capa-drop-target .capa-select,
+.capa-row.capa-drop-target .capa-thumb {
+    outline: 2px solid #0d6efd;
+    outline-offset: 1px;
+}
+.capa-row.bloqueada .capa-select { opacity: .75; }
+
 .capa-empty {
     padding: .75rem;
     text-align: center;
