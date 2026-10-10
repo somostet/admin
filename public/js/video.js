@@ -210,6 +210,34 @@
     var cajasTextos = [];                // M1: cajas de los textos del último fotograma
     var lienzoArrastrando = false;       // M1: puntero arrastrando desde el lienzo (ratón)
     var tUltimo = 0;                     // F5b: último instante dibujado en modo imágenes
+
+    /* ---------- R5 · imágenes sueltas y orden mixto con los textos ---------- */
+    /* Antes solo cabía UNA imagen: la de la tira, que se pintaba «llenando» el
+       cuerpo como un bloque y quedaba siempre debajo de todos los textos. Aquí
+       hay varias, cada una con su posición, su tamaño y su ventana temporal, y
+       se mezclan con los textos en un único orden de dibujo (campo «z»).
+       El orden se deriva de los dos arrays: el índice de un texto es su z, y el
+       de una imagen es su z decimal —así una imagen con z = 1.5 va entre el
+       texto 0 y el 1 sin tocar el orden relativo entre textos, que sigue siendo
+       el del array (lo que mueven los botones ↑/↓ de la pestaña Textos). */
+    var capasImg = [];       // { url, img, nombre, blob, x, y, esc, z, inicio, dur }
+    var capaImgSel = -1;     // índice de la imagen seleccionada en el panel Capas
+    var cajaCapaSel = null;  // caja dibujada de la seleccionada (para la manija)
+    var cajasCapasImg = [];  // cajas de las imágenes del último fotograma (hit-test)
+    var manijaImg = document.getElementById('vid-manija-img');
+    var imgArrastrando = false;    // puntero arrastrando la imagen desde la manija
+    var imgArrastreBase = null;    // punto de agarre (M2: no salta al agarrar)
+    var imgRedimBase = null;       // base del escalado por asas
+    var imgAsa = null;             // esquina que se está arrastrando
+    var MAX_CAPAS = 40;            // tope de imágenes sueltas (el panel se llena)
+    /* nodos del panel «Capas» */
+    var listaCapas = document.getElementById('vid-capas-lista');
+    var inpCapaArchivo = document.getElementById('vid-capa-archivo');
+    var editCapa = document.getElementById('vid-capa-edit');
+    var inpCapaInicio = document.getElementById('vid-capa-inicio');
+    var inpCapaDur = document.getElementById('vid-capa-dur');
+    var inpCapaEsc = document.getElementById('vid-capa-esc');
+    var valCapaEsc = document.getElementById('vid-capa-esc-val');
     /* F5f · riel de la línea de tiempo de salida */
     var rielSalWrap = document.getElementById('vid-riel-salida-wrap');
     var rielSal = document.getElementById('vid-riel-salida');
@@ -1969,6 +1997,48 @@
         dibujarSuperposiciones(tMs);
     }
 
+    /* ---------- R5 · imágenes sueltas mezcladas con los textos ---------- */
+    /* Orden de dibujo único. El índice de un texto ES su z y el de una imagen es
+       su z decimal: al ordenar, una imagen con z = 1,5 queda entre el texto 0 y
+       el 1. El desempate por índice mantiene el orden relativo entre los textos,
+       que sigue siendo el del array (el que mueven los ↑/↓ de la pestaña
+       Textos): R5 no toca ese comportamiento ya probado. */
+    function ordenCapas() {
+        var pila = [];
+        var i, c;
+        for (i = 0; i < textos.length; i++) pila.push({ t: 't', i: i, z: i });
+        for (i = 0; i < capasImg.length; i++) {
+            c = capasImg[i];
+            var z = (typeof c.z === 'number' && isFinite(c.z)) ? c.z : textos.length + 0.5;
+            pila.push({ t: 'i', i: i, z: z });
+        }
+        pila.sort(function (a, b) { return (a.z - b.z) || (a.i - b.i) || (a.t < b.t ? -1 : 1); });
+        return pila;
+    }
+
+    /* Una imagen suelta por encima del contenido. Se dimensiona partiendo del
+       cuerpo —como «Ajustar»/contain— y de ahí se aplica su escala, para que
+       esc = 1 signifique «cabe entera en el cuerpo» y el tamaño sea legible.
+       Respeta su ventana temporal igual que los textos (dur = 0 → al final). */
+    function dibujaCapaImg(c, tMs, w, h, esSel, indice) {
+        if (!c || !c.img || !c.img.naturalWidth) return;
+        var iniMs = (c.inicio || 0) * 1000;
+        var finMs = (c.dur > 0) ? iniMs + c.dur * 1000 : Infinity;
+        if (tMs < iniMs || tMs >= finMs) return;   // fuera de su ventana
+
+        var z = zonaDibujo();
+        var iw = c.img.naturalWidth, ih = c.img.naturalHeight;
+        var base = Math.min(z.w / iw, z.h / ih);
+        var esc = (c.esc >= 0.1 && c.esc <= 4) ? c.esc : 1;
+        var dw = iw * base * esc, dh = ih * base * esc;
+        var cx = c.x * w, cy = c.y * h;
+        ctx.drawImage(c.img, cx - dw / 2, cy - dh / 2, dw, dh);
+
+        var caja = { x: cx, y: cy, w: dw, h: dh };
+        cajasCapasImg[indice] = caja;   // para el hit-test, como las de los textos
+        if (esSel) cajaCapaSel = caja;
+    }
+
     /* ---------- F4/F5 · logotipo y línea de título superpuestos ---------- */
     /* Se dibuja al FINAL de cada fotograma compuesto (dibujarFrame en vídeo e
        dibujarEn en imágenes), así acompaña a vista previa y grabación y queda
@@ -2010,11 +2080,23 @@
         // cada texto (F9) y sombra opcional (P9: los nuevos salen sin ella)
         cajaTextoSel = null;
         cajasTextos = [];   // M1: se rellena con la caja de cada texto dibujado
+        cajasCapasImg = []; // R5: idem con las imágenes sueltas
+        cajaCapaSel = null;
         var zSup = noticiaActiva ? zonaDibujo() : null;   // N1: textos en el cuerpo
-        for (var i = 0; i < textos.length; i++) {
-            dibujaTexto(textos[i], tMs, w, h, margen, fuente, i === textoSel, i, zSup);
+        /* R5 · un solo recorrido para textos e imágenes: el orden lo fija
+           ordenCapas(), así una imagen puede quedar ENTRE dos textos y no
+           siempre encima de todos */
+        var pila = ordenCapas();
+        for (var i = 0; i < pila.length; i++) {
+            var it = pila[i];
+            if (it.t === 't') {
+                dibujaTexto(textos[it.i], tMs, w, h, margen, fuente, it.i === textoSel, it.i, zSup);
+            } else {
+                dibujaCapaImg(capasImg[it.i], tMs, w, h, it.i === capaImgSel, it.i);
+            }
         }
         actualizaManija();   // F5b/F5e: coloca (o esconde) la manija sobre el texto
+        actualizaManijaImg();   // R5: idem con la imagen seleccionada
         actualizaManijaContenido();   // F5d: idem para el contenido de Tet News
         // F5f: el cabezal de la línea de tiempo sigue el fotograma mostrado
         // (durante la grabación y el scrub ya lo coloca quien corresponde)
@@ -2469,6 +2551,15 @@
             }
             if (anima) s += 'a' + Math.round(t);
         }
+        /* R5 · las imágenes sueltas tienen ventana propia: si no se sumara,
+           la vista previa «descansaría» con la imagen ya fuera de su tiempo y
+           se vería congelada hasta el siguiente cambio */
+        for (var j = 0; j < capasImg.length; j++) {
+            var ci = capasImg[j];
+            var ciIni = (ci.inicio || 0) * 1000;
+            var ciFin = (ci.dur > 0) ? ciIni + ci.dur * 1000 : Infinity;
+            s += (t >= ciIni && t < ciFin) ? 'I' : 'o';
+        }
         return s;
     }
 
@@ -2653,19 +2744,30 @@
        desde el propio lienzo. En táctil NO se arrastra desde aquí: el deslizar
        vertical debe mover la página, así que el dedo selecciona con el toque y
        coloca con la manija, que sí tiene touch-action:none y zona ensanchada. */
-    function cajaTextoBajo(e) {
+    /* R5 · qué hay bajo el dedo: ahora textos e imágenes compiten por el mismo
+       punto y gana el de mayor z —el último que se pintaría encima—. Antes solo
+       se miraban los textos y, entre ellos, el último dibujado. */
+    function capaBajo(e) {
         var r = lienzo.getBoundingClientRect();
-        if (!r.width || !r.height) return -1;
+        if (!r.width || !r.height) return null;
         var x = (e.clientX - r.left) * (lienzo.width / r.width);
         var y = (e.clientY - r.top) * (lienzo.height / r.height);
         var tol = 14 * (lienzo.width / r.width);   // 14 px de pantalla en cada lado
-        for (var i = cajasTextos.length - 1; i >= 0; i--) {
-            var c = cajasTextos[i];
-            if (!c) continue;   // texto fuera de su ventana en este fotograma
+        var pila = ordenCapas();
+        var mejor = null, mejorZ = -Infinity;
+        for (var i = 0; i < pila.length; i++) {
+            var it = pila[i];
+            var c = (it.t === 't') ? cajasTextos[it.i] : cajasCapasImg[it.i];
+            if (!c) continue;   // fuera de su ventana en este fotograma
+            /* >= y no >: con z empatado gana el ÚLTIMO de la pila, que es el
+               que se pinta encima —igual que se ve en el lienzo— */
             if (x >= c.x - c.w / 2 - tol && x <= c.x + c.w / 2 + tol &&
-                y >= c.y - c.h / 2 - tol && y <= c.y + c.h / 2 + tol) return i;
+                y >= c.y - c.h / 2 - tol && y <= c.y + c.h / 2 + tol && it.z >= mejorZ) {
+                mejor = it;
+                mejorZ = it.z;
+            }
         }
-        return -1;
+        return mejor;
     }
 
     /* M2: el texto se agarra DONDE se toca y lo sigue (delta); antes el
@@ -2708,8 +2810,10 @@
 
     lienzo.addEventListener('click', function (e) {
         if (grabando) return;
-        var idx = cajaTextoBajo(e);
-        if (idx >= 0 && idx !== textoSel) seleccionaTexto(idx);
+        var hit = capaBajo(e);   // R5: texto o imagen
+        if (!hit) return;
+        if (hit.t === 't') { if (hit.i !== textoSel) seleccionaTexto(hit.i); }
+        else if (hit.i !== capaImgSel) seleccionaCapaImg(hit.i);
     });
 
     /* M2 · al tocar el lienzo se suelta el campo con foco: si no, el navegador
@@ -2723,10 +2827,15 @@
     lienzo.addEventListener('pointerdown', function (e) {
         desenfocaCampo();   // M2: también cierra el teclado al tocar en móvil
         if (grabando || e.pointerType === 'touch') return;   // en táctil manda el scroll
-        var idx = cajaTextoBajo(e);
-        if (idx < 0) return;
-        if (idx !== textoSel) seleccionaTexto(idx);
-        iniciaArrastreTexto(e);   // M2: delta desde donde se agarra
+        var hit = capaBajo(e);   // R5
+        if (!hit) return;
+        if (hit.t === 't') {
+            if (hit.i !== textoSel) seleccionaTexto(hit.i);
+            iniciaArrastreTexto(e);   // M2: delta desde donde se agarra
+        } else {
+            if (hit.i !== capaImgSel) seleccionaCapaImg(hit.i);
+            iniciaArrastreImg(e);   // R5: mismo M2, delta desde donde se agarra
+        }
         lienzoArrastrando = true;
         try { lienzo.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
         e.preventDefault();
@@ -2736,7 +2845,8 @@
        el puntero salga del lienzo o empiece sobre la manija del contenido */
     window.addEventListener('pointermove', function (e) {
         if (!lienzoArrastrando) return;
-        arrastraTextoA(e);
+        if (imgArrastreBase) arrastraImgA(e);   // R5
+        else arrastraTextoA(e);
     });
 
     ['pointerup', 'pointercancel'].forEach(function (ev) {
@@ -2744,7 +2854,138 @@
             if (!lienzoArrastrando) return;
             lienzoArrastrando = false;
             textoArrastreBase = null;   // M2
+            imgArrastreBase = null;     // R5
             try { lienzo.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+        });
+    });
+
+    /* ---------- R5 · mover y escalar una imagen suelta ---------- */
+    /* Igual que el contenido de Tet News (M2): la imagen se agarra DONDE se
+       toca —delta, para que no salte— y las cuatro asas la escalan dejando la
+       esquina opuesta clavada. La posición se guarda en fracciones del lienzo,
+       así que al cambiar de tamaño de salida la imagen se queda en su sitio. */
+    function actualizaManijaImg() {
+        var activa = capaImgSel >= 0 && !!cajaCapaSel && lienzo.style.display !== 'none';
+        manijaImg.hidden = !activa;
+        if (!activa) return;
+        var f = lienzo.clientWidth / lienzo.width;
+        var pad = 4;
+        manijaImg.style.left = (lienzo.offsetLeft + (cajaCapaSel.x - cajaCapaSel.w / 2) * f - pad) + 'px';
+        manijaImg.style.top = (lienzo.offsetTop + (cajaCapaSel.y - cajaCapaSel.h / 2) * f - pad) + 'px';
+        manijaImg.style.width = (cajaCapaSel.w * f + pad * 2) + 'px';
+        manijaImg.style.height = (cajaCapaSel.h * f + pad * 2) + 'px';
+        poneZonaTactil(manijaImg);   // M1: zona de toque hasta 44 px
+    }
+
+    /* El centro se toma del CENTRO DIBUJADO y no de c.x/c.y: durante un
+       arrastre todavía no se han escrito, y al agarrar un poco displaced la
+       imagen saltaría. Igual que hace iniciaArrastreTexto con cajaTextoSel. */
+    function iniciaArrastreImg(e) {
+        var c = capasImg[capaImgSel];
+        if (!c) return;
+        var cx = cajaCapaSel ? cajaCapaSel.x / lienzo.width : c.x;
+        var cy = cajaCapaSel ? cajaCapaSel.y / lienzo.height : c.y;
+        imgArrastreBase = { x: e.clientX, y: e.clientY, cx: cx, cy: cy };
+    }
+
+    /* El puntero se sigue en window, así que sin tope la imagen se iría fuera
+       del lienzo y ya no se podría volver a agarrar. Se permite salir a medias
+       (que la imagen asome) pero el centro siempre vuelve a ser agarrable. */
+    function imgPosClamp(x, y) {
+        return {
+            x: Math.max(-0.5, Math.min(1.5, x)),
+            y: Math.max(-0.5, Math.min(1.5, y))
+        };
+    }
+
+    function arrastraImgA(e) {
+        var c = capasImg[capaImgSel];
+        var b = imgArrastreBase;
+        if (!c || !b) return;
+        var r = lienzo.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        var p = imgPosClamp(b.cx + (e.clientX - b.x) / r.width,
+                            b.cy + (e.clientY - b.y) / r.height);
+        c.x = p.x;
+        c.y = p.y;
+        redibujarArrastre();
+        actualizaManijaImg();
+    }
+
+    /* M2, calcada del contenido: la esquina opuesta se queda clavada y el
+       escalado va en pasos del 5 % con el mismo rango que el deslizador. */
+    function iniciaRedimImg(e, esq) {
+        var c = capasImg[capaImgSel];
+        if (!c || !cajaCapaSel) return;
+        var rr = lienzo.getBoundingClientRect();
+        var f = rr.width / lienzo.width;
+        var sX = (esq === 'se' || esq === 'ne') ? 1 : -1;
+        var sY = (esq === 'se' || esq === 'sw') ? 1 : -1;
+        var c0 = { x: rr.left + cajaCapaSel.x * f, y: rr.top + cajaCapaSel.y * f };
+        var v0 = { x: sX * cajaCapaSel.w * f / 2, y: sY * cajaCapaSel.h * f / 2 };
+        var q = { x: c0.x - v0.x, y: c0.y - v0.y };   // esquina opuesta, la fija
+        var dx = e.clientX - q.x, dy = e.clientY - q.y;
+        imgRedimBase = {
+            esq: esq, q: q, k0: Math.sqrt(dx * dx + dy * dy) || 1,
+            c0: c0, v0: v0, esc0: (c.esc >= 0.1 && c.esc <= 4) ? c.esc : 1
+        };
+        imgAsa = esq;
+        imgArrastrando = false;
+        imgArrastreBase = null;
+    }
+
+    function redimImgA(e) {
+        var c = capasImg[capaImgSel];
+        var b = imgRedimBase;
+        if (!c || !b) return;
+        var dx = e.clientX - b.q.x, dy = e.clientY - b.q.y;
+        var k = Math.sqrt(dx * dx + dy * dy) / b.k0;
+        c.esc = Math.max(0.1, Math.min(4, Math.round(b.esc0 * k * 20) / 20));
+        var k2 = b.esc0 ? c.esc / b.esc0 : 1;
+        // el centro se reubica para que la esquina opuesta no se mueva
+        var rr = lienzo.getBoundingClientRect();
+        if (!rr.width || !rr.height) return;
+        var p = imgPosClamp((b.c0.x + (k2 - 1) * b.v0.x - rr.left) / rr.width,
+                            (b.c0.y + (k2 - 1) * b.v0.y - rr.top) / rr.height);
+        c.x = p.x;
+        c.y = p.y;
+        if (inpCapaEsc) inpCapaEsc.value = String(Math.round(c.esc * 100));
+        if (valCapaEsc) valCapaEsc.textContent = Math.round(c.esc * 100) + ' %';
+        redibujarArrastre();
+        actualizaManijaImg();
+    }
+
+    manijaImg.addEventListener('pointerdown', function (e) {
+        if (capaImgSel < 0 || grabando) return;
+        desenfocaCampo();   // M2: el campo con foco no debe tirar de la página
+        imgArrastrando = false;
+        imgAsa = null;
+        imgArrastreBase = null;
+        imgRedimBase = null;
+        var asa = e.target.closest ? e.target.closest('[data-esq]') : null;
+        if (asa) {
+            iniciaRedimImg(e, asa.getAttribute('data-esq'));   // escalar
+        } else {
+            iniciaArrastreImg(e);   // M2: delta desde donde se agarra
+            imgArrastrando = true;
+        }
+        try { manijaImg.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+        e.preventDefault();
+    });
+    manijaImg.addEventListener('pointermove', function (e) {
+        if (imgAsa) { redimImgA(e); return; }
+        if (imgArrastrando) arrastraImgA(e);
+    });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+        manijaImg.addEventListener(ev, function (e) {
+            if (!imgArrastrando && !imgAsa) return;
+            imgArrastrando = false;
+            imgAsa = null;
+            imgArrastreBase = null;
+            imgRedimBase = null;
+            try { manijaImg.releasePointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
+            redibujarArrastre();
+            actualizaManijaImg();
         });
     });
 
@@ -2854,13 +3095,17 @@
             e.preventDefault();
             return;
         }
-        /* M1: si hay un texto encima, manda el texto —el dedo lo selecciona y
-           el ratón lo arrastra—; el contenido solo se arrastra sin texto encima */
-        var idx = cajaTextoBajo(e);
-        if (idx >= 0) {
-            if (idx !== textoSel) seleccionaTexto(idx);
+        /* M1: si hay un texto o una imagen encima, manda esa capa —el dedo la
+           selecciona y el ratón la arrastra—; el contenido solo se arrastra
+           sin nada encima (R5: antes solo se miraban los textos) */
+        var hit = capaBajo(e);
+        if (hit) {
+            if (hit.t === 't') {
+                if (hit.i !== textoSel) seleccionaTexto(hit.i);
+            } else if (hit.i !== capaImgSel) seleccionaCapaImg(hit.i);
             if (e.pointerType === 'touch') return;   // en táctil: el toque selecciona
-            iniciaArrastreTexto(e);   // M2: delta desde el punto de agarre
+            if (hit.t === 't') iniciaArrastreTexto(e);   // M2: delta desde el agarre
+            else iniciaArrastreImg(e);
             lienzoArrastrando = true;
             try { manijaContenido.setPointerCapture(e.pointerId); } catch (err) { /* id sintético */ }
             e.preventDefault();
@@ -2875,8 +3120,10 @@
        contenido de Tet News— lo selecciona, igual que en el resto del lienzo */
     manijaContenido.addEventListener('click', function (e) {
         if (grabando) return;
-        var idx = cajaTextoBajo(e);
-        if (idx >= 0 && idx !== textoSel) seleccionaTexto(idx);
+        var hit = capaBajo(e);   // R5
+        if (!hit) return;
+        if (hit.t === 't') { if (hit.i !== textoSel) seleccionaTexto(hit.i); }
+        else if (hit.i !== capaImgSel) seleccionaCapaImg(hit.i);
     });
     manijaContenido.addEventListener('pointermove', function (e) {
         if (contAsa) { redimContenidoA(e); return; }
@@ -3194,8 +3441,11 @@
 
     function seleccionaTexto(i) {
         textoSel = (i >= 0 && i < textos.length) ? i : -1;
+        capaImgSel = -1;   // R5: una sola selección, texto o imagen
         pintaListaTextos();
         cargaEditor();
+        cargaEditorCapa();   // R5: el editor de imagen se apaga
+        pintaPanelCapas();
         repintarSuperp();
     }
 
@@ -3231,6 +3481,7 @@
         redistribuyeTextos();   // N3b
         pintaListaTextos();
         cargaEditor();
+        pintaPanelCapas();   // R5: la fila desaparece también del panel de capas
         repintarSuperp();
         /* P1c · nada se pierde en silencio: el aviso ofrece «Deshacer» unos
            segundos y devuelve el texto a su índice con su selección; cada
@@ -3242,6 +3493,7 @@
             redistribuyeTextos();   // N3b: al volver, vuelve el reparto
             pintaListaTextos();
             cargaEditor();
+            pintaPanelCapas();   // R5
             repintarSuperp();
         }, 'Deshacer');
     }
@@ -3288,6 +3540,7 @@
         if (!t) return;
         t.txt = inpTxtContenido.value;
         pintaListaTextos();
+        pintaPanelCapas();   // R5: el panel de capas copia el nombre del texto
         repintarSuperp();
     });
 
@@ -3349,6 +3602,302 @@
     }
     btnTxtCentrarH.addEventListener('click', function () { centraTextoPorEje('h'); });
     btnTxtCentrarV.addEventListener('click', function () { centraTextoPorEje('v'); });
+
+    /* ---------- R5 · panel de capas: imágenes sueltas + textos, un solo orden ---------- */
+    /* El panel lista TODO lo que se pinta encima del contenido, de arriba abajo
+       (la última fila es lo de más abajo, como en el lienzo), y desde ahí se
+       selecciona, se sube/baja, se duplica y se quita. Las imágenes se añaden
+       con el botón de arriba; nace centrada, a tamaño «cabe en el cuerpo» y
+       visible durante toda la salida (dur = 0). */
+    /* El z más alto que hay ahora, para dejar la capa nueva encima de todo. Se
+       toma del máximo REAL de la pila y no de «textos.length»: si no, dos
+       imágenes seguidas nace con el mismo z, empatan y sus ↑/↓ no las mueven */
+    function zTope() {
+        var pila = ordenCapas();
+        return pila.length ? pila[pila.length - 1].z + 0.5 : 0.5;
+    }
+
+    function nuevaCapaImg(file) {
+        if (!file || !/^image\//.test(file.type)) return;
+        if (capasImg.length >= MAX_CAPAS) {
+            aviso('Ya hay ' + MAX_CAPAS + ' imágenes encima del contenido', 'warning');
+            return;
+        }
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+            if (!img.naturalWidth) { URL.revokeObjectURL(url); return; }
+            /* el tamaño se toma del cuerpo, así que «centrada» es el centro de
+               ESE cuerpo: con Tet News el cuerpo no es todo el lienzo */
+            var zc = zonaDibujo();
+            var c = {
+                url: url, img: img, blob: file, nombre: file.name || 'imagen',
+                x: 0.5, y: (zc.y + zc.h / 2) / lienzo.height, esc: 1,
+                z: zTope(),
+                inicio: 0, dur: 0
+            };
+            capasImg.push(c);
+            capaImgSel = capasImg.length - 1;
+            textoSel = -1;   // R5: una sola selección, texto o imagen
+            pintaListaTextos();
+            cargaEditor();
+            pintaPanelCapas();
+            repintarSuperp();
+            /* sin contenido no hay lienzo donde colocar nada: se dice, en vez
+               de dejar una imagen listada que no se ve ni se puede tocar */
+            if (!imagenes.length && !videoCargado) {
+                aviso('Añadida, pero no se ve todavía: primero sube una imagen o un vídeo', 'warning');
+            } else {
+                aviso('Imagen añadida: arrástrala en la vista previa para colocarla', 'info');
+            }
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); };
+        img.src = url;
+    }
+
+    function pintaPanelCapas() {
+        if (!listaCapas) return;
+        histMarca();   // P4
+        listaCapas.innerHTML = '';
+        var pila = ordenCapas();
+        /* de arriba abajo: pila viene en z ASCENDENTE y lo de más z se pinta
+           encima, así que se recorre al revés (la primera fila es lo de arriba) */
+        for (var p = pila.length - 1; p >= 0; p--) {
+            listaCapas.appendChild(filaCapa(pila[p], p));
+        }
+        if (!pila.length) {
+            var vac = document.createElement('p');
+            vac.className = 'vid-capas-vacio';
+            vac.textContent = 'Todavía no hay nada encima del contenido. Añade una imagen o un texto.';
+            listaCapas.appendChild(vac);
+        }
+        editCapa.hidden = capaImgSel < 0;   // el editor es solo de las imágenes
+        if (inpCapaArchivo) inpCapaArchivo.disabled = (capasImg.length >= MAX_CAPAS);
+    }
+
+    /* pos es el índice de la capa en la pila ASCENDENTE; se pasa ya calculado
+       para no recalcular ordenCapas() por fila (era O(n²) por repintado) */
+    function filaCapa(it, pos) {
+        var esImg = (it.t === 'i');
+        var c = esImg ? capasImg[it.i] : null;
+        var t = esImg ? null : textos[it.i];
+        var sel = esImg ? capaImgSel : textoSel;
+
+        var fila = document.createElement('div');
+        fila.className = 'vid-texto-fila' + (sel === it.i ? ' vid-texto-activa' : '');
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'vid-texto-sel';
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('aria-selected', sel === it.i ? 'true' : 'false');
+
+        var ic = document.createElement('i');
+        ic.className = esImg ? 'fas fa-image vid-capa-ic' : 'fas fa-font vid-capa-ic';
+        ic.setAttribute('aria-hidden', 'true');
+        btn.appendChild(ic);
+
+        var nom = document.createElement('span');
+        nom.className = 'vid-texto-nombre';
+        nom.textContent = esImg ? (c.nombre || 'imagen') : (t.txt.trim() || '(texto vacío)');
+        btn.appendChild(nom);
+
+        var hora = document.createElement('span');
+        hora.className = 'vid-texto-tiempo';
+        hora.textContent = etiquetaTiempo(esImg ? c : t);
+        btn.appendChild(hora);
+
+        btn.addEventListener('click', function () {
+            if (esImg) seleccionaCapaImg(it.i);
+            else seleccionaTexto(it.i);
+        });
+        fila.appendChild(btn);
+        fila.appendChild(accionesCapa(it, pos));
+        return fila;
+    }
+
+    /* ↑/↓ mueven la capa por el orden MEZCLADO (una imagen puede cruzar un
+       texto): se promedia con el z del vecino para no empatar con nadie y, en
+       el extremo, se sale un entero. OJO al signo: la pila va en z ASCENDENTE,
+       así que «subir» en el panel es delta +1 (más z = más arriba). */
+    function accionesCapa(it, pos) {
+        var caja = document.createElement('div');
+        caja.className = 'vid-texto-acciones';
+        var acc = [
+            {
+                icono: 'fa-arrow-up', titulo: 'Subir la capa',
+                accion: function () { mueveCapa(it, pos, 1); }
+            },
+            {
+                icono: 'fa-arrow-down', titulo: 'Bajar la capa',
+                accion: function () { mueveCapa(it, pos, -1); }
+            }
+        ];
+        if (it.t === 'i') {
+            acc.push({
+                icono: 'fa-clone', titulo: 'Duplicar la imagen',
+                accion: function () { duplicaCapaImg(it.i); }
+            });
+        }
+        acc.push({
+            icono: 'fa-trash', titulo: it.t === 'i' ? 'Quitar la imagen' : 'Quitar el texto',
+            accion: function () {
+                if (it.t === 'i') quitaCapaImg(it.i);
+                else quitaTexto(it.i);
+            }
+        });
+        acc.forEach(function (b) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn';
+            btn.title = b.titulo;
+            btn.setAttribute('aria-label', b.titulo);
+            btn.innerHTML = '<i class="fas ' + b.icono + '" aria-hidden="true"></i>';
+            btn.addEventListener('click', b.accion);
+            caja.appendChild(btn);
+        });
+        return caja;
+    }
+
+    /* delta +1 = subir en el panel = más z. La capa nueva tiene que quedar por
+       ENCIMA (o por debajo) del vecino al que se mueve, no en medio de los dos:
+       promediar con los dos lados la dejaría en su sitio y el botón no haría
+       nada. Se promedia con el vecino de más allá, y en el extremo se sale 0,5. */
+    function mueveCapa(it, pos, delta) {
+        var pila = ordenCapas();
+        var destino = pos + delta;
+        if (pos < 0 || destino < 0 || destino >= pila.length) return;
+        var z;
+        if (delta > 0) {   // subir: por encima del destino
+            z = (destino + 1 < pila.length)
+                ? (pila[destino].z + pila[destino + 1].z) / 2
+                : pila[destino].z + 0.5;
+        } else {           // bajar: por debajo del destino
+            z = (destino - 1 >= 0)
+                ? (pila[destino].z + pila[destino - 1].z) / 2
+                : pila[destino].z - 0.5;
+        }
+        if (it.t === 'i') {
+            var c = capasImg[it.i];
+            if (!c) return;
+            c.z = Math.round(z * 1000) / 1000;
+        } else {
+            /* un texto solo se mueve entre textos: su z es su índice, así que
+               subirlo es moverlo en el array (lo que ya hace mueveTexto) */
+            mueveTexto(it.i, delta);
+            pintaPanelCapas();   // mueveTexto solo repinta la lista de textos
+            return;
+        }
+        pintaPanelCapas();
+        repintarSuperp();
+    }
+
+    function seleccionaCapaImg(i) {
+        capaImgSel = (i >= 0 && i < capasImg.length) ? i : -1;
+        textoSel = -1;   // R5: una sola selección
+        pintaListaTextos();
+        cargaEditorCapa();
+        pintaPanelCapas();
+        repintarSuperp();
+    }
+
+    function quitaCapaImg(i) {
+        var c = capasImg[i];
+        if (!c) return;
+        var selAntes = capaImgSel;
+        capasImg.splice(i, 1);
+        if (capaImgSel >= capasImg.length) capaImgSel = capasImg.length - 1;
+        pintaPanelCapas();
+        cargaEditorCapa();
+        repintarSuperp();
+        /* P1c, como en los textos: la url se revoca (el historial la recrea del
+           blob si vuelve) y el aviso ofrece deshacer */
+        URL.revokeObjectURL(c.url);
+        histRevocadas[c.url] = true;   // P4
+        aviso('Imagen quitada', 'warning', function () {
+            /* la url ya no vale: se rehace desde el File y se recarga el <img>,
+               que es lo mismo que hace histRestaura con el logo y los clips */
+            var url = URL.createObjectURL(c.blob);
+            var img = new Image();
+            img.onload = function () { repintarSuperp(); };
+            img.src = url;
+            c.url = url;
+            c.img = img;
+            delete histRevocadas[url];
+            capasImg.splice(Math.min(i, capasImg.length), 0, c);
+            capaImgSel = selAntes;
+            pintaPanelCapas();
+            cargaEditorCapa();
+            repintarSuperp();
+        }, 'Deshacer');
+    }
+
+    function duplicaCapaImg(i) {
+        var c = capasImg[i];
+        if (!c || !c.blob) return;
+        if (capasImg.length >= MAX_CAPAS) {
+            aviso('Ya hay ' + MAX_CAPAS + ' imágenes encima del contenido', 'warning');
+            return;
+        }
+        var url = URL.createObjectURL(c.blob);
+        var img = new Image();
+        img.onload = function () {
+            var copia = {
+                url: url, img: img, blob: c.blob, nombre: c.nombre,
+                x: c.x, y: c.y, esc: c.esc,
+                /* por encima del original y por debajo del tope: promediar
+                   garantiza que nunca comparte z con nadie */
+                z: (c.z + zTope()) / 2,
+                inicio: c.inicio, dur: c.dur
+            };
+            capasImg.splice(i + 1, 0, copia);
+            seleccionaCapaImg(i + 1);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); };
+        img.src = url;
+    }
+
+    function cargaEditorCapa() {
+        if (!editCapa) return;
+        var c = (capaImgSel >= 0) ? capasImg[capaImgSel] : null;
+        editCapa.hidden = !c;
+        if (!c) return;
+        inpCapaInicio.value = String(c.inicio);
+        inpCapaDur.value = String(c.dur);
+        inpCapaEsc.value = String(Math.round(c.esc * 100));
+        valCapaEsc.textContent = Math.round(c.esc * 100) + ' %';
+    }
+
+    if (inpCapaArchivo) {
+        inpCapaArchivo.addEventListener('change', function () {
+            var f = inpCapaArchivo.files && inpCapaArchivo.files[0];
+            if (f) nuevaCapaImg(f);
+            inpCapaArchivo.value = '';   // R5: permite reañadir el mismo archivo
+        });
+    }
+    [[inpCapaInicio, 'inicio', 0], [inpCapaDur, 'dur', 0]].forEach(function (par) {
+        if (!par[0]) return;
+        par[0].addEventListener('input', function () {
+            var c = (capaImgSel >= 0) ? capasImg[capaImgSel] : null;
+            if (!c) return;
+            var v = parseFloat(par[0].value);
+            if (!isFinite(v) || v < 0) return;
+            c[par[1]] = par[2] === 0 ? Math.round(v * 10) / 10 : v;
+            pintaPanelCapas();
+            repintarSuperp();
+        });
+    });
+    if (inpCapaEsc) {
+        inpCapaEsc.addEventListener('input', function () {
+            var c = (capaImgSel >= 0) ? capasImg[capaImgSel] : null;
+            if (!c) return;
+            var v = parseFloat(inpCapaEsc.value);
+            if (!isFinite(v)) return;
+            c.esc = Math.max(0.1, Math.min(4, v / 100));
+            if (valCapaEsc) valCapaEsc.textContent = Math.round(v) + ' %';
+            repintarSuperp();
+        });
+    }
 
     /* F9: el color se aplica en vivo mientras el selector está en pantalla */
     ['input', 'change'].forEach(function (ev) {
@@ -3436,6 +3985,7 @@
             t[cfg[1]] = Math.round(v * 10) / 10;
             cfg[0].value = String(t[cfg[1]]);
             pintaListaTextos();
+            pintaPanelCapas();   // R5: el panel de capas muestra la ventana
             repintarSuperp();
         });
     });
@@ -3478,6 +4028,7 @@
         pintaListaTextos();
         pintaRielSalida();
         cargaEditor();
+        pintaPanelCapas();   // R5: cambian los tiempos que muestra el panel
         repintarSuperp();
         aviso('Textos repartidos: ' + fmtSeg(seg) + ' s por texto', 'success');
     });
@@ -3915,6 +4466,7 @@
     });
 
     recuperaUltimo();
+    pintaPanelCapas();   // R5: el panel de capas nace con su estado vacío
 
     /* ---------- M4 · peso del archivo y grabación estable ---------- */
     /* Antes: 8 Mbps fijos para todo —un minuto de 1080p salía a ~60 MB—.
@@ -4818,6 +5370,14 @@
             textos: JSON.parse(JSON.stringify(textos)),
             textoSel: textoSel,
             selTira: sel,
+            /* R5 · las imágenes sueltas: el File viaja en el snapshot para que,
+               si su url murió al quitarla, el historial la pueda recrear */
+            capasImg: capasImg.map(function (c) {
+                return { url: c.url, img: c.img, blob: c.blob, nombre: c.nombre,
+                         x: c.x, y: c.y, esc: c.esc, z: c.z,
+                         inicio: c.inicio, dur: c.dur };
+            }),
+            capaImgSel: capaImgSel,
             contPos: contPos ? JSON.parse(JSON.stringify(contPos)) : null,
             contEsc: contEsc,
             logoImg: logoImg, logoUrl: logoUrl, logoBlob: logoBlob,
@@ -4851,6 +5411,14 @@
         return JSON.stringify({
             img: e.imagenes.map(function (i) { return i.url + '|' + i.nombre; }),
             txt: e.textos, sel: e.textoSel, tira: e.selTira,
+            /* R5 · las imágenes sueltas también entran en la clave: sin esto el
+               dedupe las daba por «igual que antes» y el historial no guardaba
+               ni añadir ni mover ni quitar una capa */
+            capas: (e.capasImg || []).map(function (c) {
+                return c.url + '|' + c.x + '|' + c.y + '|' + c.esc + '|' +
+                    c.z + '|' + c.inicio + '|' + c.dur;
+            }),
+            capasSel: e.capaImgSel,
             cp: e.contPos, ce: e.contEsc,
             logo: e.logoUrl, logon: e.logoNombre, logoe: e.logoEstado,
             mus: e.musicaId, musv: e.musicaVol,
@@ -4945,6 +5513,24 @@
         sel = e.selTira;
         textos = JSON.parse(JSON.stringify(e.textos));
         textoSel = (e.textoSel >= 0 && e.textoSel < textos.length) ? e.textoSel : -1;
+        /* R5 · imágenes sueltas: si al quitarla se revocó su url, se recrea del
+           File y hay que recargar el <img> —el elemento viejo ya no pinta— */
+        capasImg = (e.capasImg || []).map(function (c) {
+            var url = c.url;
+            var img = c.img;
+            if (url && histRevocadas[url] && c.blob) {
+                /* la vieja ya está revocada: se suelta la referencia para no
+                   dejar blobs huérfanos si se deshace muchas veces */
+                url = URL.createObjectURL(c.blob);
+                var nuevo = new Image();
+                nuevo.onload = function () { repintarSuperp(); };
+                nuevo.src = url;
+                img = nuevo;
+            }
+            return { url: url, img: img, blob: c.blob, nombre: c.nombre,
+                     x: c.x, y: c.y, esc: c.esc, z: c.z, inicio: c.inicio, dur: c.dur };
+        });
+        capaImgSel = (e.capaImgSel >= 0 && e.capaImgSel < capasImg.length) ? e.capaImgSel : -1;
         contPos = e.contPos ? JSON.parse(JSON.stringify(e.contPos)) : null;
         contEsc = e.contEsc;
         /* Formulario: se escriben los valores y se lanza «change» para que
@@ -4987,9 +5573,12 @@
         pintarTira();
         pintaListaTextos();
         cargaEditor();
+        pintaPanelCapas();   // R5
+        cargaEditorCapa();   // R5
         repintarSuperp();
         actualizaCrear();
         actualizaManija();
+        actualizaManijaImg();   // R5
         /* Algún handler normaliza valores (la duración al cambiar de modo):
            se recoloca la entrada para que el dedupe no marque un falso cambio. */
         var e2 = histCaptura();

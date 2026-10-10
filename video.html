@@ -31,9 +31,9 @@
     </script>
     <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
-    <link rel="stylesheet" href="./public/css/style.css?v=r3">
+    <link rel="stylesheet" href="./public/css/style.css?v=r4">
     <link rel="stylesheet" href="./public/css/shell.css">
-    <link rel="stylesheet" href="./public/css/video.css?v=r2">
+    <link rel="stylesheet" href="./public/css/video.css?v=r3">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -98,6 +98,16 @@
                             <span class="vid-asa vid-asa-sw" data-esq="sw"></span>
                             <span class="vid-asa vid-asa-se" data-esq="se"></span>
                         </div>
+                        <!-- R5: manija de la imagen suelta seleccionada; mismo
+                             aspecto que la del contenido (borde azul + 4 asas)
+                             porque hace lo mismo: mover y escalar -->
+                        <div class="vid-manija-contenido" id="vid-manija-img" hidden
+                             title="Arrastra para mover; toca una asa para escalar" aria-hidden="true">
+                            <span class="vid-asa vid-asa-nw" data-esq="nw"></span>
+                            <span class="vid-asa vid-asa-ne" data-esq="ne"></span>
+                            <span class="vid-asa vid-asa-sw" data-esq="sw"></span>
+                            <span class="vid-asa vid-asa-se" data-esq="se"></span>
+                        </div>
                         <p class="vid-vacio" id="vid-vacio">Agrega imágenes para ver la vista previa</p>
                     </div>
 
@@ -127,9 +137,9 @@
                     </div>
 
                     <!-- M1 · pista para móvil: tocar un texto lo selecciona -->
-                    <p class="form-text mb-0 mt-1" id="vid-lienzo-pista" hidden>Toca un texto sobre la vista
-                        previa para seleccionarlo y arrastra su manija para colocarlo; deslizar sobre el
-                        lienzo sigue moviendo la página.</p>
+                    <p class="form-text mb-0 mt-1" id="vid-lienzo-pista" hidden>Toca un texto o una imagen
+                        sobre la vista previa para seleccionarlo y arrastra su manija para colocarlo; deslizar
+                        sobre el lienzo sigue moviendo la página.</p>
 
                     <!-- M1 · controles del contenido JUNTO al lienzo: en móvil no hace
                          falta subir buscándolos por el formulario -->
@@ -181,6 +191,11 @@
                             <button class="nav-link" id="vid-tab-textos" data-bs-toggle="tab"
                                     data-bs-target="#vid-pane-textos" type="button" role="tab"
                                     aria-controls="vid-pane-textos" aria-selected="false" tabindex="-1">Textos</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="vid-tab-capas" data-bs-toggle="tab"
+                                    data-bs-target="#vid-pane-capas" type="button" role="tab"
+                                    aria-controls="vid-pane-capas" aria-selected="false" tabindex="-1">Capas</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="vid-tab-ajustes" data-bs-toggle="tab"
@@ -713,6 +728,54 @@
                     </div>
 
                     </div>
+                    <!-- R5 · panel de capas: TODO lo que se pinta encima del
+                         contenido —textos e imágenes sueltas— en un solo orden.
+                         Las imágenes se añaden aquí y se colocan arrastrándolas
+                         en la vista previa; ↑/↓ las sube y baja por el orden
+                         mezclado, así una imagen puede quedar entre dos textos -->
+                    <div class="tab-pane fade" id="vid-pane-capas" role="tabpanel"
+                         aria-labelledby="vid-tab-capas" tabindex="0">
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label class="btn btn-outline-primary w-100" for="vid-capa-archivo">
+                                <i class="fas fa-image" aria-hidden="true"></i> Añadir imagen encima
+                            </label>
+                            <input type="file" id="vid-capa-archivo" accept="image/*" class="visually-hidden">
+                            <p class="form-text mb-1 mt-1">La imagen se pinta <strong>encima</strong> del
+                                contenido y se mueve arrastrándola en la vista previa.
+                            </p>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-label">Orden de las capas</div>
+                            <div class="vid-textos" id="vid-capas-lista"
+                                 role="listbox" aria-label="Capas del vídeo"></div>
+                            <p class="form-text mb-0 mt-1">La última fila es lo que queda más abajo
+                                en la imagen, y la primera lo que se ve encima de todo.</p>
+                        </div>
+                        <div class="col-12" id="vid-capa-edit" hidden>
+                            <div class="form-label mt-1">Editar imagen</div>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label class="form-label" for="vid-capa-inicio">Aparece en (s)</label>
+                                    <input type="number" class="form-control" id="vid-capa-inicio"
+                                           min="0" step="0.1" value="0" inputmode="decimal">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label" for="vid-capa-dur">Dura (s)</label>
+                                    <input type="number" class="form-control" id="vid-capa-dur"
+                                           min="0" step="0.1" value="0" inputmode="decimal">
+                                    <div class="form-text">0 = hasta el final del vídeo</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="vid-capa-esc">Tamaño</label>
+                                    <input type="range" class="form-range" id="vid-capa-esc"
+                                           min="10" max="400" step="5" value="100">
+                                    <div class="vid-contenido-valor" id="vid-capa-esc-val">100 %</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
                     <div class="tab-pane fade" id="vid-pane-exportar" role="tabpanel"
                          aria-labelledby="vid-tab-exportar" tabindex="0">
                     <!-- Q5 · la plataforma al lado de «Crear vídeo»: lo mismo que
@@ -876,7 +939,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r6"></script>
+    <script src="./public/js/video.js?v=r7"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

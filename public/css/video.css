@@ -365,6 +365,21 @@
     white-space: nowrap;
 }
 
+/* R5 · panel de capas: reutiliza las filas de la lista de textos (mismo alto de
+   dedo y mismas acciones) y solo añade el icono de tipo y el estado vacío */
+.vid-capa-ic {
+    flex: 0 0 auto;
+    margin-right: .4rem;
+    opacity: .65;
+}
+
+.vid-capas-vacio {
+    margin: 0;
+    padding: .75rem;
+    font-size: .9rem;
+    opacity: .7;
+}
+
 .vid-texto-acciones {
     display: flex;
     flex: 0 0 auto;

@@ -29,7 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
-| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas → Diferidos · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 
 ---
 
@@ -1282,6 +1282,44 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
   omite para no tapar el poster. E2E: flujo instante→imagen→play→quitar
   con píxeles del lienzo y atributo `poster`, consola 0, barrido 21/21,
   `node --check`.
+- **R5 · Capas mixtas imágenes+textos ✅** («¿por qué no puedo mezclar imágenes
+  y texto como un editor moderno?»). **La propuesta inicial era inviable** y
+  hubo que rehacerla: apoyarse en P3.3 significaba usar `capas.js`, que es
+  **solo de los editores Fabric** —`video.html` no carga Fabric ni `capas.js`
+  (scripts en `video.html:875+`), es un `<canvas>` 2D que repinta entero cada
+  fotograma porque `captureStream` solo emite si se pinta. Así que va desde
+  cero dentro de `video.js`:
+  - **Varias imágenes sueltas**: nueva colección `capasImg`
+    (`{url, img, blob, nombre, x, y, esc, z, inicio, dur}`). Se dimensionan
+    partiendo del cuerpo —como «Ajustar»/contain—, así `esc = 1` significa «cabe
+    entera» y el tamaño se lee de un vistazo. `x`/`y` en fracciones del lienzo,
+    con tope para que siempre se puedan volver a agarrar.
+  - **Ventana temporal igual que los textos** (`inicio`, `dur = 0` → hasta el
+    final): aparece y desaparece en un momento concreto del vídeo.
+  - **Orden único mezclado**: `ordenCapas()` funde los dos arrays —el índice de
+    un texto es su z y el de una imagen un z decimal—, así una imagen puede
+    quedar ENTRE dos textos y no siempre encima de todos. El orden relativo
+    entre textos sigue siendo el del array, o sea el de los ↑/↓ de la pestaña
+    Textos, que ya estaba probado y no se toca.
+  - **Pestaña «Capas»** (entre Textos y Ajustes): lista todo lo que se pinta
+    encima del contenido, de arriba abajo, con ↑/↓ (mueven por el orden
+    mezclado), duplicar y quitar; editor con inicio, duración y tamaño.
+  - **Mover y escalar**: manija propia con las 4 asas del contenido de Tet News,
+    reutilizando su motor de M2 (delta desde el agarre, esquina opuesta clavada,
+    pasos del 5 %).
+  - **Tocar para seleccionar**: `capaBajo()` sustituye a `cajaTextoBajo()`, que
+    solo miraba textos; ahora compiten textos e imágenes por el punto y gana el
+    de mayor z.
+  - **Historial**: las capas van en el snapshot con su `File`, y `histClave` las
+    incluye —sin eso el dedupe las daba por «igual que antes» y no se
+    deshacían ni se perdían en bloque—; «quitar» revoca la url como el logo y
+    los clips, y el aviso de deshacer la rehace desde el `File`.
+  - E2E en Chrome: añadir/mover/escalar por asas, selección tocando el lienzo,
+    ↑/↓ cruzando un texto, ventana temporal (píxeles del lienzo dentro y fuera
+    de la ventana + la manija se esconde), deshacer/rehacer del orden,
+    consola 0, `node --check`. `?v=r7` en `video.js` y `?v=r3` en `video.css`.
+  - *Pendiente de R5:* rotación y opacidad por capa, y que las imágenes también
+    aparezcan en el riel de la línea de tiempo (hoy solo los textos).
 
 ---
 
@@ -1315,13 +1353,11 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
   prueba visual.
 - **Catálogo de elementos** (nuevo): biblioteca de formas, iconos, marcos y plantillas base
   para componer imágenes — siguiente bloque grande tras validar la UI.
-- **R5 · Capas mixtas imágenes+textos** (pedido: «¿por qué no puedo mezclar
-  imágenes y texto como un editor moderno?»): en el editor de vídeo los textos
-  ya se superponen al contenido, pero imagen y textos viven en pestañas
-  distintas y la imagen es UNA capa «contenido» que se escala como bloque —
-  no se pueden colocar varias imágenes sueltas con libertad junto a los
-  textos. Propuesta: panel único de capas (arrastrar, reordenar y mezclar
-  fotos/vídeos/textos) apoyado en P3.3 (capas con preview/lock) + catálogo.
+- ~~**R5 · Capas mixtas imágenes+textos**~~ → ✅ **hecho en `video.html`**, pero
+  **no como decía la propuesta**: P3.3 no servía de base porque `capas.js` es
+  solo de los editores Fabric y **`video.html` no usa Fabric** (es un `<canvas>`
+  2D plano que repinta entero cada fotograma). Se hizo desde cero dentro del
+  motor. Ver la sección 🟢 Lote R5 al final.
 - P1.7 offcanvas del formulario en móvil.
 - P2.15 guía de estado vacío.
 - **Lote S — seguridad** (quitar jQuery, CSP, validar `.json`): ver [`PLAN_SEGURIDAD.md`](PLAN_SEGURIDAD.md).
