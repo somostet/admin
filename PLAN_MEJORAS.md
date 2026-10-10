@@ -29,7 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
-| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b pista única (intercalar) ⏳ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 
 ---
 
@@ -1320,6 +1320,33 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
     consola 0, `node --check`. `?v=r7` en `video.js` y `?v=r3` en `video.css`.
   - *Pendiente de R5:* rotación y opacidad por capa, y que las imágenes también
     aparezcan en el riel de la línea de tiempo (hoy solo los textos).
+- **R6a · Combinar fotos con vídeo en la misma salida ✅** («¿no puedo
+  combinar imágenes con vídeo?»). Hasta aquí eran **modos excluyentes**: había
+  dos guardas que lo impedían («Quita el vídeo para agregar imágenes» y
+  «Quita las imágenes para recortar un vídeo») y un flag `videoCargado` que
+  encendía un modo y apagaba el otro.
+  - **Un orden de salida**: `pista[]` con entradas de los dos tipos, y las
+    pools `imagenes[]`/`colaVideos[]` intactas (siguen guardando recorte,
+    miniatura e historial). `planPista()` la convierte en segmentos con
+    `desde` y `dur`.
+  - **Tercer grabador** `crearVideoPista()`: recorre el plan en tiempo real
+    con los dos relojes (el de `performance.now()` para las fotos y el del
+    propio `<video>` para los clips) y corta el sonido del vídeo al salir de
+    un segmento. **Los dos grabadores anteriores no se tocan**: con un solo
+    tipo de elemento se sigue usando el camino de siempre.
+  - **Vista previa mixta**, scrub de la línea de tiempo y validación del total
+    sobre el plan; en mixto vuelven los controles de duración y de transición
+    (que el modo vídeo tenía apagados, porque la duración es la de las fotos y
+    los clips llevan su propio recorte).
+  - E2E en Chrome: 2 fotos × 2 s + clip de 3 s → MP4 de 7,06 s; muestreando
+    fotogramas del **MP4 producido** (0,5–3,5 s dan el fondo de las fotos y
+    4,5–6,5 s el color del vídeo), más regresión de solo-fotos (4 s) y
+    solo-vídeo (3 s). Consola 0, `node --check`.
+  - **R6b ⏳ pendiente**: la lista única que permite *intercalar* (foto →
+    clip → foto). Ahora mismo `pista[]` se arma con las fotos primero y los
+    clips detrás, así que combinar funciona pero el orden todavía no se elige:
+    hasta que exista la pista única, la salida es «todas las fotos y luego
+    todos los vídeos».
 
 ---
 

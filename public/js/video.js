@@ -461,10 +461,6 @@
 
     function cargarImagen(f) {
         return new Promise(function (resolver) {
-            if (videoCargado) {
-                aviso('Quita el vídeo para agregar imágenes', 'info');
-                return resolver();
-            }
             if (!/^image\//.test(f.type)) {
                 aviso('«' + f.name + '» no es una imagen', 'warning');
                 return resolver();
@@ -482,6 +478,7 @@
             img.onload = function () {
                 imagenes.push({ url: url, img: img, nombre: f.name });
                 usosUrl[url] = (usosUrl[url] || 0) + 1;
+                pistaInserta('img', imagenes.length - 1);   // R6: al final de la salida
                 pintarTira();
                 resolver();
             };
@@ -518,10 +515,8 @@
             aviso('Espera a que termine la captura de la pestaña', 'info');
             return;
         }
-        if (imagenes.length) {
-            aviso('Quita las imágenes para recortar un vídeo', 'info');
-            return;
-        }
+        /* R6: ya no hace falta vaciar la tira — la imagen entra en la pista
+           junto a los clips y se ordena con ellos */
         cargarVideos(lista);
     });
 
@@ -535,10 +530,8 @@
        terminar refresca ventana, cola y vista previa */
     function cargarVideos(lista) {
         if (grabando || capturando || pidiendo) return;
-        if (imagenes.length) {
-            aviso('Quita las imágenes para recortar un vídeo', 'info');
-            return;
-        }
+        /* R6 · ya no se exige vaciar la tira: el clip entra en la pista y se
+           coloca con las imágenes (F8 también entra por aquí) */
         var validos = [];
         lista.forEach(function (f) {
             var ok = /^video\//.test(f.type) || /\.(mp4|webm|m4v|mov|ogv)$/i.test(f.name);
@@ -560,6 +553,7 @@
                                tope de 5 min de E4 (se aplica por clip) */
                             colaVideos.push({ nombre: f.name, url: url, dur: d,
                                 ini: 0, fin: Math.min(d, MAX_TOTAL_SEG), blob: f });
+                            pistaInserta('clip', colaVideos.length - 1);   // R6
                         }
                         resolver();
                     });
@@ -657,6 +651,137 @@
             ultimo = { i: i, t: r.fin };
         }
         return ultimo || { i: Math.max(0, idxActivo), t: 0 };
+    }
+
+    /* ---------- R6 · pista única: imágenes y clips en la misma salida ---------- */
+    /* Antes eran modos excluyentes: `videoCargado` encendía el de vídeo y
+       apagaba el de imágenes. Ahora hay un SOLO orden de salida —`pista[]`— con
+       entradas de los dos tipos, y las pools `imagenes[]`/`colaVideos[]`
+       siguen guardando cada cosa con su recorte, su miniatura y su historial.
+       Con un solo tipo de elemento se sigue usando el camino de siempre, que
+       ya está probado; el motor mixto solo entra cuando hay de los dos. */
+    var pista = [];   // [{ t: 'img', i }, { t: 'clip', i }] — i es el índice en su pool
+
+    function esMixta() {
+        var img = false, clip = false;
+        for (var k = 0; k < pista.length; k++) {
+            if (pista[k].t === 'img') img = true;
+            else clip = true;
+        }
+        return img && clip;
+    }
+
+    /* El plan de la salida: un segmento por elemento de la pista, EN ese orden.
+       Los de imagen miden lo que diga el control de duración; los de clip, su
+       recorte. `desde` es el instante en que empieza dentro de la salida (s). */
+    function planPista() {
+        var segs = [];
+        var salida = 0;
+        var durImg = durMsPorImagen() / 1000;
+        var it, k, c, r, im;
+        for (k = 0; k < pista.length; k++) {
+            it = pista[k];
+            if (it.t === 'img') {
+                im = imagenes[it.i];
+                if (!im) continue;
+                segs.push({ tipo: 'img', idx: it.i, dur: durImg, desde: salida });
+                salida += durImg;
+            } else {
+                c = colaVideos[it.i];
+                if (!c) continue;
+                r = recorteClip(c);
+                if (r.fin - r.inicio <= 0.03) continue;   // clip recortado del todo
+                segs.push({ tipo: 'clip', idx: it.i, a: r.inicio, b: r.fin,
+                            dur: r.fin - r.inicio, desde: salida });
+                salida += r.fin - r.inicio;
+            }
+        }
+        return segs;
+    }
+
+    function totalPista() {
+        var segs = planPista();
+        var t = 0;
+        for (var k = 0; k < segs.length; k++) t += segs[k].dur;
+        return t;
+    }
+
+    /* La transición solo se puede fundir entre dos fotos seguidas, así que cada
+       segmento de imagen apunta a la anterior solo si lo es. Lo usan igual el
+       grabador y la vista previa, que pintan con el mismo código. */
+    function preparaPista() {
+        var segs = planPista();
+        for (var q = 0; q < segs.length; q++) {
+            segs[q].prevImg = (q > 0 && segs[q].tipo === 'img' && segs[q - 1].tipo === 'img')
+                ? segs[q - 1].idx : -1;
+        }
+        return segs;
+    }
+
+    /* Un fotograma de un segmento de imagen. Las superposiciones (textos,
+       capas, logo) van contra el instante GLOBAL de la salida, no contra el
+       del segmento: por eso el reloj se pasa aparte. */
+    function pintaImagenSeg(seg, localMs, tGlobalMs) {
+        var im = imagenes[seg.idx];
+        var durMs = seg.dur * 1000;
+        if (!im) { pintarFondo(); dibujarSuperposiciones(tGlobalMs); return; }
+        var modo = selTrans.value;
+        var transMs = (seg.prevImg >= 0 && modo !== 'ninguna') ? durTransicion(durMs) : 0;
+        if (transMs > 0 && localMs < transMs) {
+            var p = localMs / transMs;
+            var anterior = imagenes[seg.prevImg].img;
+            pintarFondo();
+            if (selAjuste.value === 'blur') { pintarDesenfado(anterior); pintarDesenfado(im.img, p); }
+            if (modo === 'deslizar') {
+                dibujarCentrado(anterior, zoomKen(durMs, durMs));
+                dibujarCentrado(im.img, zoomKen(localMs, durMs), 1, lienzo.width * (1 - p));
+            } else {
+                dibujarCentrado(anterior, zoomKen(durMs, durMs));
+                dibujarCentrado(im.img, zoomKen(localMs, durMs), p);
+            }
+        } else {
+            dibujar(im.img, zoomKen(localMs, durMs));
+        }
+        tUltimo = tGlobalMs;
+        dibujarSuperposiciones(tGlobalMs);
+    }
+
+    /* Mantenimiento de la pista. `pista[]` guarda índices dentro de las pools,
+       así que al quitar o mover algo hay que arreglar los índices del resto */
+    function pistaInserta(t, i, pos) {
+        var item = { t: t, i: i };
+        if (pos === undefined || pos < 0 || pos > pista.length) pista.push(item);
+        else pista.splice(pos, 0, item);
+    }
+    function pistaQuita(t, i) {
+        for (var k = pista.length - 1; k >= 0; k--) {
+            if (pista[k].t === t && pista[k].i === i) { pista.splice(k, 1); return k; }
+        }
+        return -1;
+    }
+    /* baja los índices que apuntan detrás del que se acaba de quitar */
+    function pistaRenumera(t, desde) {
+        for (var k = 0; k < pista.length; k++) {
+            if (pista[k].t === t && pista[k].i > desde) pista[k].i--;
+        }
+    }
+    function pistaIntercambia(a, b) {
+        if (a === b || a < 0 || b < 0 || a >= pista.length || b >= pista.length) return;
+        var t = pista[a]; pista[a] = pista[b]; pista[b] = t;
+    }
+    /* posición que ocupa un elemento en la pista (-1 si no está) */
+    function posEnPista(t, i) {
+        for (var k = 0; k < pista.length; k++) {
+            if (pista[k].t === t && pista[k].i === i) return k;
+        }
+        return -1;
+    }
+    function pistaEsIgual(a, b) {
+        if (!a || !b || a.length !== b.length) return false;
+        for (var k = 0; k < a.length; k++) {
+            if (a[k].t !== b[k].t || a[k].i !== b[k].i) return false;
+        }
+        return true;
     }
 
     /* E5: la cola cambió (alta, baja o reordenación) → duración de la salida,
@@ -887,6 +1012,8 @@
         var c = colaVideos[i];
         if (!c) return;
         colaVideos.splice(i, 1);
+        pistaQuita('clip', i);          // R6
+        pistaRenumera('clip', i);       // R6: los índices posteriores bajan uno
         URL.revokeObjectURL(c.url);
         histRevocadas[c.url] = true;   // P4: el historial puede recrearla del blob
         if (!colaVideos.length) {
@@ -929,6 +1056,7 @@
             histRevocadas[c.url] = true;   // P4
         });
         colaVideos = [];
+        pista = pista.filter(function (it) { return it.t !== 'clip'; });   // R6
         idxActivo = -1;
         desfaseActivo = 0;
         urlFuente = null;
@@ -1144,11 +1272,15 @@
     /* controles que no aplican en modo recorte (y etiquetas cruzadas) */
     function pintarModo() {
         var v = videoCargado;
-        inpDur.disabled = v;
-        selModoDur.disabled = v;
-        selTrans.disabled = v;
-        lblVideo.classList.toggle('disabled', v);
-        btnImagenLabel.classList.toggle('disabled', v);
+        /* R6 · con imagenes y clips juntos los controles vuelven: la duración
+           sigue siendo la de las imágenes (los clips llevan su propio recorte)
+           y la transición se puede aplicar entre dos fotos seguidas */
+        var mixto = esMixta();
+        inpDur.disabled = v && !mixto;
+        selModoDur.disabled = v && !mixto;
+        selTrans.disabled = v && !mixto;
+        lblVideo.classList.toggle('disabled', false);
+        btnImagenLabel.classList.toggle('disabled', false);
         if (selTam.options.length) {
             selTam.options[0].textContent = v ?
                 'Tamaño original del vídeo' : 'Tamaño de la primera imagen';
@@ -1313,6 +1445,8 @@
     /* Mapea el tiempo de salida (0..total): en vídeo es el recorte, en
        imágenes la duración total. Una barra por texto + cabezal con scrub. */
     function totalSalida() {
+        /* R6: con imagenes y clips mezclados manda el plan de la pista */
+        if (esMixta()) return Math.max(0.2, totalPista());
         if (videoCargado) {
             return Math.max(0.2, totalRecorte());   // E5b: suma de los recortes
         }
@@ -1338,7 +1472,7 @@
     function iniciaScrub() {
         if (rielSalScrub) return;
         rielSalScrub = true;
-        if (videoCargado) {
+        if (videoCargado || esMixta()) {
             scrubVideoPausa = vidFuente.paused;
             try { vidFuente.pause(); } catch (e) { }
         } else {
@@ -1351,6 +1485,33 @@
         var total = totalSalida();
         tMs = Math.max(0, Math.min(Math.max(0, total - 0.01) * 1000, tMs));
         poneCabezalSalida(tMs);
+        /* R6 · el cabezal también sabe dónde cae en una pista mixta: si cae en
+           un clip se busca a su tiempo, y si cae en una foto se pinta esa */
+        if (esMixta()) {
+            var segs = preparaPista();
+            var t = tMs / 1000;
+            var s = segs.length ? segs[segs.length - 1] : null, k;
+            for (k = 0; k < segs.length; k++) {
+                if (t >= segs[k].desde && t < segs[k].desde + segs[k].dur) { s = segs[k]; break; }
+            }
+            if (!s) return;
+            if (s.tipo === 'img') {
+                vidFuente.pause();
+                pintaImagenSeg(s, (t - s.desde) * 1000, tMs);
+                return;
+            }
+            var c = colaVideos[s.idx];
+            if (!c) return;
+            if (idxActivo !== s.idx) activaClip(s.idx);
+            desfaseActivo = s.desde;
+            var ct = s.a + (t - s.desde);
+            if (Math.abs((vidFuente.currentTime || 0) - ct) > 0.03) {
+                try { vidFuente.currentTime = ct; } catch (e) { }
+            }
+            marcoSucio = true;
+            dibujarFrame(vidFuente);
+            return;
+        }
         if (videoCargado) {
             /* E5b: el instante de la salida dice en qué clip cae */
             var m = clipEnSalida(tMs / 1000);
@@ -1367,6 +1528,13 @@
 
     function finScrub() {
         rielSalScrub = false;
+        /* R6 · en mixta se reinicia el bucle del plan desde el cabezal: es lo
+           único que conserva el punto exacto sin tener que reanudar el clip */
+        if (esMixta()) {
+            previewFase = rielSalUltimoMs;
+            reiniciarPreview();
+            return;
+        }
         if (videoCargado) {
             if (scrubVideoPausa === false) {
                 var p = vidFuente.play();
@@ -1612,6 +1780,9 @@
             (imagenes.length >= MAX_IMAGENES ? ' (máximo alcanzado)' : '');
         if (!hay) sel = -1;
         else if (sel < 0 || sel >= imagenes.length) sel = 0; // barra ↑↓ visible de entrada
+        /* R6 · una imagen junto a los clips devuelve los controles de duración
+           y de transición, que el modo vídeo tinha apagados */
+        pintarModo();
         actualizarBarra();
         actualizaCrear();
         reiniciarPreview();
@@ -1650,6 +1821,8 @@
         var f = imagenes[sel];
         usosUrl[f.url] = (usosUrl[f.url] || 1) + 1;
         imagenes.splice(sel + 1, 0, f);
+        /* R6: el clon va justo detrás del original, también en la pista */
+        pistaInserta('img', sel + 1, posEnPista('img', sel) + 1);
         sel = sel + 1;
         pintarTira();
     });
@@ -1657,6 +1830,8 @@
     btnQuitar.addEventListener('click', function () {
         if (sel < 0) return;
         var f = imagenes.splice(sel, 1)[0];
+        pistaQuita('img', sel);      // R6
+        pistaRenumera('img', sel);   // R6
         soltarUrl(f.url);
         if (sel >= imagenes.length) sel = imagenes.length - 1;
         pintarTira();
@@ -2439,6 +2614,31 @@
            recolocan (vale para recorte de vídeo y duración de imágenes) */
         pintaRielSalida();
         poneCabezalSalida(rielSalUltimoMs);
+        /* R6 · rama mixta: imágenes y clips en la misma salida. El total es el
+           plan entero, así que los topes se miran sobre esa suma */
+        if (esMixta()) {
+            var segs = planPista();
+            var nImg = 0, nClip = 0;
+            for (var s = 0; s < segs.length; s++) {
+                if (segs[s].tipo === 'img') nImg++; else nClip++;
+            }
+            var totalMix = totalPista();
+            var dImg = durMsPorImagen() / 1000;
+            var cortoMix = nImg > 0 && dImg < MIN_POR_IMAGEN;
+            var excedeMix = totalMix > MAX_TOTAL_SEG;
+            recIn.disabled = grabando || capturando;   // el plan no se toca
+            recFin.disabled = grabando || capturando;   // mientras se graba
+            vidTotal.textContent = segs.length
+                ? (nImg + (nImg === 1 ? ' imagen · ' : ' imágenes · ') +
+                   nClip + (nClip === 1 ? ' vídeo' : ' vídeos') +
+                   ' en ese orden = ' + fmt(totalMix) + ' s · se graba en tiempo real' +
+                   (excedeMix ? ' (máximo ' + MINUTOS_MAX + ' minutos: recorta los vídeos o quita elementos)' :
+                    cortoMix ? ' (cada imagen necesita al menos ' + fmt(MIN_POR_IMAGEN) + ' s)' : ''))
+                : '';
+            btnCrear.disabled = grabando || capturando || !segs.length || excedeMix || cortoMix;
+            pintarRiel();
+            return;
+        }
         if (videoCargado) {
             var rr = validadorRecorte();   // E5b: cada clip y la suma del montaje
             var n = colaVideos.length;
@@ -2507,6 +2707,7 @@
     }
 
     function previewNecesitaLoop() {
+        if (esMixta()) return true;   // R6: el plan avanza solo
         if (videoCargado) return true;
         if (!imagenes.length) return false;
         var animar = selTrans.value === 'kenburns' ||
@@ -2566,6 +2767,21 @@
     function reiniciarPreview() {
         histMarca();   // P4
         detenerPreview();
+        /* R6 · pista mixta: un solo reloj recorre el plan y, al entrar en un
+           clip, lo carga y lo busca; al salir lo pausa para que no suene */
+        if (esMixta()) {
+            rielSalWrap.hidden = false;
+            lienzo.style.display = 'block';
+            vacio.hidden = true;
+            pistaLienzo.hidden = false;
+            var dm = dimsSalida();
+            if (lienzo.width !== dm.w || lienzo.height !== dm.h) {
+                lienzo.width = dm.w;
+                lienzo.height = dm.h;
+            }
+            arrancarPreviewPista();
+            return;
+        }
         if (videoCargado) {
             rielSalWrap.hidden = false;   // F5f: hay línea de tiempo de salida
             lienzo.style.display = 'block';
@@ -2619,6 +2835,55 @@
                 firma = f;
             }
             poneCabezalSalida(t);   // el cabezal sigue el reloj aunque el lienzo no se mueva
+            preview = requestAnimationFrame(paso);
+        }
+        preview = requestAnimationFrame(paso);
+    }
+
+    /* R6 · vista previa de la pista mixta. Un único reloj (performance.now())
+       avanza por el plan; en los segmentos de imagen se pinta en el sitio, y
+       al entrar en uno de clip se carga, se busca a su inicio y se reproduce.
+       Al salir de un clip se pausa: si siguiera sonando se oiría un clip que
+       ya no se está viendo. */
+    function arrancarPreviewPista() {
+        if (preview || grabando) return;
+        var segs = preparaPista();
+        if (!segs.length) return;
+        var total = totalPista();
+        var fase = previewFase / 1000;
+        previewFase = 0;
+        var t0 = performance.now() - fase * 1000;
+        var enSeg = -1;
+
+        function paso() {
+            if (grabando) { preview = null; return; }
+            var t = (performance.now() - t0) / 1000;
+            if (t >= total) { t = t % total; t0 = performance.now() - t * 1000; }   // bucle
+            var s = segs[segs.length - 1], k;
+            for (k = 0; k < segs.length; k++) {
+                if (t >= segs[k].desde && t < segs[k].desde + segs[k].dur) { s = segs[k]; break; }
+            }
+            if (s.tipo === 'img') {
+                if (enSeg !== k) {   // hemos entrado en una foto: el clip calla
+                    vidFuente.pause();
+                    enSeg = k;
+                }
+                pintaImagenSeg(s, (t - s.desde) * 1000, t * 1000);
+            } else {
+                var c = colaVideos[s.idx];
+                if (!c) { preview = requestAnimationFrame(paso); return; }
+                if (enSeg !== k) {
+                    enSeg = k;
+                    idxActivo = s.idx;
+                    desfaseActivo = s.desde;   // el reloj global que usa dibujarFrame
+                    if (urlFuente !== c.url) { urlFuente = c.url; vidFuente.src = c.url; }
+                    vidFuente.currentTime = s.a;
+                    var pl = vidFuente.play();
+                    if (pl && pl.catch) pl.catch(function () { });
+                }
+                if (vidFuente.readyState >= 2) dibujarFrame(vidFuente);
+            }
+            poneCabezalSalida(t * 1000);
             preview = requestAnimationFrame(paso);
         }
         preview = requestAnimationFrame(paso);
@@ -2708,6 +2973,12 @@
     function redibujarArrastre() {
         histMarca();   // P4: al soltar, la posición nueva es historia
         if (grabando) return;
+        /* R6 · en pista mixta el bucle de la vista previa ya se encarga de
+           repintar; solo hace falta redibujar si está parado (tras un scrub) */
+        if (esMixta()) {
+            if (!preview) muestraInstante(rielSalUltimoMs);
+            return;
+        }
         if (videoCargado) { dibujarFrame(vidFuente); return; }
         if (!imagenes.length) return;
         var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
@@ -4146,6 +4417,26 @@
             aviso('Tu navegador no permite crear vídeos', 'danger');
             return;
         }
+        /* R6 · pista mixta: el motor nuevo recorre el plan imagen→clip→imagen */
+        if (esMixta()) {
+            var segs = preparaPista();
+            if (!segs.length) {
+                aviso('No hay nada que grabar en la salida', 'warning');
+                return;
+            }
+            if (totalPista() > MAX_TOTAL_SEG) {
+                aviso('Máximo ' + MINUTOS_MAX + ' minutos: recorta los vídeos o quita elementos', 'warning');
+                return;
+            }
+            var nImgMix = 0;
+            for (var s = 0; s < segs.length; s++) if (segs[s].tipo === 'img') nImgMix++;
+            if (nImgMix && durMsPorImagen() / 1000 < MIN_POR_IMAGEN) {
+                aviso('Cada imagen necesita al menos ' + fmt(MIN_POR_IMAGEN) + ' s', 'warning');
+                return;
+            }
+            vibra(10);
+            return crearVideoPista(segs);
+        }
         if (videoCargado) {
             var r = validadorRecorte();   // E5b: clips y suma del montaje
             if (!r.ok) {
@@ -5348,6 +5639,204 @@
         }
     }
 
+    /* ---------- R6 · grabador de la pista mixta (imágenes + clips) ---------- */
+    /* Recorre el plan —imagen → clip → imagen…— en tiempo real, igual que los
+       otros dos grabadores: el vídeo se codifica mientras se pinta. Lo que
+       cambia es que ahora conviven los dos relojes —el de `performance.now()`
+       para las fotos y el del propio <video> para los clips— y que en cada
+       salto hay que cortar o arrancar el sonido del vídeo. */
+    function crearVideoPista(segs) {
+        var audio = colaVideos.length ? conectarAudio() : null;
+        var total = Math.round(totalPista() * 1000);
+        var hayMusica = preparaMusica(total / 1000);
+        var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
+        if (!mime) {
+            aviso('No hay códec de vídeo disponible en este navegador', 'danger');
+            return;
+        }
+
+        var segIdx = 0;
+        var cambiando = false;   // E5: entre fuentes el lienzo se congela
+        var primerSeg = true;
+        var tIniSeg = 0;         // reloj del segmento de imagen en curso
+
+        grabando = true;
+        cancelado = false;
+        idxAntesRender = idxActivo;
+        btnCrear.disabled = true;
+        actualizaCrear();
+        btnCancelar.hidden = false;
+        resWrap.hidden = true;
+        actualizarBarra();
+        detenerPreview();
+        pintaBotonDirecto();
+        vidFuente.pause();
+        vidFuente.controls = false;
+
+        var d = dimsSalida();
+        if (d.reducido) {
+            aviso('Salida reducida a ' + d.w + '×' + d.h + ' px para que el vídeo no sea gigante', 'info');
+        }
+        lienzo.width = d.w;
+        lienzo.height = d.h;
+
+        var stream = lienzo.captureStream(FPS);
+        if ((audio || hayMusica) && audioDest) {
+            audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
+        }
+        var mimeUsado = mime;
+        var rec;
+        try {
+            rec = new MediaRecorder(stream, { mimeType: mimeUsado,
+                videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
+        } catch (e1) {
+            try {   // sin audio: el códec con pista de sonido puede no existir
+                stream = lienzo.captureStream(FPS);
+                mimeUsado = elegirMime(false) || mimeUsado;
+                rec = new MediaRecorder(stream, { mimeType: mimeUsado,
+                    videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
+                if (hayMusica) detenerMusica();
+                hayMusica = false;
+            } catch (e2) {
+                return fallo('Este navegador no pudo grabar el vídeo');
+            }
+        }
+        var chunks = [];
+        recAct = rec;
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function () {
+            recAct = null;
+            if (cancelado) { aviso('Grabación cancelada', 'info'); return limpiar(); }
+            var tipo = mimeUsado.split(';')[0];
+            var blob = new Blob(chunks, { type: tipo });
+            if (!blob.size) return fallo('La grabación salió vacía');
+            muestraResultado(blob, tipo, false, total / 1000);
+            aviso('Vídeo listo: ' + fmt(total / 1000) + ' s · ' + Math.round(blob.size / 1024) + ' KB', 'success');
+            limpiar();
+        };
+
+        progWrap.hidden = false;
+        barra.style.width = '0%'; barra.textContent = '0%';
+        estado.textContent = 'Grabando…';
+        rec.start(200);
+        iniciaMusica();
+        pantallaDespierta(true);
+
+        /* Un segmento de imagen se pinta con su propio reloj; uno de clip
+           deja el mando en el <video>, que ya suena y avanza solo. */
+        function arrancaSegPista() {
+            var s = segs[segIdx];
+            if (s.tipo === 'img') {
+                vidFuente.pause();          // el clip anterior calla al momento
+                vidFuente.controls = false;
+                cambiando = false;
+                tIniSeg = performance.now();
+                listoSegPista();
+                return;
+            }
+            var c = colaVideos[s.idx];
+            if (!c) { avanza(); return; }
+            idxActivo = s.idx;
+            desfaseActivo = s.desde;       // el reloj global que usa dibujarFrame
+            poneRecorteActivo();
+            var busca = function () {
+                if (vidFuente.readyState >= 2 && Math.abs(vidFuente.currentTime - s.a) < 0.05) {
+                    return listoSegPista();
+                }
+                var oy = function () {
+                    vidFuente.removeEventListener('seeked', oy);
+                    listoSegPista();
+                };
+                vidFuente.addEventListener('seeked', oy);
+                vidFuente.currentTime = s.a;
+            };
+            if (urlFuente === c.url && vidFuente.readyState >= 1) return busca();
+            cambiando = true;              // lienzo congelado: captureStream no emite negro
+            urlFuente = c.url;
+            vidFuente.src = c.url;
+            var om = function () {
+                vidFuente.removeEventListener('loadedmetadata', om);
+                if (!grabando) return;
+                busca();
+            };
+            vidFuente.addEventListener('loadedmetadata', om);
+        }
+
+        function listoSegPista() {
+            if (!grabando) return;
+            cambiando = false;
+            var s = segs[segIdx];
+            if (primerSeg) {
+                primerSeg = false;
+                dibujaSegmentoPista(s, 0, s.desde * 1000);
+                estado.textContent = 'Grabando…';
+            }
+            if (s.tipo === 'clip') {
+                var p = vidFuente.play();
+                if (p && p.catch) {
+                    p.catch(function () {
+                        fallo('El navegador no dejó reproducir el vídeo: toca el vídeo una vez y reintenta');
+                    });
+                }
+            }
+            rafAct = requestAnimationFrame(tickPista);
+        }
+
+        function avanza() {
+            segIdx++;
+            if (segIdx >= segs.length) {
+                grabando = false;
+                vidFuente.pause();
+                if (recAct && recAct.state !== 'inactive') recAct.stop();
+                return;
+            }
+            arrancaSegPista();
+        }
+
+        function tickPista() {
+            if (!grabando) return;
+            if (cambiando) { rafAct = requestAnimationFrame(tickPista); return; }
+            var s = segs[segIdx];
+            var local, tGlobal;
+            if (s.tipo === 'img') {
+                local = (performance.now() - tIniSeg) / 1000;
+                if (local >= s.dur) {
+                    dibujaSegmentoPista(s, s.dur * 1000 - 1, (s.desde + s.dur) * 1000);
+                    avanza();
+                    return;
+                }
+                tGlobal = s.desde + local;
+                dibujaSegmentoPista(s, local * 1000, tGlobal * 1000);
+            } else {
+                var cur = vidFuente.currentTime || 0;
+                if (vidFuente.ended || cur >= s.b) {
+                    dibujaSegmentoPista(s, 0, (s.desde + s.b - s.a) * 1000);
+                    avanza();
+                    return;
+                }
+                local = cur - s.a;
+                tGlobal = s.desde + local;
+                dibujaSegmentoPista(s, local * 1000, tGlobal * 1000);
+            }
+            var secs = total / 1000;
+            var pct = Math.max(0, Math.min(100, Math.round(tGlobal / secs * 100)));
+            barra.style.width = pct + '%';
+            barra.textContent = pct + '%';
+            estado.textContent = 'Grabando… ' + fmt(tGlobal) + ' / ' + fmt(secs) + ' s';
+            rafAct = requestAnimationFrame(tickPista);
+        }
+
+        /* Un fotograma del plan: la imagen se pinta con el reloj propio del
+           segmento y el clip con el suyo (dibujarFrame ya usa desfaseActivo
+           para el reloj global). */
+        function dibujaSegmentoPista(seg, localMs, tGlobalMs) {
+            if (seg.tipo !== 'img') { dibujarFrame(vidFuente); return; }
+            pintaImagenSeg(seg, localMs, tGlobalMs);
+        }
+
+        arrancaSegPista();
+    }
+
     /* ---------- P4 · historial deshacer/rehacer (mismo patrón que capas.js) ---------- */
     /* Capturas del modelo —imágenes, textos, ajustes, logo, música y cola de
        clips— con tope de 40 estados. El marcado vive dentro de los refrescos
@@ -5364,9 +5853,19 @@
     var btnDeshacer = null;
     var btnRehacer = null;
 
+    /* R6: si un snapshot no trae pista (no debería pasar, pero por si acaso),
+       se rehace poniendo primero las imágenes y luego los clips */
+    function pistaPorDefecto() {
+        var p = [];
+        imagenes.forEach(function (_, i) { p.push({ t: 'img', i: i }); });
+        colaVideos.forEach(function (_, i) { p.push({ t: 'clip', i: i }); });
+        return p;
+    }
+
     function histCaptura() {
         return {
             imagenes: imagenes.slice(),
+            pista: pista.map(function (it) { return { t: it.t, i: it.i }; }),   // R6
             textos: JSON.parse(JSON.stringify(textos)),
             textoSel: textoSel,
             selTira: sel,
@@ -5410,6 +5909,7 @@
     function histClave(e) {
         return JSON.stringify({
             img: e.imagenes.map(function (i) { return i.url + '|' + i.nombre; }),
+            pista: e.pista,   // R6: el orden de la salida también es historial
             txt: e.textos, sel: e.textoSel, tira: e.selTira,
             /* R5 · las imágenes sueltas también entran en la clave: sin esto el
                dedupe las daba por «igual que antes» y el historial no guardaba
@@ -5510,6 +6010,9 @@
         }
         /* imágenes, textos y selección */
         imagenes = e.imagenes.slice();
+        pista = (e.pista && e.pista.length) ? e.pista.map(function (it) {
+            return { t: it.t, i: it.i };
+        }) : pistaPorDefecto();   // R6
         sel = e.selTira;
         textos = JSON.parse(JSON.stringify(e.textos));
         textoSel = (e.textoSel >= 0 && e.textoSel < textos.length) ? e.textoSel : -1;
