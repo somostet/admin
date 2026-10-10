@@ -483,9 +483,9 @@
     var copy = q('.tet-copy');
     if (copy) { copy.appendChild(btnTema); } else { top.appendChild(btnTema); }
 
-    /* ---------------- rail de herramientas ---------------- */
-    var t1 = moverBoton('Insertar título', rail);   if (t1) hacerIcono(t1);
-    var t2 = moverBoton('Insertar detalles', rail);  if (t2) hacerIcono(t2);
+    /* ---------------- rail de herramientas ----------------
+       «Insertar título» y «Insertar detalles» NO se tocan: se quedan junto a su
+       campo en Propiedades, que es donde el usuario escribe el texto. */
     var t3 = moverBoton('Insertar imagen', rail);    if (t3) hacerIcono(t3);
 
     var btnGaleria = q('button[data-bs-target=".bd-example-modal-lg"]');
@@ -558,128 +558,6 @@
     });
     rail.appendChild(btnAtras);
     rail.appendChild(btnAdelante);
-
-    /* ---------------- barra de texto fija (solo móvil) ----------------
-       En el dock los campos de título quedan debajo del lienzo, así que en
-       el móvil había que bajar a escribir, subir a insertar y bajar a ver el
-       resultado. Aquí los campos y su botón se mudan a una barra fija abajo
-       (siempre visible) y vuelven a su sitio al pasar a escritorio. */
-    var barraMovil = null;
-    var MV = '(max-width: 991.98px)';
-    var mqMovil = window.matchMedia(MV);
-    /* pila de mudanzas: nodo + padre y hermano de origen, para devolverlo
-       exactamente donde estaba al pasar a escritorio */
-    var mudados = [];
-
-    function moverALaBarra() {
-        if (!barraMovil) return;
-        barraMovil._partes.forEach(function (n) {
-            if (n.parentNode === barraMovil) return;
-            /* el sitio original se anota ANTES de mover: si se anotara
-               después, el nodo ya estaría en la barra y no habría vuelta */
-            mudados.push({ n: n, p: n.parentNode, s: n.nextSibling });
-            barraMovil.appendChild(n);
-        });
-    }
-    function devolverAlHogar() {
-        while (mudados.length) {
-            var h = mudados.pop();
-            if (!h.p) continue;
-            if (h.s && h.s.parentNode === h.p) h.p.insertBefore(h.n, h.s);
-            else h.p.appendChild(h.n);
-        }
-    }
-    /* esconde la fila del formulario que se ha quedado sin contenido */
-    function ocultarFilaVacia(nodo) {
-        var fila = nodo && nodo.closest ? nodo.closest('.row') : null;
-        if (!fila || fila === panel) return;
-        if (fila.textContent.trim()) return;
-        if (fila.querySelector('input, select, textarea, button, label, img')) return;
-        fila.dataset.shVacia = '1';
-        fila.hidden = true;
-    }
-    function restaurarFilaVacia() {
-        panel.querySelectorAll('.row[data-sh-vacia]').forEach(function (f) {
-            delete f.dataset.shVacia;
-            f.hidden = false;
-        });
-    }
-
-    /* contenedor de un campo de texto, sea dentro de un input-group (tet1,
-       art, miniatura, modcre) o suelto en su columna (dictet, tet2) */
-    function campoMovil(id, etiqueta) {
-        var f = document.getElementById(id);
-        if (!f) return null;
-        var g = f.closest('.input-group');
-        if (g) return g;
-        var cont = f.parentElement || f;
-        /* si el campo ya trae su <label> («Término:») no se añade otro: en la
-           barra se verían los dos y la fila crecía sin necesidad */
-        if (!cont.querySelector('label') && !cont.querySelector('.sh-mv-lbl')) {
-            cont.insertBefore(el('span', 'sh-mv-lbl', etiqueta), cont.firstChild);
-        }
-        return cont;
-    }
-
-    function construirBarraMovil() {
-        if (barraMovil) return barraMovil;
-        var partes = [];
-        /* ninguno de los dos campos (páginas sin texto) → no hay barra */
-        var gTit = campoMovil('titular', 'Título');
-        var gDet = campoMovil('detalles', 'Detalles');
-        if (!gTit && !gDet) return null;
-        if (gTit) partes.push(gTit);
-        if (gDet && gDet !== gTit) partes.push(gDet);
-
-        /* los botones se toman del rail: en el móvil el rail queda para las
-           imágenes y las capas, y el texto se escribe abajo */
-        var bTit = q('[aria-label="Insertar título"]');
-        var bDet = q('[aria-label="Insertar detalles"]');
-        if (bTit) { hacerIcono(bTit); partes.push(bTit); }
-        if (bDet) { hacerIcono(bDet); partes.push(bDet); }
-        /* texto sin botón «Insertar» (tet2): la barra se construye igual */
-
-        barraMovil = el('div', 'sh-movil');
-        barraMovil.setAttribute('role', 'group');
-        barraMovil.setAttribute('aria-label', 'Texto de la publicación');
-        /* aquí SOLO se localizan: el traslado lo hace moverALaBarra(), que
-           necesita ver el sitio original de cada nodo */
-        barraMovil._partes = partes;
-        document.body.appendChild(barraMovil);
-        return barraMovil;
-    }
-
-    function barraMovilActiva(activa) {
-        if (activa) {
-            if (!construirBarraMovil()) return;
-            moverALaBarra();
-            barraMovil.hidden = false;
-            document.body.classList.add('tet-barra-movil');
-            barraMovil._partes.forEach(function (n) {
-                if (n.classList.contains('sh-mv-sinbtn')) return;
-                if (n.classList.contains('input-group') || n.classList.contains('sh-mv-lbl') ||
-                    n.querySelector('input, textarea')) {
-                    ocultarFilaVacia(n);
-                }
-            });
-        } else {
-            document.body.classList.remove('tet-barra-movil');
-            if (!barraMovil) return;
-            devolverAlHogar();
-            barraMovil.hidden = true;
-            restaurarFilaVacia();
-        }
-        autoAjustarPronto();
-    }
-
-    function alternarBarraMovil() { barraMovilActiva(mqMovil.matches); }
-    if (mqMovil.addEventListener) mqMovil.addEventListener('change', alternarBarraMovil);
-    else if (mqMovil.addListener) mqMovil.addListener(alternarBarraMovil);
-    /* gancho de diagnóstico: permite forzar el cambio de modo sin esperar a
-       que el usuario gire el dispositivo (no lo usa el resto de la app) */
-    window.tetBarraMovil = function (forzarMovil) {
-        barraMovilActiva(forzarMovil == null ? mqMovil.matches : !!forzarMovil);
-    };
 
     /* ---------------- dock con pestañas ---------------- */
     var tabs = el('div', 'dock-tabs');
@@ -1265,10 +1143,6 @@
     /* sustituye el antiguo row > col > form por el shell */
     fluidExt.appendChild(shell);
     filaTop.remove();
-
-    /* barra de texto fija: solo en móvil, y el decision se toma ya con el
-       layout definitivo montado */
-    barraMovilActiva(mqMovil.matches);
 
     /* ---------------- sincronía historial (capas.js) ---------------- */
     window.tetSyncHistorial = function (puedeDeshacer, puedeRehacer) {

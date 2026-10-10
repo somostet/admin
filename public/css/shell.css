@@ -58,7 +58,7 @@ body {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: .4rem;
+    gap: .55rem;
     padding: .4rem .6rem;
     background: var(--sh-top);
     border-bottom: 1px solid var(--sh-border);
@@ -82,7 +82,7 @@ body {
     align-self: stretch;
     min-height: 26px;
     background: var(--sh-border);
-    margin: 0 .2rem;
+    margin: 0 .35rem;
 }
 
 .top-spacer {
@@ -146,7 +146,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: .25rem;
+    gap: .45rem;
     padding: .5rem .25rem;
     overflow-y: auto;
     background: var(--sh-rail);
@@ -311,7 +311,7 @@ body {
     max-width: calc(100% - 1rem);
     margin: .5rem auto;
     display: none;
-    gap: .25rem;
+    gap: .4rem;
     padding: .3rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -327,7 +327,7 @@ body {
 
 .sh-barra-grupo {
     display: flex;
-    gap: .25rem;
+    gap: .4rem;
     flex: 0 0 auto;
 }
 
@@ -369,7 +369,7 @@ body {
 /* escritorio con puntero fino: barra más fina (el dedo solo apreta en móvil) */
 @media (min-width: 992px) and (pointer: fine) {
     .sh-barra {
-        gap: .15rem;
+        gap: .3rem;
         margin: .4rem auto;
         padding: .2rem;
         border-radius: .65rem;
@@ -377,7 +377,7 @@ body {
     }
 
     .sh-barra-grupo {
-        gap: .15rem;
+        gap: .3rem;
     }
 
     .sh-barra-btn {
@@ -579,13 +579,50 @@ body.tet-barra-movil {
     padding: .8rem .75rem !important;
 }
 
-/* en ~310px todo se apila a ancho completo, como en móvil (patrón ya validado) */
+/* en ~310px todo se apila a ancho completo, como en móvil (patrón ya validado).
+   Al apilarse hacía falta aire entre Título, el tamaño del texto y el botón:
+   se lo da el margen inferior, que se quita en la última columna de la fila
+   para no sumar espacio al padding de abajo. */
 .shell-dock .editor-panel .row > * {
     flex: 0 0 100% !important;
     max-width: 100% !important;
     width: 100% !important;
+    margin-bottom: .5rem;
 }
 
+.shell-dock .editor-panel .row > *:last-child {
+    margin-bottom: 0;
+}
+
+/* el label que va suelto sobre un campo (p. ej. "Detalles:") aprieta menos */
+.shell-dock .editor-panel .row > *.col-sm:not(:last-child) > label {
+    margin-bottom: .3rem;
+}
+
+
+/* En ventanas anchas el dock tiene sitio: el campo de Título y el tamaño
+   del texto caben juntos y se ahorra scroll. Sigue apilado por debajo de
+   420px, donde irían enanas. */
+@media (min-width: 421px) {
+    .shell-dock .editor-panel .row > .col-12.col-sm-8,
+    .shell-dock .editor-panel .row > .col-sm {
+        flex: 0 0 auto !important;
+        max-width: none !important;
+        width: auto !important;
+        margin-bottom: 0;
+    }
+
+    /* el título manda: se estira y el tamaño se ajusta a su contenido */
+    .shell-dock .editor-panel .row > .col-12.col-sm-8 {
+        flex: 1 1 auto !important;
+        min-width: 0;
+    }
+
+    /* si la fila se parte, que haya aire entre las dos mitades */
+    .shell-dock .editor-panel .row {
+        gap: .5rem;
+    }
+}
 /* ---------- capas + formatos dentro del dock ---------- */
 .shell-dock .capas-panel {
     max-width: none;
@@ -1239,6 +1276,22 @@ body.tet-barra-movil {
     }
 }
 
+/* ---------- espaciado entre botones del panel de Propiedades ----------
+   Antes iban pegados: "Insertar título" y "Insertar detalles" se leían
+   como una sola palabra. El último botón de cada fila se queda sin
+   margen derecho para no desbordar. */
+.shell-dock .editor-panel .btn,
+.editor-panel .btn {
+    margin-right: .45rem;
+    margin-bottom: .45rem;
+}
+
+.shell-dock .editor-panel .row > .col-sm:last-child .btn,
+.shell-dock .editor-panel .row > .col:last-child .btn,
+.editor-panel .row > .col-sm:last-child .btn,
+.editor-panel .row > .col:last-child .btn {
+    margin-right: 0;
+}
 /* ---------- responsive fino de la shell ---------- */
 @media (max-width: 767.98px) {
     /* objetivos táctiles de 44 px */
@@ -1298,6 +1351,23 @@ body.tet-barra-movil {
     }
 }
 
+
+/* ---------- botones sueltos dentro de filas ----------
+   Los del HTML original no cuelgan de un contenedor con gap, así que
+   el espaciado se lo da el margen propio. El último de cada fila se
+   queda sin margen derecho para no desbordar. */
+.editor-panel .row .btn,
+.editor-lienzo .row .btn {
+    margin-right: .35rem;
+    margin-bottom: .35rem;
+}
+
+.editor-panel .row > .col-sm:last-child .btn,
+.editor-panel .row > .col:last-child .btn,
+.editor-lienzo .row > .col-sm:last-child .btn,
+.editor-lienzo .row > .col:last-child .btn {
+    margin-right: 0;
+}
 /* ---------- selector de plantilla en el navbar (tet1) ---------- */
 .navbar-tpl {
     display: flex;
@@ -1340,9 +1410,24 @@ body.tet-barra-movil {
     color: #fff;
 }
 
-/* en el navbar siempre icono solo (el texto rompía la barra en móvil) */
-.navbar-tpl .solo-movil {
+/* en el navbar los botones van solo con icono: con la etiqueta puesta,
+   "Cargar plantilla" partía el texto en dos líneas y desplazaba el
+   selector de plantilla. El nombre sigue en title/aria-label, que es lo
+   que lee el lector de pantalla y lo que muestra el tooltip. */
+.navbar-tpl .btn .ms-1,
+.navbar-tpl .btn span {
     display: none !important;
+}
+
+.navbar-tpl .btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
+.navbar-tpl {
+    flex-wrap: nowrap;
 }
 
 .navbar-tpl + .navbar-social {
@@ -1361,7 +1446,8 @@ body.tet-barra-movil {
 
     .navbar-tpl select {
         max-width: none;
-        flex: 1;
+        flex: 1 1 auto;
+        min-width: 0;
         height: 40px;
     }
 
