@@ -364,7 +364,34 @@
 
     /* ---------- diagnóstico de exportación (canvas "tainted") ---------- */
     window.avisoExportacion = function (err) {
+        var nome = (err && err.name) || '';
+        var tainted = nome === 'SecurityError' ||
+            /tainted|cross-origin|seguridad/i.test(String(err && err.message || ''));
+
         console.warn('tet: exportación fallida', err);
+
+        /* El error que deja el lienzo en negro fuera del navegador tiene dos
+           causas posibles y las dos se pueden distinguir desde aquí: el canal
+           alfa (ya no debería ocurrir) o un canvas contaminado por una
+           imagen de otro origen. */
+        if (tainted) {
+            /* ¿de dónde venía la imagen? se comprueba contra data: URLs */
+            var ajenas = canvas.getObjects().filter(function (o) {
+                if (o.type !== 'image') return false;
+                var s = o.getSrc && o.getSrc();
+                return typeof s === 'string' && s.slice(0, 5) === 'http:' ||
+                       typeof s === 'string' && s.slice(0, 6) === 'https:';
+            }).length;
+            if (window.mostrarAviso) {
+                window.mostrarAviso(
+                    'El lienzo tiene ' + ajenas + ' imagen(es) de internet y el navegador ' +
+                    'prohíbe exportarlas. Cárgala otra vez desde «Cargar una imagen…» ' +
+                    '(se guarda como data: URL) o usa una de la galería.',
+                    'danger');
+            }
+            return;
+        }
+
         if (window.mostrarAviso) {
             window.mostrarAviso('No se pudo exportar la imagen. Recarga la página (Ctrl+F5) e inténtalo otra vez; si persiste, mira la consola (F12).', 'danger');
         }
@@ -462,6 +489,10 @@
 
     /* accesos para la barra flotante de la shell (móvil) */
     window.duplicarSeleccion = duplicar;
+    /* los editores que cambian la plantilla (reload) la guardan en el
+       historial: antes el cambio no entraba en la pila y Ctrl+Z no lo
+       deshacía, además de desincronizar los botones deshacer/rehacer */
+    window.tetGuardarEstado = guardarEstado;
     window.eliminarSeleccion = function () {
         var o = canvas.getActiveObject();
         if (!o) return;
@@ -593,7 +624,13 @@
         canvas.renderAll();
         var blob;
         try {
-            blob = dataUrlABlob(canvas.toDataURL({ format: 'png', enableRetinaScaling: true }));
+            /* tetLienzoPng (formatos.js) pinta un fondo opaco y apaga el
+               retina: sin eso el PNG llevaba canal alfa —se veía negro al
+               compartir o copiar— y ocupaba el triple de memoria en móvil */
+            var dataUrl = (typeof window.tetLienzoPng === 'function')
+                ? window.tetLienzoPng()
+                : canvas.toDataURL({ format: 'png', enableRetinaScaling: false });
+            blob = dataUrlABlob(dataUrl);
         } catch (err) {
             aviso('No se pudo generar la imagen', 'danger');
             return;

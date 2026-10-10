@@ -131,15 +131,29 @@
     }
     btnAuto.addEventListener('click', function () {
         if (timerAuto) { pararAuto(); return; }
-        if (!selTpl) return;
+        if (!selTpl || typeof reload !== 'function') return;
         btnAuto.innerHTML = '<i class="fas fa-pause" aria-hidden="true"></i>';
         btnAuto.setAttribute('aria-label', 'Detener rotación de plantillas');
         btnAuto.setAttribute('title', 'Detener rotación de plantillas');
         timerAuto = setInterval(function () {
+            /* con la pestaña en segundo plano no se toca el lienzo: al volver
+               el usuario se encontraba la plantilla cambiada sin saberlo */
+            if (document.hidden) return;
             var n = selTpl.options.length;
-            selTpl.value = String((parseInt(selTpl.value, 10) + 1) % n);
+            if (!n) return;
+            /* si el valor actual no es un índice (opciones editadas a mano) se
+              .parseInt devolvía NaN y el selector se quedaba en blanco */
+            var idx = parseInt(selTpl.value, 10);
+            if (isNaN(idx)) idx = 0;
+            selTpl.value = String((idx + 1) % n);
             if (typeof reload === 'function') reload();
         }, 1400);
+    });
+    /* tocar el lienzo también detiene la rotación: si no, el diseño se
+       recolocaba mientras el usuario movía un texto */
+    work.addEventListener('pointerdown', pararAuto);
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) pararAuto();
     });
     // una elección manual detiene la rotación
     if (selTpl) selTpl.addEventListener('change', pararAuto);
@@ -172,6 +186,8 @@
        +/- siguen saltando por NIVELES */
     var NIVELES = [0.5, 0.75, 1, 1.25, 1.5, 2];
     var zoom = 1;
+    /* a partir de aquí el usuario manda: auto-encajar deja de tocar el zoom */
+    var zoomManual = false;
     var btnZoomOut = mkBtn('fa-search-minus', 'Alejar');
     var btnZoomLbl = mkBtn('fa-expand', 'Zoom al 100%');
     btnZoomLbl.id = 'sh-zoom-label';
@@ -181,14 +197,39 @@
     function aplicarZoom(z) {
         zoom = Math.min(4, Math.max(0.25, z)); /* valor libre, sin engancharse a NIVELES */
         var img = document.getElementById('img');
-        if (img) img.style.transform = zoom === 1 ? '' : 'scale(' + zoom + ')';
+        if (img) {
+            /* el transform no ocupa espacio: sin reajustar #img al tamaño ya
+               escalado, el escenario seguía reservando el ancho sin escalar y
+               salía una barra de scroll horizontal en el móvil */
+            img.style.transformOrigin = 'top left';
+            img.style.transform = zoom === 1 ? '' : 'scale(' + zoom + ')';
+            var env = lienzoActual();
+            if (env) {
+                img.style.width = Math.round(env.w * zoom) + 'px';
+                img.style.height = Math.round(env.h * zoom) + 'px';
+            }
+        }
         btnZoomLbl.innerHTML = '<span>' + Math.round(zoom * 100) + '%</span>';
         if (typeof zoomEstado !== 'undefined' && zoomEstado) {
             zoomEstado.textContent = Math.round(zoom * 100) + '%';
         }
         pintarReglas();
+        /* la guía de recorte va dentro de #img: hay que recalcularla con cada
+           zoom o se queda desalineada */
+        if (window.formatosActualizar) window.formatosActualizar();
+    }
+    /* caja real del lienzo (sin contar el zoom): se mide el contenedor del
+       canvas y no #img, que se dimensiona al tamaño escalado y realimentaría
+       el propio encaje */
+    function lienzoActual() {
+        var img = document.getElementById('img');
+        if (!img) return null;
+        var env = q('.canvas-container', img) || document.querySelector('.canvas-container');
+        if (!env) return null;
+        return { w: env.offsetWidth || 0, h: env.offsetHeight || 0 };
     }
     function pasoZoom(dir) {
+        zoomManual = true;
         var idx = NIVELES.indexOf(zoom);
         if (idx < 0) {
             /* zoom libre (pellizco/ajuste): parte del nivel más cercano */
@@ -200,25 +241,65 @@
         idx = Math.min(NIVELES.length - 1, Math.max(0, idx + dir));
         aplicarZoom(NIVELES[idx]);
     }
-    /* encaja el lienzo completo en el área de trabajo */
-    function zoomAjustar() {
-        var img = document.getElementById('img');
+    /* margen disponible una vez descontados los bordes del área de trabajo */
+    function huecoDisponible() {
         var disp = document.querySelector('.shell-work');
-        if (!img || !disp) return;
-        var base = img.getBoundingClientRect().width / (zoom || 1); /* ancho sin zoom */
-        if (!(base > 0)) return;
-        var dispW = Math.max(80, disp.clientWidth - 8);
-        var dispH = Math.max(80, Math.min(disp.clientHeight, window.innerHeight - 170) - 8);
-        aplicarZoom(dispW / base < dispH / base ? dispW / base : dispH / base);
+        if (!disp) return null;
+        var w = Math.max(80, disp.clientWidth - 12);
+        /* en móvil el escenario va en el flujo normal: el alto útil es el de
+           .shell-work, no media ventana */
+        var alto = disp.clientHeight;
+        if (!alto) alto = Math.max(200, window.innerHeight - 190);
+        var h = Math.max(80, Math.min(alto, window.innerHeight - 170) - 12);
+        return { w: w, h: h, disp: disp };
+    }
+    /* encaja el lienzo completo en el área de trabajo (encajar = agranda) */
+    function zoomAjustar() {
+        var base = lienzoActual();
+        var hueco = huecoDisponible();
+        if (!base || !(base.w > 0) || !hueco) return;
+        zoomManual = true;
+        aplicarZoom(Math.min(hueco.w / base.w, hueco.h / base.w));
+    }
+    /* encaje automático: solo mientras el usuario no haya tocado el zoom y
+       nunca por encima del 100 % (no hace falta agrandar un diseño pequeño) */
+    function autoAjustar() {
+        if (zoomManual) return;
+        var base = lienzoActual();
+        var hueco = huecoDisponible();
+        if (!base || !(base.w > 0) || !hueco) return;
+        aplicarZoom(Math.max(0.05, Math.min(hueco.w / base.w, hueco.h / base.w, 1)));
     }
     btnZoomOut.addEventListener('click', function () { pasoZoom(-1); });
     btnZoomIn.addEventListener('click', function () { pasoZoom(1); });
-    btnZoomLbl.addEventListener('click', function () { aplicarZoom(1); });
+    btnZoomLbl.addEventListener('click', function () { zoomManual = true; aplicarZoom(1); });
     btnZoomFit.addEventListener('click', zoomAjustar);
     top.appendChild(btnZoomOut);
     top.appendChild(btnZoomLbl);
     top.appendChild(btnZoomIn);
     top.appendChild(btnZoomFit);
+
+    /* el encaje automático se repasa al cambiar el tamaño de la ventana, al
+       girar el móvil y cuando la barra del navegador (URL) se recoge: sin
+       esto el lienzo conservaba el tamaño CSS con el que se creó la página y
+       en un teléfono de 390 px se salía siempre del área de trabajo */
+    var autoPendiente = false;
+    function autoAjustarPronto() {
+        if (autoPendiente) return;
+        autoPendiente = true;
+        requestAnimationFrame(function () {
+            autoPendiente = false;
+            autoAjustar();
+        });
+    }
+    window.addEventListener('resize', autoAjustarPronto);
+    window.addEventListener('orientationchange', autoAjustarPronto);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', autoAjustarPronto);
+    }
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) autoAjustarPronto();
+    });
 
     /* ---------- zoom con dos dedos (móvil) ----------
        Se intercepta en fase de captura sobre el área de trabajo: mientras
@@ -235,6 +316,7 @@
     function finPinch() {
         if (!pinchVisto) return;
         pinchVisto = false;
+        zoomManual = true;   /* a partir de aquí manda el usuario */
         /* si Fabric tenía un gesto a medias por el primer dedo, se cancela
            aquí para que no haya saltos del objeto al soltar */
         if (canvas._currentTransform) canvas._currentTransform = null;
@@ -328,6 +410,13 @@
         canvas.overlayImage = null;
         canvas.overlayColor = null;
         canvas.backgroundColor = '#ffffff';
+
+        /* con el retina activo el respaldo sale a dpr²: un preset de 2560×1440
+           en un móvil pedía 7680×4320 (33 Mpx) y el lienzo se quedaba negro */
+        var dpr = fabric.devicePixelRatio || 1;
+        var retina0 = canvas.enableRetinaScaling;
+        if (d.w * d.h * dpr * dpr > 12e6) canvas.set({ enableRetinaScaling: false });
+
         canvas.setDimensions({ width: d.w, height: d.h }, { backstoreOnly: true });
         var esc = Math.min(500 / d.w, 500 / d.h, 1);
         var dw = Math.round(d.w * esc);
@@ -335,6 +424,11 @@
         canvas.setDimensions({ width: dw, height: dh }, { cssOnly: true });
         var wrap = canvas.wrapperEl;
         if (wrap) { wrap.style.width = dw + 'px'; wrap.style.height = dh + 'px'; }
+
+        /* se deja el retina como estaba: el respaldo ya está a la medida que
+           corresponde al preset elegido */
+        canvas.set({ enableRetinaScaling: retina0 });
+
         canvas.calcOffset();
         canvas.renderAll();
         if (typeof estado !== 'undefined' && estado) {
@@ -342,6 +436,7 @@
         }
         if (window.formatosActualizar) window.formatosActualizar();
         window.dispatchEvent(new Event('resize'));
+        if (window.tetGuardarEstado) window.tetGuardarEstado();
         if (window.mostrarAviso) window.mostrarAviso('Lienzo en blanco ' + d.w + '×' + d.h, 'success');
     });
     top.appendChild(btnBlanco);
@@ -463,6 +558,128 @@
     });
     rail.appendChild(btnAtras);
     rail.appendChild(btnAdelante);
+
+    /* ---------------- barra de texto fija (solo móvil) ----------------
+       En el dock los campos de título quedan debajo del lienzo, así que en
+       el móvil había que bajar a escribir, subir a insertar y bajar a ver el
+       resultado. Aquí los campos y su botón se mudan a una barra fija abajo
+       (siempre visible) y vuelven a su sitio al pasar a escritorio. */
+    var barraMovil = null;
+    var MV = '(max-width: 991.98px)';
+    var mqMovil = window.matchMedia(MV);
+    /* pila de mudanzas: nodo + padre y hermano de origen, para devolverlo
+       exactamente donde estaba al pasar a escritorio */
+    var mudados = [];
+
+    function moverALaBarra() {
+        if (!barraMovil) return;
+        barraMovil._partes.forEach(function (n) {
+            if (n.parentNode === barraMovil) return;
+            /* el sitio original se anota ANTES de mover: si se anotara
+               después, el nodo ya estaría en la barra y no habría vuelta */
+            mudados.push({ n: n, p: n.parentNode, s: n.nextSibling });
+            barraMovil.appendChild(n);
+        });
+    }
+    function devolverAlHogar() {
+        while (mudados.length) {
+            var h = mudados.pop();
+            if (!h.p) continue;
+            if (h.s && h.s.parentNode === h.p) h.p.insertBefore(h.n, h.s);
+            else h.p.appendChild(h.n);
+        }
+    }
+    /* esconde la fila del formulario que se ha quedado sin contenido */
+    function ocultarFilaVacia(nodo) {
+        var fila = nodo && nodo.closest ? nodo.closest('.row') : null;
+        if (!fila || fila === panel) return;
+        if (fila.textContent.trim()) return;
+        if (fila.querySelector('input, select, textarea, button, label, img')) return;
+        fila.dataset.shVacia = '1';
+        fila.hidden = true;
+    }
+    function restaurarFilaVacia() {
+        panel.querySelectorAll('.row[data-sh-vacia]').forEach(function (f) {
+            delete f.dataset.shVacia;
+            f.hidden = false;
+        });
+    }
+
+    /* contenedor de un campo de texto, sea dentro de un input-group (tet1,
+       art, miniatura, modcre) o suelto en su columna (dictet, tet2) */
+    function campoMovil(id, etiqueta) {
+        var f = document.getElementById(id);
+        if (!f) return null;
+        var g = f.closest('.input-group');
+        if (g) return g;
+        var cont = f.parentElement || f;
+        /* si el campo ya trae su <label> («Término:») no se añade otro: en la
+           barra se verían los dos y la fila crecía sin necesidad */
+        if (!cont.querySelector('label') && !cont.querySelector('.sh-mv-lbl')) {
+            cont.insertBefore(el('span', 'sh-mv-lbl', etiqueta), cont.firstChild);
+        }
+        return cont;
+    }
+
+    function construirBarraMovil() {
+        if (barraMovil) return barraMovil;
+        var partes = [];
+        /* ninguno de los dos campos (páginas sin texto) → no hay barra */
+        var gTit = campoMovil('titular', 'Título');
+        var gDet = campoMovil('detalles', 'Detalles');
+        if (!gTit && !gDet) return null;
+        if (gTit) partes.push(gTit);
+        if (gDet && gDet !== gTit) partes.push(gDet);
+
+        /* los botones se toman del rail: en el móvil el rail queda para las
+           imágenes y las capas, y el texto se escribe abajo */
+        var bTit = q('[aria-label="Insertar título"]');
+        var bDet = q('[aria-label="Insertar detalles"]');
+        if (bTit) { hacerIcono(bTit); partes.push(bTit); }
+        if (bDet) { hacerIcono(bDet); partes.push(bDet); }
+        /* texto sin botón «Insertar» (tet2): la barra se construye igual */
+
+        barraMovil = el('div', 'sh-movil');
+        barraMovil.setAttribute('role', 'group');
+        barraMovil.setAttribute('aria-label', 'Texto de la publicación');
+        /* aquí SOLO se localizan: el traslado lo hace moverALaBarra(), que
+           necesita ver el sitio original de cada nodo */
+        barraMovil._partes = partes;
+        document.body.appendChild(barraMovil);
+        return barraMovil;
+    }
+
+    function barraMovilActiva(activa) {
+        if (activa) {
+            if (!construirBarraMovil()) return;
+            moverALaBarra();
+            barraMovil.hidden = false;
+            document.body.classList.add('tet-barra-movil');
+            barraMovil._partes.forEach(function (n) {
+                if (n.classList.contains('sh-mv-sinbtn')) return;
+                if (n.classList.contains('input-group') || n.classList.contains('sh-mv-lbl') ||
+                    n.querySelector('input, textarea')) {
+                    ocultarFilaVacia(n);
+                }
+            });
+        } else {
+            document.body.classList.remove('tet-barra-movil');
+            if (!barraMovil) return;
+            devolverAlHogar();
+            barraMovil.hidden = true;
+            restaurarFilaVacia();
+        }
+        autoAjustarPronto();
+    }
+
+    function alternarBarraMovil() { barraMovilActiva(mqMovil.matches); }
+    if (mqMovil.addEventListener) mqMovil.addEventListener('change', alternarBarraMovil);
+    else if (mqMovil.addListener) mqMovil.addListener(alternarBarraMovil);
+    /* gancho de diagnóstico: permite forzar el cambio de modo sin esperar a
+       que el usuario gire el dispositivo (no lo usa el resto de la app) */
+    window.tetBarraMovil = function (forzarMovil) {
+        barraMovilActiva(forzarMovil == null ? mqMovil.matches : !!forzarMovil);
+    };
 
     /* ---------------- dock con pestañas ---------------- */
     var tabs = el('div', 'dock-tabs');
@@ -1049,6 +1266,10 @@
     fluidExt.appendChild(shell);
     filaTop.remove();
 
+    /* barra de texto fija: solo en móvil, y el decision se toma ya con el
+       layout definitivo montado */
+    barraMovilActiva(mqMovil.matches);
+
     /* ---------------- sincronía historial (capas.js) ---------------- */
     window.tetSyncHistorial = function (puedeDeshacer, puedeRehacer) {
         btnUndo.disabled = !puedeDeshacer;
@@ -1061,6 +1282,12 @@
 
     /* ---------------- estado inicial ---------------- */
     aplicarZoom(1);
+    /* encaje al tamaño de pantalla: hasta ahora solo pasaba si el usuario
+       pulsaba «Ajustar a pantalla», así que en un móvil el lienzo salía del
+       área de trabajo y había que desplazarse en horizontal para trabajar */
+    autoAjustarPronto();
+    setTimeout(autoAjustarPronto, 80);
+    setTimeout(autoAjustarPronto, 400);
 
     /* altura real de la navbar: con ella el shell llena exactamente la ventana */
     function medirNav() {
@@ -1069,7 +1296,10 @@
         }
     }
     medirNav();
-    window.addEventListener('resize', medirNav);
+    window.addEventListener('resize', function () {
+        medirNav();
+        autoAjustarPronto();
+    });
 
     // las reglas necesitan las medidas finales del layout
     setTimeout(pintarReglas, 60);

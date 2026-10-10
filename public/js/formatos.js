@@ -118,6 +118,21 @@
     var capaSafe = guia.querySelector('.formatos-guia-safe');
     var etiqueta = guia.querySelector('.formatos-guia-etiqueta');
 
+    /* Desplazamiento de un nodo respecto a un ancestro, en px de maquetación.
+       La guía vive DENTRO de #img, que es lo que lleva el transform del zoom:
+       medir con getBoundingClientRect() devolvía píxeles ya escalados y la
+       guía se volvía a escalar con ellos — con el encaje automático del móvil
+       (siempre < 100 %) quedaba desplazada y con el tamaño equivocado. */
+    function offsetDentro(nodo, raiz) {
+        var x = 0, y = 0, n = nodo;
+        while (n && n !== raiz) {
+            x += n.offsetLeft || 0;
+            y += n.offsetTop || 0;
+            n = n.offsetParent;
+        }
+        return { x: x, y: y };
+    }
+
     var select = panel.querySelector('#formato-salida');
     var info = panel.querySelector('#formato-info');
     var chkGuia = panel.querySelector('#formato-guia');
@@ -140,13 +155,28 @@
         return found;
     }
 
-    /* dimensiones reales de exportación (el preset "Origen" lee el lienzo actual) */
+    /* dimensiones reales de exportación (el preset "Origen" lee el lienzo actual)
+       OJO: canvas.width es el tamaño LÓGICO; lowerCanvasEl es el backing store y
+       lleva el devicePixelRatio aplicado. Con dpr 3 un diseño de 1280×720 se
+       leía como 3840×2160: se exportaba al triple y el "cover" recortaba el
+       tercio central. El botón llegaba a poner «Descargar 3840×2160». */
     function dims(fmt) {
         if (!fmt) return null;
         if (fmt.orig) {
-            return { w: canvas.lowerCanvasEl.width, h: canvas.lowerCanvasEl.height, safe: null };
+            return { w: canvas.width, h: canvas.height, safe: null };
         }
         return { w: fmt.w, h: fmt.h, safe: fmt.safe };
+    }
+
+    /* color de fondo del PNG exportado. Sin esto el lienzo temporal nace
+       transparente y el PNG sale con canal alfa: se ve negro en Fotos de
+       Windows, en Instagram, en WhatsApp y en cualquier visor que componga
+       sobre negro. */
+    function fondoLienzo() {
+        var c = canvas.backgroundColor;
+        if (typeof c === 'string' && c) return c;
+        if (c && typeof c === 'object' && typeof c.source === 'string') return c.source;
+        return '#ffffff';
     }
 
     /* ---------- geometría del recorte "cover" centrado ---------- */
@@ -172,21 +202,22 @@
 
         var el = canvas.lowerCanvasEl;
         if (!el) return;
-        var r = el.getBoundingClientRect();
-        var pr = padreGuia.getBoundingClientRect();
-        var sw = el.width;   // píxeles de respaldo (export real)
-        var sh = el.height;
+        /* todo en px de maquetación: el lienzo puede llevar un transform de
+           zoom y la guía, al vivir dentro del mismo contenedor, lo hereda */
+        var sw = canvas.width;    /* px lógicos del lienzo (origen del recorte) */
+        var sh = canvas.height;
+        var po = offsetDentro(el, padreGuia);
 
-        guia.style.left = (r.left - pr.left) + 'px';
-        guia.style.top = (r.top - pr.top) + 'px';
-        guia.style.width = r.width + 'px';
-        guia.style.height = r.height + 'px';
+        guia.style.left = po.x + 'px';
+        guia.style.top = po.y + 'px';
+        guia.style.width = el.offsetWidth + 'px';
+        guia.style.height = el.offsetHeight + 'px';
 
         var d = dims(fmt);
         if (!d) return;
         var c = recorte(sw, sh, d.w, d.h);
-        var ex = r.width / sw;
-        var ey = r.height / sh;
+        var ex = el.offsetWidth / sw;
+        var ey = el.offsetHeight / sh;
 
         capaRecorte.style.left = (c.sx * ex) + 'px';
         capaRecorte.style.top = (c.sy * ey) + 'px';
@@ -219,6 +250,13 @@
     }
 
     /* ---------- exportación en píxeles exactos (con sobremuestreo) ---------- */
+
+    /* Presupuesto de píxeles del lienzo temporal. Por encima de ~16 Mpx (el
+       límite de iOS Safari) el contexto se queda en negro o se pierde: era lo
+       que pasaba en móvil al sumar el intermediate ×devicePixelRatio y el
+       lienzo final. */
+    var MAX_PX = 16e6;
+
     function descargar() {
         var d = dims(formatoActual());
         if (!d) return;
@@ -231,13 +269,20 @@
         /* el respaldo lógico son solo 1200px y los presets llegan a 2560:
            antes se estiraba ese raster (texto suave). Ahora se pinta la
            escena ×k —texto y figuras siguen siendo vectores, salen nítidos—
-           y se reduce a los píxeles exactos del preset. k<=3 por el límite
-           de canvas de iOS (~16,7 M px) */
-        var k = Math.min(3, Math.max(2, Math.ceil(Math.max(d.w / c.cw, d.h / c.ch))));
+           y se reduce a los píxeles exactos del preset.
+
+           k tiene tres topes: el que pide el preset, 3× como máximo (a partir
+           de ahí no se gana nada visible) y el presupuesto de píxeles, que es
+           el que evita el lientero gigante en móvil. */
+        var ideal = Math.max(d.w / c.cw, d.h / c.ch);
+        var k = Math.min(3, Math.max(1, Math.ceil(ideal)));
+        var cupote = (MAX_PX * 0.8) / Math.max(1, c.cw * c.ch);
+        if (k * k > cupote) k = Math.max(1, Math.floor(Math.sqrt(cupote)));
 
         var w0 = canvas.width, h0 = canvas.height;
         var vpt0 = canvas.viewportTransform;
         var off0 = canvas.skipOffscreen;
+        var retina0 = canvas.enableRetinaScaling;
         var objs = canvas.getObjects();
         var cache0 = objs.map(function (o) { return o.objectCaching; });
         var bg = canvas.backgroundImage;
@@ -247,6 +292,11 @@
 
         var url = null, fallo = null;
         try {
+            /* el retina se apaga SOLO durante el render. Con dpr 3 el respaldo
+               salía a c.cw*k*3 × c.ch*k*3 (×9 de memoria) sin ganar nada:
+               era el primer paso del negro en móvil. */
+            canvas.set({ enableRetinaScaling: false });
+
             /* la imagen de fondo se renderiza FUERA del viewportTransform
                (renderCanvas la pinta antes del transform): hay que escalarla
                y desplazarla a mano para que cubra el recorte ×k */
@@ -276,6 +326,11 @@
             off.width = d.w;
             off.height = d.h;
             var ctx = off.getContext('2d');
+            if (!ctx) throw new Error('El navegador no ha podido reservar ' + d.w + '×' + d.h + ' px');
+            /* fondo opaco ANTES de dibujar: sin esto el PNG lleva canal alfa
+               y se ve negro fuera del navegador */
+            ctx.fillStyle = fondoLienzo();
+            ctx.fillRect(0, 0, d.w, d.h);
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(hi, 0, 0, hi.width, hi.height, 0, 0, d.w, d.h);
@@ -284,7 +339,6 @@
             fallo = err;
         } finally {
             canvas.viewportTransform = vpt0;
-            canvas.setDimensions({ width: w0, height: h0 }, { backstoreOnly: true });
             canvas.skipOffscreen = off0;
             objs.forEach(function (o, i) { o.objectCaching = cache0[i]; });
             if (bg) {
@@ -293,6 +347,10 @@
                     objectCaching: bgCache0
                 });
             }
+            /* con el retina ya en su valor original, setDimensions devuelve el
+               respaldo exacto al estado de entrada (lógico × dpr) */
+            canvas.set({ enableRetinaScaling: retina0 });
+            canvas.setDimensions({ width: w0, height: h0 }, { backstoreOnly: true });
             canvas.renderAll();
         }
 
@@ -321,6 +379,23 @@
     chkGuia.addEventListener('change', actualizarGuia);
     btnDescargar.addEventListener('click', descargar);
     window.addEventListener('resize', actualizarGuia);
+
+    /* ---------- PNG opaco del lienzo, para Compartir / portapapeles ----------
+       canvas.toDataURL() respeta el fondo del lienzo; si no lo hay, el PNG
+       sale transparente y se ve negro en cualquier app que compone sobre
+       negro. Además va sin retina: compartir un 1080×1080 no necesita ×3, y
+       en el móvil ese triplicado era justo lo que reventaba la memoria. */
+    window.tetLienzoPng = function () {
+        var bg0 = canvas.backgroundColor;
+        try {
+            if (!bg0) canvas.backgroundColor = fondoLienzo();
+            canvas.renderAll();
+            return canvas.toDataURL({ format: 'png', enableRetinaScaling: false });
+        } finally {
+            canvas.backgroundColor = bg0;
+            canvas.renderAll();
+        }
+    };
 
     // La shell (shell.js) lo usa al redimensionar / vaciar el lienzo
     window.formatosActualizar = actualizarInfo;

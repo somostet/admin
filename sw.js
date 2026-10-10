@@ -2,7 +2,7 @@
    Estrategias equivalentes al sw.js anterior:
    - html/js: NetworkFirst (y 5xx -> copia en caché)   - css: StaleWhileRevalidate
    - imágenes y fuentes: CacheFirst (máx 20, 7 días) */
-const VERSION = 'tet-admin-v5';
+const VERSION = 'tet-admin-v6';
 
 const CACHE_HTML = 'tet-html-' + VERSION;
 const CACHE_JS = 'tet-js-' + VERSION;
@@ -87,7 +87,7 @@ function staleWhileRevalidate(request, cacheName) {
 function cacheFirst(request, cacheName) {
     return caches.open(cacheName).then(function (cache) {
         return cache.match(request).then(function (cached) {
-            if (cached) return cached;
+            if (cached) return conModo(cached, request);
             return fetch(request).then(function (response) {
                 if (response && response.ok) {
                     cache.put(request, response.clone());
@@ -97,6 +97,27 @@ function cacheFirst(request, cacheName) {
             });
         });
     });
+}
+
+/* Una respuesta guardada en caché se sirve con tipo «default». Si quien la
+   pedía fue en modo «cors» —lo hacen las imágenes que dibuja Fabric sobre el
+   canvas cuando se marca crossOrigin— el navegador la rechaza y el canvas
+   queda contaminado (tainted): al exportar o compartir sale negro.
+   Se reenvuelve declarando el origen solo cuando el navegador lo necesita. */
+function conModo(res, request) {
+    if (!request || request.mode !== 'cors') return res;
+    try {
+        var cabeceras = new Headers(res.headers);
+        cabeceras.set('Access-Control-Allow-Origin', self.location.origin);
+        cabeceras.set('Access-Control-Allow-Credentials', 'true');
+        return new Response(res.body, {
+            status: res.status,
+            statusText: res.statusText,
+            headers: cabeceras
+        });
+    } catch (e) {
+        return res;
+    }
 }
 
 function limpiarCache(cache) {

@@ -19,7 +19,8 @@ function myFunction() {
 
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
-x.addEventListener('change', myFunction) // Attach listener function on state changes
+/* el ajuste al tamaño de pantalla lo hace shell.js (autoAjustar): este
+   listener solo recalculaba hc/wc y nunca los aplicaba al lienzo */
     /* inicio canvas code*/
 var canvas = new fabric.Canvas('tet', {
     preserveObjectStacking: true
@@ -95,7 +96,10 @@ function remover() {
 
 // Cargar URL de la imagen a subir
 function picload() {
-    var file = document.querySelector('input[type=file]').files[0];
+    /* por id, no por 'input[type=file]': capas.js inyecta otro input (el del
+       .json de proyecto) y el primero del documento podía acabar siendo ese */
+    var input = document.getElementById('imagen');
+    var file = input && input.files ? input.files[0] : null;
     var fileName = document.querySelector('#div-img .file-name');
     var reader = new FileReader();
 

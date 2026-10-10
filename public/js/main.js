@@ -56,12 +56,16 @@ function myFunction() {
 
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
-x.addEventListener('change', myFunction) // Attach listener function on state changes
+/* el ajuste al tamaño de pantalla lo hace shell.js (autoAjustar): este
+   listener solo recalculaba hc/wc y nunca los aplicaba al lienzo */
     /* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
+/* fondo blanco: sin él el lienzo es transparente y el PNG descargado o
+   compartido sale con canal alfa (se ve negro en fuera del navegador) */
+canvas.backgroundColor = '#ffffff';
 canvas.setBackgroundImage('./public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
     width: canvas.width,
     height: canvas.height
@@ -69,105 +73,72 @@ canvas.setBackgroundImage('./public/img/Plantilla3.png', canvas.renderAll.bind(c
 set_front_bar(tetnews_bar, "#FFFFFF");
 /* fin canvas code*/
 
-// Cambio de plantilla
+/* Cambio de plantilla
+   Una tabla en vez de un switch de 11 casos: el fondo, la barra superior y el
+   tinte de cada plantilla en un sitio, y las cuatro últimas ya no se mezclan
+   con canvas.clear() —clear() borraba también las capas del usuario y por eso
+   rotar plantillas «no servía de nada».
+   · img        → imagen de fondo
+   · barra      → overlay con la franja superior (se repite y se desplaza)
+   · color      → '#ffffff' fijo, 'color' = el del selector, '' → transparente
+   · opacidad   → 1 salvo que haya barra (esa copia se pinta encima) */
+var PLANTILLAS = [
+    { img: './public/img/Plantilla3.png', barra: tetnews_bar, color: '#FFFFFF' },
+    { img: curi_bar, barra: curi_bar, color: 'color' },
+    { img: './public/img/Plantillas/tet1/TBtet.png' },
+    { img: './public/img/Plantillas/tet1/TBtet2.png' },
+    { img: './public/img/Plantillas/tet1/creadores.png' },
+    { img: rese, barra: rese, color: 'color' },
+    { img: MB, barra: MB, color: 'color' },
+    { img: TT, barra: TT, color: 'color' },
+    { img: TF, barra: TF, color: 'color' },
+    { img: Art, barra: Art, color: 'color' },
+    { img: Blan, barra: Blan, color: 'color' }
+];
+
+/* setBackgroundImage es asíncrono: con la rotación automática cada 1,4 s se
+   encadenaban dos descargas y ganaba la que llegaba antes, dejando una
+   plantilla que ya no era la elegida. Cada cambio saca un tique y solo se
+   aplica si sigue siendo el último. */
+var tplTicket = 0;
+
 function reload() {
-    var section = plantilla.value;
+    var i = parseInt(plantilla.value, 10);
+    var t = PLANTILLAS[i];
+    if (!t) return;
     var col = color.value;
+    var fondo = (t.color === 'color') ? col : (t.color || '');
 
-    switch (section) {
-        case "0":
-            canvas.setBackgroundImage('./public/img/Plantilla3.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height
-            });
-            set_front_bar(tetnews_bar, "#FFFFFF");
-            break;
-        case "1":
-            canvas.backgroundColor = col;
-            canvas.setBackgroundImage(curi_bar, canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-                opacity: 0
-            });
-            set_front_bar(curi_bar, col);
-            break;
-        case "2":
-            canvas.clear();
-            canvas.setBackgroundImage('./public/img/Plantillas/tet1/TBtet.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-            });
-            break;
-        case "3":
-            canvas.clear();
-            canvas.setBackgroundImage('./public/img/Plantillas/tet1/TBtet2.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-            });
-            break;
-        case "4":
-            canvas.clear();
-            canvas.setBackgroundImage('./public/img/Plantillas/tet1/creadores.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-            });
-            break;
-        case "5":
-            canvas.backgroundColor = col;
-            canvas.setBackgroundImage(rese, canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-                opacity: 0
-            });
-            set_front_bar(rese, col);
-            break;
-        case "6":
-            canvas.backgroundColor = col;
-            canvas.setBackgroundImage(MB, canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-                opacity: 0
-            });
-            set_front_bar(MB, col);
-            break;
-        case "7":
-            canvas.backgroundColor = col;
-            canvas.setBackgroundImage(TT, canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-                opacity: 0
-            });
-            set_front_bar(TT, col);
-            break;
-        case "8":
-            canvas.backgroundColor = col;
-            canvas.setBackgroundImage(TF, canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-                opacity: 0
-            });
-            set_front_bar(TF, col);
-            break;
-        case "9":
-            canvas.backgroundColor = col;
-            canvas.setBackgroundImage(Art, canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-                opacity: 0
-            });
-            set_front_bar(Art, col);
-            break;
-        case "10":
-            canvas.backgroundColor = col;
-            canvas.setBackgroundImage(Blan, canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height,
-                opacity: 0
-            });
-            set_front_bar(Blan, col);
-            break;
+    /* fondo opaco también en las plantillas con imagen: sin esto el PNG
+       exportaba con canal alfa (se veía negro) */
+    canvas.backgroundColor = fondo;
 
-    };
+    if (t.barra) {
+        canvas.setOverlayImage(t.barra, canvas.renderAll.bind(canvas));
+        canvas.setOverlayColor({
+            source: fondo || '#FFFFFF',
+            repeat: 'repeat',
+            offsetX: 0,
+            offsetY: -1107
+        }, canvas.renderAll.bind(canvas));
+    } else {
+        /* las plantillas sin barra no dejaban nada del overlay anterior */
+        canvas.overlayImage = null;
+        canvas.overlayColor = null;
+    }
+
+    var tq = ++tplTicket;
+    canvas.setBackgroundImage(t.img, function () {
+        if (tq !== tplTicket) return;   // llegó una más nueva: esta ya no vale
+        canvas.renderAll();
+        /* el cambio entra en el historial: antes no se podía deshacer y los
+           botones deshacer/rehacer se quedaban desincronizados */
+        if (typeof window.tetGuardarEstado === 'function') window.tetGuardarEstado();
+    }, {
+        width: canvas.width,
+        height: canvas.height,
+        opacity: t.barra ? 0 : 1
+    });
 }
 
 // Centrar objeto seleccionado
@@ -206,7 +177,10 @@ function remover() {
 
 // Cargar URL de la imagen a subir
 function picload() {
-    var file = document.querySelector('input[type=file]').files[0];
+    /* por id, no por 'input[type=file]': capas.js inyecta otro input (el del
+       .json de proyecto) y el primero del documento podía acabar siendo ese */
+    var input = document.getElementById('imagen');
+    var file = input && input.files ? input.files[0] : null;
     var fileName = document.querySelector('#div-img .file-name');
     var reader = new FileReader();
 

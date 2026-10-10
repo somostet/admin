@@ -22,7 +22,8 @@ function myFunction() {
 
 var x = window.matchMedia("(max-width: 1000px)")
 myFunction(x) // Call listener function at run time
-x.addEventListener('change', myFunction) // Attach listener function on state changes
+/* el ajuste al tamaño de pantalla lo hace shell.js (autoAjustar): este
+   listener solo recalculaba hc/wc y nunca los aplicaba al lienzo */
 
 /* inicio canvas code*/
 var canvas = new fabric.Canvas('mh');
@@ -41,57 +42,56 @@ tipoF = "Arial";
 
 /* fin canvas mh*/
 
-// Cambio de plantilla
+/* Cambio de plantilla
+   setBackgroundImage es asíncrono: encadenados cada 1,4 s por la rotación
+   automática, dos descargas se cruzaban y ganaba la que llegaba antes, dejando
+   una plantilla que no era la elegida. Cada cambio saca un tique y solo se
+   aplica si sigue siendo el último; además entra en el historial, que antes
+   no lo recogía y dejaba deshacer/rehacer desincronizados. */
+var tplTicket = 0;
+function fondoPlantilla(url) {
+    var tq = ++tplTicket;
+    canvas.setBackgroundImage(url, function () {
+        if (tq !== tplTicket) return;   // llegó una más nueva: esta ya no vale
+        canvas.renderAll();
+        if (typeof window.tetGuardarEstado === 'function') window.tetGuardarEstado();
+    }, { width: canvas.width, height: canvas.height });
+}
+
 function reload() {
     var section = plantilla.value;
 
     switch (section) {
         case "0":
-            canvas.setBackgroundImage('./public/img/Plantillas/mh.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height
-            });
-
+            fondoPlantilla('./public/img/Plantillas/mh.png');
             colorF = "rgba(29,221,107)";
             pesoF = "bold";
             alineacion = "justify-left";
             tipoF = "Arial";
             break;
         case "1":
-            canvas.setBackgroundImage('./public/img/Plantillas/tet2/P_GNU_LINUX.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height
-            });
+            fondoPlantilla('./public/img/Plantillas/tet2/P_GNU_LINUX.png');
             colorF = "white";
             pesoF = "normal";
             alineacion = "center";
             tipoF = "Consolas";
             break;
         case "2":
-            canvas.setBackgroundImage('./public/img/Plantillas/tet2/P_html.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height
-            });
+            fondoPlantilla('./public/img/Plantillas/tet2/P_html.png');
             colorF = "black";
             pesoF = "normal";
             alineacion = "center";
             tipoF = "Century Gothic";
             break;
         case "3":
-            canvas.setBackgroundImage('./public/img/Plantillas/tet2/P_css.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height
-            });
+            fondoPlantilla('./public/img/Plantillas/tet2/P_css.png');
             colorF = "black";
             pesoF = "normal";
             alineacion = "center";
             tipoF = "Century Gothic";
             break;
         case "4":
-            canvas.setBackgroundImage('./public/img/Plantillas/tet2/P_js.png', canvas.renderAll.bind(canvas), {
-                width: canvas.width,
-                height: canvas.height
-            });
+            fondoPlantilla('./public/img/Plantillas/tet2/P_js.png');
             colorF = "black";
             pesoF = "normal";
             alineacion = "center";

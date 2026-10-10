@@ -30,6 +30,116 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 | Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c transiciones entre vídeos ⏳ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
+| Lote S — Exportación, móvil y publicación | 🔨 **S1 exportar sin negro ✅ · S2 el lienzo se encaja solo ✅ · S3 barra de texto fija en móvil ✅ · S4 panel Publicación ✅ · S5 plantillas que ya no borran el trabajo ✅ · S6 galería «toca e inserta» ✅** |
+
+---
+
+## 🔴 Lote S — Exportación, móvil y publicación
+
+> Reportado como «en pwa las imágenes salen en negro», «el canvas no se adapta»,
+> «hay que subir y bajar para arreglar el texto» y «no puedo gestionar las
+> descripciones, títulos y 5 #». Todo ello eran bugs, no preferencias.
+
+### S1 · Exportación en negro y recortes fantasma
+
+`formatos.js` leía `canvas.lowerCanvasEl.width` para el preset «Tamaño
+original`. Eso es el **backing store**, que lleva el `devicePixelRatio`
+aplicado: en un móvil con dpr 3 un diseño de 1280×720 se anunciaba como
+**3840×2160**, el «cover» recortaba el tercio central y el botón ponía
+«Descargar 3840×2160». Ahora se lee `canvas.width` (lógico).
+
+El negro tenía dos causas más:
+
+| Causa | Antes | Ahora |
+|---|---|---|
+| PNG con canal alfa | el lienzo temporal nacía transparente → negro en Fotos de Windows, Instagram, WhatsApp | se pinta el fondo del lienzo antes de dibujar (`fondoLienzo()`), opaco garantizado |
+| Presupuesto de píxeles | el intermedio se pedía a `crop × k` **y Fabric le ponía el retina encima**: 2560×1440 × dpr 3 = **33 Mpx**, por encima del límite de iOS (~16,7) → contexto en blanco | el retina se apaga solo durante el render y `k` se acota a un presupuesto de píxeles: **3,7 Mpx** en el mismo caso |
+
+«Compartir» (`capas.js`) tenía el mismo alfa; ahora usa `tetLienzoPng()`, que
+además va sin retina para no triplicar la memoria en el móvil. El botón
+«Lienzo en blanco» podía dejar el lienzo a 74 Mpx: también acotado.
+
+### S2 · El lienzo se encaja solo
+
+`myFunction()` de los 6 editores solo recalculaba `hc`/`wc`; su listener
+`matchMedia('change')` **nunca los aplicaba al canvas**, así que girar el
+teléfono no cambiaba nada. `zoomAjustar()` sí encajaba, pero solo con un botón
+y nunca al cargar. Ahora `shell.js` mide el lienzo y lo encaja al cargar, al
+redimensionar, al girar y al recoger la barra del navegador; manda el usuario
+en cuanto toca el zoom o hace un pellizco.
+
+El `transform` no ocupa espacio, así que además se reajusta `#img` al tamaño ya
+escalado: sin eso seguía habiendo scroll horizontal en el móvil. La fila de
+botones ya no impone su ancho (`max-width: 100%`) y los márgenes negativos de
+Bootstrap dejan de sangrar fuera del escenario.
+
+De paso, la **guía de recorte se escalaba dos veces** (medía con
+`getBoundingClientRect()` y luego heredaba el transform de `#img`): con el
+encaje automático, siempre por debajo del 100 %, quedaba descolocada. Ahora se
+mide en píxeles de maquetación con `offsetLeft`/`offsetWidth`.
+
+### S3 · Barra de texto fija en móvil
+
+Escribir el título exigía bajar al dock, subir a «Insertar título» y bajar a
+comprobar. Los campos de texto y su botón salen ahora del dock a una barra fija
+abajo (`shell.js` + `.sh-movil`), y vuelven a Propiedades al pasar a
+escritorio. Funciona con campos en `input-group` (tet1, art, miniatura, modcre)
+y sueltos en su columna (dictet, tet2). Se queda entre 44 y 106 px según la
+página.
+
+### S4 · Panel Publicación
+
+`public/js/publicacion.js` añade una tercera pestaña al dock: título,
+descripción y hasta 5 hashtags (sin repetir, normalizados, con contador), los
+límites de Instagram/TikTok/X/Facebook a la vista, vista previa del texto tal
+cual se copiará, copiado al portapapeles y descarga `.txt`. Se guarda en
+`localStorage` por editor y se sincroniza con el campo del lienzo.
+
+### S5 · Plantillas que ya no borran el trabajo
+
+`reload()` de tet1 llamaba a `canvas.clear()` en tres casos: **borraba todas las
+capas del usuario**. Ahora es una tabla, sin `clear()`, que limpia el overlay
+que sobre. Además:
+
+- `setBackgroundImage` es asíncrono y la rotación automática encadenaba cargas
+  cada 1,4 s: cada cambio saca un tique y solo se aplica si sigue siendo el
+  último (igual en tet2 y dictet).
+- El cambio entra en el historial (`window.tetGuardarEstado`): antes no se
+  deshacía y los botones quedaban desincronizados.
+- La rotación se para al tocar el lienzo, al ocultar la pestaña y si el valor
+  del selector no es un índice (`NaN` dejaba el selector en blanco).
+
+`picload()`aba con `querySelector('input[type=file]')`, el primero del
+documento: como `capas.js` inyecta el input del `.json` de proyecto, cualquier
+reordenación hacía que «Cargar una imagen» leyera el proyecto. Ahora va por id.
+
+### S6 · Galería: de «míralas» a «toca y va al lienzo»
+
+`galeria.js` envuelve cada `<img>` del modal en un botón. Al tocarla, la imagen
+se inserta escalada al 90 % y centrada, el modal se cierra y el usuario ve el
+resultado de inmediato. Esto era, sobre todo, un bloqueo en el móvil: no hay
+Ctrl+V para imágenes, `capas.js` solo escucha el evento `paste` del sistema y
+`navigator.clipboard.read()` no existe fuera de Chromium.
+
+En el móvil el modal también se desbordaba (seis imágenes a pantalla completa
+con `modal-lg: el cuerpo va ahora con scroll propio y dos columnas por fila.
+
+### Pendiente
+
+- **Buscador de imágenes / Gemini**: la CSP (`img-src 'self' data: blob:`,
+  `connect-src 'self'`, `frame-src 'none'`) impide tanto las imágenes remotas
+  como cualquier llamada saliente. Necesita backend propio (proxy + clave en
+  el servidor) y relajar esas dos directivas. Hasta entonces, la alternativa
+  sin backend es pegar una URL y descargarla.
+
+- **Negro en PWA**: verificado que **no** es el atributo `crossorigin` del
+  `<canvas>` (Fabric 2.4.3 no lo lee: `canvas.crossOrigin` está vacío). Se
+  endureció el `sw.js` reenviando el modo CORS al servir imágenes desde
+  caché, que es la causa documentada de canvas contaminado vía service worker,
+  y `avisoExportacion()` ahora distingue `SecurityError` de cualquier otro
+  fallo y dice cuántas imágenes de origen ajeno hay en el lienzo. Con el alfa
+  y el presupuesto de píxeles de S1 arreglados, el caso que se veía en el uso
+  normal queda cubierto; si vuelve a pasar, el mensaje dirá por qué.
 
 ---
 

@@ -244,8 +244,41 @@ body {
 .shell-work .editor-lienzo {
     flex: none !important;
     width: auto !important;
+    /* el ancho lo marca el lienzo, nunca la fila de botones: sin este tope,
+       en un teléfono esa fila (8 botones en una línea) era más ancha que la
+       pantalla y provocaba el scroll horizontal */
+    max-width: 100%;
     margin: auto !important;
     padding: 0 !important;
+}
+
+/* las .row de Bootstrap sangran 15 px por lado (.row tiene margen negativo):
+   dentro del escenario eso empujaba el contenido fuera del área visible */
+.shell-work .editor-lienzo .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: .2rem;
+    padding-right: .2rem;
+}
+
+.shell-work .editor-lienzo .row > * {
+    padding-left: .2rem;
+    padding-right: .2rem;
+}
+
+/* los botones de la fila de herramientas no imponían su ancho: con el
+   lienzo a 500 px en un teléfono de 390, esa fila era la que empujaba el
+   escenario y provocaba scroll horizontal. Con wrap, se reparten en varias
+   líneas y el ancho lo marca el lienzo. */
+.shell-work .editor-lienzo .row > * {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+}
+
+.shell-work .editor-lienzo .row > .btn {
+    flex: 0 0 auto;
 }
 
 /* chip de resolución: avisa cuando la imagen ampliada supera su nativo */
@@ -352,6 +385,125 @@ body {
         height: 34px;
         font-size: .9rem;
         border-radius: .5rem;
+    }
+}
+
+/* ---------- barra de texto fija (solo móvil) ----------
+   Los campos de título/detalles y su botón salen del dock y bajan aquí, para
+   escribir sin subir y bajar la página. En escritorio la barra se oculta y los
+   controles viven en Propiedades. */
+.sh-movil {
+    display: none;
+}
+
+body.tet-barra-movil {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+.sh-movil:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem;
+}
+
+/* los campos comparten fila entre sí y los botones la suya: así la barra no
+   crece a tres o cuatro alturas y se come la pantalla */
+.sh-movil .input-group {
+    flex: 1 1 40%;
+    min-width: 0;
+    flex-wrap: nowrap;
+}
+
+.sh-movil .input-group .input-group-text {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sh-muted);
+    background: transparent;
+    border-color: var(--sh-border);
+    white-space: nowrap;
+}
+
+/* etiqueta para los campos que no venían en un input-group (dictet, tet2) */
+.sh-mv-lbl {
+    margin-right: .35rem;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sh-muted);
+    white-space: nowrap;
+}
+
+/* las <label> propias del formulario también en línea (Bootstrap las pone en
+   bloque con margen inferior: dentro de la barra multiplican la altura) */
+.sh-movil .form-group > label,
+.sh-movil .col > label {
+    display: inline;
+    margin: 0 .35rem 0 0;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sh-muted);
+    white-space: nowrap;
+}
+
+/* dentro de la barra la etiqueta va en línea con su campo: en bloque cada
+   campo ocupaba dos alturas y la barra se comía un tercio de la pantalla */
+.sh-movil .col-12,
+.sh-movil .col,
+.sh-movil .form-group {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.sh-movil .col-12 > .form-control,
+.sh-movil .col > .form-control,
+.sh-movil .form-group > .form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sh-movil .form-control {
+    font-size: 1rem;                  /* <16px hace que iOS haga zoom al enfocar */
+    min-height: 44px;
+}
+
+/* el textarea de detalles llega con rows=4 (134 px de alto) y, dentro de la
+   barra, se comía un tercio de la pantalla: aquí va a dos líneas */
+.sh-movil textarea.form-control {
+    min-height: 44px;
+    max-height: 44px;
+    resize: none;
+    overflow-y: auto;
+}
+
+.sh-movil .btn {
+    flex: 0 0 auto;
+    height: 44px;
+    white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+    .sh-movil:not([hidden]) {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1040;
+        padding: .35rem .45rem calc(.35rem + env(safe-area-inset-bottom, 0px));
+        background: var(--sh-top);
+        border-top: 1px solid var(--sh-border);
+        box-shadow: 0 -6px 20px rgba(0, 0, 0, .35);
+    }
+
+    /* la barra flotante de la selección vive en el flujo, bajo el lienzo:
+       sin este margen acaba debajo de la barra fija */
+    .sh-barra {
+        margin-bottom: 72px;
     }
 }
 
@@ -885,6 +1037,206 @@ body {
     padding: .85rem .5rem;
     color: var(--sh-muted);
     font-size: .84rem;
+}
+
+/* ---------- panel de publicación ---------- */
+.pub-caja {
+    padding: .8rem .75rem 1rem;
+}
+
+.pub-intro {
+    margin: 0 0 .7rem;
+    font-size: .8rem;
+    color: var(--sh-muted);
+}
+
+.pub-et {
+    display: block;
+    margin: .75rem 0 .3rem;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted);
+}
+
+.pub-et:first-of-type {
+    margin-top: 0;
+}
+
+.pub-hint {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: .8;
+}
+
+.shell-dock .pub-caja .form-control {
+    font-size: .9rem;
+    padding: .42rem .6rem;
+    border-radius: 6px;
+    min-height: 38px;
+    background-color: var(--sh-input-bg);
+    color: var(--sh-text);
+    border-color: var(--sh-border);
+}
+
+.pub-cuenta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+    margin-top: .25rem;
+    font-size: .72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted);
+}
+
+.pub-lim {
+    padding: .05rem .35rem;
+    border: 1px solid var(--sh-border);
+    border-radius: 999px;
+}
+
+.pub-cuenta.es-excedido,
+.pub-lim.es-excedido {
+    color: #ff8f8f;
+    border-color: #ff8f8f;
+}
+
+.pub-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+    margin-top: .35rem;
+    min-height: 1.5rem;
+}
+
+.pub-chip {
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    background: var(--sh-hover);
+    color: var(--sh-accent);
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.pub-chip-vacio {
+    color: var(--sh-muted);
+    font-size: .76rem;
+}
+
+.pub-chip-sobran {
+    color: #ffc107;
+    font-size: .74rem;
+}
+
+.pub-preview {
+    margin: 0;
+    padding: .55rem .6rem;
+    max-height: 190px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--sh-input-bg);
+    border: 1px solid var(--sh-border);
+    border-radius: 6px;
+    color: var(--sh-text);
+    font-size: .82rem;
+    line-height: 1.45;
+}
+
+.pub-preview.es-vacio {
+    color: var(--sh-muted);
+    font-style: italic;
+}
+
+.pub-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: .8rem;
+}
+
+.shell-dock .pub-acciones .btn {
+    flex: 1 1 auto;
+    min-width: 8.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .shell-dock .pub-acciones .btn {
+        min-height: 44px;
+        flex: 0 0 auto;
+    }
+}
+
+/* ---------- galería: toca una imagen y va al lienzo ---------- */
+/* el modal era un grupo de <img> donde solo cabía copiar y pegar */
+.galeria-celda {
+    display: flex;
+    justify-content: center;
+}
+
+.galeria-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+    width: 100%;
+    padding: .45rem .35rem .3rem;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: .55rem;
+    color: #e6e6e6;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease, transform .12s ease;
+}
+
+.galeria-item:hover,
+.galeria-item:focus-visible {
+    background: rgba(255, 255, 255, .14);
+    border-color: #4dabf7;
+    color: #fff;
+}
+
+.galeria-item:active {
+    transform: scale(.97);
+}
+
+.galeria-item:disabled {
+    opacity: .5;
+    cursor: progress;
+}
+
+.galeria-item img {
+    width: 100%;
+    height: auto;
+    border-radius: .3rem;
+}
+
+.galeria-pie {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    opacity: .85;
+}
+
+/* en el móvil el modal se desborda: cuerpo con scroll propio y celdas
+   adaptables para que entren dos por fila */
+@media (max-width: 575.98px) {
+    .modal.galeria-modal .modal-dialog.modal-lg {
+        margin: .5rem;
+    }
+
+    .modal.galeria-modal .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal.galeria-modal .modal-body .row > * {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
 }
 
 /* ---------- responsive fino de la shell ---------- */

@@ -17,5 +17,8 @@ package-lock.json
 _tmp*.ps1
 ~$*
 
+# Pruebas locales (sondas de navegador, vídeos de comprobación)
+.tmp-test/
+
 # Música: los MP3 no viajan en el repo (se embeben con tools/embed-audio.js)
 public/audio/*.mp3
