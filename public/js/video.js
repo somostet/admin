@@ -661,6 +661,9 @@
        Con un solo tipo de elemento se sigue usando el camino de siempre, que
        ya está probado; el motor mixto solo entra cuando hay de los dos. */
     var pista = [];   // [{ t: 'img', i }, { t: 'clip', i }] — i es el índice en su pool
+    var listaPista = document.getElementById('vid-pista');      // R6b
+    var pistaWrap = document.getElementById('vid-pista-wrap');
+    var pistaNota = document.getElementById('vid-pista-nota');
 
     function esMixta() {
         var img = false, clip = false;
@@ -804,6 +807,7 @@
         recWrap.hidden = !videoCargado;
         pintarModo();
         pintaCola();
+        pintaPista();   // R6b: el riel refleja el clip que acaba de entrar
         actualizaCrear();
     }
 
@@ -961,7 +965,8 @@
             fila.appendChild(accionesCola(i));
             listaCola.appendChild(fila);
         });
-        colaWrap.hidden = n < 2;
+        /* R6b: la cola tampoco se ve (el riel de la pista la sustituye) */
+        colaWrap.hidden = true;
         colaNota.textContent = 'Se unen en el orden de la lista; «inicio» y «fin» ' +
             'recortan cada vídeo por separado (máximo ' + MINUTOS_MAX +
             ' minutos en total).';
@@ -1441,6 +1446,263 @@
         });
     });
 
+    /* ---------- R6b · riel de la pista: el orden real de la salida ---------- */
+    /* Una lista con fotos y vídeos intercalados, que es lo que de verdad se
+       graba. Sustituye a la tira y a la cola: la tira y la cola siguen en el
+       DOM y sus funciones las siguen actualizando (los pools mandan), pero no
+       se ven. Al tocar un vídeo se abre su recorte; al tocar una foto, nada
+       especial (sus tiempos van en la pestaña Textos). */
+    var selPista = -1;   // fila seleccionada del riel
+
+    function pintaPista() {
+        if (!listaPista) return;
+        listaPista.innerHTML = '';
+        var durImg = durMsPorImagen() / 1000;
+        var modo = selTrans.value;
+        pista.forEach(function (it, pos) {
+            var esImg = (it.t === 'img');
+            var obj = esImg ? imagenes[it.i] : colaVideos[it.i];
+            if (!obj) return;
+
+            /* R6 · marca de transición entre dos fotos seguidas: es el único
+               caso donde hay fundido, así que se señala dónde va */
+            if (pos > 0 && esImg && modo !== 'ninguna' && pista[pos - 1].t === 'img') {
+                var sep = document.createElement('div');
+                sep.className = 'vid-pista-trans';
+                sep.innerHTML = '<i class="fas fa-exchange-alt" aria-hidden="true"></i> ' +
+                    etiquetaTrans(modo);
+                listaPista.appendChild(sep);
+            }
+
+            var fila = document.createElement('div');
+            fila.className = 'vid-pista-fila' + (pos === selPista ? ' vid-pista-activa' : '');
+
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'vid-pista-sel';
+            b.setAttribute('role', 'option');
+            b.setAttribute('aria-selected', pos === selPista ? 'true' : 'false');
+
+            var mini = document.createElement('span');
+            mini.className = 'vid-pista-mini';
+            if (esImg) {
+                var im = document.createElement('img');
+                im.src = obj.url;
+                im.alt = '';
+                im.className = 'vid-pista-foto';
+                mini.appendChild(im);
+            } else {
+                var ic = document.createElement('i');
+                ic.className = 'fas fa-film';
+                ic.setAttribute('aria-hidden', 'true');
+                mini.appendChild(ic);
+            }
+            b.appendChild(mini);
+
+            var txt = document.createElement('span');
+            txt.className = 'vid-pista-txt';
+            var nom = document.createElement('span');
+            nom.className = 'vid-pista-nombre';
+            nom.textContent = obj.nombre || (esImg ? 'imagen' : 'vídeo');
+            var dur = document.createElement('span');
+            dur.className = 'vid-pista-dur';
+            dur.textContent = esImg ? fmtSeg(durImg) + ' s' : fmtSeg(durRecorte(obj)) + ' s';
+            var tipo = document.createElement('span');
+            tipo.className = 'vid-pista-tipo';
+            tipo.textContent = esImg ? 'foto' : 'vídeo';
+            txt.appendChild(nom);
+            txt.appendChild(tipo);
+            txt.appendChild(dur);
+            b.appendChild(txt);
+
+            b.addEventListener('click', function () { seleccionaEnPista(pos); });
+            fila.appendChild(b);
+            fila.appendChild(accionesPista(it, pos));
+            listaPista.appendChild(fila);
+        });
+
+        var hay = pista.length > 0;
+        pistaWrap.hidden = !hay;
+        if (pistaNota) {
+            pistaNota.textContent = hay
+                ? pista.length + (pista.length === 1 ? ' elemento' : ' elementos') +
+                  ' · ' + fmtSeg(totalSalida()) + ' s en total · toca una fila para seleccionarla' +
+                  ' y usa ↑ ↓ para cambiar el orden'
+                : '';
+        }
+    }
+
+    function etiquetaTrans(modo) {
+        if (modo === 'deslizar') return 'deslizar';
+        if (modo === 'blur') return 'desenfoque';
+        if (modo === 'kenburns') return 'encuadre';
+        return 'fundido';
+    }
+
+    function accionesPista(it, pos) {
+        var caja = document.createElement('div');
+        caja.className = 'vid-pista-acciones';
+        [
+            { icono: 'fas fa-arrow-up', titulo: 'Mover antes en el vídeo',
+              accion: function () { mueveEnPista(pos, -1); } },
+            { icono: 'fas fa-arrow-down', titulo: 'Mover después en el vídeo',
+              accion: function () { mueveEnPista(pos, 1); } }
+        ].concat(it.t === 'img' ? [{
+            icono: 'far fa-copy', titulo: 'Duplicar esta foto',
+            accion: function () { duplicaEnPista(pos); }
+        }] : [{
+            icono: 'far fa-copy', titulo: 'Duplicar este vídeo',
+            accion: function () { duplicaEnPista(pos); }
+        }]).concat([{
+            icono: 'fas fa-trash', titulo: 'Quitar del vídeo',
+            accion: function () { quitaDePista(pos); }
+        }]).forEach(function (b) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn';
+            btn.title = b.titulo;
+            btn.setAttribute('aria-label', b.titulo);
+            btn.innerHTML = '<i class="' + b.icono + '" aria-hidden="true"></i>';
+            btn.addEventListener('click', b.accion);
+            caja.appendChild(btn);
+        });
+        return caja;
+    }
+
+    function seleccionaEnPista(pos) {
+        selPista = (pos >= 0 && pos < pista.length) ? pos : -1;
+        var it = selPista >= 0 ? pista[selPista] : null;
+        if (it && it.t === 'clip') {
+            /* el recorte se edita sobre el clip activo; activaClip también
+               enciende el bloque de recorte y pone el vídeo en el visor */
+            if (idxActivo !== it.i) activaClip(it.i);
+            else pintaPista();
+        } else if (it) {
+            pintaPista();
+        } else {
+            pintaPista();
+        }
+        histMarca();
+    }
+
+    /* Mover una fila. Si el vecino es del MISMO tipo se mueve en su pool: así
+       el orden de la pista sigue siendo el del pool y los caminos antiguos,
+       que leen el pool, ven lo mismo que el riel. Si son de tipos distintos,
+       en el pool no hay nada que mover (cada uno mantiene su orden) y lo que
+       cambia es el orden de la salida. */
+    function mueveEnPista(pos, delta) {
+        if (grabando) { aviso('Espera a que termine la grabación', 'info'); return; }
+        var b = pos + delta;
+        if (pos < 0 || b < 0 || pos >= pista.length || b >= pista.length) return;
+        var A = pista[pos], B = pista[b];
+        if (A.t === 'img' && B.t === 'img') {
+            var im = imagenes[A.i];
+            imagenes[A.i] = imagenes[B.i];
+            imagenes[B.i] = im;
+            if (sel === A.i) sel = B.i; else if (sel === B.i) sel = A.i;
+        } else if (A.t === 'clip' && B.t === 'clip') {
+            var c = colaVideos[A.i];
+            colaVideos[A.i] = colaVideos[B.i];
+            colaVideos[B.i] = c;
+            var act = colaVideos[idxActivo];
+            idxActivo = colaVideos.indexOf(act);
+            desfaseActivo = montajeHasta(idxActivo);
+        } else {
+            pistaIntercambia(pos, b);
+            selPista = b;
+        }
+        refrescaPista();
+    }
+
+    function quitaDePista(pos) {
+        if (grabando) { aviso('Espera a que termine la grabación', 'info'); return; }
+        var it = pista[pos];
+        if (!it) return;
+        if (it.t === 'img') {
+            var f = imagenes[it.i];
+            if (!f) return;
+            imagenes.splice(it.i, 1);
+            pistaQuita('img', it.i);
+            pistaRenumera('img', it.i);
+            soltarUrl(f.url);
+            if (sel >= imagenes.length) sel = imagenes.length - 1;
+            pintarTira();
+        } else {
+            var c = colaVideos[it.i];
+            pistaQuita('clip', it.i);
+            pistaRenumera('clip', it.i);
+            colaVideos.splice(it.i, 1);
+            if (c) {
+                URL.revokeObjectURL(c.url);
+                histRevocadas[c.url] = true;   // P4: el historial la rehace del blob
+            }
+            if (!colaVideos.length) {
+                selPista = -1;
+                quitaVideo();   // avisa y limpia del todo
+                return;
+            }
+            if (it.i < idxActivo) idxActivo--;
+            else if (it.i === idxActivo) idxActivo = Math.min(it.i, colaVideos.length - 1);
+            if (selPista > pos) selPista--;
+            refrescaPista();
+            aviso('Vídeo quitado', 'info');
+            return;
+        }
+        if (selPista > pos) selPista--;
+        refrescaPista();
+    }
+
+    function duplicaEnPista(pos) {
+        if (grabando) { aviso('Espera a que termine la grabación', 'info'); return; }
+        var it = pista[pos];
+        if (!it) return;
+        if (it.t === 'img') {
+            if (imagenes.length >= MAX_IMAGENES) {
+                aviso('Máximo ' + MAX_IMAGENES + ' imágenes por vídeo', 'warning');
+                return;
+            }
+            var f = imagenes[it.i];
+            usosUrl[f.url] = (usosUrl[f.url] || 1) + 1;
+            imagenes.splice(it.i + 1, 0, f);   // el clon no guarda blob propio: comparte
+            pistaInserta('img', it.i + 1, pos + 1);
+            selPista = pos + 1;
+            refrescaPista();
+            return;
+        }
+        /* un vídeo se duplica desde su propia cola (copia el File, que es lo
+           que permite volver a crear la url); el riel solo lo ordena */
+        var c = colaVideos[it.i];
+        if (!c || !c.blob) {
+            aviso('Este vídeo no se puede duplicar aquí: usa «Quitar vídeo» y súbelo otra vez', 'info');
+            return;
+        }
+        var url = URL.createObjectURL(c.blob);
+        colaVideos.splice(it.i + 1, 0, {
+            nombre: c.nombre, url: url, dur: c.dur,
+            ini: c.ini, fin: c.fin, blob: c.blob
+        });
+        pistaInserta('clip', it.i + 1, pos + 1);
+        selPista = pos + 1;
+        refrescaPista();
+    }
+
+    function refrescaPista() {
+        histMarca();
+        if (selPista >= pista.length) selPista = pista.length - 1;
+        if (selPista >= 0) {
+            var it = pista[selPista];
+            if (it.t === 'clip' && colaVideos[it.i]) {
+                if (idxActivo !== it.i) { activaClip(it.i); return; }   // ya repinta
+            }
+        }
+        pintaPista();
+        pintarTira();
+        pintaCola();
+        recargaCola();
+        actualizaCrear();
+        reiniciarPreview();
+    }
+
     /* ---------- F5f · riel de la línea de tiempo de salida ---------- */
     /* Mapea el tiempo de salida (0..total): en vídeo es el recorte, en
        imágenes la duración total. Una barra por texto + cabezal con scrub. */
@@ -1774,7 +2036,9 @@
         });
 
         var hay = imagenes.length > 0;
-        tiraWrap.hidden = !hay;
+        /* R6b: la tira ya no se ve — el riel de la pista hace de ella — pero se
+           sigue llenando y `sel` se sigue llevando para el orden de las fotos */
+        tiraWrap.hidden = true;
         conteo.textContent = imagenes.length + (imagenes.length === 1 ? ' imagen' : ' imágenes') +
             ' · toca una para reordenarla o quitarla' +
             (imagenes.length >= MAX_IMAGENES ? ' (máximo alcanzado)' : '');
@@ -1783,6 +2047,7 @@
         /* R6 · una imagen junto a los clips devuelve los controles de duración
            y de transición, que el modo vídeo tinha apagados */
         pintarModo();
+        pintaPista();   // R6b: el riel refleja la foto que acaba de entrar
         actualizarBarra();
         actualizaCrear();
         reiniciarPreview();
@@ -2938,6 +3203,9 @@
                 aviso('Tu navegador no hace desenfoque: se usará el color de fondo', 'info');
             }
             if (el === selAjuste) pintaAjusteRapido();   // M2: resalta el atajo activo
+            /* R6b: cambiar la transición cambia dónde va el fundido, así que
+               el riel tiene que redibujar sus marcas entre fotos */
+            if (el === selTrans) pintaPista();
             actualizaCrear();
             if (!grabando) reiniciarPreview();
         });
@@ -4758,6 +5026,7 @@
 
     recuperaUltimo();
     pintaPanelCapas();   // R5: el panel de capas nace con su estado vacío
+    pintaPista();        // R6b: el riel de la salida nace vacío
 
     /* ---------- M4 · peso del archivo y grabación estable ---------- */
     /* Antes: 8 Mbps fijos para todo —un minuto de 1080p salía a ~60 MB—.
@@ -6078,6 +6347,7 @@
         cargaEditor();
         pintaPanelCapas();   // R5
         cargaEditorCapa();   // R5
+        pintaPista();        // R6b: el riel vuelve al estado restaurado
         repintarSuperp();
         actualizaCrear();
         actualizaManija();

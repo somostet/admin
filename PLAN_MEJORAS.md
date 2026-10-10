@@ -29,7 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
-| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b pista única (intercalar) ⏳ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c transiciones entre vídeos ⏳ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 
 ---
 
@@ -1342,11 +1342,30 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
     fotogramas del **MP4 producido** (0,5–3,5 s dan el fondo de las fotos y
     4,5–6,5 s el color del vídeo), más regresión de solo-fotos (4 s) y
     solo-vídeo (3 s). Consola 0, `node --check`.
-  - **R6b ⏳ pendiente**: la lista única que permite *intercalar* (foto →
-    clip → foto). Ahora mismo `pista[]` se arma con las fotos primero y los
-    clips detrás, así que combinar funciona pero el orden todavía no se elige:
-    hasta que exista la pista única, la salida es «todas las fotos y luego
-    todos los vídeos».
+  - **R6b ✅ · Riel de la pista** (elegido por el usuario antes que las
+    transiciones entre vídeos): una lista con fotos y vídeos intercalados que
+    es el orden real de la salida, con miniatura, tipo, duración y ↑/↓ para
+    cambiarlo. **Sustituye a la tira y a la cola**, que se conservan en el DOM
+    y se siguen actualizando (los pools mandan) pero ya no se ven. Al tocar un
+    vídeo se abre su recorte.
+    - Mover una fila: si el vecino es del **mismo tipo** se mueve en su pool,
+      para que el orden de `pista` siga siendo el del pool y los caminos
+      antiguos —que leen el pool— vean lo mismo que el riel; si son de tipos
+      distintos, en el pool no hay nada que mover y lo que cambia es `pista`.
+    - Marca de transición entre dos fotos seguidas (es el único caso en que hay
+      fundido), que se redibuja al cambiar el selector de transición.
+    - E2E en Chrome: 2 fotos + 1 vídeo; ↑/↓ deja el orden
+      `vídeo → foto → foto` y el **MP4 grabado lo respeta** (muestreando el
+      MP4: 0,5–2,5 s el color del vídeo, 3,5–6,5 s el fondo de las fotos).
+      Consola 0, `node --check`.
+  - **R6c ⏳ pendiente · transiciones entre vídeos**: el selector de transición
+    queda deshabilitado en el modo solo-vídeo a propósito. Fundir dos clips
+    exige **decodificar los dos a la vez**, o sea un segundo `<video>` además
+    del que ya se usa, y durante la grabación en tiempo real eso son dos
+    reproductores sincronizados al mismo frame: más batería, riesgo de perder
+    frames (y si se pierde uno, el clip sale corto) y peor en móvil. Es lo más
+    caro y lo más delicado que queda; conviene hacerlo solo con el riel ya
+    validado, que es justo lo que hay ahora debajo.
 
 ---
 
