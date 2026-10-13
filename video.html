@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css?v=r4">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp2">
-    <link rel="stylesheet" href="./public/css/video.css?v=r4">
+    <link rel="stylesheet" href="./public/css/video.css?v=r5">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -419,13 +419,18 @@
                             </div>
                         </div>
                         <div class="col-12 col-lg-4">
-                            <label class="form-label" for="vid-transicion">Transición entre imágenes</label>
+                            <!-- R6c · con fotos y vídeos en la misma pista, la
+                                 transición también funde con los clips. El
+                                 texto y la nota los pone pintarModo(), que
+                                 sabe si la pista es mixta o solo fotos. -->
+                            <label class="form-label" id="vid-lbl-trans" for="vid-transicion">Transición entre imágenes</label>
                             <select class="form-select" id="vid-transicion">
                                 <option value="ninguna">Ninguna (corte)</option>
                                 <option value="fundido">Fundido cruzado</option>
                                 <option value="deslizar">Deslizar</option>
                                 <option value="kenburns">Ken Burns (zoom lento)</option>
                             </select>
+                            <p class="form-text mb-0" id="vid-trans-nota" aria-live="polite"></p>
                         </div>
                         <div class="col-6 col-lg-6">
                             <label class="form-label" for="vid-ajuste">Ajuste de cada imagen</label>
@@ -972,7 +977,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r11"></script>
+    <script src="./public/js/video.js?v=r12"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

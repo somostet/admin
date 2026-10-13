@@ -487,7 +487,7 @@
     padding-right: .35rem;
 }
 
-/* marca de transición entre dos fotos seguidas */
+/* marca de transición: entre dos fotos seguidas o en un corte con solape */
 .vid-pista-trans {
     display: flex;
     align-items: center;
@@ -499,6 +499,15 @@
     opacity: .65;
     background: rgba(128, 128, 128, .10);
     border-bottom: 1px solid var(--sh-border);
+}
+
+/* R6c · cuánto se solapa el corte: el dato que explica que el total sea menor */
+.vid-pista-trans-nota {
+    margin-left: auto;
+    text-transform: none;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    opacity: .8;
 }
 
 .vid-texto-acciones {

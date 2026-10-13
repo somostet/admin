@@ -29,7 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
-| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c transiciones entre vídeos ⏳ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c fundido foto ↔ vídeo ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 | Lote S — Exportación, móvil y publicación | 🔨 **S1 exportar sin negro ✅ · S2 el lienzo se encaja solo ✅ · S3 barra de texto fija en móvil ✅ · S4 panel Publicación ✅ · S5 plantillas que ya no borran el trabajo ✅ · S6 galería «toca e inserta» ✅** |
 
 ---
@@ -1490,45 +1490,79 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
         con un `drawImage` (fotograma de vídeo o foto) sale bien. El arreglo
         sería arrancar el grabador del mixto cuando el primer clip esté listo,
         como hace `crearVideoRecorte`, en vez de antes.
-  - **R6c ⏳ pendiente · transiciones entre vídeos** — **diseño acordado y
-    escrito aquí; la implementación es el paso siguiente.** Decidido con el
-    usuario: **fundido cruzado** (el final de A se solapa con el principio de B
-    y se mezclan) y **también entre foto y vídeo**, no solo entre clips.
-    - **Consecuencia aritmética:** el solape acorta el vídeo. Con `D` segundos de
-      fundido, `total = Σ duraciones − D × nº de cortes`. Ese total hay que
-      recalcularlo a la vez en `planPista()`, `totalPista()`, `totalSalida()`, la
-      barra de progreso de los tres grabadores, el riel de la línea de tiempo de
-      los textos y la validación de los 5 minutos; si se cambia solo uno, el riel
-      y la barra mienten.
-    - **Vídeo ↔ vídeo (la parte difícil).** Hace falta un **segundo `<video>`**
-      oculto que cargue y busque el clip siguiente mientras el actual sigue
-      sonando, y durante el solape pintar los dos con `globalAlpha` cruzándose.
-      Como la grabación es en tiempo real, son dos decodificadores a la vez: en
-      móvil es donde más se nota y **si se pierde un frame el clip sale corto**.
-    - **El audio es lo más delicado.** `createMediaElementSource` **solo se puede
-      llamar una vez por elemento**, así que hay que crear un nodo de ganancia
-      por vídeo y ramp-earlos 1→0 y 0→1 durante el solape; si no, en el solape se
-      oyen los dos clips a la vez.
-    - **Foto ↔ vídeo (la parte fácil).** Una foto es un mapa de bits: no hace
-      falta segundo decodificador ni nodo de audio nuevo, solo pintar con
-      transparencia mientras el vídeo sigue sonando.
-    - **Orden de trabajo acordado: foto ↔ vídeo primero**, porque se nota en el
-      móvil y se verifica en escritorio; después vídeo ↔ vídeo, que hay que dar
-      por probado en un Android antes de darlo por bueno (en escritorio no hay
-      forma de ver si un móvil se atasca con dos decodificadores).
-    - *Lección de R6d:* esta pieza **no se toca a medias**. Un refactor a medias
-      en la ruta de grabación es peor que no hacerlo; en R6d ya hubo dos
-      regresiones por eso (un `requestAnimationFrame` anidado que pisaba el bucle
-      del grabador, y un `pintaTira` escrito donde era `pintarTira`).
-
-    queda deshabilitado en el modo solo-vídeo a propósito. Fundir dos clips
+  - **R6c ✅ · fundido cruzado entre foto y vídeo** (primer paso del diseño de
+    abajo; el de vídeo ↔ vídeo sigue pendiente). El solape pisa a los dos lados,
+    así que **la salida se acorta**: con `D` segundos de solape,
+    `total = Σ duraciones − D × nº de cortes`. `planPista()` es la única fuente
+    de la verdad y de ahí salen el total, las barras de los tres grabadores, el
+    riel de la línea de tiempo de los textos y la validación de los 5 minutos.
+    - **Dónde hay solape:** en los cortes **mixtos** (foto → vídeo y
+      vídeo → foto). Entre dos fotos sigue el fundido de siempre, dentro de la
+      segunda, que no acorta nada; entre dos vídeos el corte va seco (haría
+      falta un segundo `<video>` decodificando a la vez: es el paso 2).
+    - `D` sale de la misma regla que el fundido entre fotos (40% del más corto,
+      suelo 150 ms, techo 800) pero **acotada a la mitad del más corto**: con el
+      tope entero un clip corto desaparecería dentro del fundido. Por debajo de
+      ~80 ms no se solapa y el corte queda seco.
+    - **Pinta:** una función nueva, `pintaPlanPista()`, compone el fotograma
+      entero —el saliente debajo a opacidad 1 y el entrante encima con su
+      alfa— y pinta las superposiciones **una sola vez** al final. La clave:
+      solo la capa de abajo pinta el fondo; si la de encima lo volviera a
+      pintar, taparía con blanco justo lo que se va y el fundido saldría contra
+      el color de fondo (falló en la primera prueba, con el vídeo de prueba).
+    - **El audio** entra y sale con el solape ramp-eando un `GainNode`: el
+      `createMediaElementSource` del vídeo se enruta **una sola vez** por ese
+      nodo (solo se puede llamar una vez por elemento) y lo que se mueve es su
+      valor, que está a 1 el resto del tiempo. El reloj es el del `AudioContext`,
+      no el del fotograma.
+    - **El reloj de la grabación** era lo más delicado: el segmento que manda
+      puede cambiar **a mitad de solape**. Dos cosas que_costaron una vuelta:
+      el clip que entra se carga y arranca **D segundos antes** de que acabe el
+      saliente (si no, el lienzo se congela o el fundido se ve a posteriori),
+      y el saliente **no se para en el cruce**: sigue hasta acabar su solape.
+      Y cuando la foto entra con solape su reloj **no puede arrancar en cero**:
+      si arranca, el tiempo de salida da un salto hacia atrás, el solape se
+      cuenta dos veces y el vídeo sale largo (0,8 s de más, medido). Se
+      atrasa lo justo para seguir donde estaba.
+    - El riel marca el solape con su duración, y el total y la nota lo dicen
+      («−0,8 s por solape»), para que el número más corto no parezca un error.
+      Con el selector de transición apagado, la etiqueta y la nota vuelven a lo
+      de siempre.
+    - E2E en Chrome: 2 fotos × 2 s + clip de 3 s. Foto → vídeo: MP4 de 6,44 s
+      (6,2 + 0,2 de calentamiento) y el fundido va de 3,4 s a 4,2 s con la
+      mezcla esperada en cada punto. Vídeo → foto: 6,43 s y el fundido de 2,2 s
+      a 3,0 s. Regresión de solo-fotos (4,01 s, fundido entre fotos intacto) y
+      de solo-vídeo (3,23 s, primer fotograma sin negro). Consola 0,
+      `node --check`. Queda por probar en un Android antes de dar por buena la
+      parte de vídeo ↔ vídeo.
+  - **R6c-bis · miniaturas negras en el filmstrip** (sale de R6c). `drawImage`
+    de un `<video>` que aún no tiene fotograma **no** pinta «lo que hubiera
+    antes»: pinta el lienzo vacío. La primera miniatura era la que más se
+    colaba (sale nada más poner el `src`) porque el tope de 2,5 s a ciegas daba
+    por buena la miniatura aunque el salto de tiempo no hubiera vuelto. Ahora
+    solo se pinta con el fotograma **de verdad** en el instante pedido; si el
+    navegador no lo da se reintenta y, si tampoco, se salta esa minatura. E2E:
+    falseando `readyState` (vídeo sin decodificar) salen **0** miniaturas en vez
+    de 13 negras; con el vídeo normal, las 13 y ninguna negra.
+  - **R6c-ter · `quitaVideo` no existía** (R6b, no de R6c): al quitar el
+    último vídeo desde el riel saltaba una `ReferenceError` y la pista se
+    quedaba a medias. Era `quitarVideo()`.
+  - **R6c ⏳ pendiente · fundido entre vídeos** — **vídeo ↔ vídeo es el paso 2**,
+    y sigue como estaba: necesita un segundo `<video>` que cargue y busque el
+    clip siguiente mientras el actual sigue sonando, y durante el solape pintar
+    los dos con `globalAlpha` cruzándose. Como la grabación es en tiempo real,
+    son dos decodificadores a la vez: en móvil es donde más se nota y **si se
+    pierde un frame el clip sale corto**, así que hay que darlo por probado en
+    un Android antes de darlo por bueno (en escritorio no hay forma de verlo).
+    La parte de audio ya está preparada: el `GainNode` del vídeo se puede
+    ramp-ear por clip sin tocar el resto.
+    Sigue **deshabilitado en el modo solo-vídeo** a propósito: fundir dos clips
     exige **decodificar los dos a la vez**, o sea un segundo `<video>` además
     del que ya se usa, y durante la grabación en tiempo real eso son dos
     reproductores sincronizados al mismo frame: más batería, riesgo de perder
     frames (y si se pierde uno, el clip sale corto) y peor en móvil. Es lo más
-    caro y lo más delicado que queda; conviene hacerlo solo con el riel ya
-    validado, que es justo lo que hay ahora debajo. (La decisión de qué efecto y
-    su diseño técnico están arriba, en este mismo bloque.)
+    caro y lo más delicado que queda; el riel de abajo ya está validado, que es
+    justo lo que hacía falta antes de meterse.
 
 ---
 
