@@ -1468,6 +1468,28 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
       `vídeo → foto → foto` y el **MP4 grabado lo respeta** (muestreando el
       MP4: 0,5–2,5 s el color del vídeo, 3,5–6,5 s el fondo de las fotos).
       Consola 0, `node --check`.
+  - **R6d · El primer fotograma del vídeo salía negro ⏳ a medias** («en
+    Reels e Instagram da problemas al subir»). Solo pasa **cuando hay vídeo de
+    por medio**; las fotos solas salen bien. No es un fallo de dibujo: midiendo
+    el lienzo durante la grabación da el color correcto del vídeo a los 50 ms,
+    así que el negro lo mete el codificador. Con un clip, `captureStream` se
+    queda con el lienzo recién redimensionado (transparente) como frame 0 y no
+    lo suelta aunque se pinte después. Probado y **descartado**: pintar semilla
+    antes de `captureStream`, repintar entre `captureStream` y `rec.start`, y
+    esperar dos rAF de calentamiento — ninguno quita el negro.
+    - **Arreglo aplicado — calentamiento de 200 ms** (`ARRANQUE_PAD`): antes de
+      dejar reproducir al primer clip se graban 200 ms de su primer fotograma.
+      En `crearVideoRecorte` el bucle de calentamiento va en su propia variable
+      (`calRaf`) y no en `rafAct`: comparten variable, uno cancelaba al otro y
+      «Cancelar» dejaba de parar la grabación. El vídeo sale 0,2 s más largo.
+      - E2E: **solo-vídeo pasa de negro (brillo 0) a correcto (brillo 29) en el
+        primer frame del MP4**, medido sobre el archivo grabado.
+      - **Pendiente**: en la pista mixta que *empieza por un clip* sigue habiendo
+        ~0,08 s de negro (antes eran ~0,15 s). El calentamiento del mixto pinta
+        solo el fondo, y con un `fillRect` el primer frame sigue saliendo vacío;
+        con un `drawImage` (fotograma de vídeo o foto) sale bien. El arreglo
+        sería arrancar el grabador del mixto cuando el primer clip esté listo,
+        como hace `crearVideoRecorte`, en vez de antes.
   - **R6c ⏳ pendiente · transiciones entre vídeos**: el selector de transición
     queda deshabilitado en el modo solo-vídeo a propósito. Fundir dos clips
     exige **decodificar los dos a la vez**, o sea un segundo `<video>` además

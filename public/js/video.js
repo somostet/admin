@@ -8,6 +8,15 @@
     'use strict';
 
     var MAX_IMAGENES = 60;
+    /* R6d · calentamiento de arranque para el grabador de VÍDEO: el MP4 salía
+       con el primer fotograma negro cuando la fuente era un clip (solo o
+       mezclado con fotos), y eso es lo que rechazan o muestran mal Reels e
+       Instagram. Al contraryo que las fotos —que ya salen bien—, aquí el clip
+       tarda en cargarse y buscarse, y durante esa espera el grabador se queda
+       con el lienzo recién redimensionado. Se graban ARRANQUE_PAD ms del
+       primer fotograma antes de dejar reproducir: el vídeo sale ese poco más
+       largo a cambio de no empezar en negro. */
+    var ARRANQUE_PAD = 200;
     var MAX_LADO = 1920;          // tope de píxeles (los presets más grandes se reducen con aviso)
     var MAX_TOTAL_SEG = 300;      // 5 minutos: se graba en tiempo real, no conviene más (E4)
     var MINUTOS_MAX = Math.round(MAX_TOTAL_SEG / 60);   // «5» para los avisos (E4)
@@ -1689,13 +1698,15 @@
     function refrescaPista() {
         histMarca();
         if (selPista >= pista.length) selPista = pista.length - 1;
-        if (selPista >= 0) {
-            var it = pista[selPista];
-            if (it.t === 'clip' && colaVideos[it.i]) {
-                if (idxActivo !== it.i) { activaClip(it.i); return; }   // ya repinta
-            }
-        }
+        var it = selPista >= 0 ? pista[selPista] : null;
+        /* El riel se repinta SIEMPRE primero: si el elemento movido queda
+           seleccionado y es un clip, activatesClip() se lleva el control y
+           el riel se quedaba con el orden anterior. */
         pintaPista();
+        if (it && it.t === 'clip' && colaVideos[it.i] && idxActivo !== it.i) {
+            activaClip(it.i);   // ya repinta cola, totales y vista previa
+            return;
+        }
         pintarTira();
         pintaCola();
         recargaCola();
@@ -5735,7 +5746,7 @@
 
     function crearVideoRecorte() {
         var audio = conectarAudio();
-        var total = Math.round(totalRecorte() * 1000);   // E5b: suma de recortes
+        var total = Math.round(totalRecorte() * 1000) + ARRANQUE_PAD;   // E5b + R6d
         var hayMusica = preparaMusica(total / 1000);   // F6
         var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
         if (!mime) {
@@ -5752,6 +5763,7 @@
         var segIdx = 0;
         var cambiando = false;   // E5: cambio de clip → el lienzo se congela
         var primerSeg = true;
+        var calRaf = null;        // R6d: fotograma del calentamiento (no es rafAct)
 
         grabando = true;
         cancelado = false;
@@ -5861,10 +5873,26 @@
             if (primerSeg) {
                 primerSeg = false;
                 dibujarFrame(vidFuente);
+                /* R6d · calentamiento: se repinta el primer fotograma durante
+                   ARRANQUE_PAD ms antes de dejar reproducir al clip, para que
+                   el codificador reciba imagen desde el principio */
+                calienta();
                 recAct.start(200);
                 iniciaMusica();   // F6: la música entra al empezar a grabar
                 pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
                 estado.textContent = 'Grabando…';
+                setTimeout(function () {
+                    paraCalentar();
+                    if (!grabando) return;
+                    var p0 = vidFuente.play();
+                    if (p0 && p0.catch) {
+                        p0.catch(function () {
+                            fallo('El navegador no dejó reproducir el vídeo: toca el vídeo una vez y reintenta');
+                        });
+                    }
+                    rafAct = requestAnimationFrame(tickRec);
+                }, ARRANQUE_PAD);
+                return;
             }
             var p = vidFuente.play();
             if (p && p.catch) {
@@ -5873,6 +5901,25 @@
                 });
             }
             rafAct = requestAnimationFrame(tickRec);
+        }
+
+        /* R6d · el calentamiento va en su PROPIA variable de fotograma: si
+           compartiera `rafAct` con el bucle del grabador, uno cancelaría al otro
+           y «Cancelar» dejaría de parar la grabación. Se para solo al acabarse
+           el plazo o al cancelar. */
+        function calienta() {
+            var t0c = performance.now();
+            (function paso() {
+                if (!grabando || performance.now() - t0c >= ARRANQUE_PAD) {
+                    calRaf = null;
+                    return;
+                }
+                dibujarFrame(vidFuente);
+                calRaf = requestAnimationFrame(paso);
+            })();
+        }
+        function paraCalentar() {
+            if (calRaf) { cancelAnimationFrame(calRaf); calRaf = null; }
         }
 
         preparaSeg();
@@ -5898,8 +5945,9 @@
                 return;
             }
             dibujarFrame(vidFuente);
-            var t = Math.max(0, s.desde + (vidFuente.currentTime - s.a));
-            var secs = total / 1000;   // E5b: la salida mide la suma de recortes
+            /* R6d · el progreso cuenta también el calentamiento */
+            var t = Math.max(0, s.desde + (vidFuente.currentTime - s.a)) + ARRANQUE_PAD / 1000;
+            var secs = total / 1000;   // E5b + R6d: la salida con el calentamiento
             var pct = Math.max(0, Math.min(100, Math.round(t / secs * 100)));
             barra.style.width = pct + '%';
             barra.textContent = pct + '%';
@@ -5916,7 +5964,7 @@
        salto hay que cortar o arrancar el sonido del vídeo. */
     function crearVideoPista(segs) {
         var audio = colaVideos.length ? conectarAudio() : null;
-        var total = Math.round(totalPista() * 1000);
+        var total = Math.round(totalPista() * 1000) + ARRANQUE_PAD;   // R6d: incluye el calentamiento
         var hayMusica = preparaMusica(total / 1000);
         var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
         if (!mime) {
@@ -5928,6 +5976,7 @@
         var cambiando = false;   // E5: entre fuentes el lienzo se congela
         var primerSeg = true;
         var tIniSeg = 0;         // reloj del segmento de imagen en curso
+        var calT0 = performance.now();   // R6d: arranque del calentamiento
 
         grabando = true;
         cancelado = false;
@@ -5987,9 +6036,27 @@
         progWrap.hidden = false;
         barra.style.width = '0%'; barra.textContent = '0%';
         estado.textContent = 'Grabando…';
+        /* R6d · calentamiento (como en crearVideoRecorte): el grabador arrancaba
+           antes de que hubiera nada pintado, y el MP4 salía con el primer
+           fotograma negro. Se pinta el arranque y se deja pasar ARRANQUE_PAD ms
+           antes de que empiece el contenido. */
+        if (segs[0].tipo === 'img') pintaImagenSeg(segs[0], 0, 0);
+        else { pintarFondo(); dibujarSuperposiciones(0); }
         rec.start(200);
         iniciaMusica();
         pantallaDespierta(true);
+        var calRafP = null;
+        (function paso() {
+            if (!grabando || performance.now() - calT0 >= ARRANQUE_PAD) { calRafP = null; return; }
+            if (segs[0].tipo === 'img') pintaImagenSeg(segs[0], 0, 0);
+            else { pintarFondo(); dibujarSuperposiciones(0); }
+            calRafP = requestAnimationFrame(paso);
+        })();
+        setTimeout(function () {
+            if (calRafP) { cancelAnimationFrame(calRafP); calRafP = null; }
+            arrancaSegPista();
+        }, ARRANQUE_PAD);
+        return;
 
         /* Un segmento de imagen se pinta con su propio reloj; uno de clip
            deja el mando en el <video>, que ya suena y avanza solo. */
@@ -6087,7 +6154,7 @@
                 tGlobal = s.desde + local;
                 dibujaSegmentoPista(s, local * 1000, tGlobal * 1000);
             }
-            var secs = total / 1000;
+            var secs = total / 1000;   // R6d: incluye el calentamiento
             var pct = Math.max(0, Math.min(100, Math.round(tGlobal / secs * 100)));
             barra.style.width = pct + '%';
             barra.textContent = pct + '%';
