@@ -1490,14 +1490,45 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
         con un `drawImage` (fotograma de vídeo o foto) sale bien. El arreglo
         sería arrancar el grabador del mixto cuando el primer clip esté listo,
         como hace `crearVideoRecorte`, en vez de antes.
-  - **R6c ⏳ pendiente · transiciones entre vídeos**: el selector de transición
+  - **R6c ⏳ pendiente · transiciones entre vídeos** — **diseño acordado y
+    escrito aquí; la implementación es el paso siguiente.** Decidido con el
+    usuario: **fundido cruzado** (el final de A se solapa con el principio de B
+    y se mezclan) y **también entre foto y vídeo**, no solo entre clips.
+    - **Consecuencia aritmética:** el solape acorta el vídeo. Con `D` segundos de
+      fundido, `total = Σ duraciones − D × nº de cortes`. Ese total hay que
+      recalcularlo a la vez en `planPista()`, `totalPista()`, `totalSalida()`, la
+      barra de progreso de los tres grabadores, el riel de la línea de tiempo de
+      los textos y la validación de los 5 minutos; si se cambia solo uno, el riel
+      y la barra mienten.
+    - **Vídeo ↔ vídeo (la parte difícil).** Hace falta un **segundo `<video>`**
+      oculto que cargue y busque el clip siguiente mientras el actual sigue
+      sonando, y durante el solape pintar los dos con `globalAlpha` cruzándose.
+      Como la grabación es en tiempo real, son dos decodificadores a la vez: en
+      móvil es donde más se nota y **si se pierde un frame el clip sale corto**.
+    - **El audio es lo más delicado.** `createMediaElementSource` **solo se puede
+      llamar una vez por elemento**, así que hay que crear un nodo de ganancia
+      por vídeo y ramp-earlos 1→0 y 0→1 durante el solape; si no, en el solape se
+      oyen los dos clips a la vez.
+    - **Foto ↔ vídeo (la parte fácil).** Una foto es un mapa de bits: no hace
+      falta segundo decodificador ni nodo de audio nuevo, solo pintar con
+      transparencia mientras el vídeo sigue sonando.
+    - **Orden de trabajo acordado: foto ↔ vídeo primero**, porque se nota en el
+      móvil y se verifica en escritorio; después vídeo ↔ vídeo, que hay que dar
+      por probado en un Android antes de darlo por bueno (en escritorio no hay
+      forma de ver si un móvil se atasca con dos decodificadores).
+    - *Lección de R6d:* esta pieza **no se toca a medias**. Un refactor a medias
+      en la ruta de grabación es peor que no hacerlo; en R6d ya hubo dos
+      regresiones por eso (un `requestAnimationFrame` anidado que pisaba el bucle
+      del grabador, y un `pintaTira` escrito donde era `pintarTira`).
+
     queda deshabilitado en el modo solo-vídeo a propósito. Fundir dos clips
     exige **decodificar los dos a la vez**, o sea un segundo `<video>` además
     del que ya se usa, y durante la grabación en tiempo real eso son dos
     reproductores sincronizados al mismo frame: más batería, riesgo de perder
     frames (y si se pierde uno, el clip sale corto) y peor en móvil. Es lo más
     caro y lo más delicado que queda; conviene hacerlo solo con el riel ya
-    validado, que es justo lo que hay ahora debajo.
+    validado, que es justo lo que hay ahora debajo. (La decisión de qué efecto y
+    su diseño técnico están arriba, en este mismo bloque.)
 
 ---
 
