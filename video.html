@@ -454,6 +454,24 @@
                                  resolución de salida y fps, en vivo -->
                             <p class="form-text mb-0" id="vid-calidad-info" aria-live="polite"></p>
                         </div>
+                        <!-- R6d · calentamiento de arranque: algunos navegadores
+                             (Chrome en Android) grababan el primer fotograma en
+                             negro cuando la fuente es un vídeo, y Reels e
+                             Instagram lo rechazan. Antes de dejar reproducir se
+                             graban estos ms del primer fotograma, así que el
+                             vídeo sale un poco más largo. Si aun así te sale
+                             negro, súbele el valor hasta que vaya bien. -->
+                        <div class="col-12">
+                            <label class="form-label" for="vid-arranque">Calentamiento al grabar vídeo</label>
+                            <select class="form-select" id="vid-arranque">
+                                <option value="0">Sin calentamiento (más corto)</option>
+                                <option value="200" selected>200 ms (normal)</option>
+                                <option value="400">400 ms</option>
+                                <option value="800">800 ms (el más seguro)</option>
+                            </select>
+                            <p class="form-text mb-0">Solo afecta a los vídeos que llevan un clip.
+                                Sube el valor si el primer fotograma te sale negro.</p>
+                        </div>
                         <!-- F5d · plantilla Tet News: única plantilla, replicando el
                              canvas de noticias (barra + cuerpo) con el contenido dentro.
                              Tamaño y centrar del contenido viven JUNTO al lienzo (M1) -->
@@ -954,7 +972,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r10"></script>
+    <script src="./public/js/video.js?v=r11"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

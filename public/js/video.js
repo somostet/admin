@@ -17,6 +17,15 @@
        primer fotograma antes de dejar reproducir: el vídeo sale ese poco más
        largo a cambio de no empezar en negro. */
     var ARRANQUE_PAD = 200;
+    /* R6d · el valor real lo elige el usuario (video.html, «Calentamiento al
+       grabar vídeo»): cada navegador y cada móvil se comporta distinto, y con
+       el selector se prueba en segundos en vez de esperar a un cambio de código. */
+    var selArranque = document.getElementById('vid-arranque');
+    function padArranque() {
+        if (!selArranque) return ARRANQUE_PAD;
+        var v = parseInt(selArranque.value, 10);
+        return (v === 0 || (v >= 0 && v <= 2000)) ? v : ARRANQUE_PAD;
+    }
     var MAX_LADO = 1920;          // tope de píxeles (los presets más grandes se reducen con aviso)
     var MAX_TOTAL_SEG = 300;      // 5 minutos: se graba en tiempo real, no conviene más (E4)
     var MINUTOS_MAX = Math.round(MAX_TOTAL_SEG / 60);   // «5» para los avisos (E4)
@@ -5746,7 +5755,8 @@
 
     function crearVideoRecorte() {
         var audio = conectarAudio();
-        var total = Math.round(totalRecorte() * 1000) + ARRANQUE_PAD;   // E5b + R6d
+        var PAD = padArranque();   // R6d: se fija al empezar, no cambia a mitad
+        var total = Math.round(totalRecorte() * 1000) + PAD;   // E5b + R6d
         var hayMusica = preparaMusica(total / 1000);   // F6
         var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
         if (!mime) {
@@ -5891,7 +5901,7 @@
                         });
                     }
                     rafAct = requestAnimationFrame(tickRec);
-                }, ARRANQUE_PAD);
+                }, PAD);
                 return;
             }
             var p = vidFuente.play();
@@ -5910,7 +5920,7 @@
         function calienta() {
             var t0c = performance.now();
             (function paso() {
-                if (!grabando || performance.now() - t0c >= ARRANQUE_PAD) {
+                if (!grabando || performance.now() - t0c >= PAD) {
                     calRaf = null;
                     return;
                 }
@@ -5946,7 +5956,7 @@
             }
             dibujarFrame(vidFuente);
             /* R6d · el progreso cuenta también el calentamiento */
-            var t = Math.max(0, s.desde + (vidFuente.currentTime - s.a)) + ARRANQUE_PAD / 1000;
+            var t = Math.max(0, s.desde + (vidFuente.currentTime - s.a)) + PAD / 1000;
             var secs = total / 1000;   // E5b + R6d: la salida con el calentamiento
             var pct = Math.max(0, Math.min(100, Math.round(t / secs * 100)));
             barra.style.width = pct + '%';
@@ -5964,7 +5974,8 @@
        salto hay que cortar o arrancar el sonido del vídeo. */
     function crearVideoPista(segs) {
         var audio = colaVideos.length ? conectarAudio() : null;
-        var total = Math.round(totalPista() * 1000) + ARRANQUE_PAD;   // R6d: incluye el calentamiento
+        var PAD = padArranque();   // R6d: se fija al empezar, no cambia a mitad
+        var total = Math.round(totalPista() * 1000) + PAD;   // R6d: incluye el calentamiento
         var hayMusica = preparaMusica(total / 1000);
         var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
         if (!mime) {
@@ -6047,7 +6058,7 @@
         pantallaDespierta(true);
         var calRafP = null;
         (function paso() {
-            if (!grabando || performance.now() - calT0 >= ARRANQUE_PAD) { calRafP = null; return; }
+            if (!grabando || performance.now() - calT0 >= PAD) { calRafP = null; return; }
             if (segs[0].tipo === 'img') pintaImagenSeg(segs[0], 0, 0);
             else { pintarFondo(); dibujarSuperposiciones(0); }
             calRafP = requestAnimationFrame(paso);
@@ -6055,7 +6066,7 @@
         setTimeout(function () {
             if (calRafP) { cancelAnimationFrame(calRafP); calRafP = null; }
             arrancaSegPista();
-        }, ARRANQUE_PAD);
+        }, PAD);
         return;
 
         /* Un segmento de imagen se pinta con su propio reloj; uno de clip
