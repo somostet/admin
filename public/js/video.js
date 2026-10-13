@@ -55,12 +55,12 @@
     var marcoSucio = true;     // hay que redibujar el fotograma del vídeo en pausa
     var audioCtx = null;       // Web Audio: sonido del recorte hacia el grabador
     var audioDest = null;
-    var fuenteAudio = null;
-    /* R6c · el sonido del clip se rampa en los solapes de la pista mixta.
+    /* R6c · el sonido de cada clip se rampa en los solapes de la pista mixta.
        createMediaElementSource solo se puede llamar UNA vez por elemento, así
        que no se puede crear un nodo nuevo al vuelo: se enruta una sola vez por
-       un GainNode y lo que se mueve es su valor (a 1 el resto del tiempo). */
-    var gananciaFuente = null;
+       un GainNode y lo que se mueve es su valor (a 1 el resto del tiempo).
+       R6d · los dos <video> de reproducción tienen el suyo (ganDe[0] y
+       ganDe[1]); con un solo decodificador el segundo nunca suena. */
     /* F6 · música de fondo (misma pareja ctx/dest que el recorte) */
     var inpMusica = document.getElementById('vid-audio-archivo');
     var filaMusica = document.getElementById('vid-audio-fila');
@@ -168,6 +168,62 @@
     var recMarcarIn = document.getElementById('vid-rec-marcar-in');
     var recMarcarFin = document.getElementById('vid-rec-marcar-fin');
     var vidFuente = document.getElementById('vid-fuente');
+    /* R6d · el segundo <video> de reproducción. Solo entra en juego durante un
+       fundido entre dos clips: hace falta que el siguiente esté cargándose y
+       sonando mientras el otro todavía suena, o sea DOS decodificadores a la
+       vez. Fuera de un solape no se toca, y siempre va con `controls` apagado y
+       oculto: el que se ve y se recorta sigue siendo el primero. */
+    var vidFuente2 = document.getElementById('vid-fuente-2');
+    var vids = [vidFuente, vidFuente2];   // [0] = visible, [1] = auxiliar
+    var clipEn = [-1, -1];      // clipEn[e] = clip que suena en vids[e] (-1 = nada)
+    var urlAux = null;          // src del <video> auxiliar (el 0 usa urlFuente)
+    var ganDe = [null, null];   // su nodo de ganancia (R6c: se ramp-ea en el solape)
+    var fuenteDe = [null, null];   // su MediaElementSource (uno por elemento, R6c)
+
+    /* R6d · qué src tiene cargado cada <video>. El visible lo dice `urlFuente`
+       (que usa media app entera); el auxiliar, `urlAux`. */
+    function urlEn(e) { return e === 0 ? urlFuente : urlAux; }
+
+    /* R6d · el <video> que está sonando el clip del segmento `seg`, o null si
+       ninguno lo tiene todavía. Se mira también el src, no solo el índice del
+       clip: un <video> puede conservar fotogramas del clip anterior y hay que
+       saber cuál es cuál antes de pintar el solape. */
+    function elDelSeg(seg) {
+        if (!seg || seg.tipo !== 'clip') return null;
+        var c = colaVideos[seg.idx];
+        if (!c) return null;
+        var libre = null;
+        for (var e = 0; e < vids.length; e++) {
+            if (clipEn[e] !== seg.idx || urlEn(e) !== c.url) continue;
+            /* R6d · si los dos tienen el clip a la vez (puede pasar si la vista
+               previa dejó uno marcado), gana el que está sonando: el pausado no
+               avanza el reloj y la grabación se quedaría clavada */
+            if (!vids[e].paused) return vids[e];
+            if (!libre) libre = vids[e];
+        }
+        return libre;
+    }
+
+    /* R6d · el <video> libre para cargar el clip siguiente. Solo hay dos, así
+       que en un solape largo siempre están los dos ocupados: se llama antes de
+       que empiece, cuando el saliente ya ha soltado el suyo. */
+    function elLibre() {
+        for (var e = 0; e < vids.length; e++) if (clipEn[e] === -1) return e;
+        return 0;
+    }
+
+    /* Deja los dos <video> como estaban: sin clip, sin sonido a medias. Se
+       llama al acabar, cancelar o fallar una grabación (R6c/R6d). */
+    function sueltaVids() {
+        for (var e = 0; e < vids.length; e++) {
+            var el = vids[e];
+            if (!el) continue;
+            try { el.pause(); } catch (er) { }
+            clipEn[e] = -1;
+        }
+        urlAux = null;
+        reiniciaAudio();
+    }
     var portadaImgInp = document.getElementById('vid-portada-img');   // R9
     var portadaInstBtn = document.getElementById('vid-portada-instante');
     var portadaQuitarBtn = document.getElementById('vid-portada-quitar');
@@ -699,6 +755,18 @@
         return img && clip;
     }
 
+    /* R6d · cuándo hace falta el motor del plan (el que recorre la pista con
+       solapes y dos <video>). Con fotos y clips juntos, siempre. Con solo
+       clips, solo si hay un fundido que aplicar: fundir dos clips exige el
+       segundo decodificador, que ese motor ya tiene, mientras que el camino
+       antiguo de solo-vídeo (uno solo, corte seco) sigue como siempre con
+       «Ninguna», que es lo que ya está probado. */
+    function usaMotorPista() {
+        if (esMixta()) return true;
+        if (!videoCargado || colaVideos.length < 2) return false;
+        return selTrans.value !== 'ninguna';
+    }
+
     /* El plan de la salida: un segmento por elemento de la pista, EN ese orden.
        Los de imagen miden lo que diga el control de duración; los de clip, su
        recorte. `desde` es el instante en que empieza dentro de la salida (s).
@@ -725,13 +793,13 @@
                              dur: r.fin - r.inicio });
             }
         }
-        /* R6c · el solape de cada corte. Solo en los cortes MIXTOS: entre dos fotos no
-           hay solape (su fundido va dentro de la segunda, el de siempre, y no
-           acorta nada) y entre dos clips tampoco —fundirlos exigiría un
-           segundo <video> decodificando a la vez, que es la parte de R6c que
-           queda pendiente y hay que probar en un Android antes—. */
+        /* R6d · el solape de cada corte. Entre dos fotos NO hay solape: su
+           fundido va dentro de la segunda foto (el de siempre) y no acorta
+           nada. En cuanto hay un clip de por medio el solape sí pisa a los dos
+           lados, y entre clip y clip tambien: ese caso necesita el segundo
+           <video> sonando a la vez, que es lo que resuelve `elDelSeg()`. */
         for (k = 0; k + 1 < bruto.length; k++) {
-            sol[k] = (bruto[k].tipo === bruto[k + 1].tipo)
+            sol[k] = (bruto[k].tipo === 'img' && bruto[k + 1].tipo === 'img')
                 ? 0
                 : solapeCorte(bruto[k], bruto[k + 1]);
         }
@@ -850,11 +918,14 @@
             dibujarCentrado(im.img, zoomKen(localMs, durMs), alpha);
             return;
         }
-        /* clip: el <video> va siempre a pantalla completa y sin zoom */
+        /* clip: el <video> va siempre a pantalla completa y sin zoom. R6d · el que
+           se pinta es el que está sonando ESE clip, que durante un solape no es
+           siempre el visible: hay dos decodificando a la vez. */
         if (fondo) pintarFondo();
-        if (vidFuente.readyState >= 2) {
-            if (selAjuste.value === 'blur') pintarDesenfado(vidFuente);
-            dibujarCentrado(vidFuente, 1, alpha);
+        var el = elDelSeg(seg);
+        if (el && el.readyState >= 2) {
+            if (selAjuste.value === 'blur') pintarDesenfado(el);
+            dibujarCentrado(el, 1, alpha);
         }
     }
 
@@ -862,20 +933,28 @@
        Fuera de los cortes es el elemento en marcha; en un corte con solape son
        dos: el saliente debajo, a toda opacidad, y el entrante encima con su
        alfa —así el resultado es la mezcla (1−p)·saliente + p·entrante.
-       `vidListo` dice si el <video> tiene fotograma ya: si el clip que entra
-       todavía está cargando se sigue viendo el saliente en vez de un hueco.
+       R6d · si el entrante todavía no tiene fotograma se sigue viendo el
+       saliente entero, en vez de un hueco: en un solape entre dos clips el
+       entrante es el segundo decodificador y puede ir con retraso.
        Las superposiciones se pintan una sola vez, al final, con el reloj global. */
-    function pintaPlanPista(segs, t, vidListo) {
+    function pintaPlanPista(segs, t) {
         var tMs = t * 1000;
         var k = segEntraEnPista(segs, t);
         if (k < 0) { pintarFondo(); dibujarSuperposiciones(tMs); return; }
         var s = segs[k];
         var dentro = k > 0 && s.solIn > 0 && (t - s.desde) < s.solIn;
         var prev = dentro ? segs[k - 1] : null;
-        if (dentro && s.tipo === 'clip' && !vidListo) {
-            /* el entrante aún no tiene imagen: se mantiene el saliente entero
-               (si además es una foto, el corte se ve como un corte seco) */
-            if (prev.tipo === 'img') { k--; s = prev; dentro = false; prev = null; }
+        /* R6d · ¿tiene el entrante imagen de verdad? */
+        var listoS = true;
+        if (s.tipo === 'clip') {
+            var elS = elDelSeg(s);
+            listoS = !!(elS && elS.readyState >= 2);
+        }
+        if (dentro && !listoS && prev) {
+            k--;
+            s = prev;
+            dentro = false;
+            prev = null;
         }
         var p = dentro ? Math.max(0, Math.min(1, (t - s.desde) / s.solIn)) : 1;
         /* R9 · la portada de la vista previa tapa al clip hasta que se reproduce
@@ -1203,6 +1282,14 @@
         vidFuente.pause();
         vidFuente.removeAttribute('src');
         vidFuente.load();
+        /* R6d · el <video> auxiliar también: si se quedaba con el clip
+           quitado, el próximo fundido intentaría reproducirlo */
+        if (vidFuente2) {
+            vidFuente2.pause();
+            vidFuente2.removeAttribute('src');
+            vidFuente2.load();
+        }
+        sueltaVids();
         vidMini.removeAttribute('src');
         rielFotos.textContent = '';
         colaVideos.forEach(function (c) {
@@ -1429,24 +1516,31 @@
         /* R6 · con imagenes y clips juntos los controles vuelven: la duración
            sigue siendo la de las imágenes (los clips llevan su propio recorte)
            y la transición se puede aplicar entre dos fotos seguidas.
-           R6c · en la pista mixta la transición también funde con los vídeos,
-           que es cuando el selector deja de estar apagado. */
+           R6c · en la pista mixta la transición también funde con los vídeos.
+           R6d · y con solo vídeos también: fundir dos clips necesita un segundo
+           decodificador, que el motor del plan ya tiene. Así que el selector
+           solo se apaga si no hay ningún clip (y entonces solo funde fotos). */
         var mixto = esMixta();
         inpDur.disabled = v && !mixto;
         selModoDur.disabled = v && !mixto;
-        selTrans.disabled = v && !mixto;
+        selTrans.disabled = false;
         if (lblTrans) {
             lblTrans.textContent = mixto ? 'Transición entre elementos'
-                : 'Transición entre imágenes';
+                : (v ? 'Transición entre vídeos' : 'Transición entre imágenes');
         }
         if (notaTrans) {
-            var solapes = mixto && selTrans.value !== 'ninguna' ? cortesPista() : 0;
+            var solapes = usaMotorPista() && selTrans.value !== 'ninguna'
+                ? cortesPista() : 0;
+            var entreClips = v && !mixto;
             notaTrans.textContent = solapes
-                ? 'Con vídeos el fundido se solapa: la salida sale ' +
+                ? 'El fundido se solapa: la salida sale ' +
                   fmtSeg(ahorroPista()) + ' s más corta por ' +
-                  (solapes === 1 ? 'ese solape' : 'esos ' + solapes + ' solapes') +
-                  '. Entre dos vídeos el corte va seco.'
+                  (solapes === 1 ? 'ese solape' : 'esos ' + solapes + ' solapes') + '.'
                 : '';
+            if (notaTrans.textContent && entreClips) {
+                notaTrans.textContent += ' Fundir dos vídeos abre un segundo ' +
+                    'reproductor a la vez: en un móvil puede ir más justo.';
+            }
         }
         lblVideo.classList.toggle('disabled', false);
         btnImagenLabel.classList.toggle('disabled', false);
@@ -1943,7 +2037,7 @@
        imágenes la duración total. Una barra por texto + cabezal con scrub. */
     function totalSalida() {
         /* R6: con imagenes y clips mezclados manda el plan de la pista */
-        if (esMixta()) return Math.max(0.2, totalPista());
+        if (usaMotorPista()) return Math.max(0.2, totalPista());
         if (videoCargado) {
             return Math.max(0.2, totalRecorte());   // E5b: suma de los recortes
         }
@@ -1969,7 +2063,7 @@
     function iniciaScrub() {
         if (rielSalScrub) return;
         rielSalScrub = true;
-        if (videoCargado || esMixta()) {
+        if (videoCargado || usaMotorPista()) {
             scrubVideoPausa = vidFuente.paused;
             try { vidFuente.pause(); } catch (e) { }
         } else {
@@ -1987,7 +2081,7 @@
            R6c · en un corte con solape manda el <video> el saliente (la foto
            se pinta en el lienzo), así que se busca a SU tiempo y se compone el
            fundido entero, como lo hacen la vista previa y la grabación. */
-        if (esMixta()) {
+            if (usaMotorPista()) {
             var segs = preparaPista();
             var t = tMs / 1000;
             var k = segEntraEnPista(segs, t);
@@ -2008,7 +2102,7 @@
                 }
             } else vidFuente.pause();
             marcoSucio = true;
-            pintaPlanPista(segs, t, !lleva || vidFuente.readyState >= 2);
+            pintaPlanPista(segs, t);
             return;
         }
         if (videoCargado) {
@@ -2029,7 +2123,7 @@
         rielSalScrub = false;
         /* R6 · en mixta se reinicia el bucle del plan desde el cabezal: es lo
            único que conserva el punto exacto sin tener que reanudar el clip */
-        if (esMixta()) {
+        if (usaMotorPista()) {
             previewFase = rielSalUltimoMs;
             reiniciarPreview();
             return;
@@ -3118,7 +3212,7 @@
         poneCabezalSalida(rielSalUltimoMs);
         /* R6 · rama mixta: imágenes y clips en la misma salida. El total es el
            plan entero, así que los topes se miran sobre esa suma */
-        if (esMixta()) {
+        if (usaMotorPista()) {
             var segs = planPista();
             var nImg = 0, nClip = 0;
             for (var s = 0; s < segs.length; s++) {
@@ -3212,7 +3306,7 @@
     }
 
     function previewNecesitaLoop() {
-        if (esMixta()) return true;   // R6: el plan avanza solo
+        if (usaMotorPista()) return true;   // R6: el plan avanza solo
         if (videoCargado) return true;
         if (!imagenes.length) return false;
         var animar = selTrans.value === 'kenburns' ||
@@ -3274,7 +3368,7 @@
         detenerPreview();
         /* R6 · pista mixta: un solo reloj recorre el plan y, al entrar en un
            clip, lo carga y lo busca; al salir lo pausa para que no suene */
-        if (esMixta()) {
+        if (usaMotorPista()) {
             rielSalWrap.hidden = false;
             lienzo.style.display = 'block';
             vacio.hidden = true;
@@ -3353,9 +3447,14 @@
 
        R6c · con los solapes, «entrar en un segmento» ya no es lo mismo que
        «dejar el anterior»: el clip que entra arranca D segundos ANTES de que
-       acabe el de antes (para que la foto que sale siga debajo mientras se
-       carga) y el que sale no se pausa en el cruce sino al terminar su
-       solape —pararlo en el cruce lo congelaría antes de tiempo—. */
+       acabe el de antes (para que lo que sale siga debajo mientras se carga) y
+       el que sale no se pausa en el cruce sino al terminar su solape —pararlo
+       en el cruce lo congelaría antes de tiempo—.
+
+       R6d · en un corte entre dos clips los dos tienen que estar sonando a la
+       vez, así que el entrante se carga en el <video> LIBRE (el auxiliar si el
+       visible está ocupado) y `ajustaVidsPista()` decide cada fotograma qué
+       reproducir y qué parar. */
     function arrancarPreviewPista() {
         if (preview || grabando) return;
         var segs = preparaPista();
@@ -3373,42 +3472,68 @@
             var k = segEntraEnPista(segs, t);
             if (k < 0) { preview = requestAnimationFrame(paso); return; }
             var s = segs[k];
-            var D = s.solIn;
-            var dentro = k > 0 && D > 0 && (t - s.desde) < D;
-            var prev = dentro ? segs[k - 1] : null;
             if (k !== enSeg) {
                 enSeg = k;
-                /* el clip se carga y arranca en cuanto le toca: con solape,
-                   mientras el saliente todavía está en pantalla */
-                if (s.tipo === 'clip') cargaClipPista(s);
+                /* el clip entra en cuanto le toca: con solape, mientras lo que
+                   sale todavía está en pantalla */
+                if (s.tipo === 'clip') cargaClipPista(s, k);
             }
-            /* R6c · el saliente sigue vivo hasta acabar su solape */
-            var sigueClip = s.tipo === 'clip' ||
-                (prev && prev.tipo === 'clip' && t < prev.desde + prev.dur - 0.001);
-            if (!sigueClip && !vidFuente.paused) vidFuente.pause();
-            pintaPlanPista(segs, t, vidFuente.readyState >= 2);
+            ajustaVidsPista(segs, t);
+            pintaPlanPista(segs, t);
             poneCabezalSalida(t * 1000);
             preview = requestAnimationFrame(paso);
         }
         preview = requestAnimationFrame(paso);
     }
 
-    /* R6c · deja el clip del segmento listo y sonando. No se llama en los
-       cortes entre dos fotos (ahí no hay vídeo) ni mientras el saliente es
-       otro clip —eso queda para R6d de la transición entre vídeos—, así que
-       el <video> siempre lleva el clip que se está viendo. */
-    function cargaClipPista(s) {
+    /* R6d · deja sonando y cargando el clip del segmento `k` en el <video>
+       libre. Devuelve el número del <video> usado (-1 si no se pudo), que es
+       lo que necesita quien tenga que ramp-ear su audio. */
+    function cargaClipPista(s, k) {
         var c = colaVideos[s.idx];
-        if (!c) return;
+        if (!c) return -1;
+        var e = elLibre();
+        var el = vids[e];
+        if (!el) return -1;
         idxActivo = s.idx;
         desfaseActivo = s.desde;   // el reloj global de este clip en la salida
-        if (urlFuente !== c.url || vidFuente.readyState < 1) {
-            urlFuente = c.url;
-            vidFuente.src = c.url;
+        clipEn[e] = s.idx;
+        /* R6d · si entra con solape su sonido arranca en cero y sube durante el
+           solape: si no, en el cruce se oirían los dos clips a la vez */
+        rampaAudio(s.solIn > 0 ? 0 : 1, 1, s.solIn * 1000, e);
+        if (urlEn(e) !== c.url || el.readyState < 1) {
+            if (e === 0) urlFuente = c.url; else urlAux = c.url;
+            el.src = c.url;
         }
-        try { vidFuente.currentTime = s.a; } catch (e) { }
-        var pl = vidFuente.play();
+        try { el.currentTime = s.a; } catch (er) { }
+        var pl = el.play();
         if (pl && pl.catch) pl.catch(function () { });
+        return e;
+    }
+
+    /* R6d · deja sonando EXACTAMENTE los clips que se están viendo en el
+       instante `t` del plan, y para los demás. En un corte con solape son dos
+       a la vez —el saliente y el entrante, en <video> distintos—; el saliente
+       se para al acabar su solape, nunca en el cruce. Un clip que siguiera
+       sonando sin verse daría audio de algo que ya no está en pantalla. */
+    function ajustaVidsPista(segs, t) {
+        var k = segEntraEnPista(segs, t);
+        var vivos = [];
+        if (k >= 0) {
+            var s = segs[k];
+            var dentro = k > 0 && s.solIn > 0 && (t - s.desde) < s.solIn;
+            if (dentro) { var ep = elDelSeg(segs[k - 1]); if (ep) vivos.push(ep); }
+            var es = elDelSeg(s);
+            if (es) vivos.push(es);
+        }
+        for (var e = 0; e < vids.length; e++) {
+            var el = vids[e];
+            if (!el || clipEn[e] === -1) continue;
+            if (vivos.indexOf(el) >= 0) continue;
+            try { el.pause(); } catch (er) { }
+            clipEn[e] = -1;
+            rampaAudio(1, 1, 0, e);      // ya no se ve: el sonido vuelve a 1
+        }
     }
 
     /* E3 · la vista previa refleja el vídeo fuente: fotograma actual cuando
@@ -3501,7 +3626,7 @@
         if (grabando) return;
         /* R6 · en pista mixta el bucle de la vista previa ya se encarga de
            repintar; solo hace falta redibujar si está parado (tras un scrub) */
-        if (esMixta()) {
+        if (usaMotorPista()) {
             if (!preview) muestraInstante(rielSalUltimoMs);
             return;
         }
@@ -4944,7 +5069,7 @@
             return;
         }
         /* R6 · pista mixta: el motor nuevo recorre el plan imagen→clip→imagen */
-        if (esMixta()) {
+        if (usaMotorPista()) {
             var segs = preparaPista();
             if (!segs.length) {
                 aviso('No hay nada que grabar en la salida', 'warning');
@@ -4999,6 +5124,7 @@
 
     function limpiar() {
         reiniciaAudio();   // R6c: no dejar el vídeo a medio fundido
+        sueltaVids();      // R6d: los dos <video> parados y sin ganancia a medias
         detenerMusica();   // F6: corta la música al terminar, fallar o cancelar
         pantallaDespierta(false);   // M4: termina cualquier grabación en marcha
         if (videoCargado) {
@@ -5950,16 +6076,22 @@
             // F6: el ctx/dest pueden existir ya por la música; el
             // createMediaElementSource sigue siendo de UN solo uso
             if (!preparaCtxAudio()) return null;
-            if (!fuenteAudio) {
-                fuenteAudio = audioCtx.createMediaElementSource(vidFuente);
-                /* R6c · todo el sonido del vídeo pasa por un nodo de ganancia:
-                   a 1 se oye y se graba igual que siempre; durante un solape se
-                   ramp-ea para que no suenen los dos elementos a la vez. */
-                gananciaFuente = audioCtx.createGain();
-                gananciaFuente.gain.value = 1;
-                fuenteAudio.connect(gananciaFuente);
-                gananciaFuente.connect(audioCtx.destination);  // seguimos oyendo el vídeo
-                gananciaFuente.connect(audioDest);            // pista para el grabador
+            /* R6c · todo el sonido de cada <video> pasa por un nodo de ganancia:
+               a 1 se oye y se graba igual que siempre; durante un solape se
+               ramp-ea para que no suenen los dos clips a la vez.
+               R6d · se enrutan LOS DOS de una vez, aunque el auxiliar no suene
+               hasta que haya un fundido entre dos clips: conectar un
+               MediaElementSource más tarde, con el elemento ya reproduciendo,
+               puede dejar el sonido mudo en según qué navegadores. */
+            for (var e = 0; e < vids.length; e++) {
+                var el = vids[e];
+                if (!el || fuenteDe[e]) continue;
+                fuenteDe[e] = audioCtx.createMediaElementSource(el);
+                ganDe[e] = audioCtx.createGain();
+                ganDe[e].gain.value = 1;
+                fuenteDe[e].connect(ganDe[e]);
+                ganDe[e].connect(audioCtx.destination);  // seguimos oyendo el vídeo
+                ganDe[e].connect(audioDest);            // pista para el grabador
             }
             if (audioCtx.state === 'suspended') {
                 var p = audioCtx.resume();
@@ -5972,28 +6104,30 @@
     }
 
     /* R6c · rampa del sonido del clip durante un solape: 1→0 mientras se apaga
-       bajo una foto que entra y 0→1 mientras entra sobre una foto. El reloj es
-       el del AudioContext (muestreo a nivel de muestra, no de fotograma), así
-       que el fundido del audio no se descuadra del de la imagen. Con durMs 0
-       —fin del solape, cuando el clip ya está parado— el valor se fija de
-       golpe en 1 para dejarlo como estaba. */
-    function rampaAudio(v0, v1, durMs) {
-        if (!gananciaFuente || !audioCtx) return;
+       bajo la foto (o el clip) que entra y 0→1 mientras entra. El reloj es el
+       del AudioContext (muestreo a nivel de muestra, no de fotograma), así que
+       el fundido del audio no se descuadra del de la imagen. Con durMs 0 —fin
+       del solape, cuando el clip ya está parado— el valor se fija de golpe en
+       1 para dejarlo como estaba. `e` dice sobre qué <video>. */
+    function rampaAudio(v0, v1, durMs, e) {
+        if (e === undefined) e = 0;
+        var gan = ganDe[e];
+        if (!gan || !audioCtx) return;
         try {
             var t0 = audioCtx.currentTime;
-            var g = gananciaFuente.gain;
+            var g = gan.gain;
             if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t0);
             else g.cancelScheduledValues(t0);
             g.setValueAtTime(v0, t0);
             if (durMs > 30 && v0 !== v1) g.linearRampToValueAtTime(v1, t0 + durMs / 1000);
-        } catch (e) { }
+        } catch (er) { }
     }
 
-    /* Deja el sonido del vídeo como estaba (R6c): se llama al acabar, cancelar
-       o fallar una grabación, para que el siguiente solape no herede una rampa
-       a medias y el vídeo no se quede mudo al volver a previsualizar. */
+    /* Deja el sonido de los vídeos como estaba (R6c): se llama al acabar,
+       cancelar o fallar una grabación, para que el siguiente solape no herede
+       una rampa a medias y ningún clip se quede mudo al volver a previsualizar. */
     function reiniciaAudio() {
-        rampaAudio(1, 1, 0);
+        for (var e = 0; e < vids.length; e++) rampaAudio(1, 1, 0, e);
     }
 
     vidFuente.addEventListener('play', function () {
@@ -6254,7 +6388,10 @@
         }
 
         var segIdx = 0;
-        var cambiando = false;   // E5: entre fuentes el lienzo se congela
+        /* R6d · ya no hace falta `cambiando` (con el que el lienzo se
+           congelaba al cambiar de clip): con dos <video> el saliente nunca
+           pierde su elemento durante un solape, así que siempre queda un
+           fotograma que pintar y el grabador no se para. */
         var cargando = -1;       // R6c · segmento que se está cargando por delante
         var rampAbajo = false;   // R6c · el audio del clip saliente ya está bajando
         var calT0 = performance.now();   // R6d: arranque del calentamiento
@@ -6271,6 +6408,11 @@
         pintaBotonDirecto();
         vidFuente.pause();
         vidFuente.controls = false;
+        /* R6d · la grabación arranca con los dos <video> limpios. Si no, el clip
+           que dejara marcado la vista previa hace que el primero que se carga
+           vaya al <video> auxiliar y el reloj se quede mirando al otro, parado:
+           la grabación se congela en el primer segundo. */
+        sueltaVids();
 
         var d = dimsSalida();
         if (d.reducido) {
@@ -6317,26 +6459,43 @@
         progWrap.hidden = false;
         barra.style.width = '0%'; barra.textContent = '0%';
         estado.textContent = 'Grabando…';
-        /* R6c · calentamiento y entrada: el primer fotograma de la salida. El
-           grabador sigue arrancando ARRANQUE_PAD antes de que empiece el
-           contenido (R6d), así que esto solo pinta. */
+        /* R6c · el primer fotograma de la salida, para el calentamiento. */
         function pintaArranque() {
-            pintaPlanPista(segs, segs[0].desde, false);
+            pintaPlanPista(segs, segs[0].desde);
         }
-        pintaArranque();
-        rec.start(200);
-        iniciaMusica();
-        pantallaDespierta(true);
+
+        /* R6d · el grabador NO arranca aquí sino cuando el primer segmento ya
+           está en pantalla. Antes arrancaba antes de tiempo y, con la pista
+           empezando por un clip, el primer fotograma salía en el color del
+           fondo: el clip aún estaba cargándose y `pintaArranque` solo pintaba
+           `pintarFondo` (un `fillRect` no le da imagen al codificador). Con el
+           clip ya en pantalla lo que se repinta durante el calentamiento es su
+           primer fotograma de verdad, que sí es un `drawImage`.
+           Es lo mismo que hace `crearVideoRecorte` desde R6d. */
+        var grabIniciado = false;
         var calRafP = null;
-        (function paso() {
-            if (!grabando || performance.now() - calT0 >= PAD) { calRafP = null; return; }
-            pintaArranque();
-            calRafP = requestAnimationFrame(paso);
-        })();
-        setTimeout(function () {
-            if (calRafP) { cancelAnimationFrame(calRafP); calRafP = null; }
-            arrancaSegPista();
-        }, PAD);
+        function calientaYArranca(ya) {
+            if (grabIniciado) { ya(); return; }
+            grabIniciado = true;
+            rec.start(200);
+            iniciaMusica();
+            pantallaDespierta(true);
+            calT0 = performance.now();
+            (function paso() {
+                if (!grabando || performance.now() - calT0 >= PAD) { calRafP = null; return; }
+                pintaArranque();
+                calRafP = requestAnimationFrame(paso);
+            })();
+            setTimeout(function () {
+                if (calRafP) { cancelAnimationFrame(calRafP); calRafP = null; }
+                if (grabando) ya();
+            }, PAD);
+        }
+
+        progWrap.hidden = false;
+        barra.style.width = '0%'; barra.textContent = '0%';
+        estado.textContent = 'Preparando…';
+        arrancaSegPista();
         return;
 
         /* ---------- R6c · el plan con solapes, grabado en tiempo real ----------
@@ -6355,20 +6514,26 @@
         var clipAjuste = 0; // R6c · retraso del clip al tomar el mando
 
         function dibujaPlan(t) {
-            pintaPlanPista(segs, t, vidFuente.readyState >= 2);
+            pintaPlanPista(segs, t);
         }
 
+        /* R6d · el reloj del segmento en marcha: el del <video> que lo está
+           sonando, que en un solape no siempre es el visible. */
         function relojPista(s) {
             if (s.tipo === 'img') return s.desde + (performance.now() - tIniSeg) / 1000;
-            return s.desde + (vidFuente.currentTime - s.a) + clipAjuste;
+            var el = elDelSeg(s);
+            if (!el) return s.desde;
+            return s.desde + (el.currentTime - s.a) + clipAjuste;
         }
 
-        /* Un clip puede pintarse: es el que está cargado, en su punto de
-           inicio y con fotograma. */
-        function clipListo(s) {
+        /* Un clip puede pintarse: el <video> que lo tiene cargado, en su punto
+           de inicio y con fotograma. */
+        function clipListo(s, e) {
             var c = colaVideos[s.idx];
-            return !!c && urlFuente === c.url && vidFuente.readyState >= 2 &&
-                Math.abs(vidFuente.currentTime - s.a) < 0.08;
+            var el = vids[e];
+            if (!c || !el) return false;
+            return clipEn[e] === s.idx && urlEn(e) === c.url &&
+                el.readyState >= 2 && Math.abs(el.currentTime - s.a) < 0.08;
         }
 
         /* Cuándo le toca tomar el mando al siguiente. Si el saliente es un clip
@@ -6377,6 +6542,23 @@
         function cortePista(sig) {
             if (sig.solIn > 0 && segs[segIdx].tipo === 'clip') return sig.desde + sig.solIn;
             return sig.desde;
+        }
+
+        /* R6d · suelta el clip saliente: se para y su sonido vuelve a 1. Se
+           llama al pasar el mando, que es justo donde acaba su solape.
+           `eSalva` es el <video> que va a tomar el mando: sin esa salvedad,
+           al arrancar el PRIMER clip se soltaría a sí mismo, `clipEn` se
+           quedaría a -1 y el reloj del segmento se congelaría en cero. */
+        function sueltaSaliente(eSalva) {
+            var sp = segs[segIdx];
+            if (!sp || sp.tipo !== 'clip') return;
+            var el = elDelSeg(sp);
+            if (!el) return;
+            var e = el === vids[0] ? 0 : 1;
+            if (e === eSalva) return;
+            try { el.pause(); } catch (er) { }
+            clipEn[e] = -1;
+            rampaAudio(1, 1, 0, e);
         }
 
         /* Un segmento de foto toma el mando: su reloj empieza a contar desde su
@@ -6391,12 +6573,10 @@
            atrasa lo justo para seguir donde estaba. */
         function arrancaPista(k, tEntrada) {
             var s = segs[k];
-            vidFuente.pause();
+            sueltaSaliente();        // R6d: el clip que salía se para aquí
             vidFuente.controls = false;
             rampAbajo = false;
-            rampaAudio(1, 1, 0);      // el saliente ya se calló: valor a 1
             cargando = -1;
-            cambiando = false;
             segIdx = k;
             var lleva = Math.max(0, tEntrada - s.desde);
             tIniSeg = performance.now() - lleva * 1000;
@@ -6405,21 +6585,25 @@
             pideBucle();
         }
 
-        /* Carga y busca el clip del segmento k. El lienzo solo se congela si
-           lo que sale es OTRO clip (su <video> ya se está reemplazando y no
-           hay nada que dibujar); con una foto de por medio se sigue pintando,
-           que es justo el fundido que se quiere ver. */
+        /* R6d · carga y busca el clip del segmento k en el <video> LIBRE. Con
+           un solape de clip contra clip eso es el auxiliar, de modo que el
+           saliente sigue sonando en el visible mientras este llega: el lienzo
+           nunca hace falta congelarlo, porque siempre queda un fotograma que
+           pintar. */
         function preparaClipPista(k) {
             var s = segs[k];
             var c = colaVideos[s.idx];
             /* no debería pasar: el plan ya se limpió de clips vacíos */
             if (!c) return fallo('Un vídeo de la lista ya no está disponible');
-            if (segs[segIdx].tipo === 'clip') cambiando = true;
+            var e = elLibre();
+            var el = vids[e];
+            if (!el) return fallo('Este navegador no pudo abrir un segundo vídeo para el fundido');
             cargando = k;
+            clipEn[e] = s.idx;
             var sueltas = function () {
-                vidFuente.removeEventListener('loadedmetadata', sueltas);
-                vidFuente.removeEventListener('seeked', sueltas);
-                vidFuente.removeEventListener('error', sueltas);
+                el.removeEventListener('loadedmetadata', sueltas);
+                el.removeEventListener('seeked', sueltas);
+                el.removeEventListener('error', sueltas);
                 clearTimeout(topeCarga);
             };
             var sinClip = function () {
@@ -6434,47 +6618,58 @@
                 if (cargando !== k) return;
                 cargando = -1;
                 if (!grabando) return;
-                /* R6c · el clip entra con solape D segundos ANTES de que acabe
-                   el saliente: si tarda en cargar, el retraso se compensa para
-                   que su reloj no dé un salto atrás (y el solape no se cuente
-                   dos veces). Sin bucle todavía es el primero: no hay nada que
+                /* R6c · el clip entra con solape D segundos ANTES de que acabe el
+                   saliente: si tarda en cargar, el retraso se compensa para que
+                   su reloj no dé un salto atrás (y el solape no se cuente dos
+                   veces). Sin bucle todavía es el primero: no hay nada que
                    compensar. */
-                arrancaClipPista(k, bucleOn ? relojPista(segs[segIdx]) : s.desde);
+                arrancaClipPista(k, e, bucleOn ? relojPista(segs[segIdx]) : s.desde);
             };
             var busca = function () {
-                vidFuente.removeEventListener('loadedmetadata', busca);
+                el.removeEventListener('loadedmetadata', busca);
                 if (!grabando) return;
-                if (vidFuente.readyState >= 2 &&
-                        Math.abs(vidFuente.currentTime - s.a) < 0.05) return listo();
-                vidFuente.addEventListener('seeked', listo);
-                try { vidFuente.currentTime = s.a; } catch (e) { listo(); }
+                if (el.readyState >= 2 && Math.abs(el.currentTime - s.a) < 0.05) return listo();
+                el.addEventListener('seeked', listo);
+                try { el.currentTime = s.a; } catch (er) { listo(); }
             };
             /* R6c · sin este tope, un clip que no llega a cargar deja la
                grabación esperando para siempre con el progreso clavado */
             var topeCarga = setTimeout(sinClip, 8000);
-            vidFuente.addEventListener('error', sinClip);
-            if (urlFuente !== c.url || vidFuente.readyState < 1) {
-                vidFuente.addEventListener('loadedmetadata', busca);
-                urlFuente = c.url;
-                vidFuente.src = c.url;
+            el.addEventListener('error', sinClip);
+            if (urlEn(e) !== c.url || el.readyState < 1) {
+                el.addEventListener('loadedmetadata', busca);
+                if (e === 0) urlFuente = c.url; else urlAux = c.url;
+                el.src = c.url;
             } else busca();
         }
 
         /* El clip ya está cargado, buscado y en su punto: pasa a mandar el
            reloj y a sonar. R6c · si entra con solape, su sonido sube desde cero
            para mezclarse con el saliente en vez de aparecer encima. */
-        function arrancaClipPista(k, tEntrada) {
+        function arrancaClipPista(k, e, tEntrada) {
             if (!grabando) return;
-            segIdx = k;
-            cambiando = false;
+            /* R6d · el primero no entra hasta que el grabador está arrancado
+               (y calentado) con su primer fotograma ya en pantalla */
+            if (!grabIniciado) {
+                calientaYArranca(function () { arrancaClipPista(k, e, tEntrada); });
+                return;
+            }
+            /* R6d · aquí NO se suelta el clip saliente: este arranque ocurre al
+               PRINCIPIO del solape, no al final. Con un clip detrás seguiría
+               sonando hasta que acabe su solape, que es justo el fundido; si se
+               soltara ahora, se pararía en el cruce y se congelaría antes de
+               tiempo. Quien lo suelta al final es `ajustaVidsPista()`. */
             rampAbajo = false;
+            segIdx = k;
             var s = segs[k];
+            var el = vids[e];
+            clipEn[e] = s.idx;       // R6d: el <video> ya es de este segmento
             clipAjuste = Math.max(0, tEntrada - s.desde);
             idxActivo = s.idx;
             desfaseActivo = s.desde;   // el reloj global que usa dibujarFrame
             poneRecorteActivo();
-            rampaAudio(s.solIn > 0 ? 0 : 1, 1, s.solIn * 1000);
-            var p = vidFuente.play();
+            rampaAudio(s.solIn > 0 ? 0 : 1, 1, s.solIn * 1000, e);
+            var p = el.play();
             if (p && p.catch) {
                 p.catch(function () {
                     fallo('El navegador no dejó reproducir el vídeo: toca el vídeo una vez y reintenta');
@@ -6486,8 +6681,13 @@
         }
 
         function arrancaSegPista() {
-            if (segs[0].tipo === 'clip') { preparaClipPista(0); return; }
-            arrancaPista(0, segs[0].desde);
+            if (segs[0].tipo === 'clip') {
+                /* R6d · se carga y arranca él solo cuando esté listo */
+                preparaClipPista(0);
+                return;
+            }
+            pintaArranque();      // la foto sí está en el lienzo ya
+            calientaYArranca(function () { arrancaPista(0, segs[0].desde); });
         }
 
         /* Un bucle y solo uno: `bucleOn` es la puerta, para que un `pideBucle()` desde
@@ -6514,23 +6714,29 @@
             var fin = s.desde + s.dur;
             var t = relojPista(s);
 
-            /* R6c · cambiando de clip el lienzo se congela y se conserva el
-               último fotograma (captureStream no emite nada: es lo de E5). Con
-               una foto saliente no hace falta, y en ese caso no se congela. */
-            if (cambiando) return;
-
-            /* el clip que entra con solape tiene que estar cargado D segundos
-               antes de que acabe el de ahora */
+            /* R6d · el clip que entra con solape tiene que estar cargado D
+               segundos antes de que acabe el de ahora, en el <video> libre. Con
+               solape de clip contra clip es el auxiliar, así que el saliente
+               sigue sonando y pintándose mientras este llega: el lienzo no
+               hace falta congelarlo nunca. */
             if (sig && sig.tipo === 'clip' && t >= sig.desde - 0.004 &&
-                    cargando !== segIdx + 1 && !clipListo(sig)) {
+                    cargando !== segIdx + 1 && !clipListo(sig, elLibre())) {
                 preparaClipPista(segIdx + 1);
             }
-            /* el audio del clip saliente baja mientras entra la foto */
-            if (!rampAbajo && s.tipo === 'clip' && sig && sig.tipo === 'img' &&
-                    sig.solIn > 0 && t >= sig.desde - 0.004) {
+            /* el audio del clip saliente baja mientras entra lo que sea: una
+               foto (no suena ella) o el clip siguiente (que sube desde cero).
+               R6d · la rampa va sobre el <video> del saliente, que no siempre
+               es el mismo que lleva el segmento entrante. */
+            if (!rampAbajo && s.tipo === 'clip' && sig && sig.solIn > 0 &&
+                    t >= sig.desde - 0.004) {
                 rampAbajo = true;
-                rampaAudio(1, 0, sig.solIn * 1000);
+                var elSal = elDelSeg(s);
+                rampaAudio(1, 0, sig.solIn * 1000, elSal === vidFuente ? 0 : 1);
             }
+            /* R6d · para los <video> cuyo segmento ya acabó. En un solape
+               entre dos clips, el saliente sigue sonando y pintándose hasta
+               que acaba su solape, que es cuando se suelta. */
+            ajustaVidsPista(segs, t);
             /* una foto entra en el acto, en cuanto le toca el turno */
             if (sig && sig.tipo === 'img' && t >= cortePista(sig) - 0.004) {
                 arrancaPista(segIdx + 1, t);
@@ -6539,7 +6745,7 @@
             if (!sig && t >= fin - 0.004) {
                 dibujaPlan(fin);
                 grabando = false;
-                vidFuente.pause();
+                sueltaVids();          // R6d: los dos <video> y sus ganancias
                 if (recAct && recAct.state !== 'inactive') recAct.stop();
                 return;
             }

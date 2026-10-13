@@ -366,6 +366,12 @@
                                 para posicionar el cabezal (o usa las flechas del teclado sobre un tirador).</p>
                         </div>
                         <video id="vid-mini" hidden muted playsinline preload="metadata"></video>
+                    <!-- R6d · segundo <video> de reproducción: solo se usa
+                         durante un fundido entre dos clips, que es el único
+                         momento en que hace falta el segundo decodificador
+                         sonando a la vez. Fuera de ahí no se toca nunca. -->
+                    <video id="vid-fuente-2" hidden playsinline preload="auto"
+                           crossorigin="anonymous"></video>
                     </div>
 
                     </div>
@@ -977,7 +983,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r12"></script>
+    <script src="./public/js/video.js?v=r13"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

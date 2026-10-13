@@ -29,7 +29,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
 | Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
-| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c fundido foto ↔ vídeo ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
+| Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c fundido entre fotos y vídeos ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 | Lote S — Exportación, móvil y publicación | 🔨 **S1 exportar sin negro ✅ · S2 el lienzo se encaja solo ✅ · S3 barra de texto fija en móvil ✅ · S4 panel Publicación ✅ · S5 plantillas que ya no borran el trabajo ✅ · S6 galería «toca e inserta» ✅** |
 
 ---
@@ -1547,22 +1547,45 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
   - **R6c-ter · `quitaVideo` no existía** (R6b, no de R6c): al quitar el
     último vídeo desde el riel saltaba una `ReferenceError` y la pista se
     quedaba a medias. Era `quitarVideo()`.
-  - **R6c ⏳ pendiente · fundido entre vídeos** — **vídeo ↔ vídeo es el paso 2**,
-    y sigue como estaba: necesita un segundo `<video>` que cargue y busque el
-    clip siguiente mientras el actual sigue sonando, y durante el solape pintar
-    los dos con `globalAlpha` cruzándose. Como la grabación es en tiempo real,
-    son dos decodificadores a la vez: en móvil es donde más se nota y **si se
-    pierde un frame el clip sale corto**, así que hay que darlo por probado en
-    un Android antes de darlo por bueno (en escritorio no hay forma de verlo).
-    La parte de audio ya está preparada: el `GainNode` del vídeo se puede
-    ramp-ear por clip sin tocar el resto.
-    Sigue **deshabilitado en el modo solo-vídeo** a propósito: fundir dos clips
-    exige **decodificar los dos a la vez**, o sea un segundo `<video>` además
-    del que ya se usa, y durante la grabación en tiempo real eso son dos
-    reproductores sincronizados al mismo frame: más batería, riesgo de perder
-    frames (y si se pierde uno, el clip sale corto) y peor en móvil. Es lo más
-    caro y lo más delicado que queda; el riel de abajo ya está validado, que es
-    justo lo que hacía falta antes de meterse.
+  - **R6d · fundido entre vídeos ✅ · el paso 2 de R6c, hecho**. El solape ya no
+    se limita a los cortes mixtos: **entre dos clips también**, y para eso hace
+    falta lo que el diseño de R6c llamaba «la parte difícil».
+    - **Un segundo `<video>`** (`#vid-fuente-2`), oculto y sin controles. Solo
+      se usa durante un solape; fuera de ahí no se toca. Dos ideas lo hacen
+      workable: el saliente **no se suelta en el cruce** (sigue sonando hasta
+      acabar su solape, que es donde se para), y el entrante se carga en el
+      `<video>` **libre**, que siempre es el otro.
+    - **El audio**: los dos `<video>` se enrutan **una sola vez** por su
+      `GainNode` al crear el grabador (no al vuelo: conectar un
+      `MediaElementSource` con el elemento ya reproduciendo puede dejarlo mudo).
+      El saliente baja 1→0 mientras el entrante sube 0→1.
+    - **`elDelSeg(seg)`** es quien dice qué `<video>` suena cada segmento (comprueba
+      clip **y** src, y prefiere el que no está en pausa). Si se equivoca, el
+      reloj se queda mirando un elemento parado y **la grabación se congela**:
+      pasó, y fue el fallo más difícil de ver.
+    - **La pista de solo-vídeo con fundido entra por el motor del plan**
+      (`usaMotorPista()`) en vez de duplicar el crossfade en `crearVideoRecorte`.
+      Con «Ninguna» y solo clips se sigue usando el camino antiguo de un solo
+      `<video>`, que es el que ya estaba probado.
+    - **R6d (el pendiente, cerrado de paso):** el grabador del mixto ya **no
+      arranca antes de tiempo**. Esperaba al primer segmento en pantalla y solo
+      entonces encendía el grabador y calentaba, igual que `crearVideoRecorte`.
+      Antes, con la pista empezando por un clip, el primer fotograma salía en el
+      color del fondo (blanco), porque lo que se pintaba era un `fillRect` y el
+      clip aún estaba cargándose. Medido: el primer frame pasó de `255,255,255`
+      a `196,28,28` (el color del clip).
+    - E2E en Chrome. **Dos clips de 3 s**: MP4 de 5,42 s (5,2 + 0,2) con el
+      fundido de 2,2 s a 3,0 s, y el canal verde **constante en 27** durante
+      toda la mezcla (rojo↔azul): si saliera contaminado, se vería subir, que es
+      lo que pasaba cuando la capa de arriba repintaba el fondo. **Tres clips**:
+      7,60 s, los dos solapes seguidos con los `<video>` alternando (0→1→0).
+      **Mixto clip+clip+foto**: 6,60 s con los dos cortes fundidos. Regresiones:
+      solo-fotos 4,01 s con su fundido de siempre, y solo-vídeo con «Ninguna» en
+      el camino antiguo (6,25 s, corte seco a los 3 s). Consola 0,
+      `node --check`.
+    - ⚠️ **Pendiente de probar en un Android**, como estaba avisado: dos
+      decodificadores a la vez en tiempo real es justo lo que puede ir justo en
+      un móvil. Si un clip sale corto, la pista es que se perdió un frame.
 
 ---
 
