@@ -403,8 +403,17 @@
     var restaurando = false;
     var HIST_MAX = 40;
 
+    /* Propiedades propias que deben viajar en el historial y en el proyecto.
+       Fabric solo serializa las que se le piden aquí:
+       · tetZona      → la zona (titular/detalle) del texto de tet1, para que al
+         cambiar de formato vuelva a su sitio.
+
+       En los otros editores la lista no cambia nada. */
+    var PROPS_PROPIAS = ['tetZona'];
+
     function guardarEstado() {
         if (restaurando) return;
+
         /* Q1b · el overlay de color de tet1 es un patrón con source nulo y su
            toObject() truena leyendo null.src: se despega solo durante la
            serialización (y si el source está bien, se conserva y restaura) */
@@ -412,7 +421,7 @@
         var ocRoto = oc && !oc.source;
         if (ocRoto) canvas.overlayColor = null;
         try {
-            var estado = JSON.stringify(canvas.toJSON());
+            var estado = JSON.stringify(canvas.toJSON(PROPS_PROPIAS));
         } catch (err) {
             // p.ej. canvas "tainted" al abrir como file://: sin historial, pero visible en consola
             console.warn('tet: no se pudo guardar el historial', err);
@@ -443,6 +452,10 @@
                 histIdx = idx;
                 actualizarToolbar();
                 render();
+                /* tet1: la franja viene del JSON como una imagen normal y se
+                   veria estirada a lo ancho entero; se vuelve a componer por
+                   piezas (main.js). En el resto de editores no hace nada. */
+                if (window.tetRestaurarDecoracion) window.tetRestaurarDecoracion();
             });
         } catch (err) {
             restaurando = false; // que no se quede el flag colgado
@@ -507,7 +520,7 @@
 
     /* ---------- guardar / cargar proyecto (.json) ---------- */
     function guardarProyecto() {
-        var datos = JSON.stringify(canvas.toJSON());
+        var datos = JSON.stringify(canvas.toJSON(PROPS_PROPIAS));
         var blob = new Blob([datos], { type: 'application/json' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
@@ -595,6 +608,8 @@
                         restaurando = false;
                         guardarEstado();
                         render();
+                        /* tet1: recompone la franja (ver restaurar) */
+                        if (window.tetRestaurarDecoracion) window.tetRestaurarDecoracion();
                         aviso('Proyecto cargado', 'success');
                     });
                 } catch (err) {

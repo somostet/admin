@@ -364,12 +364,21 @@
     if (fmtPanel) {
         var selFmt = fmtPanel.querySelector('#formato-salida');
         var infoFmt = fmtPanel.querySelector('#formato-info');
+        var selAnclaFmt = fmtPanel.querySelector('#formato-ancla');
         var chkWrapFmt = fmtPanel.querySelector('.form-check');
         btnFmt = fmtPanel.querySelector('#formato-descargar');
 
         if (selFmt) {
             selFmt.setAttribute('title', 'Red / tamaño de exportación');
             top.appendChild(selFmt);
+        }
+        /* el ancla del recorte también sube a la barra: el panel entero se
+           borra más abajo (fmtPanel.remove()), así que si se queda dentro se
+           pierde el control */
+        if (selAnclaFmt) {
+            selAnclaFmt.classList.add('form-select-sm', 'sh-ancla');
+            selAnclaFmt.setAttribute('title', 'Por dónde entra el recorte vertical');
+            top.appendChild(selAnclaFmt);
         }
         if (infoFmt) {
             // sigue en el DOM para formatos.js; el tamaño lo comunica el botón
@@ -404,8 +413,13 @@
             return;
         }
         canvas.discardActiveObject();
-        var objs = canvas.getObjects();
-        while (objs.length) canvas.remove(objs[0]);
+        /* canvas.getObjects() devuelve una COPIA (en Fabric 2.4.3 es
+           _objects.concat()), no el array vivo. Por eso el bucle
+           `while (objs.length) canvas.remove(objs[0])` no terminaba nunca:
+           quitaba el primer elemento, el siguiente ya no estaba en el lienzo
+           y remove() no hacía nada, una y otra vez — colgaba el editor entero
+           cada vez que se pulsaba «Lienzo en blanco» con algo puesto. */
+        canvas.getObjects().slice().forEach(function (o) { canvas.remove(o); });
         canvas.backgroundImage = null;
         canvas.overlayImage = null;
         canvas.overlayColor = null;
@@ -417,20 +431,17 @@
         var retina0 = canvas.enableRetinaScaling;
         if (d.w * d.h * dpr * dpr > 12e6) canvas.set({ enableRetinaScaling: false });
 
-        canvas.setDimensions({ width: d.w, height: d.h }, { backstoreOnly: true });
-        var esc = Math.min(500 / d.w, 500 / d.h, 1);
-        var dw = Math.round(d.w * esc);
-        var dh = Math.round(d.h * esc);
-        canvas.setDimensions({ width: dw, height: dh }, { cssOnly: true });
-        var wrap = canvas.wrapperEl;
-        if (wrap) { wrap.style.width = dw + 'px'; wrap.style.height = dh + 'px'; }
+        /* el redimensionado vive en main.js (tetAjustarLienzoA): lo comparten
+           este botón y la adaptación automática al cambiar de formato, y así
+           no se duplica —ni se desincroniza— el cálculo del respaldo. */
+        if (window.tetAjustarLienzoA) window.tetAjustarLienzoA(d);
+        else {
+            canvas.setDimensions({ width: d.w, height: d.h }, { backstoreOnly: true });
+            canvas.set({ enableRetinaScaling: retina0 });
+            canvas.calcOffset();
+            canvas.renderAll();
+        }
 
-        /* se deja el retina como estaba: el respaldo ya está a la medida que
-           corresponde al preset elegido */
-        canvas.set({ enableRetinaScaling: retina0 });
-
-        canvas.calcOffset();
-        canvas.renderAll();
         if (typeof estado !== 'undefined' && estado) {
             estado.textContent = d.w + ' × ' + d.h + ' px';
         }

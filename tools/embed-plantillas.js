@@ -28,6 +28,7 @@ var plantillas = [
     './public/img/bars/somostetTF2079.png',
     './public/img/bars/somostetArt.png',
     './public/img/bars/somostetBlanco.png',
+
     './public/img/Plantillas/tet1/TBtet.png',
     './public/img/Plantillas/tet1/TBtet2.png',
     './public/img/Plantillas/tet1/creadores.png',

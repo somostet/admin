@@ -31,6 +31,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 | Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c fundido entre fotos y vídeos ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 | Lote S — Exportación, móvil y publicación | 🔨 **S1 exportar sin negro ✅ · S2 el lienzo se encaja solo ✅ · S3 barra de texto fija en móvil ✅ · S4 panel Publicación ✅ · S5 plantillas que ya no borran el trabajo ✅ · S6 galería «toca e inserta» ✅** |
+| Lote T — Lienzo de tet1 (plantillas sociales) | 🔨 **T1 franja que se adapta sin deformarse ✅ · T2 el lienzo se adapta al formato, sin recortar ✅ · T3 fondo con degradado + opacidad ✅ · T4 texto ya insertado editable ✅ · T5 imantado con guías ✅ · T6 recorte anclado arriba ✅ · T7 bugs de fondo/zonas/archivo repetido ✅** |
 
 ---
 
@@ -140,6 +141,146 @@ con `modal-lg: el cuerpo va ahora con scroll propio y dos columnas por fila.
   fallo y dice cuántas imágenes de origen ajeno hay en el lienzo. Con el alfa
   y el presupuesto de píxeles de S1 arreglados, el caso que se veía en el uso
   normal queda cubierto; si vuelve a pasar, el mensaje dirá por qué.
+
+---
+
+## 🔴 Lote T — Lienzo de `tet1.html` (plantillas para redes sociales)
+
+> Petición: «adaptar la imagen de la plantilla de noticias al tamaño de redes
+> sociales, que use los PNG, que siempre esté y se adapte y que esté arriba, el
+> fondo pueda cambiar, meter degradado y opacidad», «mejora la manipulación» y
+> el bug de que el fondo no cambiaba.
+
+### T1 · La franja se redimensiona, no se estira
+
+La franja superior se coloca pegada arriba y se ajusta al ancho del lienzo con
+una **escala uniforme**:
+
+    escala = ancho del lienzo / 1200      (las barras vienen a 1200 × 93)
+
+Lo importante es que la escala sea la misma en X que en Y: así el logo, el
+rótulo y la diagonal conservan su proporción y solo cambian de tamaño. Medido
+en los formatos de uso:
+
+| Formato | Lienzo | Escala | Franja |
+|---|---|---|---|
+| Instagram 4:5 | 1080×1350 | 0,900 | 1080×84 |
+| Facebook post | 1200×630 | 1,000 | 1200×93 |
+| TikTok story | 1080×1920 | 0,900 | 1080×84 |
+| YouTube miniatura | 1280×720 | 1,067 | 1280×99 |
+
+Se usa el overlay de Fabric (`canvas.overlayImage`), no un objeto suelto: así
+no sale en el panel de capas, no se mueve por accidente y no se serializa en el
+historial. El overlay se pinta después de los objetos, o sea que la franja
+queda por encima del contenido, como siempre.
+
+> **Descartado**: partir la franja en piezas (`public/img/tetNews/`) y
+> componerlas, o colocarlas como capas independientes. Medido contra el PNG
+> original daba un 98% de píxeles idénticos —es decir, no deformaba nada— pero
+> era mucho más mecanismo para el mismo resultado. Los archivos siguen en el
+> repo por si acaso.
+
+### T2 · El lienzo se adapta al formato, no se recorta
+
+Al elegir un formato en la barra, el lienzo **adopta ese tamaño** en lugar de
+quedarse en 1200 × 1200 y recortarse. Antes, pasar a un 1080 × 1350 desde el
+cuadrado recortaba 240 px por cada lado —justo donde está «somostet.com»— y la
+franja salía partida; la captura que motivó el cambio mostraba esas franjas
+gris del recorte.
+
+- Se conserva todo el contenido.
+- El **titular y el detalle vuelven a su zona** del formato nuevo; el resto de
+  capas se quedan donde el usuario las puso (`tetReubicarTextos`). Para poder
+  reconocerlos, `set_title`/`set_detail` marcan el texto con `tetZona`, y esa
+  propiedad se declara en el `toJSON` de `capas.js` (`PROPS_PROPIAS`) porque
+  Fabric solo serializa las propiedades que se le piden: sin eso se perdía al
+  deshacer.
+- «Tamaño original» no redimensiona nada.
+- Avisa de que se ha adaptado y el cambio entra en el historial (Ctrl+Z
+  deshace).
+
+El redimensionado del lienzo vive en `tetAjustarLienzoA` (`main.js`) y lo
+comparten este proceso y el botón «Lienzo en blanco», para que el cálculo del
+respaldo (y su tope de píxeles con el retina) no se duplique ni se desincronice.
+
+**Extra**: la barra de estado que anuncia el tamaño del lienzo se refresca
+también; seguía diciendo 1200 × 1200 con el lienzo ya adaptado.
+
+### T3 · Fondo con degradado y opacidad
+
+- **Degradado** (panel «Plantilla»): color inicial, color final y ángulo. Se
+  usa un `fabric.Gradient` nativo —se serializa y revive solo en el historial y
+  en el `.json` del proyecto— con los extremos sobre la diagonal del lienzo, y
+  se recalcula al cambiar el tamaño.
+- **Opacidad** de la decoración (0–100 %), que es lo que deja ver el fondo
+  detrás de la plantilla.
+- **Franja superior** con interruptor para quitarla.
+
+Las plantillas que apuntan a un PNG de 1200 × 93 que *es* la franja (casi
+todas) ya no se estiran a tapar el lienzo: se marca `arte: true/false` y solo
+se pinta la imagen de las que son el dibujo de verdad (TBtet, creadores…),
+sustituyendo la regla invisible `opacity: barra ? 0 : 1`.
+
+`formatos.js` elegía el color del lienzo para pintar de opaco el lienzo de
+exportación y, al toparse con un Gradient, caía siempre en blanco: ahora usa el
+primer tope del degradado.
+
+### T4 · El texto ya insertado se puede editar
+
+Antes el tamaño, la negrita y la alineación solo se elegían **antes** de
+insertar: una vez puesto el titular, la única forma de cambiarle el tamaño era
+borrarlo y volver a crearlo. El panel «Texto» (que aparece en Propiedades
+cuando hay un texto seleccionado) da tamaño, negrita, alineación e
+interlineado, sobre uno o varios textos a la vez, entrando en el historial.
+
+### T5 · Imantado con guías
+
+Imanta a bordes, centro y tercios del lienzo y a los bordes/centros del resto
+de capas, con guía visible mientras se arrastra y rejilla de tercios opcional.
+
+Dos trampas que lo dejaban **completamente muerto**:
+
+1. **El objeto se imantaba a sí mismo.** `objetivosX()` incluía sus propios
+   bordes, así que la distancia 0 de sí mismo siempre ganaba y el ajuste nunca
+   se aplicaba. Ahora se excluye con `excepto`.
+2. **`getBoundingRect()` devuelve las `aCoords` cacheadas**, que durante el
+   arrastre van un paso por detrás (solo se recalculan al soltar): se medía la
+   posición anterior. Se llama a `setCoords()` antes de medir.
+
+El ajuste se aplica por el centro (`setPositionByOrigin`), que ya descuenta la
+rotación, y respeta `lockMovementX/Y`.
+
+### T6 · Recorte anclado arriba
+
+El recorte «cover» de `formatos.js` era siempre centrado: al pasar de
+1200 × 1200 a un 1080 × 1350 se comía media franja. Nuevo selector
+**Recorte vertical** (Centrado / Desde arriba / Desde abajo) en la barra
+superior; por defecto **Centrado**, para no cambiar el comportamiento de los
+otros cinco editores.
+
+### T7 · Bugs de fondo, zonas y archivo repetido
+
+| Antes | Ahora |
+|---|---|
+| El selector de **color del fondo no hacía nada** (solo el del texto tenía manejador): había que pulsar «Cargar plantilla» | Repinta el fondo mientras se arrastra y guarda el estado al soltar |
+| El titular iba a `top: 730` y el detalle a `top: 870`, fijos para el lienzo cuadrado: en un 1200 × 630 de Facebook **no se veían** | Zonas en fracciones de la altura (0,60 y 0,72): se reparten en cualquier formato |
+| Elegir **el mismo archivo** dos veces no hacía nada (el navegador no relanza `change` si el valor no cambia) | El input se vacía tras leer |
+| `setOverlayColor` con `offsetY: -1107` | Fuera; la geometría sale del lienzo real |
+
+### 🐞 Bug de campo encontrado por el camino (no era de este lote)
+
+`shell.js`, botón **«Lienzo en blanco»**:
+
+```js
+var objs = canvas.getObjects();
+while (objs.length) canvas.remove(objs[0]);
+```
+
+`getObjects()` devuelve una **copia** (`_objects.concat()` en Fabric 2.4.3), no
+el array vivo: el bucle quitaba el primer elemento, el siguiente leave de estar
+en el lienzo y `remove()` no hacía nada, una y otra vez. **Colgaba el editor
+entero** cada vez que se pulsaba con algo puesto en el lienzo. Ahora se vacía
+con `getObjects().slice().forEach(...)`.
 
 ---
 

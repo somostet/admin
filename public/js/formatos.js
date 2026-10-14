@@ -5,7 +5,12 @@
    Requiere la variable global `canvas` de Fabric.js creada antes de cargar este script. */
 (function () {
     /* Lista de presets accesible también sin lienzo (gif.html la usa para su
-       selector de tamaño); el resto del módulo necesita el canvas de fabric. */
+       selector de tamaño); el resto del módulo necesita el canvas de fabric.
+
+       Tamaños revisados en octubre de 2026 y Collected en TAMANOS_REDES.md,
+       que es la referencia completa (incluye lo que aquí no cabe, como banners
+       muy apaisados). Las zonas seguras se marcan con `safe`: el editor las
+       dibuja como guía para que el texto no caiga donde la red lo tapa. */
     var FORMATOS = [
         {
             grupo: 'Origen', items: [
@@ -13,49 +18,117 @@
             ]
         },
         {
+            grupo: 'Universal', items: [
+                { n: 'Cuadrado 1080', w: 1080, h: 1080 },
+                { n: 'Vertical 4:5 (1080×1350)', w: 1080, h: 1350 },
+                { n: 'Historia / Reel 9:16', w: 1080, h: 1920, safe: { w: 1080, h: 1610 } },
+                { n: 'Horizontal 1,91:1', w: 1080, h: 566 }
+            ]
+        },
+        {
             grupo: 'Instagram', items: [
-                { n: 'Instagram cuadrado', w: 1080, h: 1080 },
-                { n: 'Instagram vertical (4:5)', w: 1080, h: 1350 },
-                { n: 'Instagram story / Reel', w: 1080, h: 1920 }
+                { n: 'IG post cuadrado', w: 1080, h: 1080 },
+                { n: 'IG post vertical (4:5)', w: 1080, h: 1350 },
+                { n: 'IG post horizontal (1,91:1)', w: 1080, h: 566 },
+                { n: 'IG story / reel', w: 1080, h: 1920, safe: { w: 1080, h: 1610 } },
+                { n: 'IG perfil', w: 320, h: 320 },
+                { n: 'IG anuncio stories', w: 1440, h: 2560, safe: { w: 1150, h: 1970 } },
+                { n: 'IG anuncio cuadrado', w: 1440, h: 1440 }
             ]
         },
         {
             grupo: 'Facebook', items: [
-                { n: 'Facebook post', w: 1200, h: 630 },
-                { n: 'Facebook cover', w: 820, h: 312 },
-                { n: 'Facebook evento', w: 1920, h: 1005 }
+                { n: 'FB post', w: 1080, h: 566 },
+                { n: 'FB post vertical (4:5)', w: 1080, h: 1359 },
+                { n: 'FB post cuadrado', w: 1080, h: 1080 },
+                { n: 'FB story / reel', w: 1080, h: 1920, safe: { w: 1080, h: 1610 } },
+                { n: 'FB portada de página', w: 851, h: 315 },
+                { n: 'FB portada móvil', w: 640, h: 360 },
+                { n: 'FB perfil', w: 320, h: 320 },
+                { n: 'FB anuncio feed', w: 1440, h: 1440 },
+                { n: 'FB anuncio vertical', w: 1440, h: 1800 },
+                { n: 'FB anuncio stories', w: 1440, h: 2560, safe: { w: 1150, h: 1970 } }
             ]
         },
         {
             grupo: 'X (Twitter)', items: [
-                { n: 'X post', w: 1600, h: 900 },
-                { n: 'X banner', w: 1500, h: 500 }
-            ]
-        },
-        {
-            grupo: 'YouTube', items: [
-                { n: 'YouTube miniatura', w: 1280, h: 720 },
-                { n: 'YouTube miniatura 2K (con zona segura)', w: 2560, h: 1440, safe: { w: 1546, h: 423 } },
-                { n: 'YouTube banner (con zona segura)', w: 2048, h: 1152, safe: { w: 1546, h: 423 } }
-            ]
-        },
-        {
-            grupo: 'TikTok', items: [
-                { n: 'TikTok / story', w: 1080, h: 1920 }
+                { n: 'X post horizontal (16:9)', w: 1280, h: 720 },
+                { n: 'X post vertical', w: 720, h: 1280 },
+                { n: 'X post cuadrado', w: 1080, h: 1080 },
+                { n: 'X cabecera / banner', w: 1500, h: 500, safe: { w: 1500, h: 380 } },
+                { n: 'X perfil', w: 400, h: 400 },
+                { n: 'X anuncio grande', w: 1200, h: 628 },
+                { n: 'X anuncio con botón', w: 800, h: 418 }
             ]
         },
         {
             grupo: 'LinkedIn', items: [
-                { n: 'LinkedIn post', w: 1200, h: 627 }
+                { n: 'LI post con enlace', w: 1200, h: 627 },
+                { n: 'LI post cuadrado', w: 1200, h: 1200 },
+                { n: 'LI post vertical', w: 720, h: 900 },
+                { n: 'LI carrusel', w: 1080, h: 1080 },
+                { n: 'LI portada personal', w: 1584, h: 396 },
+                { n: 'LI portada de empresa', w: 1128, h: 191 },
+                { n: 'LI perfil', w: 400, h: 400 }
+            ]
+        },
+        {
+            grupo: 'TikTok', items: [
+                { n: 'TikTok vídeo / carrusel', w: 1080, h: 1920, safe: { w: 1080, h: 1610 } },
+                { n: 'TikTok anuncio vertical', w: 540, h: 960 },
+                { n: 'TikTok anuncio horizontal', w: 960, h: 540 },
+                { n: 'TikTok anuncio cuadrado', w: 640, h: 640 },
+                { n: 'TikTok perfil', w: 200, h: 200 }
+            ]
+        },
+        {
+            grupo: 'YouTube', items: [
+                { n: 'YT miniatura', w: 1280, h: 720 },
+                { n: 'YT miniatura 2K', w: 2560, h: 1440, safe: { w: 1546, h: 423 } },
+                { n: 'YT banner de canal', w: 2560, h: 1440, safe: { w: 1546, h: 423 } },
+                { n: 'YT banner (mínimo)', w: 2048, h: 1152, safe: { w: 1546, h: 423 } },
+                { n: 'YT miniatura de podcast', w: 1280, h: 1280 },
+                { n: 'YT perfil', w: 800, h: 800 }
             ]
         },
         {
             grupo: 'Pinterest', items: [
-                { n: 'Pinterest', w: 1000, h: 1500 }
+                { n: 'Pin 2:3', w: 1000, h: 1500 },
+                { n: 'Pin de colección (1:1)', w: 1000, h: 1000 },
+                { n: 'Pin 4:5', w: 1000, h: 1250 },
+                { n: 'Portada de perfil', w: 800, h: 450 },
+                { n: 'Perfil', w: 280, h: 280 }
+            ]
+        },
+        {
+            grupo: 'Snapchat', items: [
+                { n: 'Snap anuncio 9:16', w: 1080, h: 1920, safe: { w: 1080, h: 1440 } },
+                { n: 'Snap banner', w: 375, h: 278 },
+                { n: 'Perfil', w: 320, h: 320 }
+            ]
+        },
+        {
+            grupo: 'Bluesky', items: [
+                { n: 'Bluesky post 4:5', w: 1000, h: 1250 },
+                { n: 'Bluesky post cuadrado', w: 1000, h: 1000 },
+                { n: 'Bluesky banner', w: 3000, h: 1000, safe: { w: 1500, h: 600 } },
+                { n: 'Perfil', w: 1000, h: 1000 }
+            ]
+        },
+        {
+            grupo: 'Threads', items: [
+                { n: 'Threads post', w: 1440, h: 1920 },
+                { n: 'Threads post 3:4', w: 1080, h: 1440 },
+                { n: 'Perfil', w: 640, h: 640 }
+            ]
+        },
+        {
+            grupo: 'WhatsApp', items: [
+                { n: 'WA estado 9:16', w: 1080, h: 1920, safe: { w: 1080, h: 1610 } },
+                { n: 'WA perfil', w: 640, h: 640 }
             ]
         }
     ];
-
     window.TET_FORMATOS = FORMATOS; // presets también sin lienzo (gif.html)
 
     if (typeof canvas === 'undefined' || !canvas) {
@@ -83,6 +156,12 @@
             '<label class="form-label" for="formato-salida">Red / tamaño</label>' +
             '<select class="form-select" id="formato-salida">' + opciones + '</select>' +
             '<div class="form-text" id="formato-info">1080 × 1080 px</div>' +
+            '<label class="form-label mt-2" for="formato-ancla">Recorte vertical</label>' +
+            '<select class="form-select form-select-sm" id="formato-ancla">' +
+                '<option value="centro" selected>Centrado</option>' +
+                '<option value="arriba">Desde arriba (conserva la franja)</option>' +
+                '<option value="abajo">Desde abajo</option>' +
+            '</select>' +
             '<div class="form-check mt-2">' +
                 '<input class="form-check-input" type="checkbox" id="formato-guia" checked>' +
                 '<label class="form-check-label" for="formato-guia">Mostrar guía de recorte</label>' +
@@ -134,6 +213,7 @@
     }
 
     var select = panel.querySelector('#formato-salida');
+    var selAncla = panel.querySelector('#formato-ancla');
     var info = panel.querySelector('#formato-info');
     var chkGuia = panel.querySelector('#formato-guia');
     var btnDescargar = panel.querySelector('#formato-descargar');
@@ -163,9 +243,11 @@
     function dims(fmt) {
         if (!fmt) return null;
         if (fmt.orig) {
-            return { w: canvas.width, h: canvas.height, safe: null };
+            /* `orig` se propaga para que quien llama (la adaptación automática
+               del lienzo de tet1) sepa que este preset no redimensiona nada */
+            return { w: canvas.width, h: canvas.height, safe: null, orig: true };
         }
-        return { w: fmt.w, h: fmt.h, safe: fmt.safe };
+        return { w: fmt.w, h: fmt.h, safe: fmt.safe, orig: false };
     }
 
     /* color de fondo del PNG exportado. Sin esto el lienzo temporal nace
@@ -175,21 +257,43 @@
     function fondoLienzo() {
         var c = canvas.backgroundColor;
         if (typeof c === 'string' && c) return c;
-        if (c && typeof c === 'object' && typeof c.source === 'string') return c.source;
+        if (c && typeof c === 'object') {
+            if (typeof c.source === 'string') return c.source;
+            /* tet1 admite fondo degradado (un fabric.Gradient): el PNG se
+               compone sobre un color plano, así que se usa el primer tope.
+               Antes caía en el blanco por defecto y el recorte salía con una
+               orla blanca en el lado del degradado más oscuro. */
+            if (window.tetColorFondoPlano) return window.tetColorFondoPlano();
+            if (c.colorStops && c.colorStops.length && c.colorStops[0].color) {
+                return c.colorStops[0].color;
+            }
+        }
         return '#ffffff';
     }
 
-    /* ---------- geometría del recorte "cover" centrado ---------- */
-    function recorte(sw, sh, W, H) {
+    /* ---------- geometría del recorte "cover" ----------
+       `ancla` decide por dónde entra el recorte cuando el formato es más alto o
+       más bajo que el lienzo. Centrado es lo de siempre; «Desde arriba» existe
+       porque en las plantillas de tet la franja y el titular viven arriba y el
+       recorte centrado los cortaba (al pasar de 1200 × 1200 a un 1080 × 1350
+       se comía media franja). */
+    function recorte(sw, sh, W, H, ancla) {
         var m = Math.max(W / sw, H / sh);      // escala uniforme para cubrir
         var cw = W / m;                         // ancho de origen recortado
         var ch = H / m;                         // alto de origen recortado
+        var sy = (sh - ch) / 2;
+        if (ancla === 'arriba') sy = 0;
+        else if (ancla === 'abajo') sy = sh - ch;
         return {
             sx: (sw - cw) / 2,
-            sy: (sh - ch) / 2,
+            sy: sy,
             cw: cw,
             ch: ch
         };
+    }
+
+    function anclaActual() {
+        return (selAncla && selAncla.value) || 'centro';
     }
 
     function actualizarGuia() {
@@ -215,7 +319,7 @@
 
         var d = dims(fmt);
         if (!d) return;
-        var c = recorte(sw, sh, d.w, d.h);
+        var c = recorte(sw, sh, d.w, d.h, anclaActual());
         var ex = el.offsetWidth / sw;
         var ey = el.offsetHeight / sh;
 
@@ -264,7 +368,7 @@
         canvas.discardActiveObject();
 
         /* recorte cover centrado en coordenadas lógicas del lienzo */
-        var c = recorte(canvas.width, canvas.height, d.w, d.h);
+        var c = recorte(canvas.width, canvas.height, d.w, d.h, anclaActual());
 
         /* el respaldo lógico son solo 1200px y los presets llegan a 2560:
            antes se estiraba ese raster (texto suave). Ahora se pinta la
@@ -377,6 +481,7 @@
 
     select.addEventListener('change', actualizarInfo);
     chkGuia.addEventListener('change', actualizarGuia);
+    if (selAncla) selAncla.addEventListener('change', actualizarGuia);
     btnDescargar.addEventListener('click', descargar);
     window.addEventListener('resize', actualizarGuia);
 
