@@ -52,6 +52,10 @@ cuadras, en PNG). El script borra la versión que no mejora.
 ## Funciones del editor
 
 - Plantillas, títulos, imágenes, detalles y capas (arrastrar orden, traer/enviar).
+- **El titular y el detalle nunca se tocan** (tet1): el aire entre las dos zonas
+  es el 2 % de la altura del lienzo, el titular se encoge midiendo su alto real
+  y, al insertar cualquiera de los dos, `separarTextos()` comprueba la
+  separación y mueve el detalle (o sube el titular) lo que falte.
 - **Pestaña «Capas» en el editor de vídeo** (`video.html`, R5): varias imágenes sueltas además del contenido, cada una con posición, tamaño y ventana temporal (aparece y desaparece en un momento del vídeo), mezcladas con los textos en un único orden de dibujo — una imagen puede quedar entre dos textos. Con tocar para seleccionar, manija para mover y asas para escalar.
 - **Panel de capas** (`capas.js`): deshacer/rehacer (Ctrl+Z / Ctrl+Shift+Z), duplicar, guardar/cargar proyecto `.json`, compartir (Web Share).
 - **Formatos sociales** (`formatos.js`): presets de Instagram, Facebook, X, YouTube, TikTok, LinkedIn y Pinterest con guía de recorte y zona segura; exporta PNG en píxeles exactos. Incluye el preset **Origen** (tamaño original del lienzo).

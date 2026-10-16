@@ -32,7 +32,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c fundido entre fotos y vídeos ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 | Lote S — Exportación, móvil y publicación | 🔨 **S1 exportar sin negro ✅ · S2 el lienzo se encaja solo ✅ · S3 barra de texto fija en móvil ✅ · S4 panel Publicación ✅ · S5 plantillas que ya no borran el trabajo ✅ · S6 galería «toca e inserta» ✅** |
 | Lote T — Lienzo de tet1 (plantillas sociales) | 🔨 **T1 franja que se adapta sin deformarse ✅ · T2 el lienzo se adapta al formato, sin recortar ✅ · T3 fondo con degradado + opacidad ✅ · T4 texto ya insertado editable ✅ · T5 imantado con guías ✅ · T6 recorte anclado arriba ✅ · T7 bugs de fondo/zonas/archivo repetido ✅** |
-| Lote U — Portada, navegación y móvil | ✅ **U1 portada con nombres, filtros y pasos · U2 «Editores» visible en el navbar · U3 capturas de la portada a JPEG (−55 %) · U4 barra y rail en filas que se ven enteras (sin scroll) · U5 el lienzo se calcula, no se fija en 300 px · U6 botones de acción fuera del lienzo · U7 «Insertar título» junto a su campo · U8 contraste y Lighthouse 1,00 · U10 bugs de campo (compartir, franja, hashtags) · U11 botones del dock a igual en móvil** |
+| Lote U — Portada, navegación y móvil | ✅ **U1 portada con nombres, filtros y pasos · U2 «Editores» visible en el navbar · U3 capturas de la portada a JPEG (−55 %) · U4 barra y rail en filas que se ven enteras (sin scroll) · U5 el lienzo se calcula, no se fija en 300 px · U6 botones de acción fuera del lienzo · U7 «Insertar título» junto a su campo · U8 contraste y Lighthouse 1,00 · U10 bugs de campo (compartir, franja, hashtags) · U11 botones del dock a igual en móvil · U12 el titular y el detalle nunca se tocan** |
 
 ---
 
@@ -231,6 +231,44 @@ misma letra (también «Generar» en tet2 y dictet).
 > caracteres) hacia saltar la descarga a otra fila aunque luego se encogiera y
 > sobrara sitio. La opción se abrevió a «Desde arriba» y la explicación se
 > quedó en el `title`.
+### U12 · Que el titular y el detalle nunca se toquen
+
+Las zonas están al 60 % y al 72 % de la altura (12 px de aire en un lienzo de
+1200), pero el titular se encogía con una **estimación** del alto
+—«líneas × tamaño × 1,16»— que se quedaba corta: el texto medía 137 px donde se
+estimaban 130 y el detalle acababa a **6 px** del titular. Con la sombra
+activada se leían pegados.
+
+Tres cambios:
+
+1. **El aire es una fracción de la altura** (2 %, 24 px en 1200) y
+   `huecoTitulo()` lo reserva, así que el titular encoge con el hueco ya
+   descontado.
+2. **El encoge se mide de verdad**: se crea el Textbox y se baja de 4 en 4
+   mientras su alto real no quepa. `_textLines.length × fontSize × lineHeight`
+   es lo que dibuja Fabric; la estimación线路 del alto se queda corta siempre.
+3. **`separarTextos()`** como red de seguridad: al insertar cualquiera de los
+   dos y al recolocar las zonas (cambio de formato), mide el final del titular
+   y el principio del detalle, y empuja el detalle hacia abajo lo que falte. Si
+   el detalle se saldría por abajo, sube el titular en lugar de bajar el
+   detalle. Expuesta como `window.tetSepararTextos()`.
+
+Importante: se mide el alto **del texto**, no el de la caja. El Textbox del
+detalle se crea con `height` = alto de zona para que no se salga por abajo, así
+que medir su caja daría 240 px de algo que no existe y movería todo de más.
+
+Medido: titular y detalle largos en 1200×1200 → 33 px de aire (antes 6), el
+titular baja a 48 px solo. Titular interminable → 32 px y 3 líneas, dentro de su
+hueco. Detalle insertado antes que el titular → 60 px. En 1200×630 con los dos
+largos → 34 px y el detalle a 9 px del borde. Tras `tetReubicarTextos()`
+(cambio de formato) el aire se mantiene.
+
+Solo afecta a `tet1.html`: es el único editor con titular **y** detalle (art y
+miniatura solo tienen titular; tet2 y dictet, solo detalle).
+
+> Lo que **no** hace: si mueves un texto a mano encima del otro, se quedan
+> donde los dejes. La separación se garantiza al colocar y al recolocar, no
+> mientras arrastras —ahí pelearse con el dedo sería peor.
 ### U9 · Cache busting
 
 `sw.js` sube a `tet-admin-v7` (descarta las cachés viejas, incluidos los PNG que
