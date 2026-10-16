@@ -145,7 +145,7 @@ function aplicarBarra(url) {
         canvas.overlayImage.set({
             left: 0, top: 0,
             scaleX: r.esc, scaleY: r.esc,
-            opacity: DECO.opacidad
+            opacity: 1          /* la franja nunca se transparenta */
         });
         canvas.renderAll();
         return;
@@ -157,7 +157,7 @@ function aplicarBarra(url) {
         top: 0,
         scaleX: r.esc,
         scaleY: r.esc,
-        opacity: DECO.opacidad
+        opacity: 1              /* la franja nunca se transparenta */
     });
 }
 
@@ -210,11 +210,15 @@ function esLaMismaImagen(url, img) {
     return s.slice(-url.length) === url;
 }
 
-/* Opacidad sobre lo ya cargado: no recarga nada. */
+/* Opacidad sobre lo ya cargado: no recarga nada.
+   La FRANJA se queda siempre al 100 %: es la identidad de la plantilla (logo y
+   rótulo en blanco sobre azul) y con el deslizador a media el degradado se
+   transparentaba a través de ella y el rótulo se apagaba. El deslizador solo
+   afecta a la imagen de plantilla. */
 function refrescarOpacidadDecoracion() {
     var bg = canvas.backgroundImage, ov = canvas.overlayImage;
     if (bg) bg.set({ opacity: DECO.opacidad });
-    if (ov) ov.set({ opacity: DECO.opacidad });
+    if (ov) ov.set({ opacity: 1 });
     canvas.renderAll();
 }
 

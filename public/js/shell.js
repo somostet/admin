@@ -49,9 +49,15 @@
         return b;
     }
 
-    /* Mueve un botón del formulario a otro sitio conservando sus handlers */
+    /* Mueve un botón del formulario a otro sitio conservando sus handlers.
+       Se busca en todo el documento y no solo en .editor-panel: en tet2,
+       dictet, art, miniatura y modcre la fila de botones de acción está en la
+       columna del lienzo, así que no se encontraba nunca y el botón se quedaba
+       apilado encima del lienzo —en el móvil, media pantalla de botones antes
+       de ver el diseño. */
     function moverBoton(etiqueta, contenedor) {
-        var b = panel.querySelector('[aria-label="' + etiqueta + '"]');
+        var sel = '[aria-label="' + etiqueta + '"]';
+        var b = (panel && panel.querySelector(sel)) || document.querySelector(sel);
         if (!b) return null;
         b.classList.add('btn-ghost');
         contenedor.appendChild(b);
@@ -63,24 +69,35 @@
         if (!b) return;
         var span = b.querySelector('span');
         if (span) span.classList.add('solo-movil');
+        /* w-100 es width:100% !important de Bootstrap: en el rail (y en la
+           rejilla del móvil) esos botones se comían la fila entera */
+        b.classList.remove('w-100');
     }
 
-    /* quita columnas/filas que quedaron vacías tras mover los botones */
+    /* quita columnas/filas que quedaron vacías tras mover los botones.
+       Se mira también la columna del lienzo: allí viven, en tet2, dictet, art,
+       miniatura y modcre, la fila de acciones y las de orden de capas, que se
+       vacían al subir las herramientas al rail y a la barra. */
     function limpiarVacios() {
         var esCol = /(^|\s)col(-[a-z0-9]+)*(\s|$)/i;
+        var raices = [panel, lienzo];
         for (var p = 0; p < 5; p++) {
             var quitados = 0;
-            panel.querySelectorAll('.row > div').forEach(function (d) {
-                if (!esCol.test(d.className || '')) return;
-                if (d.querySelector('input, select, textarea, button, label, img, canvas, kbd, h6, p')) return;
-                if (!d.textContent.trim()) { d.remove(); quitados++; }
-            });
-            panel.querySelectorAll('.row').forEach(function (r) {
-                if (!r.textContent.trim() &&
-                    !r.querySelector('input, select, textarea, button, label, img')) {
-                    r.remove();
-                    quitados++;
-                }
+            raices.forEach(function (raiz) {
+                if (!raiz) return;
+                raiz.querySelectorAll('.row > div').forEach(function (d) {
+                    if (!esCol.test(d.className || '')) return;
+                    if (d.classList.contains('sh-guardado')) return;
+                    if (d.querySelector('input, select, textarea, button, label, img, canvas, kbd, h6, p')) return;
+                    if (!d.textContent.trim()) { d.remove(); quitados++; }
+                });
+                raiz.querySelectorAll('.row').forEach(function (r) {
+                    if (!r.textContent.trim() &&
+                        !r.querySelector('input, select, textarea, button, label, img, canvas')) {
+                        r.remove();
+                        quitados++;
+                    }
+                });
             });
             if (!quitados) break;
         }
@@ -113,56 +130,17 @@
     top.appendChild(el('span', 'shell-doc',
         '<i class="fas fa-pen" aria-hidden="true"></i> ' + (nombreEdit || 'Editor')));
 
-    /* selector de plantilla + avance automático en el navbar */
+    /* selector de plantilla en el navbar (el avance automático ▶ se quitó:
+       cambiaba la plantilla solo, cada 1,4 s, sin avisar) */
     var navPrin = document.querySelector('nav.navbar');
     var socialNav = document.querySelector('.navbar-social');
     var grupoTpl = el('div', 'navbar-tpl');
     var selTpl = q('#plantilla');
     if (selTpl) grupoTpl.appendChild(selTpl);
     moverBoton('Cargar plantilla', grupoTpl);
-
-    var btnAuto = mkBtn('fa-play', 'Rotar plantillas automáticamente');
-    var timerAuto = null;
-    function pararAuto() {
-        if (timerAuto) { clearInterval(timerAuto); timerAuto = null; }
-        btnAuto.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
-        btnAuto.setAttribute('aria-label', 'Rotar plantillas automáticamente');
-        btnAuto.setAttribute('title', 'Rotar plantillas automáticamente');
-    }
-    btnAuto.addEventListener('click', function () {
-        if (timerAuto) { pararAuto(); return; }
-        if (!selTpl || typeof reload !== 'function') return;
-        btnAuto.innerHTML = '<i class="fas fa-pause" aria-hidden="true"></i>';
-        btnAuto.setAttribute('aria-label', 'Detener rotación de plantillas');
-        btnAuto.setAttribute('title', 'Detener rotación de plantillas');
-        timerAuto = setInterval(function () {
-            /* con la pestaña en segundo plano no se toca el lienzo: al volver
-               el usuario se encontraba la plantilla cambiada sin saberlo */
-            if (document.hidden) return;
-            var n = selTpl.options.length;
-            if (!n) return;
-            /* si el valor actual no es un índice (opciones editadas a mano) se
-              .parseInt devolvía NaN y el selector se quedaba en blanco */
-            var idx = parseInt(selTpl.value, 10);
-            if (isNaN(idx)) idx = 0;
-            selTpl.value = String((idx + 1) % n);
-            if (typeof reload === 'function') reload();
-        }, 1400);
-    });
-    /* tocar el lienzo también detiene la rotación: si no, el diseño se
-       recolocaba mientras el usuario movía un texto */
-    work.addEventListener('pointerdown', pararAuto);
-    document.addEventListener('visibilitychange', function () {
-        if (document.hidden) pararAuto();
-    });
-    // una elección manual detiene la rotación
-    if (selTpl) selTpl.addEventListener('change', pararAuto);
-    if (selTpl) {
-        grupoTpl.appendChild(btnAuto);
-        if (navPrin) {
-            if (socialNav) navPrin.insertBefore(grupoTpl, socialNav);
-            else navPrin.appendChild(grupoTpl);
-        }
+    if (selTpl && navPrin) {
+        if (socialNav) navPrin.insertBefore(grupoTpl, socialNav);
+        else navPrin.appendChild(grupoTpl);
     }
 
     top.appendChild(sep());
@@ -193,6 +171,14 @@
     btnZoomLbl.id = 'sh-zoom-label';
     var btnZoomIn = mkBtn('fa-search-plus', 'Acercar');
     var btnZoomFit = mkBtn('fa-compress-arrows-alt', 'Ajustar a pantalla');
+    btnZoomFit.classList.add('sh-zoom-fit');   /* en el teléfono se oculta */
+
+    /* estos seis son la primera fila de la barra en el teléfono (ver el CSS
+       de .sh-ctl); la casilla de la guía también cabe ahí, y los dos selectores
+       se quedan en la segunda */
+    [btnUndo, btnRedo, btnZoomOut, btnZoomLbl, btnZoomIn].forEach(function (b) {
+        if (b) b.classList.add('sh-ctl');
+    });
 
     function aplicarZoom(z) {
         zoom = Math.min(4, Math.max(0.25, z)); /* valor libre, sin engancharse a NIVELES */
@@ -265,10 +251,51 @@
        nunca por encima del 100 % (no hace falta agrandar un diseño pequeño) */
     function autoAjustar() {
         if (zoomManual) return;
+        encajarBaseLienzo();
         var base = lienzoActual();
         var hueco = huecoDisponible();
         if (!base || !(base.w > 0) || !hueco) return;
         aplicarZoom(Math.max(0.05, Math.min(hueco.w / base.w, hueco.h / base.w, 1)));
+    }
+
+    /* Tamaño de maquetación del lienzo calculado, no el del triángulo fijo que traía el HTML.
+       Cada editor nacía con 300 px de lado en pantallas pequeñas y 500 px en las
+       demás — valores pensados para un monitor. Como el encaje automático nunca
+       pasa del 100 %, en un teléfono el lienzo se quedaba a 300 px con los
+       bordes de margen y en una tableta (768 px) quedaba diminuto al lado de la
+       pantalla. Aquí se calcula a partir del sitio libre y del tamaño real del
+       diseño (canvas.getWidth/getHeight), tocando solo el CSS del contenedor:
+       el backing store no se mueve, el 100 % sigue siendo el tamaño real y lo
+       que se descarga o se comparte es exactamente igual. */
+    function encajarBaseLienzo() {
+        var hueco = huecoDisponible();
+        if (!hueco) return;
+        var c = window.canvas;
+        if (!c || typeof c.getWidth !== 'function') return;
+        var lw = c.getWidth(), lh = c.getHeight();
+        if (!(lw > 0) || !(lh > 0)) return;
+        var escala = Math.min(1, hueco.w / lw, (hueco.h > 0 ? hueco.h / lh : 1));
+        if (!(escala > 0)) return;
+        var w = Math.max(160, Math.round(lw * escala));
+        var h = Math.max(160, Math.round(lh * escala));
+        var env = q('.canvas-container');
+        if (!env || (env.offsetWidth === w && env.offsetHeight === h)) return;
+
+        /* Ojo: setDimensions({...}, {cssOnly:true}) no sirve aquí. En el Fabric
+           vendorizado la rama cssOnly pasa el número sin «px»
+           (style.width = 400 no es CSS válido) y el tamaño se descarta en
+           silencio. Se escriben a mano el contenedor y los dos canvas. */
+        env.style.width = w + 'px';
+        env.style.height = h + 'px';
+        [c.lowerCanvasEl, c.upperCanvasEl].forEach(function (el) {
+            if (el) {
+                el.style.width = w + 'px';
+                el.style.height = h + 'px';
+            }
+        });
+        /* sin esto Fabric sigue creyendo que el lienzo está donde estaba y
+           al mover un elemento con el dedo se desplaza */
+        if (typeof c.calcOffset === 'function') c.calcOffset();
     }
     btnZoomOut.addEventListener('click', function () { pasoZoom(-1); });
     btnZoomIn.addEventListener('click', function () { pasoZoom(1); });
@@ -405,6 +432,9 @@
 
     /* lienzo en blanco ajustado al formato elegido */
     var btnBlanco = mkBtn('fa-file', 'Lienzo en blanco al tamaño del formato');
+    /* en el teléfono se oculta: es lo que empujaba la barra a tres filas y
+       vacía el lienzo, así que en el móvil sigue estando en el dock */
+    btnBlanco.classList.add('sh-limpiar');
     btnBlanco.addEventListener('click', function () {
         var d = window.formatosDims ? window.formatosDims() : null;
         if (!d) return;
@@ -456,10 +486,16 @@
 
     /* compartir (reenvía al botón de la toolbar de capas) */
     var capasShare = q('#capas-toolbar [data-act="share"]');
-    if (navigator.share && capasShare) {
+    if (capasShare) {
         var btnShare = mkBtn('fa-share-alt', 'Compartir imagen', 'Compartir');
         btnShare.classList.remove('btn-ghost');
         btnShare.classList.add('btn-primary');
+        /* en el teléfono la barra deja los botones en 36 px de ancho y
+           «Compartir» quedaba cortado, como si el botón no existiera: con esta
+           clase se queda solo con el icono (el nombre sigue en el title y en el
+           aria-label) */
+        btnShare.classList.add('sh-share');
+        btnShare.classList.add('sh-ctl');   /* primera fila de la barra en el móvil */
         btnShare.addEventListener('click', function () { reenviar('share'); });
         top.appendChild(btnShare);
     }
@@ -468,8 +504,11 @@
     if (btnFmt) top.appendChild(btnFmt);
 
     /* el descargador original del formulario se retira:
-       el preset "Origen" del selector exporta al tamaño original */
-    var btnDesc = panel.querySelector('[aria-label="Descargar"]');
+       el preset "Origen" del selector exporta al tamaño original.
+       Documento entero y no solo el panel: en art, miniatura y modcre el botón
+       estaba en la columna del lienzo y se quedaba ahí, con un segundo
+       «Descargar» redundante (y, de paso, media pantalla de botones en el móvil). */
+    var btnDesc = document.querySelector('[aria-label="Descargar"]');
     if (btnDesc) btnDesc.remove();
 
     /* tema oscuro / claro */
@@ -559,16 +598,36 @@
 
     rail.appendChild(el('span', 'shell-rail-sep'));
 
-    var btnAtras = mkBtn('fa-arrow-down', 'Enviar hacia atrás');
-    btnAtras.addEventListener('click', function () {
-        if (typeof window.toBackward === 'function') window.toBackward();
-    });
-    var btnAdelante = mkBtn('fa-arrow-up', 'Traer hacia delante');
-    btnAdelante.addEventListener('click', function () {
-        if (typeof window.toForward === 'function') window.toForward();
-    });
-    rail.appendChild(btnAtras);
-    rail.appendChild(btnAdelante);
+    /* Orden de capas. art, miniatura y modcre traen sus propios botones de
+       orden en la columna del lienzo y se quedaban apilados encima del
+       lienzo (cuatro botones y sus dos filas, justo donde tiene que estar el
+       diseño). Si la página los trae, se suben al rail y no se crean los dos
+       de siempre, que harían el mismo trabajo: los de la página ya llaman a
+       toBackward/toForward. */
+    var ordenPagina = ['Enviar al fondo', 'Enviar atrás', 'Traer adelante', 'Traer al frente']
+        .map(function (nombre) {
+            return document.querySelector('[aria-label="' + nombre + '"]');
+        })
+        .filter(Boolean);
+
+    if (ordenPagina.length) {
+        ordenPagina.forEach(function (b) {
+            b.classList.add('btn-ghost');
+            hacerIcono(b);
+            rail.appendChild(b);
+        });
+    } else {
+        var btnAtras = mkBtn('fa-arrow-down', 'Enviar hacia atrás');
+        btnAtras.addEventListener('click', function () {
+            if (typeof window.toBackward === 'function') window.toBackward();
+        });
+        var btnAdelante = mkBtn('fa-arrow-up', 'Traer hacia delante');
+        btnAdelante.addEventListener('click', function () {
+            if (typeof window.toForward === 'function') window.toForward();
+        });
+        rail.appendChild(btnAtras);
+        rail.appendChild(btnAdelante);
+    }
 
     /* ---------------- dock con pestañas ---------------- */
     var tabs = el('div', 'dock-tabs');
@@ -1164,6 +1223,25 @@
     var cr = q('#capas-toolbar [data-act="redo"]');
     btnUndo.disabled = cu ? cu.disabled : true;
     btnRedo.disabled = cr ? cr.disabled : true;
+
+    /* «Insertar título» junto a su campo, en Propiedades. En tet1 ya estaba
+       así; en art, miniatura y modcre vivía en la fila de acciones del
+       lienzo y, al subir esa fila al rail, se quedaba solo encima del lienzo:
+       un «H» suelto que no explica nada y ocupa sitio. */
+    var campoTitulo = document.getElementById('titular');
+    var btnTitulo = document.querySelector('[aria-label="Insertar título"]');
+
+    var filaCampo = campoTitulo && campoTitulo.closest('.row');
+    if (campoTitulo && btnTitulo && filaCampo &&
+        !filaCampo.querySelector('[aria-label="Insertar título"]')) {
+        var ancla = (campoTitulo.closest('.input-group, .form-group') || campoTitulo).parentElement;
+        if (ancla && ancla.parentElement) {
+            var celda = el('div', 'col-12 col-sm');
+            ancla.parentElement.insertBefore(celda, ancla.nextSibling);
+            celda.appendChild(btnTitulo);
+            btnTitulo.classList.add('w-100');
+        }
+    }
 
     /* ---------------- estado inicial ---------------- */
     aplicarZoom(1);

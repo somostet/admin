@@ -647,15 +647,22 @@ textarea:focus-visible,
         border-radius: 0 0 10px 10px;
     }
 
-    /* R8 · el toggle «Crear» se convierte en hamburguesa (44 px táctiles) */
+    /* R8 · el toggle «Editores» se convierte en hamburguesa (44 px táctiles).
+       Se ocultan el icono y el texto con display:none —no con font-size:0,
+       que el bloque de más abajo (`.nav-link`, misma especificidad y posterior)
+       volvía a poner a .86rem y el texto se colaba en la barra. */
     .tet-nav-menu .dropdown-toggle {
-        font-size: 0;   /* oculta el texto «Crear», sigue accesible */
         width: 44px;
         height: 44px;
         padding: 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+    }
+
+    .tet-nav-menu .dropdown-toggle .tet-nav-toggle-txt,
+    .tet-nav-menu .dropdown-toggle i {
+        display: none;
     }
 
     .tet-nav-menu .dropdown-toggle::before {
@@ -796,5 +803,407 @@ textarea:focus-visible,
     .tet-nav-menu .nav-link {
         padding: .4rem .6rem;
         font-size: .86rem;
+    }
+}
+
+/* El desplegable llevaba years el texto vacío: en escritorio solo se veía una
+   flechita de 4 px, sin decir qué abre. Ahora es «icono + Editores» y en
+   móvil, donde el texto se oculta con font-size:0, se queda solo el icono. */
+.tet-nav-menu .dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.tet-nav-menu .dropdown-toggle i {
+    font-size: .85em;
+    opacity: .85;
+}
+
+/* ============================================================
+   Portada (index.html) — rejilla de editores + filtros + pasos
+   ============================================================ */
+
+:root {
+    --tet-acento: #2f6fd0;
+    --tet-acento-claro: #eaf2ff;
+    --tet-linea: #e3e8ef;
+    --tet-texto: #1c2433;
+    --tet-texto-suave: #5a6780;
+}
+
+/* ---------- cabecera ---------- */
+.portada-hero {
+    padding: 2.4rem 0 2rem;
+    background: linear-gradient(180deg, #f5f8fc 0%, #eaeff6 100%);
+    border-bottom: 1px solid var(--tet-linea);
+    text-align: center;
+}
+
+.portada-titulo {
+    margin: 0 0 .35rem;
+    font-size: clamp(1.9rem, 5.5vw, 2.9rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    color: var(--tet-texto);
+}
+
+.portada-lead {
+    max-width: 44rem;
+    margin: 0 auto;
+    font-size: clamp(.98rem, 2.6vw, 1.12rem);
+    color: var(--tet-texto-suave);
+}
+
+.portada-datos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .4rem .5rem;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.portada-datos li {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .7rem;
+    border: 1px solid #d9e2ef;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .8);
+    color: #40506c;
+    font-size: .84rem;
+    font-weight: 600;
+}
+
+.portada-datos i {
+    color: #2f9e63;
+    font-size: .78rem;
+}
+
+/* ---------- secciones ---------- */
+.portada-seccion {
+    padding: 2.2rem 0;
+}
+
+.portada-seccion + .portada-seccion {
+    padding-top: .5rem;
+}
+
+.portada-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .7rem 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.portada-titulo-seccion {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--tet-texto);
+}
+
+.portada-sub {
+    margin: .15rem 0 0;
+    font-size: .88rem;
+    color: var(--tet-texto-suave);
+}
+
+/* ---------- filtros ---------- */
+.portada-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.chip {
+    min-height: 38px;
+    padding: .35rem .9rem;
+    border: 1px solid #d3dceb;
+    border-radius: 999px;
+    background: #fff;
+    color: #3c4a63;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.chip:hover {
+    background: var(--tet-acento-claro);
+    border-color: #b9cef0;
+    color: var(--tet-acento);
+}
+
+.chip.is-activo {
+    background: var(--tet-nav, #1d2b43);
+    border-color: var(--tet-nav, #1d2b43);
+    color: #fff;
+}
+
+/* ---------- rejilla ---------- */
+.portada-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+    gap: 1rem;
+}
+
+.portada-vacio {
+    margin: 1.5rem 0;
+    text-align: center;
+    color: var(--tet-texto-suave);
+}
+
+/* ---------- tarjeta ---------- */
+.tarjeta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border: 1px solid var(--tet-linea);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.tarjeta:hover,
+.tarjeta:focus-within {
+    transform: translateY(-3px);
+    border-color: #c9d8ef;
+    box-shadow: 0 .8rem 1.6rem rgba(16, 32, 64, .13);
+}
+
+.tarjeta-media {
+    display: block;
+    background: #e9edf3;
+    line-height: 0;
+}
+
+.tarjeta-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 510 / 327;
+    object-fit: cover;
+    border-bottom: 1px solid var(--tet-linea);
+}
+
+.tarjeta-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    padding: .8rem .9rem .9rem;
+}
+
+.tarjeta-cat {
+    margin: 0;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    /* #7b8aa3 daba 3,5:1 sobre blanco: por debajo del 4,5 que pide WCAG AA */
+    color: #5c6a84;
+}
+
+.tarjeta-titulo {
+    margin: .2rem 0 .3rem;
+    font-size: 1.06rem;
+    font-weight: 700;
+    color: var(--tet-texto);
+}
+
+.tarjeta-sub {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #64738c;
+}
+
+.tarjeta-desc {
+    flex: 1 1 auto;
+    margin: 0 0 .7rem;
+    font-size: .9rem;
+    line-height: 1.45;
+    color: var(--tet-texto-suave);
+}
+
+.tarjeta-desc code {
+    font-size: .85em;
+    color: #b2477a;
+}
+
+.tarjeta-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    padding: .5rem .6rem;
+    border: 1px solid #d6e2f5;
+    border-radius: 9px;
+    background: #f3f7ff;
+    color: var(--tet-acento);
+    font-size: .88rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.tarjeta-cta:hover,
+.tarjeta-cta:focus-visible {
+    background: #e3edff;
+    border-color: #bcd2f2;
+    color: #1d4fa8;
+}
+
+/* ---------- pasos ---------- */
+.portada-pasos {
+    padding-bottom: 2.6rem;
+}
+
+.pasos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1rem;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: paso;
+}
+
+.paso {
+    position: relative;
+    padding: 1rem 1rem 1.05rem;
+    background: #fff;
+    border: 1px solid var(--tet-linea);
+    border-radius: 12px;
+}
+
+.paso-n {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-bottom: .5rem;
+    border-radius: 50%;
+    background: var(--tet-nav, #1d2b43);
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.paso-titulo {
+    margin: 0 0 .25rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--tet-texto);
+}
+
+.paso-desc {
+    margin: 0;
+    font-size: .88rem;
+    line-height: 1.45;
+    color: var(--tet-texto-suave);
+}
+
+/* ---------- portada en móvil: dos columnas y tarjeta entera pulsable ---------- */
+@media (max-width: 767.98px) {
+    .portada-hero {
+        padding: 1.6rem 0 1.4rem;
+    }
+
+    .portada-seccion {
+        padding: 1.5rem 0;
+    }
+
+    .portada-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .6rem;
+    }
+
+    .portada-cabecera {
+        align-items: stretch;
+    }
+
+    .portada-filtros {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: .15rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tarjeta {
+        border-radius: 12px;
+    }
+
+    .tarjeta-media img {
+        aspect-ratio: 16 / 10;
+    }
+
+    .tarjeta-body {
+        padding: .6rem .65rem .65rem;
+    }
+
+    .tarjeta-cat {
+        font-size: .63rem;
+        letter-spacing: .05em;
+    }
+
+    .tarjeta-titulo {
+        font-size: .95rem;
+        margin: .15rem 0 .25rem;
+    }
+
+    .tarjeta-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: .5rem;
+        font-size: .82rem;
+        line-height: 1.35;
+    }
+
+    .tarjeta-cta {
+        min-height: 44px;   /* objetivo táctil cómodo */
+        padding: .5rem .4rem;
+        font-size: .85rem;
+    }
+
+    /* el botón cubre la tarjeta: un solo toque abre el editor */
+    .tarjeta-cta::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+    }
+}
+
+@media (max-width: 380px) {
+    .portada-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- quien no quiere movimiento ---------- */
+@media (prefers-reduced-motion: reduce) {
+
+    .tarjeta,
+    .tarjeta-cta,
+    .chip,
+    .card,
+    .navbar-social a {
+        transition: none !important;
+    }
+
+    .tarjeta:hover,
+    .tarjeta:focus-within,
+    .card:hover,
+    .navbar-social a:hover {
+        transform: none !important;
     }
 }

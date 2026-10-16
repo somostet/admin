@@ -15,23 +15,20 @@
     </script>
     <meta charset="utf-8">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta name="description" content="Página principal de tet.">
-    <meta name="keywords" content="tech,tecnológia">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="tet admin: crea con plantillas las imágenes, los GIF y los vídeos de somostet. Ocho editores (noticias, textos, diccionario, arte, miniaturas, creaciones, GIF y vídeo), sin instalar nada y con el tamaño exacto de cada red social.">
+    <meta name="keywords" content="tet,somostet,diseño,plantillas,redes sociales,imagenes,gif,video,editor">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#1d2b43">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
-    <title>tet | Admin</title>
+    <title>tet admin · Crea imágenes, GIF y vídeos para tet</title>
 
-    <!-- Bootstrap CSS CDN -->
     <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
-    <!-- Our Custom CSS -->
-    <link rel="stylesheet" href="./public/css/style.css?v=r4">
+    <link rel="stylesheet" href="./public/css/style.css?v=r7">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
 
     <!-- manifest del app + iconos -->
     <link rel="manifest" href="./manifest.webmanifest">
-    <link rel="apple-touch-icon" href="./public/img/Logotet.png">
+    <link rel="apple-touch-icon" href="./public/img/pwa-192.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="tet admin">
@@ -45,159 +42,234 @@
             });
         }
     </script>
-    <style>
-        .bd-placeholder-img {
-            font-size: 1.125rem;
-            text-anchor: middle;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        
-        @media (min-width: 768px) {
-            .bd-placeholder-img-lg {
-                font-size: 3.5rem;
-            }
-        }
-    </style>
-
 </head>
 
-<body>
-            <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
-            <a class="navbar-brand" href="index.html">
-                <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
-                <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
-            </a>
-            <ul class="navbar-nav tet-nav-menu">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"></a>
-                    <ul class="dropdown-menu tet-dd">
-                        <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
-                        <li><a class="dropdown-item" href="./tet2.html">Textos <span class="tet-dd-sub">tet 2</span></a></li>
-                        <li><a class="dropdown-item" href="./dictet.html">Diccionario <span class="tet-dd-sub">tet 3</span></a></li>
-                        <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
-                        <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
-                        <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
-                        <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
-                        <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
-                    </ul>
-                </li>
-            </ul>
-            <div class="navbar-social">
-                <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
-                <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
-                <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X de tet" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
-                <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
-            </div>
-        </nav>
+<body class="portada">
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                    aria-expanded="false"><i class="fas fa-layer-group" aria-hidden="true"></i>
+                    <span class="tet-nav-toggle-txt">Editores</span></a>
+                <ul class="dropdown-menu tet-dd">
+                    <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
+                    <li><a class="dropdown-item" href="./tet2.html">Textos <span class="tet-dd-sub">tet 2</span></a></li>
+                    <li><a class="dropdown-item" href="./dictet.html">Diccionario <span class="tet-dd-sub">tet 3</span></a></li>
+                    <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
+                    <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
+                    <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
+                    <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
+                    <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-social">
+            <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+            <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X de tet" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
+        </div>
+    </nav>
 
-    <main role="main">
-
-        <section class="p-5 mb-4 bg-body-tertiary rounded-3 text-center">
+    <main>
+        <!-- ---------- cabecera ---------- -->
+        <section class="portada-hero">
             <div class="container">
-                <h1>tet admin</h1>
-                <p class="lead text-muted">Herramienta creada para que los miembros de tu espacio tecnológico puedan agilizar el proceso de generación de multimedia y reglas de diseño para todo el contenido. </p>
+                <h1 class="portada-titulo">tet admin</h1>
+                <p class="portada-lead">Ocho editores con las plantillas de tet ya hechas: elige una, escribe, coloca
+                    y descarga. Sin instalar nada y con el tamaño exacto de cada red social.</p>
+                <ul class="portada-datos">
+                    <li><i class="fas fa-check" aria-hidden="true"></i> Funciona en el móvil</li>
+                    <li><i class="fas fa-check" aria-hidden="true"></i> Sin cuenta ni servidor</li>
+                    <li><i class="fas fa-check" aria-hidden="true"></i> Exporta en PNG, MP4 y GIF</li>
+                </ul>
             </div>
         </section>
 
-        <div class="album py-5 bg-light">
+        <!-- ---------- editores ---------- -->
+        <section class="portada-seccion">
             <div class="container">
+                <div class="portada-cabecera">
+                    <div>
+                        <h2 class="portada-titulo-seccion">Elige qué quieres crear</h2>
+                        <p class="portada-sub" id="portada-conteo">8 editores</p>
+                    </div>
+                    <div class="portada-filtros" role="group" aria-label="Filtrar editores por tipo de contenido">
+                        <button type="button" class="chip is-activo" data-filtro="todos" aria-pressed="true">Todos</button>
+                        <button type="button" class="chip" data-filtro="imagen" aria-pressed="false">Imágenes</button>
+                        <button type="button" class="chip" data-filtro="gif" aria-pressed="false">GIF</button>
+                        <button type="button" class="chip" data-filtro="video" aria-pressed="false">Vídeo</button>
+                    </div>
+                </div>
 
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="tet1.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/tet1.png"></a>
-                            <div class="card-body">
-                                <p class="card-text">Crea imágenes de las secciones de tet más recurrentes.</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="tet1.html">Crear</a>
-                            </div>
+                <div class="portada-grid" id="portada-grid">
+
+                    <article class="tarjeta" data-cat="imagen">
+                        <a class="tarjeta-media" href="tet1.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/tet1.jpg" alt="" width="510" height="327"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Imagen · 1200×1200</p>
+                            <h3 class="tarjeta-titulo">Noticias <span class="tarjeta-sub">tet 1</span></h3>
+                            <p class="tarjeta-desc">Las secciones más recurrentes de tet con su franja, su fondo y sus
+                                colores.</p>
+                            <a class="tarjeta-cta" href="tet1.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="tet2.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/tet2.png"></a>
-                            <div class="card-body">
-                                <p class="card-text">Crea imágenes de las secciones basadas en solo texto.</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="tet2.html">Crear</a>
-                            </div>
+                    </article>
+
+                    <article class="tarjeta" data-cat="imagen">
+                        <a class="tarjeta-media" href="tet2.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/tet2.jpg" alt="" width="510" height="327"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Imagen · solo texto</p>
+                            <h3 class="tarjeta-titulo">Textos <span class="tarjeta-sub">tet 2</span></h3>
+                            <p class="tarjeta-desc">Carteles de una sola frase sobre HTML, GNU/Linux, CSS o el que
+                                elijas.</p>
+                            <a class="tarjeta-cta" href="tet2.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="dictet.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/tet3.png"></a>
-                            <div class="card-body">
-                                <p class="card-text">Crea imágenes para la sección de diccionario tecnológico.</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="dictet.html">Crear</a>
-                            </div>
+                    </article>
+
+                    <article class="tarjeta" data-cat="imagen">
+                        <a class="tarjeta-media" href="dictet.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/tet3.jpg" alt="" width="510" height="327"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Imagen · 1200×1200</p>
+                            <h3 class="tarjeta-titulo">Diccionario <span class="tarjeta-sub">tet 3</span></h3>
+                            <p class="tarjeta-desc">La ficha del diccionario tecnológico con su código <code>#code</code>
+                                y el marco de siempre.</p>
+                            <a class="tarjeta-cta" href="dictet.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
                         </div>
-                    </div>
+                    </article>
+
+                    <article class="tarjeta" data-cat="imagen">
+                        <a class="tarjeta-media" href="art.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/tet4.jpg" alt="" width="510" height="327"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Imagen · 1280×720</p>
+                            <h3 class="tarjeta-titulo">Arte <span class="tarjeta-sub">tet 4</span></h3>
+                            <p class="tarjeta-desc">La cabecera horizontal de los artículos de somostet.com.</p>
+                            <a class="tarjeta-cta" href="art.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
+                        </div>
+                    </article>
+
+                    <article class="tarjeta" data-cat="imagen">
+                        <a class="tarjeta-media" href="miniatura.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/tet5.png" alt="" width="510" height="327"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Imagen · 1280×720</p>
+                            <h3 class="tarjeta-titulo">Miniaturas <span class="tarjeta-sub">tet 5</span></h3>
+                            <p class="tarjeta-desc">La miniatura 16:9 de los vídeos que subís a redes sociales.</p>
+                            <a class="tarjeta-cta" href="miniatura.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
+                        </div>
+                    </article>
+
+                    <article class="tarjeta" data-cat="imagen">
+                        <a class="tarjeta-media" href="modcre.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/tet6.jpg" alt="" width="510" height="327"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Imagen · libre</p>
+                            <h3 class="tarjeta-titulo">Creaciones <span class="tarjeta-sub">tet 6</span></h3>
+                            <p class="tarjeta-desc">Lienzo en blanco para componer lo que quieras, sin plantilla de
+                                partida.</p>
+                            <a class="tarjeta-cta" href="modcre.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
+                        </div>
+                    </article>
+
+                    <article class="tarjeta" data-cat="gif">
+                        <a class="tarjeta-media" href="gif.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/gif.jpg" alt="" width="760" height="532"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">GIF · animado</p>
+                            <h3 class="tarjeta-titulo">GIF animado <span class="tarjeta-sub">gif</span></h3>
+                            <p class="tarjeta-desc">Un GIF a partir de tus imágenes, de un vídeo o de lo que tengas
+                                en el lienzo.</p>
+                            <a class="tarjeta-cta" href="gif.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
+                        </div>
+                    </article>
+
+                    <article class="tarjeta" data-cat="video">
+                        <a class="tarjeta-media" href="video.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/video.jpg" alt="" width="760" height="532"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Vídeo · MP4 / WebM</p>
+                            <h3 class="tarjeta-titulo">Vídeo <span class="tarjeta-sub">video</span></h3>
+                            <p class="tarjeta-desc">Un vídeo a partir de imágenes —o recorta uno que ya tengas— con
+                                texto, música y transiciones.</p>
+                            <a class="tarjeta-cta" href="video.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
+                        </div>
+                    </article>
+
                 </div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="art.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/tet4.png"></a>
-                            <div class="card-body">
-                                <p class="card-text">Crea imágenes para los artículos de somostet.com</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="art.html">Crear</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="miniatura.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/tet5.png"></a>
-                            <div class="card-body">
-                                <p class="card-text">Crea miniaturas para los vídeos destinados a redes sociales.</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="miniatura.html">Crear</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="modcre.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/tet6.png"></a>
-                            <div class="card-body">
-                                <p class="card-text">Deja volar tu imaginación y crea nuevas imágenes.</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="modcre.html">Crear</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="gif.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/gif.png" alt="Captura del creador de GIF animados"></a>
-                            <div class="card-body">
-                                <p class="card-text">Crea GIFs animados a partir de tus imágenes, un vídeo o el lienzo.</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="gif.html">Crear</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card mb-4 shadow-sm">
-                            <a href="video.html"><img class="bd-placeholder-img card-img-top img-fluid" width="100%" height="225" src="public/img/indexIMG/video.png" alt="Captura del creador de vídeos"></a>
-                            <div class="card-body">
-                                <p class="card-text">Crea un vídeo MP4 o WebM a partir de varias imágenes o recorta uno que ya tengas.</p>
-                                <a type="button" class="btn btn-sm btn-outline-secondary btn-crear" href="video.html">Crear</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+                <p class="portada-vacio" id="portada-vacio" hidden>No hay editores en este filtro.</p>
             </div>
-        </div>
-        </div>
+        </section>
 
+        <!-- ---------- cómo funciona ---------- -->
+        <section class="portada-seccion portada-pasos">
+            <div class="container">
+                <h2 class="portada-titulo-seccion">Tres pasos, siempre igual</h2>
+                <ol class="pasos">
+                    <li class="paso">
+                        <span class="paso-n" aria-hidden="true">1</span>
+                        <h3 class="paso-titulo">Elige la plantilla</h3>
+                        <p class="paso-desc">Cada editor trae las suyas. Se cambian con un botón y el lienzo se
+                            adapta al formato elegido.</p>
+                    </li>
+                    <li class="paso">
+                        <span class="paso-n" aria-hidden="true">2</span>
+                        <h3 class="paso-titulo">Escribe y coloca</h3>
+                        <p class="paso-desc">Título, detalles e imágenes: los mueves con el dedo o con el ratón y
+                            los cambias de tamaño con las asas.</p>
+                    </li>
+                    <li class="paso">
+                        <span class="paso-n" aria-hidden="true">3</span>
+                        <h3 class="paso-titulo">Descarga o comparte</h3>
+                        <p class="paso-desc">Elige el tamaño de la red (Instagram, Facebook, X, YouTube…) y baja el
+                            PNG exacto, o compártelo sin archivos de por medio.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
     </main>
 
-        <footer class="page-footer font-small text-light bg-tet-footer">
+    <footer class="page-footer font-small text-light bg-tet-footer">
         <div class="container tet-footer-grid">
             <div class="tet-footer-col">
-                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo">
+                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo" loading="lazy" width="88"
+                    height="88">
                 <p class="tet-footer-tag">La tecnología tiene su espacio</p>
                 <a class="tet-footer-web" href="https://www.somostet.com" target="_blank" rel="noopener">somostet.com</a>
             </div>
             <div class="tet-footer-col">
-                <h6 class="tet-footer-title">Crear</h6>
+                <h2 class="tet-footer-title">Crear</h6>
                 <ul class="tet-footer-list">
                     <li><a href="./tet1.html">Noticias</a></li>
                     <li><a href="./tet2.html">Textos</a></li>
@@ -210,7 +282,7 @@
                 </ul>
             </div>
             <div class="tet-footer-col">
-                <h6 class="tet-footer-title">Redes</h6>
+                <h2 class="tet-footer-title">Redes</h6>
                 <ul class="tet-footer-list tet-footer-social">
                     <li><a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook</a></li>
                     <li><a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i> Instagram</a></li>
@@ -219,7 +291,7 @@
                 </ul>
             </div>
             <div class="tet-footer-col">
-                <h6 class="tet-footer-title">Proyecto</h6>
+                <h2 class="tet-footer-title">Proyecto</h6>
                 <ul class="tet-footer-list">
                     <li><a href="https://somostet.github.io/" target="_blank" rel="noopener">tet (sitio)</a></li>
                     <li><a href="./index.html">tet admin</a></li>
@@ -231,7 +303,8 @@
 
     <!-- Scripts -->
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
-    
+    <script src="./public/js/portada.js?v=p1"></script>
+
 </body>
 
 </html>

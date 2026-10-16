@@ -224,10 +224,24 @@
     function refrescar() { pintarChips(); pintarCuentas(); pintarPreview(); guardar(); }
 
     inTags.addEventListener('input', function () {
-        /* se normaliza en caliente: al teclear el 6.º hashtag se sustituye
-           por los cinco primeros en vez de dejar un aviso que hay que leer */
-        var limpio = normalizarTags(inTags.value);
-        if (limpio !== inTags.value) inTags.value = limpio;
+        /* Se normaliza en caliente (al teclear el 6.º hashtag se sustituye por
+           los cinco primeros, en vez de dejar un aviso que hay que leer), pero
+           conservando el separador del final: al normalizar, el espacio que se
+           acababa de pulsar desaparecía y a partir de ahí el segundo # se
+           pegaba al primero («solo se puede poner un #»). También se devuelve
+           el cursor a donde estaba: reescribir el value lo manda al final y a
+           mitad de frase el texto se escribía detrás. */
+        var bruto = inTags.value;
+        var limpio = normalizarTags(bruto);
+        if (/\s$/.test(bruto)) limpio += ' ';
+        if (limpio !== bruto) {
+            var pos = inTags.selectionStart;
+            inTags.value = limpio;
+            try {
+                var fin = Math.min(pos, limpio.length);
+                inTags.setSelectionRange(fin, fin);
+            } catch (e) { /* algunos navegadores no dejan mover el cursor */ }
+        }
         refrescar();
     });
     inTitulo.addEventListener('input', function () {

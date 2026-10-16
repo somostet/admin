@@ -159,7 +159,10 @@
             '<label class="form-label mt-2" for="formato-ancla">Recorte vertical</label>' +
             '<select class="form-select form-select-sm" id="formato-ancla">' +
                 '<option value="centro" selected>Centrado</option>' +
-                '<option value="arriba">Desde arriba (conserva la franja)</option>' +
+                /* «conserva la franja» era la explicación, no la opción: con 30
+                   caracteres el selector no cabía en la barra y la descarga
+                   saltaba de fila. La explicación sigue en el title. */
+                '<option value="arriba">Desde arriba</option>' +
                 '<option value="abajo">Desde abajo</option>' +
             '</select>' +
             '<div class="form-check mt-2">' +
@@ -349,7 +352,7 @@
         var d = dims(fmt);
         if (!fmt || !d) return;
         info.textContent = d.w + ' × ' + d.h + ' px' + (d.safe ? ' · zona segura ' + d.safe.w + '×' + d.safe.h : '');
-        textoDescargar.textContent = 'Descargar ' + d.w + '×' + d.h;
+        textoDescargar.innerHTML = 'Descargar <span class="sh-dim">' + d.w + '×' + d.h + '</span>';
         actualizarGuia();
     }
 

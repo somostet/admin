@@ -32,6 +32,225 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c fundido entre fotos y vídeos ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 | Lote S — Exportación, móvil y publicación | 🔨 **S1 exportar sin negro ✅ · S2 el lienzo se encaja solo ✅ · S3 barra de texto fija en móvil ✅ · S4 panel Publicación ✅ · S5 plantillas que ya no borran el trabajo ✅ · S6 galería «toca e inserta» ✅** |
 | Lote T — Lienzo de tet1 (plantillas sociales) | 🔨 **T1 franja que se adapta sin deformarse ✅ · T2 el lienzo se adapta al formato, sin recortar ✅ · T3 fondo con degradado + opacidad ✅ · T4 texto ya insertado editable ✅ · T5 imantado con guías ✅ · T6 recorte anclado arriba ✅ · T7 bugs de fondo/zonas/archivo repetido ✅** |
+| Lote U — Portada, navegación y móvil | ✅ **U1 portada con nombres, filtros y pasos · U2 «Editores» visible en el navbar · U3 capturas de la portada a JPEG (−55 %) · U4 barra y rail en filas que se ven enteras (sin scroll) · U5 el lienzo se calcula, no se fija en 300 px · U6 botones de acción fuera del lienzo · U7 «Insertar título» junto a su campo · U8 contraste y Lighthouse 1,00 · U10 bugs de campo (compartir, franja, hashtags) · U11 botones del dock a igual en móvil** |
+
+---
+
+## 🟢 Lote U — Portada, navegación y móvil
+
+> «Mira el proyecto y ve qué puedes mejorar, optimizar e implementar. El diseño
+> web y móvil deben ser fáciles de entender y usar». Todo lo de este lote
+> sale de recorrer las nueve páginas en un navegador a 1280, 768 y 390 px.
+
+### U1 · Portada: ocho editores sin nombre
+
+Las tarjetas solo tenían una frase («Crea imágenes de las secciones de tet más
+recurrentes») y un botón «Crear»: no decía qué herramienta era ni para qué
+sirvía, y en el móvil obligaba a hacer scroll y scroll para comparar ocho
+opciones. Ahora cada tarjeta lleva **categoría** (Imagen · GIF · Vídeo), **nombre**
+(Noticias tet 1…), **tamaño de salida** (1200×1200, 1280×720…) y una línea de
+descripción; arriba hay **filtros** (Todos · Imágenes · GIF · Vídeo) y abajo los
+**tres pasos** del flujo (plantilla → escribir → descargar). En el móvil son dos
+columnas y la tarjeta entera es pulsable (`.tarjeta-cta::after` cubre la tarjeta).
+
+`portada.js` son 30 líneas de filtros; el recuento de la cabecera se actualiza
+con «6 editores» al filtrar.
+
+### U2 · El desplegable del navbar no decía qué abría
+
+En las nueve páginas el botón iba **vacío**: en escritorio solo se veía una
+flechita de 4 px, sin texto ni icono, y en el móvil se convertía en
+hamburguesa (donde sí funcionaba). Ahora es «▤ Editores ▾» y en móvil, solo el
+icono.
+
+El texto se ocultaba con `font-size: 0`, pero un bloque posterior del mismo
+archivo (`.nav-link { font-size: .86rem }`, misma especificidad y posterior)
+lo volvía a poner a 13,76 px y la etiqueta se colaba en la barra. Se oculta con
+`display: none` sobre `.tet-nav-toggle-txt`, que no se puede pisar por
+cascada.
+
+### U3 · 413 KB de capturas en la portada → 186 KB
+
+Las ocho capturas eran PNG de 510×327 (y dos de 1000×700) guardadas como
+fotografía de pantalla: la mayor, 137 KB para un sello de 350 px.
+`tools/optimizar-imagenes-portada.ps1` aplana el alfa sobre blanco, las deja en
+760 px (2× del ancho real de la tarjeta, así que en retina no se ve blanda) y
+las guarda en JPEG 82. El script **compara con el original y borra la versión
+peor**, por eso `tet5` sigue en PNG. Además las imágenes de las tarjetas van con
+`loading="lazy"`, `decoding="async"` y `width`/`height`.
+
+### U4 · En el móvil se ve la barra, no el diseño
+
+Medido a 390 px, antes de ver el lienzo había **430 px de chrome**: la barra
+superior ocupaba 154 px repartida en tres filas y el rail 225 px en cuatro.
+Ahora:
+
+| a 390 px | antes | ahora |
+|---|---|---|
+| barra superior | 154 px (3 filas) | **105 px (2 filas)** |
+| rail de herramientas | 225 px (4 filas) | **134 px (2 filas)** |
+| primer píxel del lienzo | y = 430 | **y = 356** |
+
+**Nada de scroll lateral.** Se probó primero una fila única con desplazamiento
+horizontal (56 px + 71 px, el mejor número) y se descartó —«se veía roto»—:
+«Descargar» quedaba `position: sticky` flotando encima de los selectores, los
+tapaba a medias y salía la barra de scroll. Con scroll, además, cuatro de las
+ocho herramientas quedaban fuera de la vista sin avisar.
+
+Lo que funciona es repartir en filas que se ven enteras:
+
+- **Rail** → icono con la etiqueta **debajo**, como los iconos del móvil: es lo
+  único que cabe en dos filas a 390 px sin recortar los nombres. Todos los
+  botones miden lo mismo (74 × 58 px) y la etiqueta ocupa siempre dos líneas de
+  alto, así que la fila no baila; `justify-content: center` deja la última fila
+  incompleta centrada. En el teléfono se ocultan «Pegar imagen» (el portapapeles
+  del sistema no existe en iOS Safari: `navigator.clipboard.read()` es solo
+  Chromium) y los separadores verticales.
+- **Barra superior** → dos filas, con el reparto hecho con `flex order` (sin
+  tocar el DOM, porque en el HTML «Descargar» va el último):
+  1. deshacer · rehacer · zoom− · 100 % · zoom+ · guía
+  2. **Descargar** · formato de salida · anclaje
+
+  En el teléfono se ocultan «Ajustar a pantalla» (el pellizco y el encaje
+  automático hacen lo mismo) y «Lienzo en blanco» (era el que empujaba la barra
+  a tres filas en 360 px y además vacía el lienzo). El tamaño 1200×1200 vive en
+  `<span class="sh-dim">` y se oculta en móvil para que «Descargar» quepa.
+
+Medido a 320 px la barra pasa a 3 filas (se ve entera, no se esconde nada), a
+360 y 390 px son 2 filas, y a 768 px la barra sigue en 2 (99 px) con el rail en
+2 (107 px) y el lienzo a 583 px. Cero scroll horizontal en `.shell-top`,
+`.shell-rail`, `.sh-barra` y `.shell-work`.
+
+> Dos trampas de Bootstrap que costaron una vuelta: `w-100` es
+> `width:100% !important`, así que los botones de acción que suben al rail se
+> comían la fila entera (hay que quitarles la clase al moverlos, o pisar el
+> ancho con `!important`); y el salto de línea se calcula con el ancho **base**
+> de cada elemento, no con el ancho al que crece: un `flex: 1 1 auto` en
+> «Descargar» hace que el navegador lo mida en pequeño para decidir el reparto y
+> luego lo crezca.
+### U5 · El lienzo medía 300 px porque el HTML lo decía
+
+Cada editor nacía con `wc = hc = 300` en pantallas pequeñas y 500 en las demás:
+valores pensados para un monitor. Como el encaje automático **nunca pasa del
+100 %**, en un teléfono el lienzo se quedaba a 300 px y en una tableta de 768 px
+a 300 también, con media pantalla vacía.
+
+`encajarBaseLienzo()` (en `shell.js`) calcula ahora el tamaño de maquetación a
+partir del sitio libre y del tamaño real del diseño (`canvas.getWidth()`), y
+solo toca el CSS del contenedor y de los dos canvas: **el backing store no se
+mueve**, así que el 100 % sigue siendo el tamaño real y lo que se descarga o se
+comparte es idéntico. Resultado: 339 px a 390 de ancho, 523 px en tableta y 750
+en un escritorio de 1280, donde antes eran 300, 300 y 500.
+
+> Trampa de Fabric: `setDimensions({...}, {cssOnly: true})` **no funciona** en el
+> vendorizado. La rama `cssOnly` pasa el número sin `px`
+> (`style.width = 400` no es CSS válido) y el tamaño se descarta en silencio.
+> Hay que escribir el estilo a mano y llamar a `calcOffset()`, o el dedo mueve
+> los objetos con desfase.
+
+### U6 · Botones de acción encima del lienzo
+
+`moverBoton()` buscaba solo dentro de `.editor-panel`, pero en tet2, dictet, art,
+miniatura y modcre la fila de acciones vive en la **columna del lienzo**: nunca
+encontraba los botones y ahí se quedaban, apilados justo encima del diseño (en
+art, además, un segundo botón «Descargar» redundante). Ahora se busca en todo el
+documento y `limpiarVacios()` también barre la columna del lienzo.
+
+Los cuatro botones de orden que trae art/miniatura/modcre («Enviar al fondo»,
+«Enviar atrás», «Traer adelante», «Traer al frente») suben al rail, y solo si la
+página **no** trae los suyos se crean los dos de siempre, que harían lo mismo.
+«Insertar título» se cuelga junto a su campo en Propiedades, que es donde está
+el campo que escribe.
+
+### U7 · La barra de escritura fija: implementada y descartada
+
+El lote S3 («barra de texto fija en móvil») dejó el CSS `.sh-movil` escrito y
+completo, pero **ningún JS creaba el elemento**: la barra nunca existió. Se
+implementó (el campo de título y su botón bajando a una barra fija de 64 px,
+volviendo a Propiedades al pasar a escritorio) y **se quitó a petición del
+usuario**: duplicaba el campo que ya estaba en el dock y «Insertar título» en
+una barra fija se veía más cerca del lienzo pero menos cerca de donde se escribe.
+El CSS `.sh-movil`, que llevaba dos lotes sin usarse, también se borró.
+
+Lo que sí se queda deaquello: **«Insertar título» junto a su campo** en
+Propiedades (ver U6), que en tet1 ya era así y en art/miniatura/modcre no.
+### U8 · Detalles de interfaz
+
+- Contraste: la etiqueta de categoría de las tarjetas estaba en 3,5:1 y el
+  «tet 1» en 2,4:1 sobre blanco (por debajo del 4,5 de WCAG AA); «Ninguna imagen
+  seleccionada» usaba el gris de Bootstrap sobre el panel oscuro (2,4:1).
+- Orden de encabezados: los títulos del pie eran `<h6>` después de los `<h3>` de
+  las tarjetas; ahora son `<h2>` (el pie es una región con sus propias secciones).
+- `prefers-reduced-motion`: sin transiciones ni saltos de tarjeta.
+- Lighthouse en la portada: accesibilidad **0,88 → 1,00**, SEO **0,80 → 1,00**,
+  buenas prácticas 1,00. Antes fallaban el orden de encabezados, los `alt`
+  ausentes en las imágenes y un enlace sin nombre (el desplegable vacío).
+
+### U10 · Bugs de campo (después del primer repaso en móvil)
+
+**«Borraste el botón Compartir».** No se había borrado, pero tampoco salía en
+cualquier navegador: tanto `capas.js` como `shell.js` lo creaban **solo si
+existía `navigator.share`** (Web Share: Chrome/Android y Safari iOS, nada en
+Firefox ni en Safari de escritorio). Como `compartir()` ya cae al portapapeles y
+después a la descarga cuando no hay Web Share, el botón se pinta **siempre**, en
+la barra y en el panel de Capas. Además, en el móvil se quedaba con solo el
+icono (36 px): con el texto dentro del ancho fijo de la barra quedaba cortado y
+parecía no existir.
+
+**«El degradado no debe afectar la imagen de franja superior».** La franja es
+`canvas.overlayImage` y el decorado se le aplicaba la opacidad del panel
+(`DECO.opacidad`): con el degradado puesto y el deslizador a media, el fondo se
+transparentaba a través de la franja y el «tet news» blanco se apagaba. Ahora la
+franja se repinta **siempre al 100 %** (`aplicarBarra` y
+`refrescarOpacidadDecoracion`); el deslizador solo afecta a la imagen de
+plantilla.
+
+**«Solo se puede poner un #».** El campo de hashtags se normalizaba en caliente
+en cada tecla y `normalizarTags()` une con un espacio, así que el espacio que
+acabas de pulsar **desaparecía**: a partir de ahí el segundo `#` se pegaba al
+primero (`#tecnologia#a`). Se conserva el separador del final y se devuelve el
+cursor a donde estaba (reescribir el `value` lo mandaba al final y a mitad de
+frase el texto se escribía detrás).
+
+**Fuera el botón de rotar plantillas (▶).** Cambiaba la plantilla solo, cada
+1,4 s, sin avisar; pararlo requería tocar el lienzo. Se elimina el botón, el
+`setInterval` y los oyentes que lo detenían. El selector de plantilla y «Cargar
+plantilla» se quedan.
+
+### U11 · Botones del dock del mismo tamaño en el móvil
+
+«Insertar título» medía 147 px, «Insertar detalles» 162 px y «Cargar una
+imagen…» 303 px, a dos tamaños de letra, según la columna Bootstrap en la que
+cayesen. En el móvil se normalizan a ancho completo del dock, 48 px de alto y la
+misma letra (también «Generar» en tet2 y dictet).
+
+> De paso, para que «Compartir» entrara en la barra sin partirla en dos filas:
+> los dos `<select>` llevan ahora `flex-basis` explícito. El salto de línea se
+> decide con el tamaño **hipotético** y no con el final, así que un selector sin
+> base fija (su ancho de contenido era «Desde arriba (conserva la franja)», 30
+> caracteres) hacia saltar la descarga a otra fila aunque luego se encogiera y
+> sobrara sitio. La opción se abrevió a «Desde arriba» y la explicación se
+> quedó en el `title`.
+### U9 · Cache busting
+
+`sw.js` sube a `tet-admin-v7` (descarta las cachés viejas, incluidos los PNG que
+ya no existen) y `shell.js` —que hasta ahora se pedía **sin `?v=`**, el único
+script sin versionar— pasa a `?v=sh16`. `style.css` a `r7`, `shell.css` a `sp25`
+y `formatos.js` a `a3c`, `capas.js` a `p3b`, `main.js` a `q3c` y `publicacion.js` a `p1b`.
+
+Al subir un `?v=` hay que acordarse de que el service worker sirve el CSS con
+*stale-while-revalidate*: aunque el archivo cambie, la primera carga de esa URL
+sigue dando la copia vieja de la caché. Por eso los `?v=` se suben aunque el
+cambio sea de una línea.
+
+### Pendiente
+
+- Prueba visual en un teléfono de verdad (esta tanda se midió con iframes de
+  320/360/390/768 px): el gesto de pellizco, que en U4 perdió su botón
+  «Ajustar a pantalla» en el móvil.
+- El rail del móvil va en dos filas de 4 botones. En pantallas de 320 px son
+  cuatro: si en algún móvil sale a tres, el sitio más cómodo es esconder
+  «Centrar elemento» (también está en Capas) y dejar la rejilla de 4 × 2.
 
 ---
 
