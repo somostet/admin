@@ -433,8 +433,1925 @@ textarea:focus-visible,
 }
 
 
-/* .navbar{
-    max-height: 50px;
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
+}
+
+/* ===== Panel «Editar imagen» (editar.js) ===== */
+.ed-panel {
+    margin: 0 0 .8rem;
+    padding: .7rem .75rem;
+    background: var(--sh-panel, #2d2d2d);
+    color: var(--sh-text, #e6e6e6);
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 8px;
+}
+
+.ed-cab {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-size: .92rem;
+}
+
+.ed-cab .ed-pista {
+    margin-left: auto;
+    font-size: .74rem;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-grupo {
+    margin-bottom: .6rem;
+}
+
+.ed-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted, #9a9a9a);
+}
+
+.ed-reset {
+    border: none;
+    background: transparent;
+    color: var(--sh-muted, #9a9a9a);
+    cursor: pointer;
+    padding: 0 0 0 .25rem;
+    font-size: .8rem;
+}
+
+.ed-reset:hover { color: var(--sh-accent, #4dabf7); }
+
+.ed-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.ed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    background: transparent;
+    border: 1px solid var(--sh-border, #454545);
+    border-radius: 6px;
+    color: var(--sh-text, #e6e6e6);
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.ed-btn:hover { background: var(--sh-hover, rgba(255,255,255,.1)); }
+.ed-btn.ed-activo { background: #4dabf7; border-color: #4dabf7; color: #fff; }
+.ed-btn.ed-ok { background: #198754; border-color: #198754; color: #fff; }
+.ed-btn.ed-cancelar { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.ed-rango {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .2rem 0;
+    font-size: .82rem;
+    color: var(--sh-text, #e6e6e6);
+}
+
+.ed-rango span {
+    flex: 0 0 7.5rem;
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ed-rango input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #4dabf7;
+}
+
+.ed-rango output {
+    flex: 0 0 3.2rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted, #9a9a9a);
+    font-size: .78rem;
+}
+
+.ed-pista {
+    font-size: .78rem;
+    color: var(--sh-muted, #9a9a9a);
+    margin: .35rem 0 0;
 }
 
 .navbar-expand-lg{
@@ -482,10 +2399,24 @@ textarea:focus-visible,
     margin-bottom: .35rem;
 }
 
+/* ===== Objetivos táctiles (WCAG 2.5.8) =====
+   Los enlaces del pie y los deslizadores medían 19-20 px de alto: por debajo
+   del mínimo de 24 px, así que en el móvil costaba mucho pulsarlos. */
+.tet-copy a,
+.tet-copy .btn {
+    display: inline-block;
+    min-height: 24px;
+    padding-top: .3rem;
+    padding-bottom: .3rem;
+}
+
 .tet-footer-web {
     color: #8fd0ff;
     font-size: .88rem;
     text-decoration: none;
+    display: inline-block;
+    padding: .3rem 0;
+    min-height: 24px;
 }
 
 .tet-footer-web:hover {
@@ -734,6 +2665,9 @@ textarea:focus-visible,
     min-width: 14.5rem;
     padding: .4rem;
     margin-top: .4rem;
+    /* Bootstrap pone color #212529 (texto oscuro) en .dropdown-menu: sobre este
+       fondo oscuro los <li> se quedaban a 1:1 de contraste. */
+    color: #e8ecf5;
     background: var(--tet-nav-dark);
     border: 1px solid rgba(255, 255, 255, .12);
     border-radius: 10px;
@@ -759,8 +2693,8 @@ textarea:focus-visible,
 }
 
 .tet-dd .dropdown-item[aria-current="page"] {
-    color: #7cc4ff;
-    background: rgba(124, 196, 255, .12);
+    color: #ffffff;
+    background: rgba(124, 196, 255, .22);
 }
 
 .tet-dd-sub {
@@ -1206,4 +3140,61 @@ textarea:focus-visible,
     .navbar-social a:hover {
         transform: none !important;
     }
+}
+
+/* ===== Contraste en los editores oscuros =====
+   Sobre el fondo oscuro, el azul de Bootstrap (#0d6efd) se queda en 3:1.
+   Las pestañas inactivas además competían visualmente con la activa. */
+[data-theme="dark"] .btn-outline-primary {
+    color: #7cc4ff;
+    border-color: #4dabf7;
+}
+
+[data-theme="dark"] .btn-outline-primary:hover,
+[data-theme="dark"] .btn-outline-primary:focus-visible {
+    color: #0b1a2b;
+    background: #7cc4ff;
+    border-color: #7cc4ff;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link {
+    color: #adb5bd;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link:hover,
+[data-theme="dark"] .nav-tabs .nav-link:focus-visible {
+    color: #fff;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link.active {
+    /* la pestaña activa va sobre fondo blanco: el azul claro se quedaba a
+       1,9:1. Texto oscuro sobre el azul. */
+    color: #0b1a2b;
+    background: #7cc4ff;
+    border-color: #7cc4ff;
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+    color: #adb5bd;
+    border-color: #6c757d;
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover,
+[data-theme="dark"] .btn-outline-secondary:focus-visible {
+    color: #fff;
+    border-color: #adb5bd;
+}
+
+/* collage: «Galería» y «Cargar» salían con el azul de Bootstrap (#0d6efd)
+   sobre el panel oscuro: 3:1, por debajo del 4,5:1 que exige WCAG AA */
+[data-theme="dark"] .collage-fuentes .btn-outline-primary {
+    color: #7cc4ff;
+    border-color: #4dabf7;
+}
+
+[data-theme="dark"] .collage-fuentes .btn-outline-primary:hover,
+[data-theme="dark"] .collage-fuentes .btn-outline-primary:focus-visible {
+    color: #0b1a2b;
+    background: #7cc4ff;
+    border-color: #7cc4ff;
 }

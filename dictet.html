@@ -23,10 +23,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="tet admin">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <script>
+        // tema del editor (oscuro por defecto) antes del primer pintado
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tetTema') || 'dark'); }
+        catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    </script>
     <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
-    <link rel="stylesheet" href="./public/css/style.css?v=r7">
-    <link rel="stylesheet" href="./public/css/shell.css?v=sp25">
+    <link rel="stylesheet" href="./public/css/style.css?v=r20">
+    <link rel="stylesheet" href="./public/css/shell.css?v=sp24">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
@@ -62,6 +67,7 @@
             </div>
         </nav>
     <!-- Cuerpo -->
+    <main id="contenido">
     <div class="container-fluid">
         <div class="row mt-3">
             <div class="col-12">
@@ -72,7 +78,7 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <label for="detalles">Plantilla:</label>
-                                        <select class="form-control" id="plantilla">
+                                        <select class="form-control" id="plantilla" aria-label="Plantilla">
                                             <option value="0">Code</option>
                                             <option value="1">Tech</option>
                                             <option value="2">Game</option>
@@ -92,7 +98,7 @@
                                 </div>
                                 <label for="detalles">Tamaño de letra:</label>
                                 <div class="col-sm">
-                                    <select class="form-control" id="font_sizeD">
+                                    <select class="form-control" id="font_sizeD" aria-label="Tamaño de la letra">
                                         <option value="64">64</option>
                                         <option value="56">56</option>
                                         <option value="48">48</option>
@@ -168,6 +174,7 @@
             </div>
         </div>
     </footer>
+    </main>
     <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
     <!-- Scripts -->
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
@@ -177,10 +184,11 @@
     <script src="./public/js/plantillas-data.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
     <script src="./public/js/dictet.js"></script>
-    <script src="./public/js/capas.js?v=p3b"></script>
+    <script src="./public/js/capas.js?v=p6"></script>
     <script src="./public/js/formatos.js"></script>
-    <script src="./public/js/shell.js?v=sh16"></script>
-    <script src="./public/js/publicacion.js?v=p1b"></script>
+    <script src="./public/js/shell.js?v=sh18"></script>
+    <script src="./public/js/editar.js?v=e6"></script>
+    <script src="./public/js/publicacion.js?v=p2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {

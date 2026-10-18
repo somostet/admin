@@ -58,9 +58,7 @@ body {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    /* 0,45rem y no 0,55: con «Compartir» en la barra, a 0,55 el conjunto se
-       pasaba de 1280 px en 21 y la descarga saltaba a una segunda fila */
-    gap: .45rem;
+    gap: .55rem;
     padding: .4rem .6rem;
     background: var(--sh-top);
     border-bottom: 1px solid var(--sh-border);
@@ -140,7 +138,10 @@ body {
 .shell-mid {
     flex: 1 1 auto;
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) 320px;
+    /* 60 px y no 48: el botón del rail mide 44 px + 8 px de margen, así que
+       con 48 la fila siempre se salía y el rail acababa con scroll horizontal
+       (que es justo lo que no queremos en las barras). */
+    grid-template-columns: 60px minmax(0, 1fr) 320px;
     min-height: 0;
 }
 
@@ -151,6 +152,9 @@ body {
     gap: .45rem;
     padding: .5rem .25rem;
     overflow-y: auto;
+    /* red de seguridad: si algún botón no llegara a caber, que se recorte en
+       lugar de abrir una barra de scroll lateral */
+    overflow-x: hidden;
     background: var(--sh-rail);
     border-right: 1px solid var(--sh-border);
 }
@@ -389,6 +393,141 @@ body {
         height: 34px;
         font-size: .9rem;
         border-radius: .5rem;
+    }
+}
+
+/* ---------- barra de texto fija (solo móvil) ----------
+   Los campos de título/detalles y su botón salen del dock y bajan aquí, para
+   escribir sin subir y bajar la página. En escritorio la barra se oculta y los
+   controles viven en Propiedades. */
+.sh-movil {
+    display: none;
+}
+
+body.tet-barra-movil {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+.sh-movil:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem;
+}
+
+/* los campos comparten fila entre sí y los botones la suya: así la barra no
+   crece a tres o cuatro alturas y se come la pantalla */
+.sh-movil .input-group {
+    flex: 1 1 40%;
+    min-width: 0;
+    flex-wrap: nowrap;
+}
+
+.sh-movil .input-group .input-group-text {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sh-muted);
+    background: transparent;
+    border-color: var(--sh-border);
+    white-space: nowrap;
+}
+
+/* etiqueta para los campos que no venían en un input-group (dictet, tet2) */
+.sh-mv-lbl {
+    margin-right: .35rem;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sh-muted);
+    white-space: nowrap;
+}
+
+/* las <label> propias del formulario también en línea (Bootstrap las pone en
+   bloque con margen inferior: dentro de la barra multiplican la altura) */
+.sh-movil .form-group > label,
+.sh-movil .col > label {
+    display: inline;
+    margin: 0 .35rem 0 0;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--sh-muted);
+    white-space: nowrap;
+}
+
+/* dentro de la barra la etiqueta va en línea con su campo: en bloque cada
+   campo ocupaba dos alturas y la barra se comía un tercio de la pantalla */
+.sh-movil .col-12,
+.sh-movil .col,
+.sh-movil .form-group {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.sh-movil .col-12 > .form-control,
+.sh-movil .col > .form-control,
+.sh-movil .form-group > .form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sh-movil .form-control {
+    font-size: 1rem;                  /* <16px hace que iOS haga zoom al enfocar */
+    min-height: 44px;
+}
+
+/* el textarea de detalles llega con rows=4 (134 px de alto) y, dentro de la
+   barra, se comía un tercio de la pantalla: aquí va a dos líneas */
+.sh-movil textarea.form-control {
+    min-height: 44px;
+    max-height: 44px;
+    resize: none;
+    overflow-y: auto;
+}
+
+.sh-movil .btn {
+    flex: 0 0 auto;
+    height: 44px;
+    white-space: nowrap;
+}
+
+/* el botón que en el dock ocupa la fila entera (w-100) se sube con el campo:
+   en la barra tiene que compartir su altura con el campo, no ocupar una fila
+   entera por su cuenta. Bootstrap pone width:100% con !important, de ahí el
+   !important de aquí */
+.sh-movil .btn.w-100 {
+    width: auto !important;
+    flex: 0 0 auto;
+}
+
+/* en la barra los botones van solo con icono: «Insertar título» ocuparía media
+   pantalla a 390 px. La etiqueta sigue en el DOM y vuelve a verse cuando el
+   botón regresa a Propiedades en escritorio */
+.sh-movil .btn > span {
+    display: none !important;
+}
+
+@media (max-width: 991.98px) {
+    .sh-movil:not([hidden]) {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1040;
+        padding: .35rem .45rem calc(.35rem + env(safe-area-inset-bottom, 0px));
+        background: var(--sh-top);
+        border-top: 1px solid var(--sh-border);
+        box-shadow: 0 -6px 20px rgba(0, 0, 0, .35);
+    }
+
+    /* la barra flotante de la selección vive en el flujo, bajo el lienzo:
+       sin este margen acaba debajo de la barra fija */
+    .sh-barra {
+        margin-bottom: 72px;
     }
 }
 
@@ -639,8 +778,11 @@ body {
 
 .swatch {
     flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
+    /* 24 px en vez de 18: con el dedo una muestra de 18 px era casi
+       imposible de acertar (WCAG 2.5.8, objetivo táctil). El color sigue
+       viéndose igual porque el relleno va hasta el borde. */
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: 1px solid rgba(127, 127, 127, .6);
     border-radius: 4px;
@@ -749,36 +891,30 @@ body {
    como los iconos del móvil: se leen de un vistazo y caben en dos filas. */
 @media (max-width: 575.98px) {
     .shell-rail {
-        justify-content: center;   /* la última fila incompleta, al centro */
+        justify-content: flex-start;
         align-items: stretch;
-        gap: .25rem .2rem;
+        gap: .25rem .3rem;
         padding: .4rem .35rem;
     }
 
     .shell-rail .btn {
         width: 74px !important;   /* gana a w-100 de Bootstrap */
         min-width: 74px;
-        height: 58px;             /* todos igual de altos, con una o dos líneas */
+        height: auto;
         flex-direction: column;
-        justify-content: center;
         gap: 3px;
-        padding: 4px 3px;
+        padding: 5px 3px;
         font-size: .82rem;
         line-height: 1;
         white-space: normal;
     }
 
-    /* la etiqueta ocupa siempre dos líneas: con una línea, «Galería» quedaba
-       en un botón más bajo que «Remover seleccionado» y la fila bailaba */
     .shell-rail .solo-movil {
-        display: block !important;
-        height: 26px;
         font-size: .6rem;
         line-height: 1.15;
         text-align: center;
         white-space: normal;
         letter-spacing: -.01em;
-        overflow: hidden;
     }
 
     /* los separadores verticales no significan nada en una rejilla */
@@ -787,24 +923,13 @@ body {
     }
 }
 
-/* ---------- barra superior: exportación (traída del panel de formatos) ----------
-   flex-basis explícito: el salto de línea se decide con el tamaño hipotético
-   (flex-basis) y no con el que acaba el elemento. Un <select> sin base fija usa
-   su ancho de contenido —«Desde arriba (conserva la franja)» son 30 caracteres—
-   y la barra se partía en dos filas en cuanto se le añadía un botón, aunque
-   luego los selectores se encogieran y sobrara sitio. */
+/* ---------- barra superior: exportación (traída del panel de formatos) ---------- */
 .shell-top #formato-salida {
-    flex: 0 1 14rem;
-    min-width: 9rem;
-    max-width: 14rem;
+    min-width: 12.5rem;
+    max-width: 15rem;
     padding-top: .1rem;
     padding-bottom: .1rem;
     font-size: .85rem;
-}
-
-.shell-top .sh-ancla {
-    flex: 0 1 10rem;
-    min-width: 6rem;
 }
 
 .shell-top #formato-info {
@@ -914,7 +1039,13 @@ body {
     font-size: .78rem;
     margin-top: .35rem;
     /* #6c757d de Bootstrap sobre el panel oscuro se quedaba en 2,4:1 */
-    color: var(--sh-muted);
+    color: var(--sh-muted) !important;
+}
+
+.shell-dock .editor-panel kbd {
+    color: var(--sh-text);
+    background: var(--sh-hover);
+    border-color: var(--sh-border);
 }
 
 .shell-dock .input-color-container {
@@ -1345,18 +1476,6 @@ body {
         display: none;
     }
 
-    /* «Compartir» con el mismo tratamiento que el resto: solo el icono, que es
-       lo que cabe. Con el texto dentro de 36 px quedaba cortado y parecía que
-       el botón no existía */
-    .shell-top .sh-share {
-        width: 36px;
-        padding: 0;
-    }
-
-    .shell-top .sh-share>span {
-        display: none !important;
-    }
-
     /* fuera del rail: el portapapeles del sistema no existe en iOS Safari
        (navigator.clipboard.read() es solo Chromium) y sin Ctrl+V el botón no
        hace nada. Era un icono sin etiqueta que no explicaba nada */
@@ -1381,31 +1500,6 @@ body {
     /* «Ajustar a pantalla»: estorba en el teléfono y el pellizco hace lo mismo */
     .shell-top .sh-zoom-fit {
         display: none;
-    }
-
-    /* la casilla de la guía de recorte no cabe en el teléfono (45 px) y ya
-       viene activada; con ella fuera, «Compartir» entra en la primera fila y
-       la barra se queda en dos */
-    .shell-top .sh-guia {
-        display: none;
-    }
-
-    /* Los tres botones grandes del dock medían 147, 162 y 303 px de ancho (y a
-       dos tamaños de letra) según la columna en que caían. En el móvil se
-       normalizan: ancho completo del dock, mismo alto y misma letra. */
-    .shell-dock [aria-label="Insertar título"],
-    .shell-dock [aria-label="Insertar detalles"],
-    .shell-dock [aria-label="Generar"],
-    .shell-dock #div-img .btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: .45rem;
-        width: 100% !important;
-        min-height: 48px;
-        padding: .6rem .7rem;
-        font-size: .95rem;
-        white-space: nowrap;
     }
 
     /* «Lienzo en blanco»: vacía el lienzo y en el móvil era el que empujaba
@@ -1589,7 +1683,9 @@ body {
     flex: 1 1 auto;
     min-width: 0;
     accent-color: var(--sh-accent);
-    height: 1.25rem;
+    /* 24 px de alto en vez de 20: es el mínimo cómodo para acertar con el
+       dedo (WCAG 2.5.8, objetivo táctil) */
+    height: 1.5rem;
     cursor: pointer;
 }
 

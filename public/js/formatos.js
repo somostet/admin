@@ -159,10 +159,7 @@
             '<label class="form-label mt-2" for="formato-ancla">Recorte vertical</label>' +
             '<select class="form-select form-select-sm" id="formato-ancla">' +
                 '<option value="centro" selected>Centrado</option>' +
-                /* «conserva la franja» era la explicación, no la opción: con 30
-                   caracteres el selector no cabía en la barra y la descarga
-                   saltaba de fila. La explicación sigue en el title. */
-                '<option value="arriba">Desde arriba</option>' +
+                '<option value="arriba">Desde arriba (conserva la franja)</option>' +
                 '<option value="abajo">Desde abajo</option>' +
             '</select>' +
             '<div class="form-check mt-2">' +

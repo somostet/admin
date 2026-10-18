@@ -54,6 +54,7 @@
     }
 
     /* ---------- construcción del panel ---------- */
+    var puedeCompartir = !!(navigator.share);
     var panel = document.createElement('div');
     panel.className = 'capas-panel';
     panel.innerHTML =
@@ -69,14 +70,11 @@
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="dup" title="Duplicar capa seleccionada" aria-label="Duplicar capa"><i class="fas fa-clone" aria-hidden="true"></i><span class="solo-movil ms-1">Duplicar</span></button>' +
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="save" title="Guardar proyecto (.json)" aria-label="Guardar proyecto"><i class="fas fa-save" aria-hidden="true"></i><span class="solo-movil ms-1">Guardar</span></button>' +
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="load" title="Cargar proyecto (.json)" aria-label="Cargar proyecto"><i class="fas fa-folder-open" aria-hidden="true"></i><span class="solo-movil ms-1">Cargar</span></button>' +
-            /* El botón sale siempre: compartir() ya cae al portapapeles y
-               después a la descarga cuando el navegador no trae Web Share
-               (Firefox, Safari de escritorio…). Antes solo se pintaba cuando
-               existía navigator.share, así que en esos navegadores no había
-               forma de compartir y el botón parecía haberse perdido. */
-            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="share" title="Compartir imagen" aria-label="Compartir imagen"><i class="fas fa-share-alt" aria-hidden="true"></i><span class="solo-movil ms-1">Compartir</span></button>' +
+            (puedeCompartir
+                ? '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="share" title="Compartir imagen" aria-label="Compartir imagen"><i class="fas fa-share-alt" aria-hidden="true"></i><span class="solo-movil ms-1">Compartir</span></button>'
+                : '') +
         '</div>' +
-        '<input type="file" id="capas-cargar" accept="application/json,.json" hidden>' +
+        '<input type="file" id="capas-cargar" accept="application/json,.json" aria-label="Cargar un proyecto" hidden>' +
         '<div class="capas-list" id="capas-list"></div>';
 
     var anchor = document.getElementById('img');
@@ -415,6 +413,12 @@
 
     function guardarEstado() {
         if (restaurando) return;
+        /* Un repintado en bloque (collage.js quita y vuelve a poner todos los
+           marcos de golpe) dispara un object:added por objeto, y eso llenaba
+           la pila de docenas de estados: para deshacer el cambio de diseño
+           había que pulsar Ctrl+Z cuatro veces. Con el flag, guardarEstado no
+           apila nada y quien hace el bloque apila UNO solo al final. */
+        if (window.tetHistorialEnBloque) return;
 
         /* Q1b · el overlay de color de tet1 es un patrón con source nulo y su
            toObject() truena leyendo null.src: se despega solo durante la
@@ -458,6 +462,11 @@
                    veria estirada a lo ancho entero; se vuelve a componer por
                    piezas (main.js). En el resto de editores no hace nada. */
                 if (window.tetRestaurarDecoracion) window.tetRestaurarDecoracion();
+                /* Tras un deshacer/rehacer el lienzo puede haber vuelto a un
+                   estado anterior (en el collage, otro diseño y otro hueco).
+                   Quien tenga estado propio aparte del lienzo (collage.js) se
+                   resincroniza aquí. */
+                canvas.fire('estado-restaurado');
             });
         } catch (err) {
             restaurando = false; // que no se quede el flag colgado
@@ -508,6 +517,18 @@
        historial: antes el cambio no entraba en la pila y Ctrl+Z no lo
        deshacía, además de desincronizar los botones deshacer/rehacer */
     window.tetGuardarEstado = guardarEstado;
+    /* Ejecuta fn con el historial en silencio y apila un único estado al
+       terminar (aunque fn añada o quite muchos objetos). */
+    window.tetHistorialBloque = function (fn) {
+        var antes = window.tetHistorialEnBloque;
+        window.tetHistorialEnBloque = true;
+        try {
+            fn();
+        } finally {
+            window.tetHistorialEnBloque = antes;
+            guardarEstado();
+        }
+    };
     window.eliminarSeleccion = function () {
         var o = canvas.getActiveObject();
         if (!o) return;
@@ -775,6 +796,12 @@
             fabric.Image.fromURL(e.target.result, function (img) {
                 if (!img || !img.width) {
                     if (window.mostrarAviso) window.mostrarAviso('No se pudo leer la imagen del portapapeles', 'danger');
+                    return;
+                }
+                /* el collage decide: si hay una celda elegida, la foto va a ella
+                   y se recorta ahí (galeria.js y este mismo hook) */
+                if (typeof window.tetCollagePegar === 'function' && window.tetCollagePegar(img)) {
+                    if (window.mostrarAviso) window.mostrarAviso('Foto en la celda · muévela o acércala', 'success');
                     return;
                 }
                 // escala al70% del lienzo y lo centra (antes se pegaba a tamaño real)

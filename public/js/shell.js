@@ -130,17 +130,56 @@
     top.appendChild(el('span', 'shell-doc',
         '<i class="fas fa-pen" aria-hidden="true"></i> ' + (nombreEdit || 'Editor')));
 
-    /* selector de plantilla en el navbar (el avance automático ▶ se quitó:
-       cambiaba la plantilla solo, cada 1,4 s, sin avisar) */
+    /* selector de plantilla + avance automático en el navbar */
     var navPrin = document.querySelector('nav.navbar');
     var socialNav = document.querySelector('.navbar-social');
     var grupoTpl = el('div', 'navbar-tpl');
     var selTpl = q('#plantilla');
     if (selTpl) grupoTpl.appendChild(selTpl);
     moverBoton('Cargar plantilla', grupoTpl);
-    if (selTpl && navPrin) {
-        if (socialNav) navPrin.insertBefore(grupoTpl, socialNav);
-        else navPrin.appendChild(grupoTpl);
+
+    var btnAuto = mkBtn('fa-play', 'Rotar plantillas automáticamente');
+    var timerAuto = null;
+    function pararAuto() {
+        if (timerAuto) { clearInterval(timerAuto); timerAuto = null; }
+        btnAuto.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
+        btnAuto.setAttribute('aria-label', 'Rotar plantillas automáticamente');
+        btnAuto.setAttribute('title', 'Rotar plantillas automáticamente');
+    }
+    btnAuto.addEventListener('click', function () {
+        if (timerAuto) { pararAuto(); return; }
+        if (!selTpl || typeof reload !== 'function') return;
+        btnAuto.innerHTML = '<i class="fas fa-pause" aria-hidden="true"></i>';
+        btnAuto.setAttribute('aria-label', 'Detener rotación de plantillas');
+        btnAuto.setAttribute('title', 'Detener rotación de plantillas');
+        timerAuto = setInterval(function () {
+            /* con la pestaña en segundo plano no se toca el lienzo: al volver
+               el usuario se encontraba la plantilla cambiada sin saberlo */
+            if (document.hidden) return;
+            var n = selTpl.options.length;
+            if (!n) return;
+            /* si el valor actual no es un índice (opciones editadas a mano) se
+              .parseInt devolvía NaN y el selector se quedaba en blanco */
+            var idx = parseInt(selTpl.value, 10);
+            if (isNaN(idx)) idx = 0;
+            selTpl.value = String((idx + 1) % n);
+            if (typeof reload === 'function') reload();
+        }, 1400);
+    });
+    /* tocar el lienzo también detiene la rotación: si no, el diseño se
+       recolocaba mientras el usuario movía un texto */
+    work.addEventListener('pointerdown', pararAuto);
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) pararAuto();
+    });
+    // una elección manual detiene la rotación
+    if (selTpl) selTpl.addEventListener('change', pararAuto);
+    if (selTpl) {
+        grupoTpl.appendChild(btnAuto);
+        if (navPrin) {
+            if (socialNav) navPrin.insertBefore(grupoTpl, socialNav);
+            else navPrin.appendChild(grupoTpl);
+        }
     }
 
     top.appendChild(sep());
@@ -195,7 +234,12 @@
                 img.style.height = Math.round(env.h * zoom) + 'px';
             }
         }
-        btnZoomLbl.innerHTML = '<span>' + Math.round(zoom * 100) + '%</span>';
+        var pct = Math.round(zoom * 100) + '%';
+        btnZoomLbl.innerHTML = '<span>' + pct + '</span>';
+        /* El texto visible es el porcentaje actual, así que el nombre accesible
+           tiene que contenerlo (WCAG 2.5.3): si no, axe lo marca como
+           «label-content-name-mismatch» cuando el zoom no es 100 %. */
+        btnZoomLbl.setAttribute('aria-label', 'Zoom al 100% (ahora ' + pct + ')');
         if (typeof zoomEstado !== 'undefined' && zoomEstado) {
             zoomEstado.textContent = Math.round(zoom * 100) + '%';
         }
@@ -314,15 +358,40 @@
     function autoAjustarPronto() {
         if (autoPendiente) return;
         autoPendiente = true;
-        requestAnimationFrame(function () {
+        var correr = function () {
             autoPendiente = false;
             autoAjustar();
-        });
+        };
+        /* rAF para que no compite con el pintado, pero con temporizador
+           detrás: requestAnimationFrame NO se dispara si la pestaña está en
+           segundo plano, y entonces el lienzo se quedaba con el tamaño fijo
+           del HTML hasta que el usuario giraba el móvil. */
+        if (window.requestAnimationFrame) window.requestAnimationFrame(correr);
+        window.setTimeout(correr, 120);
     }
     window.addEventListener('resize', autoAjustarPronto);
     window.addEventListener('orientationchange', autoAjustarPronto);
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', autoAjustarPronto);
+    }
+
+    /* Al ABRIR la página no hay ningún evento resize, así que el encaje solo
+       ocurría al girar el móvil o redimensionar la ventana: mientras tanto el
+       lienzo se quedaba con el tamaño fijo del HTML (300 px, y 1200 px en el
+       collage, que se salía del área de trabajo). Se dispara al cargar y se
+       vigila el área de trabajo, que también cambia al abrir/cerrar el dock. */
+    if (window.ResizeObserver) {
+        new window.ResizeObserver(autoAjustarPronto).observe(work);
+    }
+    if (document.readyState === 'complete') {
+
+        autoAjustarPronto();
+        window.setTimeout(autoAjustarPronto, 300);
+    } else {
+        window.addEventListener('load', function () {
+            autoAjustarPronto();
+            window.setTimeout(autoAjustarPronto, 300);
+        });
     }
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) autoAjustarPronto();
@@ -418,7 +487,10 @@
             if (chkLblFmt) chkLblFmt.remove();
             var cajaGuia = el('span', 'sh-guia');
             cajaGuia.setAttribute('title', 'Mostrar guía de recorte');
-            var lblGuia = el('label', null, '<i class="fas fa-crop-alt" aria-hidden="true"></i>');
+            /* el icono solo es aria-hidden, así que sin este texto el checkbox
+               se quedaba sin nombre accesible (fallo «label» de Lighthouse) */
+            var lblGuia = el('label', null, '<i class="fas fa-crop-alt" aria-hidden="true"></i>' +
+                '<span class="visually-hidden">Mostrar guía de recorte</span>');
             lblGuia.setAttribute('for', chkFmt.id);
             lblGuia.setAttribute('title', 'Mostrar guía de recorte');
             cajaGuia.appendChild(chkFmt);
@@ -486,16 +558,10 @@
 
     /* compartir (reenvía al botón de la toolbar de capas) */
     var capasShare = q('#capas-toolbar [data-act="share"]');
-    if (capasShare) {
+    if (navigator.share && capasShare) {
         var btnShare = mkBtn('fa-share-alt', 'Compartir imagen', 'Compartir');
         btnShare.classList.remove('btn-ghost');
         btnShare.classList.add('btn-primary');
-        /* en el teléfono la barra deja los botones en 36 px de ancho y
-           «Compartir» quedaba cortado, como si el botón no existiera: con esta
-           clase se queda solo con el icono (el nombre sigue en el title y en el
-           aria-label) */
-        btnShare.classList.add('sh-share');
-        btnShare.classList.add('sh-ctl');   /* primera fila de la barra en el móvil */
         btnShare.addEventListener('click', function () { reenviar('share'); });
         top.appendChild(btnShare);
     }
@@ -1224,13 +1290,26 @@
     btnUndo.disabled = cu ? cu.disabled : true;
     btnRedo.disabled = cr ? cr.disabled : true;
 
-    /* «Insertar título» junto a su campo, en Propiedades. En tet1 ya estaba
-       así; en art, miniatura y modcre vivía en la fila de acciones del
-       lienzo y, al subir esa fila al rail, se quedaba solo encima del lienzo:
-       un «H» suelto que no explica nada y ocupa sitio. */
+    /* ---------------- barra de escritura fija (solo móvil) ----------------
+       Escribir el título obligaba a bajar al dock, subir al botón «Insertar
+       título» y volver a bajar a mirar el resultado. En el teléfono el campo y
+       su botón bajan a una barra fija —el CSS (.sh-movil) estaba escrito desde
+       el lote S3, pero ningún JS creaba el elemento, así que la barra no
+       existía— y al pasar a escritorio vuelven a su sitio en Propiedades. */
+    var mqBarra = window.matchMedia('(max-width: 991.98px)');
+    var barra = el('div', 'sh-movil');
+    barra.hidden = true;
+    barra.setAttribute('role', 'group');
+    barra.setAttribute('aria-label', 'Título');
+    var mudado = [];
+
     var campoTitulo = document.getElementById('titular');
     var btnTitulo = document.querySelector('[aria-label="Insertar título"]');
 
+    /* «Insertar título» junto a su campo. En tet1 ya estaba así; en art,
+       miniatura y modcre vivía en la fila de acciones del lienzo y, al subir
+       esa fila al rail, se quedaba solo encima del lienzo: un «H» suelto que
+       no explica nada y ocupa sitio. */
     var filaCampo = campoTitulo && campoTitulo.closest('.row');
     if (campoTitulo && btnTitulo && filaCampo &&
         !filaCampo.querySelector('[aria-label="Insertar título"]')) {
@@ -1240,6 +1319,62 @@
             ancla.parentElement.insertBefore(celda, ancla.nextSibling);
             celda.appendChild(btnTitulo);
             btnTitulo.classList.add('w-100');
+        }
+    }
+
+    if (campoTitulo) {
+        var caja = campoTitulo.closest('.input-group, .form-group') || campoTitulo;
+        mudado.push({ nodo: caja, casa: caja.parentNode, sitio: caja.nextSibling });
+        if (caja === campoTitulo) barra.appendChild(el('span', 'sh-mv-lbl', 'Título'));
+        barra.appendChild(caja);
+
+        if (btnTitulo) {
+            btnTitulo.classList.add('btn-ghost');
+            /* la etiqueta («Insertar título») no se borra: dentro de la barra la
+               oculta .sh-movil .btn span, y al volver al dock aparece entera */
+            mudado.push({ nodo: btnTitulo, casa: btnTitulo.parentNode, sitio: btnTitulo.nextSibling });
+            barra.appendChild(btnTitulo);
+        }
+    }
+
+    function colocarBarra(movil) {
+        if (!mudado.length) return;
+        mudado.forEach(function (m) {
+            if (movil) {
+                if (m.nodo.parentNode !== barra) barra.appendChild(m.nodo);
+                /* la columna que alojaba el campo se queda marcada: sin esto
+                   limpiarVacios() se la lleva por estar vacía y, al volver a
+                   escritorio, el campo se restauraba en un=nodo desligado
+                   (desaparecía del formulario) */
+                if (m.casa && m.casa.classList) m.casa.classList.add('sh-guardado');
+            } else {
+                if (m.casa && m.casa.classList) m.casa.classList.remove('sh-guardado');
+                if (!m.casa || !m.casa.isConnected) {
+                    /* el sitio original ya no existe: al dock, que es donde
+                        pertenece el campo */
+                    if (panel && m.nodo.parentNode !== panel) panel.appendChild(m.nodo);
+                    return;
+                }
+                if (m.nodo.parentNode !== m.casa) {
+                    /* el sitio guardado puede haber desaparecido dentro de la
+                       misma columna: insertBefore() con un nodo que ya no está
+                       en ese padre lanza NotFoundError */
+                    var sitio = (m.sitio && m.sitio.parentNode === m.casa) ? m.sitio : null;
+                    m.casa.insertBefore(m.nodo, sitio);
+                }
+            }
+        });
+        barra.hidden = !movil;
+        document.body.classList.toggle('tet-barra-movil', movil);
+        limpiarVacios();
+        setTimeout(autoAjustarPronto, 60);
+    }
+
+    if (mudado.length) {
+        document.body.appendChild(barra);
+        colocarBarra(mqBarra.matches);
+        if (mqBarra.addEventListener) {
+            mqBarra.addEventListener('change', function () { colocarBarra(mqBarra.matches); });
         }
     }
 

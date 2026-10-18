@@ -1987,6 +1987,115 @@ Cinco puntos recibidos desde el móvil (somostet.com/adm); R5 queda en abierto.
 
 ---
 
+## Lote V - Collage y edición de imagen
+
+### V1 - Collage (`collage.html` + `public/js/collage.js`)
+
+Editor nuevo con 10 plantillas de celdas (1, 2, 3, 4, 5, 6 fotos y dos de
+revista). La foto entra **entera** dentro de la celda por defecto (encuadre
+`completa`), con opción a `cubrir` para quien prefiera que la celda se llene.
+Se elige celda tocando el hueco y la foto se pone desde la galería, desde un
+archivo o con Ctrl+V. Color de fondo, hueco entre fotos y esquinas redondeadas
+ajustables en vivo.
+
+Tres fallos que costaron la mitad del lote:
+
+- **La galería se abría sola al tocar la celda.** En el móvil tapaba el collage
+  entero cada vez que se pasaba el dedo por encima. Ahora tocar solo elige y
+  resalta la celda; la galería se abre con su botón (o Ctrl+V, que pega directo).
+- **La foto se veía cutada.** Además del encuadre `cover` inicial había dos
+  errores de coordenadas: los objetos se creaban con el origen por defecto de
+  Fabric (`center`) mientras `left`/`top` se calculaban como la esquina, y el
+  `clipPath` se colocaba desde el origen del objeto cuando Fabric lo ancla a su
+  **centro**. Con `originX/originY = 'left'/'top` y el recorte medido desde el
+  centro de la foto (helper `clipDeCelda`) la foto entra entera y el recorte
+  queda clavado a la celda aunque muevas o amplíes la foto a mano.
+- **El selector de diseño no hacía nada**: solo reaccionaba el botón «Cargar
+  plantilla», que en el móvil se va a la barra flotante. Ahora el `change`
+  aplica el diseño al momento.
+
+Hueco y encuadre reajustan solo las fotos que el usuario **no** ha tocado
+(`tetMovida`); las que ha movido o ampliado se respetan. Y ya no se recargan
+las fotos desde su dataURL al arrastrar un deslizador: se rehacen solo los
+marcos y los recortes.
+
+### V2 - Edición de imagen (`public/js/editar.js`)
+
+Panel en el dock (pestaña Propiedades) que aparece al seleccionar una foto:
+girar 90°, voltear, brillo/contraste/saturación con reset, **borrador** con
+tamaño y plumón (`fabric.Borrador`: subclase de `PencilBrush` con `createPath`
+relleno y `globalCompositeOperation: 'destination-out'`) y **recorte**
+arrastrando un marco. Todo entra en el historial, así que Ctrl+Z funciona.
+
+Tres detalles que hubo que arreglar:
+
+- `editar.js` se cargaba **antes** de `shell.js`, así que no encontraba el
+  dock y se iba sin hacer nada. Orden invertido en las 7 páginas.
+- Al recortar se seleccionaba el marco y el panel se cerraba, de modo que no
+  había forma de pulsar «Aplicar». Además `recorte` se asignaba después de
+  `setActiveObject`, así que el evento de selección lo veía a `null`.
+- Los filtros no hacían nada: se construían como `new Brightness({ brillo: v })`
+  y la propiedad de Fabric es `brightness`. Ahora hay una tabla `FILTROS` que
+  traduce el nombre del panel al de Fabric.
+
+El borrador sigue activo aunque se deseleccione la foto (si no, había que
+reactivarlo después de cada trazo).
+
+### V3 - Un deshacer por operación, y collage coherente al deshacer
+
+`capas.js` apila un estado del historial por cada `object:added`, así que un
+repintado en bloque (quitar y volver a poner todos los marcos) llenaba la pila:
+cambiar de diseño en el collage exigía **cuatro** pulsaciones de Ctrl+Z para
+recuperar las fotos. Se añadió `window.tetHistorialBloque(fn)` para que un
+bloque apile un único estado.
+
+Además, el collage guarda estado que no viaja en el historial (diseño, hueco,
+fotos por celda). Al deshacer un cambio de diseño el lienzo volvía al anterior
+pero el collage seguía creyendo en el nuevo, y a partir de ahí los huecos y las
+fotos nuevas se colocaban con la geometría equivocada. `capas.js` emite ahora
+`estado-restaurado` al restaurar y `collage.js` repinta con el diseño elegido.
+No se intenta adivinar el diseño a partir de los marcos porque estos solo
+existen en las celdas **vacías**.
+
+### V4 - El lienzo no se encajaba al abrir la página
+
+`autoAjustar()` solo se disparaba con `resize` / `orientationchange`. Al
+**abrir** la página no hay ningún evento, así que el lienzo se quedaba con el
+tamaño fijo del HTML (300 px, y 1200 px en el collage, que se salía del área de
+trabajo) hasta que se giraba el móvil. Añadido: llamada al cargar,
+`ResizeObserver` sobre `.shell-work` (que también cambia al abrir el dock) y un
+temporizador detrás de `requestAnimationFrame`, que no se dispara con la
+pestaña en segundo plano.
+
+### V5 - El rail se salía 4-10 px
+
+`grid-template-columns: 48px`, pero cada botón del rail mide 44 px + 8 px de
+margen = 52 px: la columna estaba siempre corta y el rail acababa con scroll
+horizontal (justo lo que no se quería). Ahora la columna es de 60 px y el rail
+lleva `overflow-x: hidden` como red de seguridad.
+
+### V6 - Accesibilidad: las 10 páginas a 1,00
+
+Lighthouse (accesibilidad / buenas prácticas / SEO) = **1,00 / 1,00 / 1,00 en las
+10 páginas**, sin avisos. Lo que faltaba:
+
+- `<main>` en los 7 editores (solo el collage lo tenía).
+- Controles sin nombre accesible: `#plantilla`, `#formato-salida`,
+  `#formato-ancla`, `#font_size`, `#capas-cargar`, `#colorT` y el checkbox de
+  la guía, que al pasar a la barra superior se quedó solo con un icono
+  `aria-hidden`.
+- El botón del zoom: su texto visible es el porcentaje actual, así que el
+  `aria-label` fijo («Zoom al 100 %») no lo contenía y axe lo marcaba como
+  `label-content-name-mismatch` cuando el zoom no era 100 %. El nombre se
+  actualiza ahora con el porcentaje.
+- `<label>` sin control en `publicacion.js` («Vista previa») y en el borrador de
+  `editar.js`: el nombre accesible tiene que **contener** el texto visible.
+- Objetivos táctiles: muestras de color de 18 a 24 px, deslizadores a 24 px y
+  enlaces del pie con `min-height` (WCAG 2.5.8).
+- Contraste en tema oscuro: botones `btn-outline-primary` / `-secondary`, los
+  `<li>` del desplegable del navbar (heredaban el `#212529` de Bootstrap) y la
+  pestaña activa de `video.html` (azul claro sobre fondo blanco).
+
 ## ⚪ P4 — Repo y calidad
 
 > ✅ **Completado**. Punto 8 **diferido**.

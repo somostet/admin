@@ -30,8 +30,8 @@
     </script>
     <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
-    <link rel="stylesheet" href="./public/css/style.css?v=r7">
-    <link rel="stylesheet" href="./public/css/shell.css?v=sp25">
+    <link rel="stylesheet" href="./public/css/style.css?v=r20">
+    <link rel="stylesheet" href="./public/css/shell.css?v=sp24">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
@@ -67,6 +67,7 @@
             </div>
         </nav>
     <!-- Cuerpo -->
+    <main id="contenido">
     <div class="container-fluid">
         <div class="row mt-3">
             <div class="col">
@@ -76,7 +77,7 @@
                             <div class="col-12 col-lg-4 pt-3 pb-3 border shadow editor-panel">
                                 <div class="row">
                                     <div class="col-12 col-sm-10">
-                                        <select class="form-control" id="plantilla">
+                                        <select class="form-control" id="plantilla" aria-label="Plantilla">
                                             <option value="0">tet news</option>
                                             <option value="1">curiosidades</option>
                                             <option value="2">TBtet 1</option>
@@ -98,11 +99,11 @@
                                     <div class="col-12 col-sm-8">
                                         <div class="input-group">
                                             <span class="input-group-text">Título</span>
-                                            <input type="text" class="form-control" placeholder="Inserte el título" id="titular">
+                                            <input type="text" class="form-control" placeholder="Inserte el título" id="titular" aria-label="Título">
                                         </div>
                                     </div>
                                     <div class="col-sm">
-                                        <select class="form-control" id="font_size">
+                                        <select class="form-control" id="font_size" aria-label="Tamaño de la letra">
                                             <option value="72">72</option>
                                             <option value="66">66</option>
                                             <option value="64">64</option>
@@ -127,7 +128,7 @@
                                         <textarea class="form-control text-justify" id="detalles" rows="4" placeholder="Inserte el detalle" cols="50"></textarea>
                                     </div>
                                     <div class="col-sm">
-                                        <select class="form-control" id="font_sizeD">
+                                        <select class="form-control" id="font_sizeD" aria-label="Tamaño de la letra">
                                             <option value="48">48</option>
                                             <option value="44">44</option>
                                             <option value="42">42</option>
@@ -184,25 +185,25 @@
                                         <label for="colorT">Color del texto:</label>
 
                                         <div class="input-color-container">
-                                            <input type="color" id="colorT" class="input-color" name="favcolor" value="#000000">
+                                            <input type="color" id="colorT" class="input-color" aria-label="Color del texto" name="favcolor" value="#000000">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="sh-atajos solo-desktop" role="list" aria-label="Atajos de teclado">
+                                <div class="sh-atajos solo-desktop" role="group" aria-label="Atajos de teclado">
                                     <h6 class="sh-atajos-tit">Atajos</h6>
-                                    <div class="sh-atajo" role="listitem">
+                                    <div class="sh-atajo" role="presentation">
                                         <span class="sh-kbd"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
                                         <span class="sh-atajo-desc">pegar imagen</span>
                                     </div>
-                                    <div class="sh-atajo" role="listitem">
+                                    <div class="sh-atajo" role="presentation">
                                         <span class="sh-kbd"><kbd>Supr</kbd></span>
                                         <span class="sh-atajo-desc">borrar seleccionado</span>
                                     </div>
-                                    <div class="sh-atajo" role="listitem">
+                                    <div class="sh-atajo" role="presentation">
                                         <span class="sh-kbd"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
                                         <span class="sh-atajo-desc">deshacer</span>
                                     </div>
-                                    <div class="sh-atajo" role="listitem">
+                                    <div class="sh-atajo" role="presentation">
                                         <span class="sh-kbd"><kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>Z</kbd></span>
                                         <span class="sh-atajo-desc">rehacer</span>
                                     </div>
@@ -269,6 +270,7 @@
             </div>
         </div>
     </footer>
+    </main>
     <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
     <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -310,13 +312,14 @@
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
     <script src="./public/js/plantillas-data.js"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
-    <script src="./public/js/main.js?v=q3d"></script>
-    <script src="./public/js/capas.js?v=p3b"></script>
-    <script src="./public/js/formatos.js?v=a3bc"></script>
-    <script src="./public/js/shell.js?v=sh16"></script>
+    <script src="./public/js/main.js?v=q3b"></script>
+    <script src="./public/js/capas.js?v=p6"></script>
+    <script src="./public/js/formatos.js?v=a3b"></script>
+    <script src="./public/js/shell.js?v=sh18"></script>
+    <script src="./public/js/editar.js?v=e6"></script>
     <script src="./public/js/tet1-editor.js?v=e2a"></script>
-    <script src="./public/js/publicacion.js?v=p1b"></script>
-    <script src="./public/js/galeria.js?v=g1a"></script>
+    <script src="./public/js/publicacion.js?v=p2"></script>
+    <script src="./public/js/galeria.js?v=g2"></script>
     <script>
         // document.getElementById("sombra").step = "1";
         document.addEventListener('DOMContentLoaded', function() {

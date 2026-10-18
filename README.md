@@ -32,6 +32,7 @@ En producción, GitHub Pages sirve `master/` en `/admin/`.
 | `modcre.html` | Mod creaciones |
 | `gif.html` | GIF animado a partir de imágenes (lote D) |
 | `video.html` | Vídeo MP4/WebM a partir de imágenes (lote E) |
+| `collage.html` | Collage: varias fotos en una sola imagen con plantillas de celdas |
 
 ## Portada (`index.html`)
 
@@ -52,10 +53,6 @@ cuadras, en PNG). El script borra la versión que no mejora.
 ## Funciones del editor
 
 - Plantillas, títulos, imágenes, detalles y capas (arrastrar orden, traer/enviar).
-- **El titular y el detalle nunca se tocan** (tet1): el aire entre las dos zonas
-  es el 2 % de la altura del lienzo, el titular se encoge midiendo su alto real
-  y, al insertar cualquiera de los dos, `separarTextos()` comprueba la
-  separación y mueve el detalle (o sube el titular) lo que falte.
 - **Pestaña «Capas» en el editor de vídeo** (`video.html`, R5): varias imágenes sueltas además del contenido, cada una con posición, tamaño y ventana temporal (aparece y desaparece en un momento del vídeo), mezcladas con los textos en un único orden de dibujo — una imagen puede quedar entre dos textos. Con tocar para seleccionar, manija para mover y asas para escalar.
 - **Panel de capas** (`capas.js`): deshacer/rehacer (Ctrl+Z / Ctrl+Shift+Z), duplicar, guardar/cargar proyecto `.json`, compartir (Web Share).
 - **Formatos sociales** (`formatos.js`): presets de Instagram, Facebook, X, YouTube, TikTok, LinkedIn y Pinterest con guía de recorte y zona segura; exporta PNG en píxeles exactos. Incluye el preset **Origen** (tamaño original del lienzo).
@@ -64,11 +61,26 @@ cuadras, en PNG). El script borra la versión que no mejora.
   - El **tamaño en pantalla del lienzo se calcula** (no es el 300/500 px fijo de
     el HTML): llena el espacio de trabajo sin pasar de 100 %, y el 100 % sigue
     siendo el tamaño real del diseño.
-  - En **móvil y tableta** la barra y el rail se reparten en filas que se ven
-    enteras —**nada de scroll horizontal**—: el rail son dos filas de botones con
-    la etiqueta debajo, todos del mismo tamaño y centrados, y la barra dos filas
-    (deshacer/zoom/guía + Descargar/formato/anclaje). En el móvil se ocultan
-    «Ajustar a pantalla», «Lienzo en blanco» y «Pegar imagen».
+  - En **móvil y tableta** el rail y la barra superior son una fila que se
+    desplaza lateralmente, con «Descargar» anclado a la derecha, y el campo de
+    título + su botón bajan a una barra fija (`.sh-movil`) para escribir sin
+    subir y bajar la página.
+  - El encaje se recalcula **al abrir la página** (no solo al girar el móvil) y
+    también cuando cambia el área de trabajo, por ejemplo al abrir el dock.
+- **Edición de imagen** (`editar.js`, compartido por los 6 editores Fabric):
+  girar 90°, voltear horizontal/vertical, brillo/contraste/saturación con reset,
+  **borrador** con tamaño y plumón (borde suave), y **recortar** arrastrando un
+  marco. Todo deshacible. El panel aparece en el dock solo cuando hay una foto
+  seleccionada.
+- **Collage** (`collage.html` + `collage.js`): plantillas con celdas (1, 2, 3,
+  4, 5, 6 fotos y diseños de revista). Tocas una celda para elegirla y luego
+  pones la foto desde **Galería**, **Cargar** o Ctrl+V — la galería no se abre
+  sola. La foto entra **entera** en la celda; con «Rellena la celda» se recorta.
+  Dentro de la celda se mueve y se acerca para encuadrar, y el recorte sigue a
+  la foto. Color de fondo, hueco y esquinas redondeadas ajustables en vivo.
+- **Accesibilidad**: Lighthouse (accesibilidad / buenas prácticas / SEO) da
+  1,00 / 1,00 / 1,00 en las 10 páginas, sin scroll horizontal en rail ni barra
+  superior, y objetivos táctiles de 24 px como mínimo.
 - PWA: service worker vanilla en `sw.js` (raíz) con caché de estáticos.
 
 > Al tocar `shell.js`, `shell.css`, `style.css` o `formatos.js`, sube el `?v=`

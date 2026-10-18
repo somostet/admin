@@ -79,6 +79,19 @@
                     aviso('No se pudo cargar esa imagen', 'danger');
                     return;
                 }
+                /* El collage (y cualquier editor que defina
+                   window.tetDestinoImagen) deciden dónde cae la foto: en una
+                   celda, por ejemplo. Sin destino, va como siempre: centrada
+                   y escalada al 90 %. */
+                if (typeof window.tetDestinoImagen === 'function') {
+                    var destino = window.tetDestinoImagen(foto, src, boton);
+                    if (destino) {
+                        var inst0 = window.bootstrap && bootstrap.Modal
+                            ? bootstrap.Modal.getInstance(modal) : null;
+                        if (inst0) inst0.hide();
+                        return;
+                    }
+                }
                 /* contain al 90 % y centrada; nunca por encima del tamaño
                    nativo, para que no salga pixelada */
                 if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(foto, 0.9);

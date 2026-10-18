@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- CSP: solo en http/https; en file:// no se inyecta para no romper el modo doble-clic -->
+    <script>
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+            var csp = document.createElement('meta');
+            csp.setAttribute('http-equiv', 'Content-Security-Policy');
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            document.head.appendChild(csp);
+            /* frame-buster: en http/https el admin no se deja embeber en un iframe */
+            if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1d2b43">
+    <meta name="description" content="Collage de fotos de tet: elige un diseño, toca cada celda y pon la foto. Con marcos redondos, color de fondo y salida en el tamaño de cada red social.">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./public/img/pwa-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="tet admin">
+        <script>
+        // tema del editor (oscuro por defecto) antes del primer pintado
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tetTema') || 'dark'); }
+        catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    </script>
+    <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
+    <link rel="stylesheet" href="./public/css/style.css?v=r20">
+    <link rel="stylesheet" href="./public/css/shell.css?v=sp24">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <meta property="og:image" content="./public/img/Logotet.png">
+    <title>tet admin · Collage</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                    aria-expanded="false"><i class="fas fa-layer-group" aria-hidden="true"></i>
+                    <span class="tet-nav-toggle-txt">Editores</span></a>
+                <ul class="dropdown-menu tet-dd">
+                    <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
+                    <li><a class="dropdown-item" href="./tet2.html">Textos <span class="tet-dd-sub">tet 2</span></a></li>
+                    <li><a class="dropdown-item" href="./dictet.html">Diccionario <span class="tet-dd-sub">tet 3</span></a></li>
+                    <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
+                    <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
+                    <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
+                    <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
+                    <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
+                    <li><a class="dropdown-item" href="./collage.html" aria-current="page">Collage <span class="tet-dd-sub">collage</span></a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-social">
+            <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+            <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X de tet" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
+        </div>
+    </nav>
+
+    <!-- Cuerpo -->
+    <main role="main">
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col">
+                <form class="pb-5">
+                    <div class="container-fluid pt-3 pb-3">
+                        <div class="row">
+                            <div class="col-12 col-lg-4 pt-3 pb-3 border shadow editor-panel">
+                                <div class="row">
+                                    <div class="col-12 col-sm-10">
+                                        <select class="form-control" id="plantilla" aria-label="Diseño del collage">
+                                            <option>4 fotos · 2 × 2</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm">
+                                        <button type="button" class="btn btn-info" data-bs-toggle="tooltip"
+                                            data-bs-placement="right" title="Cargar plantilla" onclick="reload()"
+                                            aria-label="Cargar plantilla"><i class="fas fa-sync"></i><span class="ms-1">Cargar plantilla</span></button>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <p class="collage-estado" id="collage-estado" role="status" aria-live="polite">Toca una celda para llenarla</p>
+                                        <div class="collage-fuentes">
+                                            <button type="button" class="btn btn-outline-primary"
+                                                onclick="tetCollageFoto('galeria')"><i class="far fa-images"
+                                                    aria-hidden="true"></i> Galería</button>
+                                            <button type="button" class="btn btn-outline-primary"
+                                                onclick="tetCollageFoto('archivo')"><i class="fas fa-upload"
+                                                    aria-hidden="true"></i> Cargar</button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                onclick="tetCollageFoto('pegar')"><i class="fas fa-paste"
+                                                    aria-hidden="true"></i> Pegar</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <label for="colorFondoCollage" class="form-label">Color de fondo del collage:</label>
+                                        <div class="input-color-container">
+                                            <input type="color" id="colorFondoCollage" class="input-color" value="#ffffff" aria-label="Color de fondo del collage" oninput="tetCollageColor(this.value)">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-12 col-sm-6">
+                                        <label for="encuadreCollage" class="form-label">Cómo entra la foto:</label>
+                                        <select class="form-control" id="encuadreCollage" onchange="tetCollageModo(this.value)">
+                                            <option value="completa" selected>Completa (se ve entera)</option>
+                                            <option value="cubrir">Rellena la celda (recorta)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label for="huecoCollage" class="form-label">Hueco entre fotos:</label>
+                                        <input type="range" class="form-range" id="huecoCollage" min="0" max="60" value="14" aria-label="Hueco entre fotos" oninput="tetCollageHueco(this.value)">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-12 col-sm-6">
+                                        <label for="radioCollage" class="form-label">Esquinas redondas:</label>
+                                        <input type="range" class="form-range" id="radioCollage" min="0" max="80" value="22" aria-label="Esquinas redondas" oninput="tetCollageRadio(this.value)">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-sm">
+                                        <div id="div-img">
+                                            <input class="visually-hidden" type="file" id="imagen" accept="image/*" onchange="collageSubir(event)">
+                                            <label class="btn btn-outline-primary w-100" for="imagen"><i class="fas fa-upload" aria-hidden="true"></i> Cargar una imagen...</label>
+                                            <div class="file-name form-text text-muted">Ninguna imagen seleccionada</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="form-text mt-3">Toca una celda para elegir la foto de la galería (o pega una con
+                                    <kbd>Ctrl</kbd>+<kbd>V</kbd> con la celda ya elegida). Dentro de la celda, muévela o acércala
+                                    para encuadrarla.</p>
+
+                                <div class="sh-atajos solo-desktop" role="group" aria-label="Atajos de teclado">
+                                    <h6 class="sh-atajos-tit">Atajos</h6>
+                                    <div class="sh-atajo" role="presentation">
+                                        <span class="sh-kbd"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+                                        <span class="sh-atajo-desc">pegar foto en la celda elegida</span>
+                                    </div>
+                                    <div class="sh-atajo" role="presentation">
+                                        <span class="sh-kbd"><kbd>Supr</kbd></span>
+                                        <span class="sh-atajo-desc">borrar la foto seleccionada</span>
+                                    </div>
+                                    <div class="sh-atajo" role="presentation">
+                                        <span class="sh-kbd"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
+                                        <span class="sh-atajo-desc">deshacer</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-8 m-2 m-lg-4 editor-lienzo">
+                                <div id="img" crossOrigin="anonymous">
+                                    <div class="text-center"><canvas id="collage" crossOrigin="anonymous" class="zonatet shadow"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer font-small text-light bg-tet-footer">
+        <div class="container tet-footer-grid">
+            <div class="tet-footer-col">
+                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo" width="88" height="88">
+                <p class="tet-footer-tag">La tecnología tiene su espacio</p>
+                <a class="tet-footer-web" href="https://www.somostet.com" target="_blank" rel="noopener">somostet.com</a>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Crear</h2>
+                <ul class="tet-footer-list">
+                    <li><a href="./tet1.html">Noticias</a></li>
+                    <li><a href="./tet2.html">Textos</a></li>
+                    <li><a href="./dictet.html">Diccionario</a></li>
+                    <li><a href="./art.html">Arte</a></li>
+                    <li><a href="./miniatura.html">Miniaturas</a></li>
+                    <li><a href="./modcre.html">Creaciones</a></li>
+                    <li><a href="./gif.html">GIF animado</a></li>
+                    <li><a href="./video.html">Vídeo</a></li>
+                    <li><a href="./collage.html">Collage</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Redes</h2>
+                <ul class="tet-footer-list tet-footer-social">
+                    <li><a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook</a></li>
+                    <li><a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i> Instagram</a></li>
+                    <li><a href="https://twitter.com/somostet" target="_blank" rel="noopener"><i class="fab fa-twitter" aria-hidden="true"></i> Twitter / X</a></li>
+                    <li><a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener"><i class="fab fa-youtube" aria-hidden="true"></i> YouTube</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Proyecto</h2>
+                <ul class="tet-footer-list">
+                    <li><a href="https://somostet.github.io/" target="_blank" rel="noopener">tet (sitio)</a></li>
+                    <li><a href="./index.html">tet admin</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+    </main>
+    <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
+
+    <!-- Galería: la usan galeria.js y collage.js («toca una celda y pon la foto») -->
+    <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLgLabel">Galería de imágenes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body bg-dark">
+                    <div class="row">
+                        <div class="col text-center">
+                            <img src="./public/img/Logotet.png" class="img-fluid" alt="Logo tet">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/2NGSQ.png" class="img-fluid" alt="Diseño 2NGSQ">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/somostet.png" class="img-fluid" alt="somostet">
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col">
+                            <img src="./public/img/bars/ElegantKatHead.png" class="img-fluid" alt="ElegantKat cabeza">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/tetmeme.png" class="img-fluid" alt="tetmeme">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/ElegantKat.png" class="img-fluid" alt="ElegantKat">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="./public/vendor/fabricjs/fabric.min.js"></script>
+    <script src="./public/vendor/reimg/reimg.js"></script>
+    <!-- el lienzo nace ANTES que collage.js, capas.js, formatos.js y shell.js:
+         estos cuatro lo esperan ya creado (igual que en los demás editores) -->
+    <script>
+        /* el lienzo nace ANTES que collage.js, capas.js, formatos.js y shell.js:
+           estos cuatro lo esperan ya creado (igual que en los demás editores).
+           El tamaño lógico es 1200×1200: las celdas se calculan con él y el
+           PNG sale con las dimensiones de la red elegida. */
+        var canvas = new fabric.Canvas('collage', { preserveObjectStacking: true });
+        canvas.setDimensions({ width: 1200, height: 1200 });
+
+        function avisoCollage() {
+            if (window.mostrarAviso) window.mostrarAviso('Elige primero una celda del collage', 'warning');
+        }
+        function collageSubir(ev) {
+            var f = ev.target.files && ev.target.files[0];
+            if (!f) return;
+            var lector = new FileReader();
+            lector.onload = function (e) {
+                fabric.Image.fromURL(e.target.result, function (img) {
+                    if (!img || !img.width) return;
+                    img.set({ strokeUniform: true });
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                    canvas.renderAll();
+                    if (window.tetGuardarEstado) window.tetGuardarEstado();
+                });
+            };
+            lector.readAsDataURL(f);
+        }
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+            bootstrap.Tooltip.getOrCreateInstance(el);
+        });
+    </script>
+    <script src="./public/js/collage.js?v=d5"></script>
+    <script src="./public/js/capas.js?v=p6"></script>
+    <script src="./public/js/formatos.js?v=a4"></script>
+    <script src="./public/js/shell.js?v=sh18"></script>
+    <script src="./public/js/editar.js?v=e6"></script>
+    <script src="./public/js/publicacion.js?v=p2"></script>
+    <script src="./public/js/galeria.js?v=g2"></script>
+    <script>
+        if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
+</body>
+
+</html>

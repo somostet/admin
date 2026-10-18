@@ -23,7 +23,7 @@
     <title>tet admin · Crea imágenes, GIF y vídeos para tet</title>
 
     <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="./public/css/style.css?v=r7">
+    <link rel="stylesheet" href="./public/css/style.css?v=r20">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
 
     <!-- manifest del app + iconos -->
@@ -64,6 +64,7 @@
                     <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
                     <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
                     <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
+                    <li><a class="dropdown-item" href="./collage.html">Collage <span class="tet-dd-sub">collage</span></a></li>
                 </ul>
             </li>
         </ul>
@@ -103,6 +104,7 @@
                         <button type="button" class="chip" data-filtro="imagen" aria-pressed="false">Imágenes</button>
                         <button type="button" class="chip" data-filtro="gif" aria-pressed="false">GIF</button>
                         <button type="button" class="chip" data-filtro="video" aria-pressed="false">Vídeo</button>
+                        <button type="button" class="chip" data-filtro="collage" aria-pressed="false">Collage</button>
                     </div>
                 </div>
 
@@ -226,6 +228,21 @@
                         </div>
                     </article>
 
+                    <article class="tarjeta" data-cat="collage">
+                        <a class="tarjeta-media" href="collage.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/collage.png" alt="" width="760" height="586"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Collage · plantillas</p>
+                            <h3 class="tarjeta-titulo">Collage <span class="tarjeta-sub">collage</span></h3>
+                            <p class="tarjeta-desc">Varias fotos en una sola imagen: elige el diseño, toca cada celda
+                                y pon la foto. Con marcos redondos y color de fondo.</p>
+                            <a class="tarjeta-cta" href="collage.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
+                        </div>
+                    </article>
+
                 </div>
 
                 <p class="portada-vacio" id="portada-vacio" hidden>No hay editores en este filtro.</p>
@@ -279,6 +296,7 @@
                     <li><a href="./modcre.html">Creaciones</a></li>
                     <li><a href="./gif.html">GIF animado</a></li>
                     <li><a href="./video.html">Vídeo</a></li>
+                    <li><a href="./collage.html">Collage</a></li>
                 </ul>
             </div>
             <div class="tet-footer-col">
