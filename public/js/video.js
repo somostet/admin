@@ -8,14 +8,8 @@
     'use strict';
 
     var MAX_IMAGENES = 60;
-    /* R6d · calentamiento de arranque para el grabador de VÍDEO: el MP4 salía
-       con el primer fotograma negro cuando la fuente era un clip (solo o
-       mezclado con fotos), y eso es lo que rechazan o muestran mal Reels e
-       Instagram. Al contraryo que las fotos —que ya salen bien—, aquí el clip
-       tarda en cargarse y buscarse, y durante esa espera el grabador se queda
-       con el lienzo recién redimensionado. Se graban ARRANQUE_PAD ms del
-       primer fotograma antes de dejar reproducir: el vídeo sale ese poco más
-       largo a cambio de no empezar en negro. */
+    /* R6d · el calentamiento da tiempo al codificador móvil para recibir el
+       primer fotograma del lienzo antes de avanzar la línea de tiempo. */
     var ARRANQUE_PAD = 200;
     /* R6d · el valor real lo elige el usuario (video.html, «Calentamiento al
        grabar vídeo»): cada navegador y cada móvil se comporta distinto, y con
@@ -5483,7 +5477,9 @@
     function crearVideo() {
         var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
             Math.round(calculoDuracion().porImagen * 1000));
-        var total = durMs * imagenes.length;
+        var PAD = padArranque();
+        var durLineaMs = durMs * imagenes.length;
+        var total = durLineaMs + PAD;
         var hayMusica = preparaMusica(total / 1000);   // F6
         var mime = elegirMime(hayMusica) || elegirMime(false);
         if (!mime) {
@@ -5516,6 +5512,8 @@
         var mimeUsado = mime;
         var chunks = [];
         var rec;
+        var calRaf = null;
+        var t0 = 0;
         try {
             rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
         } catch (e) {
@@ -5556,30 +5554,58 @@
         progWrap.hidden = false;
         barra.style.width = '0%';
         barra.textContent = '0%';
-        estado.textContent = 'Grabando…';
+        estado.textContent = PAD ? 'Preparando…' : 'Grabando…';
 
-        var t0 = performance.now();
+        function calienta() {
+            var t0c = performance.now();
+            (function paso() {
+                if (!grabando || performance.now() - t0c >= PAD) {
+                    calRaf = null;
+                    return;
+                }
+                dibujarEn(0, durMs);
+                calRaf = requestAnimationFrame(paso);
+            })();
+        }
+
+        function paraCalentar() {
+            if (calRaf) {
+                cancelAnimationFrame(calRaf);
+                calRaf = null;
+            }
+        }
+
+        calienta();
         rec.start(200);
         iniciaMusica();   // F6: la música entra al empezar a grabar
         pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
 
+        setTimeout(function () {
+            paraCalentar();
+            if (!grabando) return;
+            t0 = performance.now();
+            estado.textContent = 'Grabando…';
+            rafAct = requestAnimationFrame(tick);
+        }, PAD);
+
         function tick() {
             if (!grabando) return;
             var t = performance.now() - t0;
-            if (t >= total) {
-                dibujarEn(total - 1, durMs);
+            if (t >= durLineaMs) {
+                dibujarEn(durLineaMs - 1, durMs);
                 grabando = false;
                 if (recAct && recAct.state !== 'inactive') recAct.stop();
                 return;
             }
             dibujarEn(t, durMs);
-            var pct = Math.round(t / total * 100);
+            var transcurrido = PAD + t;
+            var pct = Math.round(transcurrido / total * 100);
             barra.style.width = pct + '%';
             barra.textContent = pct + '%';
-            estado.textContent = 'Grabando… ' + fmt(t / 1000) + ' / ' + fmt(total / 1000) + ' s';
+            estado.textContent = 'Grabando… ' + fmt(transcurrido / 1000) +
+                ' / ' + fmt(total / 1000) + ' s';
             rafAct = requestAnimationFrame(tick);
         }
-        rafAct = requestAnimationFrame(tick);
     }
 
     /* ---------- E2 · grabar el lienzo en directo ---------- */
