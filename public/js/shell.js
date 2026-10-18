@@ -1279,6 +1279,7 @@
 
     var campoTitulo = document.getElementById('titular');
     var btnTitulo = document.querySelector('[aria-label="Insertar título"]');
+    var mantenerTituloEnPropiedades = !!window.tetDeco;
 
     /* «Insertar título» junto a su campo. En tet1 ya estaba así; en art,
        miniatura y modcre vivía en la fila de acciones del lienzo y, al subir
@@ -1296,7 +1297,7 @@
         }
     }
 
-    if (campoTitulo) {
+    if (campoTitulo && !mantenerTituloEnPropiedades) {
         var caja = campoTitulo.closest('.input-group, .form-group') || campoTitulo;
         mudado.push({ nodo: caja, casa: caja.parentNode, sitio: caja.nextSibling });
         if (caja === campoTitulo) barra.appendChild(el('span', 'sh-mv-lbl', 'Título'));

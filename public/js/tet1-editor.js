@@ -397,9 +397,8 @@
     var outAngulo = panelTpl.querySelector('#tet-angulo-n');
     var inOpacidad = panelTpl.querySelector('#tet-opacidad');
     var outOpacidad = panelTpl.querySelector('#tet-opacidad-n');
-    /* El deslizador controla la franja, NO la imagen de plantilla: antes bajaba
-       la opacidad de ambas y el diseño de fondo se veía desteñido, como si la
-       plantilla estuviera dañada. */
+    /* La franja superior mantiene su opacidad; el deslizador solo afecta al
+       fondo si se activa esta opción. */
     var chkOpacidad = el('input', 'form-check-input');
     chkOpacidad.type = 'checkbox';
     chkOpacidad.id = 'tet-opacidad-fondo';

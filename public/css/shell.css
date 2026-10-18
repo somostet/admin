@@ -189,25 +189,6 @@ body {
     background: var(--sh-border);
 }
 
-/* Los tres botones grandes del dock medían 147, 162 y 303 px de ancho (y a
-       dos tamaños de letra) según la columna en que caían. Normalizan: ancho
-       FIJO de 303 px (el máximo) para que todos tengan el mismo tamaño aunque
-       estén en columnas/filas distintas. Se aplica SIEMPRE, no solo en móvil. */
-.shell-dock [aria-label="Insertar título"],
-.shell-dock [aria-label="Insertar detalles"],
-.shell-dock [aria-label="Generar"],
-.shell-dock #div-img .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: .45rem;
-    width: 303px;
-    min-height: 48px;
-    padding: .6rem .7rem;
-    font-size: .95rem;
-    white-space: nowrap;
-}
-
 /* ---------- escenario: reglas + lienzo ---------- */
 .shell-stage {
     position: relative;
@@ -1285,22 +1266,20 @@ body.tet-barra-movil {
 }
 
 .pub-acciones {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .35rem;
     margin-top: .8rem;
 }
 
 .shell-dock .pub-acciones .btn {
-    flex: 1 1 auto;
-    min-width: 8.5rem;
-}
-
-@media (max-width: 767.98px) {
-    .shell-dock .pub-acciones .btn {
-        min-height: 44px;
-        flex: 0 0 auto;
-    }
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 44px;
+    white-space: normal;
+    line-height: 1.2;
 }
 
 /* ---------- galería: toca una imagen y va al lienzo ---------- */
@@ -1381,6 +1360,7 @@ body.tet-barra-movil {
 .editor-panel .btn {
     margin-right: .45rem;
     margin-bottom: .45rem;
+    min-height: 44px;
 }
 
 .shell-dock .editor-panel .row > .col-sm:last-child .btn,
@@ -1389,6 +1369,29 @@ body.tet-barra-movil {
 .editor-panel .row > .col:last-child .btn {
     margin-right: 0;
 }
+.shell-dock .editor-panel .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.shell-dock .editor-panel .row > .prop-action-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    min-width: 0;
+}
+
+@media (min-width: 421px) {
+    .shell-dock .editor-panel .row > .prop-action-col {
+        flex: 0 0 303px !important;
+        width: 303px !important;
+    }
+}
+
 /* ---------- responsive fino de la shell ---------- */
 @media (max-width: 767.98px) {
     /* objetivos táctiles de 44 px */

@@ -60,7 +60,7 @@ var DECO = {
     color1: '#ffffff',     // degradado: color inicial
     color2: '#1d3f7a',     // degradado: color final
     angulo: 150,           // grados; 0 = de izquierda a derecha
-    opacidad: 1,           // 0..1 sobre la franja (no sobre el fondo)
+    opacidad: 1,           // 0..1 sobre el fondo cuando se activa esa opción
     opacidadFondo: false,  // true = el deslizador también baja el fondo
     conBarra: true         // mostrar / ocultar la franja
 };
@@ -140,14 +140,13 @@ function aplicarBarra(url) {
     }
     var r = rectBarra();
 
-    /* La franja (overlayImage) siempre sigue el deslizador de opacidad: es
-       transparente por naturaleza y lo único que se le pide es que se vea
-       más o menos. El fondo va aparte (DECO.opacidadFondo). */
+    /* La franja superior conserva siempre su opacidad: el deslizador solo
+       puede afectar al fondo cuando el usuario activa esa opción. */
     if (esLaMismaImagen(url, canvas.overlayImage)) {
         canvas.overlayImage.set({
             left: 0, top: 0,
             scaleX: r.esc, scaleY: r.esc,
-            opacity: DECO.opacidad
+            opacity: 1
         });
         canvas.renderAll();
         return;
@@ -159,7 +158,7 @@ function aplicarBarra(url) {
         top: 0,
         scaleX: r.esc,
         scaleY: r.esc,
-        opacity: DECO.opacidad
+        opacity: 1
     });
 }
 
@@ -221,7 +220,7 @@ function refrescarOpacidadDecoracion() {
     /* el fondo solo se toca si el usuario lo pidió: si no, el deslizador
        desteñía la plantilla entera y parecía que estuviera dañada */
     if (bg) bg.set({ opacity: (DECO.opacidadFondo ? DECO.opacidad : 1) });
-    if (ov) ov.set({ opacity: DECO.opacidad });
+    if (ov) ov.set({ opacity: 1 });
     canvas.renderAll();
 }
 
@@ -559,6 +558,8 @@ function huecoTitulo() {
    zonas. Si el detalle se saldría por abajo, se sube el titular en lugar de
    bajar el detalle. Devuelve true si ha movido algo. */
 function separarTextos() {
+    if (window.matchMedia('(max-width: 767.98px)').matches) return false;
+
     var titulos = [], detalles = [];
     canvas.getObjects().forEach(function (o) {
         if (o.tetZona === 'titulo') titulos.push(o);
@@ -734,7 +735,6 @@ function set_title() {
 
     situarEnZona(obj, 'titulo');
     canvas.add(obj);
-    separarTextos();
 
     var canvas_objects = canvas._objects;
     if (canvas_objects.length !== 0) {

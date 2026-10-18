@@ -237,10 +237,8 @@
     function refrescar() { pintarChips(); pintarCuentas(); pintarPreview(); guardar(); }
 
     inTags.addEventListener('input', function () {
-        /* se normaliza en caliente: al teclear el 6.º hashtag se sustituye
-           por los cinco primeros en vez de dejar un aviso que hay que leer */
-        var limpio = normalizarTags(inTags.value);
-        if (limpio !== inTags.value) inTags.value = limpio;
+        /* Mantener la entrada intacta permite escribir hashtags separados por
+           espacios sin que se borre el espacio al normalizar cada tecla. */
         refrescar();
     });
     inTitulo.addEventListener('input', function () {
