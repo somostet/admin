@@ -218,6 +218,8 @@ body {
 .ruler-h {
     grid-area: rulH;
     width: 100%;
+    height: 172px;
+    min-width: 0;
     height: 22px;
     border-bottom: 1px solid var(--sh-border);
 }
@@ -891,8 +893,8 @@ body.tet-barra-movil {
    como los iconos del móvil: se leen de un vistazo y caben en dos filas. */
 @media (max-width: 575.98px) {
     .shell-rail {
-        justify-content: flex-start;
-        align-items: stretch;
+        justify-content: center;
+        align-items: center;
         gap: .25rem .3rem;
         padding: .4rem .35rem;
     }
@@ -1287,6 +1289,7 @@ body.tet-barra-movil {
 .galeria-celda {
     display: flex;
     justify-content: center;
+    min-width: 0;
 }
 
 .galeria-item {
@@ -1322,7 +1325,9 @@ body.tet-barra-movil {
 
 .galeria-item img {
     width: 100%;
-    height: auto;
+    height: 132px;
+    flex: 0 0 132px;
+    object-fit: contain;
     border-radius: .3rem;
 }
 
@@ -1333,22 +1338,59 @@ body.tet-barra-movil {
     opacity: .85;
 }
 
-/* en el móvil el modal se desborda: cuerpo con scroll propio y celdas
-   adaptables para que entren dos por fila */
+/* miniaturas uniformes y modal desplazable, también en pantallas estrechas */
+.modal.galeria-modal .modal-dialog {
+    max-width: min(920px, calc(100% - 1rem));
+    margin: .5rem auto;
+}
+
+.modal.galeria-modal .modal-content {
+    max-height: calc(100dvh - 1rem);
+}
+
+.modal.galeria-modal .modal-body {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
+    gap: .6rem;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal.galeria-modal .modal-body .row {
+    display: contents;
+}
+
+.modal.galeria-modal .modal-body .row > * {
+    width: auto;
+    max-width: none;
+    flex: initial;
+    padding: 0;
+}
+
 @media (max-width: 575.98px) {
-    .modal.galeria-modal .modal-dialog.modal-lg {
-        margin: .5rem;
+    .modal.galeria-modal .modal-dialog {
+        max-width: calc(100% - 1rem);
     }
 
     .modal.galeria-modal .modal-body {
-        max-height: 70vh;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .modal.galeria-modal .modal-body .row > * {
-        flex: 0 0 50%;
-        max-width: 50%;
+    .galeria-item {
+        height: 142px;
+    }
+
+    .galeria-item img {
+        height: 102px;
+        flex-basis: 102px;
+    }
+
+    .galeria-pie {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 }
 
@@ -1426,22 +1468,14 @@ body.tet-barra-movil {
 }
 
 @media (max-width: 575.98px) {
-    /* La barra del teléfono se repartía en tres filas y ocupaba 154 px; con
-       scroll lateral se quedaba en una (56 px), pero «Descargar» iba anclado
-       encima de los selectores, los tapaba a medias y salía la barra de scroll:
-       se veía roto. Ahora son dos filas fijas y todo se ve entero:
-
-         fila 1 · deshacer · rehacer · zoom− · 100 % · zoom+ · Descargar
-         fila 2 · formato de salida · anclaje · guía · lienzo en blanco
-
-       El salto de línea se fuerza con flex-basis:100% en el selector de formato
-       y el tamaño (1200×1200) se esconde en .sh-dim para que «Descargar» quepa
-       en la primera fila. «Ajustar a pantalla» no cabe: en táctil hace lo mismo
-       el pellizco y el encaje automático, así que en el teléfono se oculta. */
+    /* Barra superior ordenada en tres filas, sin depender del ancho restante:
+       zoom, selectores de salida y acciones. */
     .shell-top {
-        gap: .3rem .25rem;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: center;
+        gap: .35rem;
         padding: .35rem .45rem;
-        flex-wrap: wrap;          /* sin scroll: si no cabe, baja de fila */
         overflow: visible;
     }
 
@@ -1457,25 +1491,15 @@ body.tet-barra-movil {
         display: none;
     }
 
-    /* Orden de las dos filas sin tocar el DOM (flex order): en el HTML,
-       «Descargar» va el último, después de los selectores, y con el scroll
-       se quedaba anclado encima de ellos. La primera fila es la de deshacer,
-       rehacer y zoom (los botones con .sh-ctl). */
-    .shell-top>* {
-        order: 2;
-    }
-
-    .shell-top>.sh-ctl,
-    .shell-top>.sh-guia {
-        order: 0;
-    }
-
-    .shell-top>#formato-descargar {
-        order: 1;
-    }
-
-    .shell-top .btn {
-        width: 36px;
+    /* Fila 1: controles de zoom. Fila 2: formato y anclaje. Fila 3:
+       compartir y descargar. La rejilla evita que los controles salten de
+       fila de forma distinta según el ancho disponible. */
+    .shell-top>.sh-ctl {
+        grid-row: 1;
+        justify-self: stretch;
+        width: 100%;
+        max-width: 48px;
+        min-width: 0;
         padding: 0;
         font-size: .88rem;
     }
@@ -1488,8 +1512,10 @@ body.tet-barra-movil {
 
     /* el único botón con texto de la barra: se queda con lo que sobre */
     .shell-top #formato-descargar {
-        width: auto;
-        flex: 1 1 auto;
+        grid-column: 3 / span 3;
+        grid-row: 3;
+        width: 100%;
+        max-width: 160px;
         padding: 0 .7rem;
         font-size: .84rem;
     }
@@ -1498,26 +1524,21 @@ body.tet-barra-movil {
         display: none;
     }
 
-    /* «Compartir» con el mismo tratamiento que el resto: solo el icono, que es
-       lo que cabe. Con el texto dentro de 36 px quedaba cortado y parecía que
-       el botón no existía */
-    .shell-top .sh-share {
-        width: 36px;
+    /* «Compartir» solo con icono: el texto no cabe en la pantalla estrecha. */
+    .shell-top [aria-label="Compartir imagen"] {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+        width: 100%;
+        max-width: 100px;
         padding: 0;
     }
 
-    .shell-top .sh-share>span {
-        display: none !important;
-    }
-
-    /* «Compartir»: el texto dentro del botón de la barra se desbordaba 5 px */
+    /* Oculta las etiquetas textuales de los botones de acción. */
     .shell-top .btn-primary .ms-1 {
         display: none !important;
     }
 
-    /* la casilla de la guía de recorte no cabe en el teléfono (45 px) y ya
-       viene activada; con ella fuera, «Compartir» entra en la primera fila y
-       la barra se queda en dos */
+    /* La guía se omite en la pantalla estrecha; está activada por defecto. */
     .shell-top .sh-guia {
         display: none;
     }
@@ -1530,14 +1551,18 @@ body.tet-barra-movil {
     }
 
     .shell-top #formato-salida {
-        flex: 1 1 6rem;
+        grid-column: 1 / span 3;
+        grid-row: 2;
+        width: 100%;
         min-width: 0;
         max-width: none;
         font-size: .82rem;
     }
 
     .shell-top #formato-ancla {
-        flex: 1 1 5.5rem;
+        grid-column: 4 / span 2;
+        grid-row: 2;
+        width: 100%;
         min-width: 0;
         max-width: none;
         font-size: .82rem;
@@ -1723,6 +1748,31 @@ body.tet-barra-movil {
 
 .tet-fila .tet-lbl {
     flex: 0 0 auto;
+}
+
+.tet-color-parada {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    align-items: center;
+    gap: .4rem;
+    font-size: .72rem;
+    color: var(--sh-muted);
+}
+
+.tet-color-parada span {
+    flex: 0 0 auto;
+}
+
+.tet-gradient-preview {
+    min-height: 1.25rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .35rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2);
+}
+
+.tet-gradient-preview[hidden] {
+    display: none;
 }
 
 .tet-range {

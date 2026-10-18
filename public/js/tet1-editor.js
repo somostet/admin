@@ -370,9 +370,14 @@
         '    <button type="button" class="tet-seg-btn" data-fondo="degradado" title="Degradado"><i class="fas fa-fill-drip" aria-hidden="true"></i> Degradado</button>',
         '  </div>',
         '  <div class="tet-fila tet-colores" id="tet-fila-degradado" hidden>',
-        '    <label class="tet-lbl" for="tet-color2">Color 2</label>',
-        '    <input type="color" id="tet-color2" class="tet-color" value="#1d3f7a" aria-label="Segundo color del degradado">',
+        '    <label class="tet-color-parada" for="tet-color1"><span>Inicio</span>',
+        '      <input type="color" id="tet-color1" class="tet-color" value="#ffffff" aria-label="Color inicial del degradado">',
+        '    </label>',
+        '    <label class="tet-color-parada" for="tet-color2"><span>Final</span>',
+        '      <input type="color" id="tet-color2" class="tet-color" value="#1d3f7a" aria-label="Color final del degradado">',
+        '    </label>',
         '  </div>',
+        '  <div class="tet-gradient-preview" id="tet-gradient-preview" role="img" aria-label="Vista previa del degradado"></div>',
         '  <div class="tet-fila" id="tet-fila-angulo" hidden>',
         '    <label class="tet-lbl" for="tet-angulo">Ángulo</label>',
         '    <input type="range" class="tet-range" id="tet-angulo" min="0" max="360" step="5" value="150">',
@@ -392,7 +397,9 @@
     ].join(''));
 
     var segFondo = panelTpl.querySelector('#tet-tipo-fondo');
+    var inColor1 = panelTpl.querySelector('#tet-color1');
     var inColor2 = panelTpl.querySelector('#tet-color2');
+    var previewDegradado = panelTpl.querySelector('#tet-gradient-preview');
     var inAngulo = panelTpl.querySelector('#tet-angulo');
     var outAngulo = panelTpl.querySelector('#tet-angulo-n');
     var inOpacidad = panelTpl.querySelector('#tet-opacidad');
@@ -427,12 +434,16 @@
         filaAngulo.hidden = !esGrad;
         inAngulo.value = DECO.angulo;
         outAngulo.textContent = Math.round(DECO.angulo) + '°';
+        inColor1.value = DECO.color1;
         inOpacidad.value = Math.round(DECO.opacidad * 100);
         outOpacidad.textContent = Math.round(DECO.opacidad * 100) + '%';
         var chkOpFondo = document.getElementById('tet-opacidad-fondo');
         if (chkOpFondo) chkOpFondo.checked = !!DECO.opacidadFondo;
         inColor2.value = DECO.color2;
         chkBarra.checked = !!DECO.conBarra;
+        previewDegradado.style.background =
+            'linear-gradient(' + DECO.angulo + 'deg, ' + DECO.color1 + ', ' + DECO.color2 + ')';
+        previewDegradado.hidden = !esGrad;
     }
 
     /* Cada ajuste repinta la decoración; el historial se guarda una vez al
@@ -464,13 +475,22 @@
         pintarDecoracion();
     });
 
+    inColor1.addEventListener('input', function () {
+        DECO.color1 = this.value;
+        var selectorFondo = document.getElementById('color');
+        if (selectorFondo) selectorFondo.value = this.value;
+        refrescarPanelTpl();
+        if (DECO.tipoFondo === 'degradado') pintarDecoracion();
+    });
     inColor2.addEventListener('input', function () {
         DECO.color2 = this.value;
+        refrescarPanelTpl();
         if (DECO.tipoFondo === 'degradado') pintarDecoracion();
     });
     inAngulo.addEventListener('input', function () {
         DECO.angulo = +this.value;
         outAngulo.textContent = Math.round(DECO.angulo) + '°';
+        refrescarPanelTpl();
         if (DECO.tipoFondo === 'degradado') pintarDecoracion();
     });
     inOpacidad.addEventListener('input', function () {
