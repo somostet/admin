@@ -582,7 +582,8 @@
     }
 
     /* pegar desde el portapapeles (la lógica vive en capas.js) */
-    var btnPegar = mkBtn('fa-clipboard', 'Pegar imagen (Ctrl+V)');
+    var btnPegar = mkBtn('fa-clipboard', 'Pegar imagen (Ctrl+V)', 'Pegar');
+    hacerIcono(btnPegar);
     btnPegar.addEventListener('click', function () {
         function av(msg, tipo) { if (window.mostrarAviso) window.mostrarAviso(msg, tipo); }
         if (navigator.clipboard && navigator.clipboard.read) {
@@ -671,10 +672,8 @@
         { id: 'capas',    icono: 'fa-layer-group',    texto: 'Capas' },
         { id: 'pub',      icono: 'fa-hashtag',        texto: 'Publicación' }
     ];
-    /* En el móvil la pestaña activa por defecto es «Publicación»: es la que
-       tiene los botones de copiar/descargar que la gente busca, y antes quedaba
-       oculta detrás de «Propiedades». En escritorio sigue siendo «Propiedades». */
-    var activaInicial = window.matchMedia('(max-width: 991.98px)').matches ? 'pub' : 'props';
+    /* Propiedades es la pestaña inicial en todos los tamaños de pantalla. */
+    var activaInicial = 'props';
     PESTANAS.forEach(function (p) {
         /* publicacion.js puede cargarse antes y ya haber creado la pestaña/panel:
            si se creara otra, el dock tendría dos pestañas iguales. */

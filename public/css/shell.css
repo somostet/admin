@@ -1472,7 +1472,7 @@ body.tet-barra-movil {
        zoom, selectores de salida y acciones. */
     .shell-top {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(10, minmax(0, 1fr));
         align-items: center;
         gap: .35rem;
         padding: .35rem .45rem;
@@ -1496,27 +1496,29 @@ body.tet-barra-movil {
        fila de forma distinta según el ancho disponible. */
     .shell-top>.sh-ctl {
         grid-row: 1;
+        grid-column: span 2;
         justify-self: stretch;
         width: 100%;
-        max-width: 48px;
+        max-width: none;
         min-width: 0;
         padding: 0;
         font-size: .88rem;
     }
 
     #sh-zoom-label {
-        width: 44px;
-        min-width: 44px;
+        width: 100%;
+        min-width: 0;
         font-size: .78rem;
     }
 
-    /* el único botón con texto de la barra: se queda con lo que sobre */
+    /* Acciones iguales, en una fila propia y con icono + etiqueta visibles. */
     .shell-top #formato-descargar {
-        grid-column: 3 / span 3;
+        grid-column: 6 / span 5;
         grid-row: 3;
         width: 100%;
-        max-width: 160px;
-        padding: 0 .7rem;
+        max-width: none;
+        min-width: 0;
+        padding: 0 .35rem;
         font-size: .84rem;
     }
 
@@ -1524,18 +1526,14 @@ body.tet-barra-movil {
         display: none;
     }
 
-    /* «Compartir» solo con icono: el texto no cabe en la pantalla estrecha. */
     .shell-top [aria-label="Compartir imagen"] {
-        grid-column: 1 / span 2;
+        grid-column: 1 / span 5;
         grid-row: 3;
         width: 100%;
-        max-width: 100px;
-        padding: 0;
-    }
-
-    /* Oculta las etiquetas textuales de los botones de acción. */
-    .shell-top .btn-primary .ms-1 {
-        display: none !important;
+        max-width: none;
+        min-width: 0;
+        padding: 0 .35rem;
+        font-size: .84rem;
     }
 
     /* La guía se omite en la pantalla estrecha; está activada por defecto. */
@@ -1543,15 +1541,8 @@ body.tet-barra-movil {
         display: none;
     }
 
-    /* fuera del rail: el portapapeles del sistema no existe en iOS Safari
-       (navigator.clipboard.read() es solo Chromium) y sin Ctrl+V el botón no
-       hace nada. Era un icono sin etiqueta que no explicaba nada */
-    .shell-rail .btn[aria-label^="Pegar"] {
-        display: none;
-    }
-
     .shell-top #formato-salida {
-        grid-column: 1 / span 3;
+        grid-column: 1 / span 6;
         grid-row: 2;
         width: 100%;
         min-width: 0;
@@ -1560,7 +1551,7 @@ body.tet-barra-movil {
     }
 
     .shell-top #formato-ancla {
-        grid-column: 4 / span 2;
+        grid-column: 7 / span 4;
         grid-row: 2;
         width: 100%;
         min-width: 0;
