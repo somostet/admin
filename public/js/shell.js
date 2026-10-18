@@ -130,7 +130,7 @@
     top.appendChild(el('span', 'shell-doc',
         '<i class="fas fa-pen" aria-hidden="true"></i> ' + (nombreEdit || 'Editor')));
 
-    /* selector de plantilla + avance automático en el navbar */
+    /* selector de plantilla en el navbar */
     var navPrin = document.querySelector('nav.navbar');
     var socialNav = document.querySelector('.navbar-social');
     var grupoTpl = el('div', 'navbar-tpl');
@@ -138,44 +138,10 @@
     if (selTpl) grupoTpl.appendChild(selTpl);
     moverBoton('Cargar plantilla', grupoTpl);
 
-    var btnAuto = mkBtn('fa-play', 'Rotar plantillas automáticamente');
-    var timerAuto = null;
-    function pararAuto() {
-        if (timerAuto) { clearInterval(timerAuto); timerAuto = null; }
-        btnAuto.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
-        btnAuto.setAttribute('aria-label', 'Rotar plantillas automáticamente');
-        btnAuto.setAttribute('title', 'Rotar plantillas automáticamente');
-    }
-    btnAuto.addEventListener('click', function () {
-        if (timerAuto) { pararAuto(); return; }
-        if (!selTpl || typeof reload !== 'function') return;
-        btnAuto.innerHTML = '<i class="fas fa-pause" aria-hidden="true"></i>';
-        btnAuto.setAttribute('aria-label', 'Detener rotación de plantillas');
-        btnAuto.setAttribute('title', 'Detener rotación de plantillas');
-        timerAuto = setInterval(function () {
-            /* con la pestaña en segundo plano no se toca el lienzo: al volver
-               el usuario se encontraba la plantilla cambiada sin saberlo */
-            if (document.hidden) return;
-            var n = selTpl.options.length;
-            if (!n) return;
-            /* si el valor actual no es un índice (opciones editadas a mano) se
-              .parseInt devolvía NaN y el selector se quedaba en blanco */
-            var idx = parseInt(selTpl.value, 10);
-            if (isNaN(idx)) idx = 0;
-            selTpl.value = String((idx + 1) % n);
-            if (typeof reload === 'function') reload();
-        }, 1400);
-    });
-    /* tocar el lienzo también detiene la rotación: si no, el diseño se
-       recolocaba mientras el usuario movía un texto */
-    work.addEventListener('pointerdown', pararAuto);
-    document.addEventListener('visibilitychange', function () {
-        if (document.hidden) pararAuto();
-    });
-    // una elección manual detiene la rotación
-    if (selTpl) selTpl.addEventListener('change', pararAuto);
+    /* Sin botón de rotación automática: se quitó a propósito (decisión del
+       usuario) porque cambiaba la plantilla solo y sin avisar. Aquí solo queda
+       el selector y «Cargar plantilla». */
     if (selTpl) {
-        grupoTpl.appendChild(btnAuto);
         if (navPrin) {
             if (socialNav) navPrin.insertBefore(grupoTpl, socialNav);
             else navPrin.appendChild(grupoTpl);
@@ -558,7 +524,7 @@
 
     /* compartir (reenvía al botón de la toolbar de capas) */
     var capasShare = q('#capas-toolbar [data-act="share"]');
-    if (navigator.share && capasShare) {
+    if (capasShare) {
         var btnShare = mkBtn('fa-share-alt', 'Compartir imagen', 'Compartir');
         btnShare.classList.remove('btn-ghost');
         btnShare.classList.add('btn-primary');
@@ -702,18 +668,26 @@
 
     var PESTANAS = [
         { id: 'props',    icono: 'fa-pen',            texto: 'Propiedades' },
-        { id: 'capas',    icono: 'fa-layer-group',    texto: 'Capas' }
+        { id: 'capas',    icono: 'fa-layer-group',    texto: 'Capas' },
+        { id: 'pub',      icono: 'fa-hashtag',        texto: 'Publicación' }
     ];
+    /* En el móvil la pestaña activa por defecto es «Publicación»: es la que
+       tiene los botones de copiar/descargar que la gente busca, y antes quedaba
+       oculta detrás de «Propiedades». En escritorio sigue siendo «Propiedades». */
+    var activaInicial = window.matchMedia('(max-width: 991.98px)').matches ? 'pub' : 'props';
     PESTANAS.forEach(function (p) {
-        var b = el('button', 'dock-tab' + (p.id === 'props' ? ' is-active' : ''),
+        /* publicacion.js puede cargarse antes y ya haber creado la pestaña/panel:
+           si se creara otra, el dock tendría dos pestañas iguales. */
+        if (document.querySelector('.dock-tab[data-pane="' + p.id + '"]')) return;
+        var b = el('button', 'dock-tab' + (p.id === activaInicial ? ' is-active' : ''),
             '<i class="fas ' + p.icono + '" aria-hidden="true"></i> ' + p.texto);
         b.type = 'button';
         b.setAttribute('role', 'tab');
-        b.setAttribute('aria-selected', p.id === 'props' ? 'true' : 'false');
+        b.setAttribute('aria-selected', p.id === activaInicial ? 'true' : 'false');
         b.dataset.pane = p.id;
         tabs.appendChild(b);
 
-        var pane = el('div', 'dock-pane' + (p.id === 'props' ? ' is-active' : ''));
+        var pane = el('div', 'dock-pane' + (p.id === activaInicial ? ' is-active' : ''));
         pane.dataset.pane = p.id;
         pane.setAttribute('role', 'tabpanel');
         panes.appendChild(pane);
@@ -1330,17 +1304,17 @@
 
         if (btnTitulo) {
             btnTitulo.classList.add('btn-ghost');
-            /* la etiqueta («Insertar título») no se borra: dentro de la barra la
-               oculta .sh-movil .btn span, y al volver al dock aparece entera */
-            mudado.push({ nodo: btnTitulo, casa: btnTitulo.parentNode, sitio: btnTitulo.nextSibling });
-            barra.appendChild(btnTitulo);
+            /* En el móvil el botón NO va a la barra: ahí quedaba a 42 px de ancho
+               (la etiqueta oculta), frente a los 303 px de «Insertar detalles» y
+               «Cargar una imagen». Se queda en el dock, con el mismo tamaño. */
+            mudado.push({ nodo: btnTitulo, casa: btnTitulo.parentNode, sitio: btnTitulo.nextSibling, aBarra: false });
         }
     }
 
     function colocarBarra(movil) {
         if (!mudado.length) return;
         mudado.forEach(function (m) {
-            if (movil) {
+            if (movil && m.aBarra !== false) {
                 if (m.nodo.parentNode !== barra) barra.appendChild(m.nodo);
                 /* la columna que alojaba el campo se queda marcada: sin esto
                    limpiarVacios() se la lleva por estar vacía y, al volver a

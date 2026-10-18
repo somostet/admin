@@ -54,7 +54,11 @@
     }
 
     /* ---------- construcción del panel ---------- */
-    var puedeCompartir = !!(navigator.share);
+    /* El botón de compartir siempre está: antes dependía de navigator.share y
+       en iOS (y en este emulador) no existía, así que el botón nunca se creaba
+       y la toolbar se quedaba sin la acción que la gente más busca. Si el
+       navegador no tiene Web Share API, el handler de capas.js ya cae al
+       portapapeles/descarga. */
     var panel = document.createElement('div');
     panel.className = 'capas-panel';
     panel.innerHTML =
@@ -70,9 +74,7 @@
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="dup" title="Duplicar capa seleccionada" aria-label="Duplicar capa"><i class="fas fa-clone" aria-hidden="true"></i><span class="solo-movil ms-1">Duplicar</span></button>' +
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="save" title="Guardar proyecto (.json)" aria-label="Guardar proyecto"><i class="fas fa-save" aria-hidden="true"></i><span class="solo-movil ms-1">Guardar</span></button>' +
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="load" title="Cargar proyecto (.json)" aria-label="Cargar proyecto"><i class="fas fa-folder-open" aria-hidden="true"></i><span class="solo-movil ms-1">Cargar</span></button>' +
-            (puedeCompartir
-                ? '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="share" title="Compartir imagen" aria-label="Compartir imagen"><i class="fas fa-share-alt" aria-hidden="true"></i><span class="solo-movil ms-1">Compartir</span></button>'
-                : '') +
+            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="share" title="Compartir imagen" aria-label="Compartir imagen"><i class="fas fa-share-alt" aria-hidden="true"></i><span class="solo-movil ms-1">Compartir</span></button>' +
         '</div>' +
         '<input type="file" id="capas-cargar" accept="application/json,.json" aria-label="Cargar un proyecto" hidden>' +
         '<div class="capas-list" id="capas-list"></div>';

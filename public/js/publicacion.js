@@ -39,17 +39,27 @@
         if (window.mostrarAviso) window.mostrarAviso(msg, tipo);
     }
 
-    /* ---------------- pestaña ---------------- */
-    var tab = el('button', 'dock-tab',
-        '<i class="fas fa-hashtag" aria-hidden="true"></i> Publicación');
-    tab.type = 'button';
-    tab.setAttribute('role', 'tab');
-    tab.setAttribute('aria-selected', 'false');
-    tab.dataset.pane = 'pub';
+    /* ---------------- pestaña ----------------
+       shell.js ya crea la pestaña «Publicación» (PESTANAS). Aquí solo se
+       reutiliza: si se creara otra, el dock tendría dos pestañas iguales. */
+    var tab = document.querySelector('.dock-tab[data-pane="pub"]');
+    if (!tab) {
+        tab = el('button', 'dock-tab',
+            '<i class="fas fa-hashtag" aria-hidden="true"></i> Publicación');
+        tab.type = 'button';
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-selected', 'false');
+        tab.dataset.pane = 'pub';
+        tabs.appendChild(tab);
+    }
 
-    var pane = el('div', 'dock-pane pub-pane');
-    pane.dataset.pane = 'pub';
-    pane.setAttribute('role', 'tabpanel');
+    var pane = document.querySelector('.dock-pane[data-pane="pub"]');
+    if (!pane) {
+        pane = el('div', 'dock-pane pub-pane');
+        pane.dataset.pane = 'pub';
+        pane.setAttribute('role', 'tabpanel');
+        panes.appendChild(pane);
+    }
     pane.innerHTML =
         '<div class="pub-caja">' +
             '<p class="pub-intro">Texto que acompaña a la imagen. Se guarda en ' +

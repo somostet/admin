@@ -2132,6 +2132,60 @@ Lighthouse (accesibilidad / buenas prácticas / SEO) = **1,00 / 1,00 / 1,00 en l
   `<li>` del desplegable del navbar (heredaban el `#212529` de Bootstrap) y la
   pestaña activa de `video.html` (azul claro sobre fondo blanco).
 
+### V7 - Regresión en tet1: el cache-busting iba hacia atrás
+
+**Síntoma:** en tet1 volvieron cosas que el usuario había quitado a propósito (el
+botón ▶ «Rotar plantillas automáticamente»), el «Título» aparecía en sitios que
+no correspondía y faltaban mejoras de diseño que ya estaban hechas.
+
+**Causa raíz — dos errores distintos, ambos míos:**
+
+1. **Versiones `?v=` bajadas en vez de subidas.** Para tocar CSS/JS usaba un
+   reemplazo global del tipo
+   `-replace 'shell\.css\?v=sp\d+', 'shell.css?v=sp24'`.
+   Eso reescribe *cualquier* número a un valor fijo. Como el usuario había
+   subido `shell.css` a `sp25`, mi script lo dejó en `sp24`: un token **más
+   bajo** que uno ya servido. El service worker (StaleWhileRevalidate en CSS)
+   y la caché HTTP siguen asociando `?v=sp24` a la copia vieja, así que la
+   página seguía pintándose con el CSS anterior a sus cambios. Por eso «se
+   volvió a dañar»: el código nuevo estaba bien en disco, pero no llegaba al
+   navegador.
+
+2. **Pérdida real de código suyo.** Al comparar `main.js` y `shell.css` contra
+   `9806237` (su commit «text guide») aparecieron ausencias que no eran solo de
+   versión:
+   - `main.js`: se perdió todo el bloque de **separación titular/detalle**
+     (`SEPARACION`, `separacionMinima`, `altoTexto`, `huecoTitulo`,
+     `separarTextos`, `window.tetSepararTextos`), el encogido del titular
+     medido sobre el **alto real** del objeto (yo había dejado la estimación
+     `líneas × tamaño × 1,16`) y dos llamadas a `separarTextos()`.
+   - `shell.js`: reintroduje `btnAuto` (el botón ▶ de rotar plantillas) que el
+     usuario había borrado en `f3390fd`.
+   - `shell.css`: desaparecieron 6 selectores suyos — `.shell-top .sh-share`,
+     `.shell-top .sh-share>span`, `.shell-top .sh-guia` y el bloque
+     `.shell-dock [aria-label="Insertar título"] …` que normaliza el ancho de
+     los tres botones grandes del dock.
+
+**Cómo se detecta en el futuro:** antes de dar por bueno un cambio, comparar
+el archivo de disco con la versión del último commit del usuario buscando
+identificadores suyos que ya no estén:
+
+```powershell
+$previo = (git --no-pager show "HEAD~1:public/js/main.js") -join "`n"
+$ids = [regex]::Matches($previo, '(?m)^\s*function ([a-zA-Z_$][\w$]*)') |
+    ForEach-Object { $_.Groups[1].Value }
+# ids que no aparecen en el archivo actual
+```
+
+Y **subir** los `?v=` por encima de todo lo histórico (aquí: `sp30`, `r30`,
+`sh21`, `q3e`, `p7`, `a3d`, `g3`, `p3`, `e7`, `e2b`), nunca fijarlos a un
+valor bajo. Si aun así el navegador sigue viendo la versión vieja, es la caché
+HTTP: recargar con `fetch(url, { cache: 'reload' })` o borrar las cachés del SW.
+
+**Resultado tras la corrección:** tet1 sin el botón ▶, separación titular/detalle
+funcionando (33 px de aire con el mínimo de 24), «Compartir» compacto en la
+barra, botones del dock normalizados, y Lighthouse 1,00/1,00/1,00 en las
+10 páginas.
 ## ⚪ P4 — Repo y calidad
 
 > ✅ **Completado**. Punto 8 **diferido**.

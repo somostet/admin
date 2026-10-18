@@ -397,6 +397,22 @@
     var outAngulo = panelTpl.querySelector('#tet-angulo-n');
     var inOpacidad = panelTpl.querySelector('#tet-opacidad');
     var outOpacidad = panelTpl.querySelector('#tet-opacidad-n');
+    /* El deslizador controla la franja, NO la imagen de plantilla: antes bajaba
+       la opacidad de ambas y el diseño de fondo se veía desteñido, como si la
+       plantilla estuviera dañada. */
+    var chkOpacidad = el('input', 'form-check-input');
+    chkOpacidad.type = 'checkbox';
+    chkOpacidad.id = 'tet-opacidad-fondo';
+    chkOpacidad.setAttribute('aria-label', 'Aplicar opacidad también al fondo');
+    if (inOpacidad && inOpacidad.parentElement) {
+        var lbl = inOpacidad.parentElement.querySelector('label[for="tet-opacidad"]');
+        if (lbl) lbl.after(chkOpacidad);
+        else inOpacidad.parentElement.insertBefore(chkOpacidad, inOpacidad);
+    }
+    chkOpacidad.addEventListener('change', function () {
+        DECO.opacidadFondo = chkOpacidad.checked;
+        pintarDecoracion();
+    });
     var chkBarra = panelTpl.querySelector('#tet-barra');
     var chkSnap = panelTpl.querySelector('#tet-snap');
     var chkTercios = panelTpl.querySelector('#tet-tercios');
@@ -414,6 +430,8 @@
         outAngulo.textContent = Math.round(DECO.angulo) + '°';
         inOpacidad.value = Math.round(DECO.opacidad * 100);
         outOpacidad.textContent = Math.round(DECO.opacidad * 100) + '%';
+        var chkOpFondo = document.getElementById('tet-opacidad-fondo');
+        if (chkOpFondo) chkOpFondo.checked = !!DECO.opacidadFondo;
         inColor2.value = DECO.color2;
         chkBarra.checked = !!DECO.conBarra;
     }

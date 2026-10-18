@@ -60,7 +60,8 @@ var DECO = {
     color1: '#ffffff',     // degradado: color inicial
     color2: '#1d3f7a',     // degradado: color final
     angulo: 150,           // grados; 0 = de izquierda a derecha
-    opacidad: 1,           // 0..1 sobre la imagen de plantilla y la franja
+    opacidad: 1,           // 0..1 sobre la franja (no sobre el fondo)
+    opacidadFondo: false,  // true = el deslizador también baja el fondo
     conBarra: true         // mostrar / ocultar la franja
 };
 
@@ -139,8 +140,9 @@ function aplicarBarra(url) {
     }
     var r = rectBarra();
 
-    /* Si ya está puesta esa misma franja solo se reajusta escala y opacidad:
-       recargarla en cada movimiento de deslizador haría parpadear el lienzo. */
+    /* La franja (overlayImage) siempre sigue el deslizador de opacidad: es
+       transparente por naturaleza y lo único que se le pide es que se vea
+       más o menos. El fondo va aparte (DECO.opacidadFondo). */
     if (esLaMismaImagen(url, canvas.overlayImage)) {
         canvas.overlayImage.set({
             left: 0, top: 0,
@@ -189,7 +191,10 @@ function aplicarImagenPlantilla(url, sinCallback) {
             scaleY: esc,
             left: (W - img.width * esc) / 2,
             top: (H - img.height * esc) / 2,
-            opacity: DECO.opacidad
+            /* el fondo se miente a tope salvo que el usuario haya marcado
+               «aplicar opacidad también al fondo»: si no, el deslizador
+               desteñía la plantilla entera */
+            opacity: (DECO.opacidadFondo ? DECO.opacidad : 1)
         });
     });
 }
@@ -213,7 +218,9 @@ function esLaMismaImagen(url, img) {
 /* Opacidad sobre lo ya cargado: no recarga nada. */
 function refrescarOpacidadDecoracion() {
     var bg = canvas.backgroundImage, ov = canvas.overlayImage;
-    if (bg) bg.set({ opacity: DECO.opacidad });
+    /* el fondo solo se toca si el usuario lo pidió: si no, el deslizador
+       desteñía la plantilla entera y parecía que estuviera dañada */
+    if (bg) bg.set({ opacity: (DECO.opacidadFondo ? DECO.opacidad : 1) });
     if (ov) ov.set({ opacity: DECO.opacidad });
     canvas.renderAll();
 }
@@ -494,12 +501,6 @@ function anchoTexto() {
     return Math.max(80, Math.round(canvas.getWidth() * 0.92));
 }
 
-/* Alto disponible entre las dos zonas: el titular encoge hasta quepa aquí. */
-function huecoTitulo() {
-    var H = canvas.getHeight();
-    return Math.max(40, Math.round((ZONAS.detalle.top - ZONAS.titulo.top) * H - 12));
-}
-
 /* Coloca un texto en su zona y deja constancia de a cuál pertenece
    (`tetZona`). Esa marca es la que permite recolocarlos solos al cambiar el
    tamaño del lienzo; viaja en el historial porque capas.js la pide
@@ -518,6 +519,85 @@ function situarEnZona(obj, zona) {
     return obj;
 }
 
+/* -------------------------------------------------------------------------
+   SEPARACIÓN ENTRE TITULAR Y DETALLE
+
+   Las zonas están al 60 % y al 72 % de la altura: 12 px de aire en un lienzo
+   de 1200. Pero el titular se encogía con una estimación del alto
+   (líneas × tamaño × 1,16) que se queda corta —el texto real medía 137 px
+   donde se estimaban 130— y el detalle acababa a 6 px del titular; con la
+   sombra activada se leían pegados.
+
+   Ahora el aire es una fracción de la altura (2 %, 24 px en 1200) y se
+   comprueba con el alto REAL del texto, no con el de la caja: el Textbox del
+   detalle se crea con height = alto de zona, y medir su caja daría 240 px de
+   algo que no existe.
+   ------------------------------------------------------------------------- */
+var SEPARACION = 0.02;
+
+function separacionMinima() {
+    return Math.max(12, Math.round(canvas.getHeight() * SEPARACION));
+}
+
+/* Alto que ocupa el TEXTO de un objeto (no el de su caja). */
+function altoTexto(obj) {
+    if (obj._textLines && obj.fontSize) {
+        return obj._textLines.length * obj.fontSize * (obj.lineHeight || 1.16);
+    }
+    return obj.height || 0;
+}
+
+/* Alto disponible entre las dos zonas: el titular encoge hasta quepa aquí,
+   dejando además la separación mínima. */
+function huecoTitulo() {
+    var H = canvas.getHeight();
+    return Math.max(40, Math.round((ZONAS.detalle.top - ZONAS.titulo.top) * H - separacionMinima()));
+}
+
+/* Garantiza que entre el final del titular y el principio del detalle haya
+   separación. Se llama al insertar cualquiera de los dos y al recolocar las
+   zonas. Si el detalle se saldría por abajo, se sube el titular en lugar de
+   bajar el detalle. Devuelve true si ha movido algo. */
+function separarTextos() {
+    var titulos = [], detalles = [];
+    canvas.getObjects().forEach(function (o) {
+        if (o.tetZona === 'titulo') titulos.push(o);
+        else if (o.tetZona === 'detalle') detalles.push(o);
+    });
+    if (!titulos.length || !detalles.length) return false;
+
+    var finTitulo = -Infinity, iniDetalle = Infinity, finDetalle = -Infinity;
+    titulos.forEach(function (o) {
+        finTitulo = Math.max(finTitulo, o.top + altoTexto(o));
+    });
+    detalles.forEach(function (o) {
+        iniDetalle = Math.min(iniDetalle, o.top);
+        finDetalle = Math.max(finDetalle, o.top + altoTexto(o));
+    });
+
+    var falta = separacionMinima() - (iniDetalle - finTitulo);
+    if (falta <= 0) return false;
+
+    var H = canvas.getHeight();
+    var mover = function (lista, delta) {
+        lista.forEach(function (o) {
+            o.set({ top: Math.round(o.top + delta) });
+            o.setCoords();
+        });
+    };
+
+    /* el detalle no puede quedar pegado al borde del lienzo */
+    var margenAbajo = Math.max(8, Math.round(H * 0.02));
+    if (finDetalle + falta > H - margenAbajo) {
+        mover(titulos, -falta);   /* no cabe bajando: sube el titular */
+    } else {
+        mover(detalles, falta);
+    }
+    canvas.renderAll();
+    return true;
+}
+window.tetSepararTextos = separarTextos;
+
 /* Recoloca el titular y los detalles en sus zonas para el tamaño de lienzo
    actual. Se llama al cambiar de formato («Lienzo en blanco»): los textos se
    quedan donde el usuario los puso salvo que sean uno de esos dos, que es lo
@@ -530,7 +610,10 @@ window.tetReubicarTextos = function () {
             n++;
         }
     });
-    if (n) canvas.renderAll();
+    if (n) {
+        separarTextos();
+        canvas.renderAll();
+    }
     return n;
 };
 
@@ -624,8 +707,6 @@ function set_title() {
         lineas.push(actual);
         return lineas;
     }
-    while (size > 24 && parteTitulo(size).length * size * 1.16 > maxH) size -= 4;
-
     var obj = new fabric.Textbox(titulo, {
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
@@ -641,8 +722,19 @@ function set_title() {
         borderColor: 'black',
         transparentCorners: false
     });
+
+    /* El encoge se mide sobre el objeto ya creado (alto real del texto) en vez
+       de estimarlo con «líneas × tamaño × 1,16»: la estimación se quedaba
+       corta y el titular se pegaba al detalle. Se baja de 4 en 4 hasta que el
+       texto que de verdad dibuja Fabric cabe en el hueco. */
+    while (obj.fontSize > 24 && altoTexto(obj) > maxH) {
+        size -= 4;
+        obj.set({ fontSize: size, width: maxW });
+    }
+
     situarEnZona(obj, 'titulo');
     canvas.add(obj);
+    separarTextos();
 
     var canvas_objects = canvas._objects;
     if (canvas_objects.length !== 0) {
@@ -687,7 +779,7 @@ function set_detail() {
     });
     situarEnZona(obj, 'detalle');
     canvas.add(obj);
-
+    separarTextos();   /* el detalle acaba de entrar: comprueba el aire con el titular */
 
     var canvas_objects = canvas._objects;
     if (canvas_objects.length !== 0) {
