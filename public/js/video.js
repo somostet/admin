@@ -5854,17 +5854,30 @@
     });
 
     /* ---------- Q4 · lista de música incluida ---------- */
-    /* Cuatro pistas libres que viajan embebidas en audio-data.js (generado
-       por tools/embed-audio.js): el embed solo se pide al primer uso porque
-       pesa MB, y una vez como data: URL funciona igual a doble clic
-       (file://, sin fetch de binarios) que con servidor. Elegir una pista
-       la convierte en File y pasa por el MISMO camino que un archivo
-       subido: validación, historial, «Quitar» y volumen incluidos. */
+    /* Pistas libres de Mixkit (uso personal y comercial, sin atribución)
+       que viajan embebidas en audio-data.js (generado por
+       tools/embed-audio.js, que lee ESTA lista): el embed solo se pide al
+       primer uso porque pesa MB, y una vez como data: URL funciona igual a
+       doble clic (file://, sin fetch de binarios) que con servidor. Elegir
+       una pista la convierte en File y pasa por el MISMO camino que un
+       archivo subido: validación, historial, «Quitar» y volumen incluidos.
+
+       Tema pensado para noticias, última hora, tecnología y videojuegos.
+       `grupo` es solo la etiqueta que se pinta en la fila. `dur` son los
+       60 s a los que se recortan todas (public/audio/LEEME.md). */
     var LISTA_MUSICA = [
-        { id: 'driving-ambition', titulo: 'Driving Ambition', autor: 'Ahjay Stelino', dur: 60 },
-        { id: 'tech-house-vibes', titulo: 'Tech House vibes', autor: 'Alejandro Magana (A. M.)', dur: 60 },
-        { id: 'hip-hop-02', titulo: 'Hip Hop 02', autor: 'Lily J', dur: 60 },
-        { id: 'epical-drums-01', titulo: 'Epical Drums 01', autor: 'Grigoriy Nuzhny', dur: 60 }
+        { id: 'driving-ambition', titulo: 'Driving Ambition', autor: 'Ahjay Stelino', dur: 60, grupo: 'Noticias' },
+        { id: 'delayed-flight', titulo: 'Delayed Flight', autor: 'Michael Ramir C.', dur: 60, grupo: 'Última hora' },
+        { id: 'almost-game-time', titulo: 'Almost Game Time', autor: 'Ahjay Stelino', dur: 60, grupo: 'Última hora' },
+        { id: 'tech-house-vibes', titulo: 'Tech House vibes', autor: 'Alejandro Magaña (A. M.)', dur: 60, grupo: 'Tecnología' },
+        { id: 'new-bass-01', titulo: 'New Bass 01', autor: 'Lily J', dur: 60, grupo: 'Tecnología' },
+        { id: 'close-up', titulo: 'Close Up', autor: 'Michael Ramir C.', dur: 60, grupo: 'Tecnología' },
+        { id: 'digital-clouds', titulo: 'Digital Clouds', autor: 'Alejandro Magaña (A. M.)', dur: 60, grupo: 'Tecnología' },
+        { id: 'sci-fi-score', titulo: 'Sci-Fi Score', autor: 'Arulo', dur: 60, grupo: 'Tecnología' },
+        { id: 'epic-games', titulo: 'Epic Games', autor: 'Ahjay Stelino', dur: 60, grupo: 'Videojuegos' },
+        { id: 'games-music', titulo: 'Games Music', autor: 'Grigoriy Nuzhny', dur: 60, grupo: 'Videojuegos' },
+        { id: 'hip-hop-02', titulo: 'Hip Hop 02', autor: 'Lily J', dur: 60, grupo: 'General' },
+        { id: 'epical-drums-01', titulo: 'Epical Drums 01', autor: 'Grigoriy Nuzhny', dur: 60, grupo: 'Acción' }
     ];
 
     function pintaListaMusica() {
@@ -5877,7 +5890,9 @@
                 ' id="vid-musica-pista-' + i + '" value="' + p.titulo + '" autocomplete="off">' +
                 '<label class="btn btn-outline-primary vid-musica-nombre" for="vid-musica-pista-' + i + '">' +
                 '<span>' + p.titulo + '</span>' +
-                '<span class="vid-musica-meta">' + p.autor + ' · ' + formatoAudio(p.dur) + '</span></label>' +
+                '<span class="vid-musica-meta">' +
+                (p.grupo ? p.grupo + ' · ' : '') + p.autor + ' · ' + formatoAudio(p.dur) +
+                '</span></label>' +
                 '<button type="button" class="btn btn-outline-secondary vid-musica-play" data-idx="' + i + '"' +
                 ' aria-pressed="false" aria-label="Escuchar ' + p.titulo + '">' +
                 '<i class="fas fa-play" aria-hidden="true"></i></button>';
@@ -5895,7 +5910,7 @@
         if (audioCargando) return;
         audioCargando = true;
         var sc = document.createElement('script');
-        sc.src = './public/js/audio-data.js?v=q4a';
+        sc.src = './public/js/audio-data.js?v=q4b';
         sc.async = true;
         sc.onload = function () {
             audioCargando = false;

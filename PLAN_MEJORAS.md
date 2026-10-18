@@ -27,7 +27,7 @@ Orden por prioridad: 🔴 crítico/roto → 🟠 alta → 🟡 media → 🟢 ba
 | Lote F — Enriquecimientos vídeo | 🔨 **F1 duración objetivo ✅ · F2 transiciones ✅ · F3 fondo blur ✅ · F4 logo y título ✅ · F5 animaciones ✅ · F5b título arrastrable ✅ · F5d plantilla Tet News ✅ · F5e lista de textos ✅ · F5f riel con cabezal ✅ · F6 música ✅ · F8 grabar pestaña ✅ · F7 compartir ✅ · F9 color y tipografía de los textos ✅ · F10 compartir y descarga en el móvil ✅** |
 | Lote N — Textos y noticias ágiles | ✅ **N1 motor de texto (salto de líneas, ajuste y zona) · N2 tipos de texto y «Añadir título» · N3a centrado blindado · N3b reparto de textos · N4 centrado por ejes del contenido · N5 centrado por ejes de los textos** |
 | Lote P — Interfaz amigable y rápida | 🔨 **P1a barra de acción pegajosa ✅ · P1b duplicar texto ✅ · P1c quitar con deshacer ✅ · P1d feedback («✓ guardado», táctil y vibración) ✅ · P2 barra flotante sobre el texto ✅ · P3 pestañas del formulario ✅ · P4 deshacer/rehacer ✅ · P5 vista previa en reposo ✅ · P6 barra de texto fuera del lienzo ✅ · P7 calidad del vídeo a la vista ✅ · P8 aire vista previa/pestañas/paneles ✅ · P9 sombra del texto a medida ✅ · P10 duración real en los metadatos del MP4 ✅** |
-| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
+| Lote Q — Móvil, plantillas y exportación | 🔨 **Q1a titular sin cortar (tet1) ✅ · Q1b deshacer de tet1 arreglado ✅ · Q1c textos por defecto + repartir (vídeo) ✅ · Q2 plantillas por plataforma ✅ · Q3 logo automático ✅ · Q4 música ✅ · Q4b más música (noticias, tecnología, videojuegos) ✅ · Q5 exportar por plataforma ✅ · Q6 enlace cobalt.tools ✅** |
 | Lote M — Móvil en vídeo (`video.html`) | 🔨 **M1 lienzo táctil y controles junto al lienzo ✅ · M2 manipulación estilo tet1 ✅ · M3 el resultado no se pierde (IndexedDB) ✅ · M4 peso y grabación estable ✅** |
 | Lote R — Bugs de campo (lista con capturas) | 🔨 **R1 navbar móvil ✅ · R2 iconos PWA ✅ · R3 texto visible en oscuro ✅ · R4 defaults sin logo ni sombra ✅ · R5 capas mixtas (imágenes sueltas + panel) ✅ · R6a combinar fotos con vídeo ✅ · R6b riel de la pista (intercalar) ✅ · R6c fundido entre fotos y vídeos ✅ · R6 plantilla somostet + posición ✅ · R2b iconos fondo azul ✅ · R7 desplegable a todo ancho ✅ · R8 hamburguesa + sin «ambas» ✅ · R9 portada de vista previa ✅** |
 | Lote S — Exportación, móvil y publicación | 🔨 **S1 exportar sin negro ✅ · S2 el lienzo se encaja solo ✅ · S3 barra de texto fija en móvil ✅ · S4 panel Publicación ✅ · S5 plantillas que ya no borran el trabajo ✅ · S6 galería «toca e inserta» ✅** |
@@ -1666,6 +1666,42 @@ amigable y rápida». Un commit por pieza.
   `original-2026-10-07-180333.mp4` decodificado con **pico 0.171**
   (música real en la salida) y el ▶ detenido, consola 0, barrido
   17/17, `node --check`; `?v=q4a` en `video.html` (script y CSS).
+- **Q4b · Música de noticias, tecnología y videojuegos ✅**. La lista
+  de Q4 pasa de 4 a **12 temas** de Mixkit (misma licencia, sin atribución)
+  elegidos por uso: noticias/última hora (Driving Ambition, Delayed
+  Flight, Almost Game Time), tecnología (Tech House vibes, New Bass 01,
+  Close Up, Digital Clouds, Sci-Fi Score), videojuegos (Epic Games, Games
+  Music) y los dos generales de antes (Hip Hop 02, Epical Drums 01). Cada
+  fila añade su **grupo** en la línea de créditos («Tecnología · Lily J ·
+  1:00»), que era solo `autor · duración`. Nuevo `tools/descargar-musica.js`:
+  baja el MP3 de `assets.mixkit.co/music/<id>`, lo recodea a **60 s /
+  112 kbps** con ffmpeg (Gyan.FFmpeg 9.0.2 por winget) con un fundido de
+  0,4 s al final para que el bucle del vídeo no chasquee, y borra el crudo
+  (3–4 MB → 821 KB, idéntico a las cuatro anteriores; `public/audio/` es
+  gitignore, así que al repo solo va el embed). `tools/embed-audio.js` deja
+  de llevar su propia lista de ids y **lee `LISTA_MUSICA` de
+  `public/js/video.js`**: una sola fuente de verdad, 12 ids que ya no se
+  duplican (si no aparece la lista, avisa). Embed de 4,28 → **12,83 MB**,
+  igual de perezoso (solo al primer uso). `public/audio/LEEME.md` con la
+  tabla de los 12 temas, autor, grupo, página y original, el procedimiento
+  para añadir uno y una sección **«Licencia»** con las condiciones reales
+  de la Mixkit Stock Music Free License (leída de
+  `mixkit.co/license/modal/musicFree/`, no de memoria): uso comercial y no
+  comercial sin atribución obligatoria —y por eso es correcto **modificar y
+  distribuir** los MP3 recortados dentro del embed—, y lo que **no** se
+  puede hacer (CDs/DVDs, emisión en TV o radio, **usarlas dentro de un
+  videojuego**, remixes o tracks de solo música, reclamarlas como propias
+  o registrarlas en Content ID), más la aclaración de que **no son dominio
+  público ni CC0**: los derechos siguen siendo de sus autores. Los enlaces
+  `/license/` y `/terms/`, comprobados 200. E2E: 12 filas pintadas con su
+  grupo, embed perezoso
+  (0 al abrir, 12 claves tras tocar la música, 1 solo script `?v=q4b`),
+  elegir «Epic Games» → fila «Epic Games · 1:00» con el radio marcado y el
+  ▶ cortado, ▶ real con clic auténtico (`blob:`, sonando, t=1,04 s,
+  dur 60 s, botón en «Pausar Games Music»), embed idéntico **byte a byte**
+  a los 12 MP3 de `public/audio` (12/12) y los 12 decodifican a 60,00 s
+  estéreo con Web Audio, consola 0, `node --check`; `?v=r14` en
+  `video.html` (script).
 - **Q5 · Exportar por plataforma ✅**. La plataforma también vive en
   el panel **Exportar**: fila de chips —Original, TikTok, Reel, Short,
   YouTube, IG 1:1, IG 4:5 y A mano— de 44 px junto a «Crear vídeo»,

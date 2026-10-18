@@ -7,6 +7,10 @@
    suben al repo (ver .gitignore): este script se ejecuta en local
    despues de anadir o cambiar una pista.
 
+   Los ids se leen de LISTA_MUSICA (public/js/video.js), que es la unica
+   fuente de verdad: anade ahi la pista, deja el MP3 recortado en
+   public/audio/<id>.mp3 y ejecuta este script.
+
    Uso:  node tools/embed-audio.js
    Recuerda regenerar si anades o cambias alguna pista. */
 'use strict';
@@ -16,15 +20,21 @@ var path = require('path');
 
 var raiz = path.join(__dirname, '..');
 
-/* id = nombre del archivo sin extension; debe coincidir con LISTA_MUSICA
-   (public/js/video.js) */
-var pistas = [
-    'driving-ambition',
-    'tech-house-vibes',
-    'hip-hop-02',
-    'epical-drums-01'
-];
+/* id = nombre del archivo sin extension. */
+function leePistas() {
+    var js = fs.readFileSync(path.join(raiz, 'public', 'js', 'video.js'), 'utf8');
+    var bloque = js.match(/var LISTA_MUSICA = \[([\s\S]*?)\n    \];/);
+    if (!bloque) {
+        throw new Error('no se encontro LISTA_MUSICA en public/js/video.js');
+    }
+    var ids = [], m;
+    var re = /id:\s*'([^']+)'/g;
+    while ((m = re.exec(bloque[1]))) ids.push(m[1]);
+    if (!ids.length) throw new Error('LISTA_MUSICA esta vacia en public/js/video.js');
+    return ids;
+}
 
+var pistas = leePistas();
 var mapa = {};
 var bytes = 0;
 
