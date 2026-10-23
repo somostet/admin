@@ -277,11 +277,15 @@
     /* Coordenadas del marco en el sistema LOCAL de la imagen (sin escala):
        así el recorte se mueve y escala con la foto. */
     function clipDe(foto, marco) {
+        /* El marco se ajusta con las asas, y eso cambia scaleX/scaleY (no
+           width/height): sin multiplicar por la escala, aplicar tras
+           redimensionar recortaba el tamaño inicial. */
+        var sx = Math.abs(marco.scaleX || 1), sy = Math.abs(marco.scaleY || 1);
         return new fabric.Rect({
             left: (marco.left - foto.left) / (foto.scaleX || 1),
             top: (marco.top - foto.top) / (foto.scaleY || 1),
-            width: marco.width / (foto.scaleX || 1),
-            height: marco.height / (foto.scaleY || 1),
+            width: (marco.width * sx) / (foto.scaleX || 1),
+            height: (marco.height * sy) / (foto.scaleY || 1),
             originX: 'left',
             originY: 'top',
             fill: 'rgba(0,0,0,0)',
@@ -297,28 +301,27 @@
         quitarPincel();
         cancelarRecorte();
         var w = img.getScaledWidth(), h = img.getScaledHeight();
+        /* El marco solo aporta la zona interactiva; el aspecto de recorte
+           (velo, rejilla y esquinas) lo pinta tetRecorteClasico. */
         var marco = new fabric.Rect({
             left: img.left + w * 0.12,
             top: img.top + h * 0.12,
             width: w * 0.76,
             height: h * 0.76,
-            fill: 'rgba(0,0,0,0.28)',
-            stroke: '#4dabf7',
-            strokeWidth: 2,
-            strokeDashArray: [8, 5],
-            cornerSize: 24,
-            cornerColor: '#ffffff',
-            cornerStrokeColor: '#0d6efd',
-            borderColor: '#0d6efd',
+            fill: 'rgba(0,0,0,0)',
+            stroke: null,
+            strokeWidth: 0,
             name: 'Recorte',
-            lockRotation: true
+            lockRotation: true,
+            excludeFromExport: true
         });
-        marco.setControlsVisibility({ mtr: false, mb: false, mt: false, ml: false, mr: false });
+        marco.setControlsVisibility({ mtr: false });
         /* recorte se asigna ANTES de setActiveObject: el evento de selección
            llama a sincronizaPanel() y, si recorte es null, oculta el panel */
         recorte = { marco: marco };
         canvas.add(marco);
         canvas.setActiveObject(marco);
+        if (window.tetRecorteClasico) window.tetRecorteClasico.activar(marco, { foto: img });
         $('[data-ed="aplicar-recorte"]').hidden = false;
         $('[data-ed="cancelar-recorte"]').hidden = false;
         $('[data-ed="recortar"]').hidden = true;
@@ -326,8 +329,10 @@
 
     function cancelarRecorte() {
         if (!recorte) return;
-        canvas.remove(recorte.marco);
+        var m = recorte.marco;
         recorte = null;
+        canvas.remove(m);
+        if (window.tetRecorteClasico) window.tetRecorteClasico.desactivar();
         $('[data-ed="aplicar-recorte"]').hidden = true;
         $('[data-ed="cancelar-recorte"]').hidden = true;
         $('[data-ed="recortar"]').hidden = false;
@@ -335,10 +340,13 @@
 
     function aplicarRecorte() {
         if (!recorte || !img) return;
-        img.clipPath = clipDe(img, recorte.marco);
+        /* guarda la foto antes de cancelar: al quitar el marco se dispara
+           selection:cleared y el panel pone `img` a null */
+        var foto = img;
+        foto.clipPath = clipDe(foto, recorte.marco);
         if (window.tetGuardarEstado) window.tetGuardarEstado();
         cancelarRecorte();
-        canvas.setActiveObject(img);
+        canvas.setActiveObject(foto);
         canvas.renderAll();
     }
 
@@ -426,8 +434,12 @@
     });
 
     /* la imagen se puede cambiar de sitio con el teclado: el marco del
-       recorte se queda donde estaba, así que se cancela solo */
-    canvas.on('object:modified', function () { if (recorte) cancelarRecorte(); });
+       recorte se queda donde estaba, así que se cancela solo. Al mover o
+       escalar el PROPIO marco no se cancela: eso es justo lo que se hace
+       para ajustar el recorte. */
+    canvas.on('object:modified', function (e) {
+        if (recorte && e.target !== recorte.marco) cancelarRecorte();
+    });
 
     canvas.on('selection:created', sincronizaPanel);
     canvas.on('selection:updated', sincronizaPanel);

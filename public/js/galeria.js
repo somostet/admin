@@ -104,6 +104,9 @@
                 canvas.add(foto);
                 canvas.setActiveObject(foto);
                 canvas.renderAll();
+                /* con «Automático al colocar la foto» el degradado se adapta
+                   también cuando la imagen llega desde la galería */
+                if (window.tetSugerirDegradadoAuto) window.tetSugerirDegradadoAuto(foto);
                 if (window.tetGuardarEstado) window.tetGuardarEstado();
 
                 /* se cierra el modal para ver el resultado de una vez */

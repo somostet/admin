@@ -28,6 +28,9 @@ var plantillas = [
     './public/img/bars/somostetTF2079.png',
     './public/img/bars/somostetArt.png',
     './public/img/bars/somostetBlanco.png',
+    './public/img/bars/tetnews_nuevo.jpg',
+    './public/img/bars/recomendaciones.jpg',
+    './public/img/bars/estrenos_streaming.png',
 
     './public/img/Plantillas/tet1/TBtet.png',
     './public/img/Plantillas/tet1/TBtet2.png',
@@ -55,7 +58,12 @@ plantillas.forEach(function (p) {
     }
     var buf = fs.readFileSync(f);
     bytes += buf.length;
-    mapa[p] = 'data:image/png;base64,' + buf.toString('base64');
+    /* el tipo tiene que coincidir con el archivo: antes todo iba como
+       image/png y un JPEG embebido con esa etiqueta no se decodifica */
+    var ext = path.extname(f).toLowerCase();
+    var mime = (ext === '.jpg' || ext === '.jpeg') ? 'image/jpeg'
+        : (ext === '.webp' ? 'image/webp' : 'image/png');
+    mapa[p] = 'data:' + mime + ';base64,' + buf.toString('base64');
 });
 
 if (process.exitCode) {

@@ -1,6 +1,9 @@
 // Variables globales para la imagen a subir
 
-var globalpic;
+var globalpic;                 // data URL (compatibilidad / respaldo)
+var globalpicFuente = null;    // canvas ya decodificado y reducido: inserción instantánea
+var picPromesa = null;         // preparación en curso (el botón auto la espera)
+var picToken = 0;              // evita que gane una imagen vieja si se eligen dos seguidas
 var oImg;
 var hc = 500;
 var wc = 500;
@@ -14,6 +17,11 @@ var TT = "./public/img/bars/somostetTT.png";
 var TF = "./public/img/bars/somostetTF2079.png";
 var Art = "./public/img/bars/somostetArt.png";
 var Blan = "./public/img/bars/somostetBlanco.png";
+/* Franjas nuevas: mismas medidas que el resto (1200 × 93) para que la
+   cabecera mida lo mismo en todas las plantillas. */
+var barTetNewsNuevo = "./public/img/bars/tetnews_nuevo.jpg";
+var barRecomendaciones = "./public/img/bars/recomendaciones.jpg";
+var barEstrenos = "./public/img/bars/estrenos_streaming.png";
 
 
 /* =========================================================================
@@ -268,13 +276,344 @@ window.tetReajustarAlLienzo = function () {
 
 /* Tras un deshacer o al cargar un proyecto, el overlay vuelve como una imagen
    normal; se reaplica la decoración para que quede con la escala y la
-   opacidad que tocan a la plantilla y al formato actuales. */
+   opacidad que tocan a la plantilla y al formato actuales. Antes de repintar
+   se lee el fondo que acaba de restaurar el historial: si no, DECO seguía con
+   los colores nuevos y Ctrl+Z no devolvía el degradado anterior. */
 window.tetRestaurarDecoracion = function () {
+    sincronizarDecoConFondo();
     aplicarDecoracion(false);
 };
 
 window.tetAplicarDecoracion = aplicarDecoracion;
 window.tetDeco = DECO;
+
+
+/* =========================================================================
+   1b · DEGRADADO SUGERIDO A PARTIR DE LA FOTO
+   -------------------------------------------------------------------------
+   La idea: mirar los colores de la imagen que hay en el lienzo y proponer un
+   degradado que no compita con ella. Se muestrea la foto en pequeño (48 px),
+   se busca el tono dominante y se construyen dos paradas del mismo tono:
+   una clara y otra más profunda. El ángulo se elige para que el texto se lea:
+   si el texto es oscuro, la parte baja del degradado queda clara; si es
+   claro, queda oscura.
+
+   Todo se hace sobre un canvas aparte, nunca sobre el lienzo de Fabric: el
+   muestreo no toca el diseño ni el historial. Si la imagen es de otro origen
+   y el navegador bloquea la lectura de píxeles, se avisa y no se cambia nada.
+   ========================================================================= */
+
+function _rgbAHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h = 0, s = 0, l = (max + min) / 2;
+    var d = max - min;
+    if (d) {
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+        else if (max === g) h = ((b - r) / d + 2) * 60;
+        else h = ((r - g) / d + 4) * 60;
+    }
+    return { h: h, s: s, l: l };
+}
+
+function _hslAHex(h, s, l) {
+    h = (((h % 360) + 360) % 360) / 360;
+    s = Math.max(0, Math.min(1, s));
+    l = Math.max(0, Math.min(1, l));
+    var r, g, b;
+    if (!s) {
+        r = g = b = l;
+    } else {
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        var tono = function (t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        r = tono(h + 1 / 3);
+        g = tono(h);
+        b = tono(h - 1 / 3);
+    }
+    var hex = function (v) {
+        var x = Math.round(v * 255).toString(16);
+        return x.length < 2 ? '0' + x : x;
+    };
+    return '#' + hex(r) + hex(g) + hex(b);
+}
+
+function _luminanciaHex(hex) {
+    if (!hex || hex.charAt(0) !== '#') return null;
+    var h = hex.slice(1);
+    if (h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) +
+        h.charAt(2) + h.charAt(2);
+    if (h.length !== 6) return null;
+    var r = parseInt(h.slice(0, 2), 16) / 255;
+    var g = parseInt(h.slice(2, 4), 16) / 255;
+    var b = parseInt(h.slice(4, 6), 16) / 255;
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function _rgbAHex(r, g, b) {
+    var hex = function (v) {
+        var x = Math.round(Math.max(0, Math.min(255, v))).toString(16);
+        return x.length < 2 ? '0' + x : x;
+    };
+    return '#' + hex(r) + hex(g) + hex(b);
+}
+
+/* Normaliza a #rrggbb lo que puede venir en un fondo de Fabric (hex o
+   rgba). Devuelve null si no es un color reconocible. */
+function _colorAHex(c) {
+    if (typeof c !== 'string') return null;
+    c = c.trim();
+    if (c.charAt(0) === '#') {
+        var h = c.slice(1);
+        if (h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) +
+            h.charAt(2) + h.charAt(2);
+        return /^[0-9a-f]{6}$/i.test(h) ? '#' + h.toLowerCase() : null;
+    }
+    var m = c.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+    if (!m) return null;
+    return _rgbAHex(+m[1], +m[2], +m[3]);
+}
+
+/* El historial restaura el fondo tal cual estaba (sólido o degradado). Antes
+   de volver a aplicar la decoración se copia ese estado a DECO para que los
+   selectores del panel y un nuevo cambio no pisen lo restaurado. */
+function sincronizarDecoConFondo() {
+    var bg = canvas.backgroundColor;
+    var selector = document.getElementById('color');
+    if (!bg) return;
+    if (bg.type === 'linear' || bg.type === 'radial') {
+        var paradas = bg.colorStops || [];
+        if (paradas.length >= 2) {
+            DECO.tipoFondo = 'degradado';
+            DECO.color1 = _colorAHex(paradas[0].color) || DECO.color1;
+            DECO.color2 = _colorAHex(paradas[paradas.length - 1].color) || DECO.color2;
+            if (bg.coords) {
+                var dx = (bg.coords.x2 || 0) - (bg.coords.x1 || 0);
+                var dy = (bg.coords.y2 || 0) - (bg.coords.y1 || 0);
+                var ang = Math.atan2(dy, dx) * 180 / Math.PI;
+                if (ang < 0) ang += 360;
+                DECO.angulo = Math.round(ang);
+            }
+            if (selector) selector.value = DECO.color1;
+        }
+    } else if (typeof bg === 'string') {
+        DECO.tipoFondo = 'solido';
+        if (selector) selector.value = bg;
+    }
+    document.dispatchEvent(new CustomEvent('tet:deco-restaurada'));
+}
+
+/* Devuelve { color1, color2, angulo } o null si no se puede leer la foto. */
+function _sugerenciaDeImagen(img) {
+    var el = img && (img._element || img._originalElement);
+    if (!el) return null;
+    var nw = el.naturalWidth || el.width || 0;
+    var nh = el.naturalHeight || el.height || 0;
+    if (!nw || !nh) return null;
+
+    /* Se analiza solo la parte visible: si la foto tiene un recorte de
+       Fabric, su width/height ya son el trozo recortado y cropX/cropY, el
+       origen dentro del archivo. */
+    var cx = Math.max(0, Math.round(img.cropX || 0));
+    var cy = Math.max(0, Math.round(img.cropY || 0));
+    var cw = Math.max(1, Math.round(img.width || nw));
+    var ch = Math.max(1, Math.round(img.height || nh));
+    cw = Math.min(cw, nw - cx);
+    ch = Math.min(ch, nh - cy);
+    if (cw < 2 || ch < 2) return null;
+
+    var esc = Math.min(1, 48 / Math.max(cw, ch));
+    var w = Math.max(8, Math.round(cw * esc));
+    var h = Math.max(8, Math.round(ch * esc));
+    var lienzo = document.createElement('canvas');
+    lienzo.width = w;
+    lienzo.height = h;
+    var ctx = lienzo.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return null;
+
+    try {
+        ctx.drawImage(el, cx, cy, cw, ch, 0, 0, w, h);
+    } catch (e) {
+        return null;
+    }
+
+    var datos;
+    try {
+        datos = ctx.getImageData(0, 0, w, h).data;
+    } catch (e) {
+        /* imagen de otro dominio sin CORS: el navegador no deja leer píxeles */
+        return null;
+    }
+
+    var BINS = 24, i;
+    var hist = [];
+    for (i = 0; i < BINS; i++) {
+        hist.push({ peso: 0, sin: 0, cos: 0, s: 0, l: 0 });
+    }
+    var sumaSat = 0, sumaLum = 0, n = 0;
+
+    for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+            var p = (y * w + x) * 4;
+            if (datos[p + 3] < 96) continue;
+            var r = datos[p], g = datos[p + 1], b = datos[p + 2];
+            var hsl = _rgbAHsl(r, g, b);
+            sumaSat += hsl.s;
+            sumaLum += hsl.l;
+            n++;
+            /* los blancos, negros y grises no aportan tono: si mandaran,
+               una foto con fondo blanco sugeriría un degradado gris */
+            if (hsl.s < 0.06 || hsl.l < 0.05 || hsl.l > 0.97) continue;
+            var idx = Math.floor(hsl.h / (360 / BINS)) % BINS;
+            var peso = (0.2 + hsl.s) * (1 - Math.abs(hsl.l - 0.5) * 0.8);
+            var rad = hsl.h * Math.PI / 180;
+            hist[idx].peso += peso;
+            hist[idx].sin += Math.sin(rad) * peso;
+            hist[idx].cos += Math.cos(rad) * peso;
+            hist[idx].s += hsl.s * peso;
+            hist[idx].l += hsl.l * peso;
+        }
+    }
+
+    var tono = 214, sat = 0.16, lum = 0.55;
+    var mejor = -1, mejorPeso = 0;
+    for (i = 0; i < BINS; i++) {
+        if (hist[i].peso > mejorPeso) {
+            mejorPeso = hist[i].peso;
+            mejor = i;
+        }
+    }
+    if (mejor >= 0 && mejorPeso > 0) {
+        var vx = 0, vy = 0;
+        for (i = -1; i <= 1; i++) {
+            var j = (mejor + i + BINS) % BINS;
+            vx += hist[j].cos;
+            vy += hist[j].sin;
+        }
+        tono = Math.atan2(vy, vx) * 180 / Math.PI;
+        if (tono < 0) tono += 360;
+        sat = hist[mejor].s / hist[mejor].peso;
+        lum = hist[mejor].l / hist[mejor].peso;
+    } else if (n) {
+        /* foto en blanco y negro o muy apagada: se usa su luminosidad media
+           con un tono frío suave, que combina con casi todo */
+        sat = Math.min(0.3, sumaSat / n);
+        lum = sumaLum / n;
+        tono = 214;
+    }
+
+    /* El ángulo se decide por el color del texto: el degradado no debe
+       comerse la legibilidad. Texto oscuro → zona baja clara; texto claro →
+       zona baja oscura. */
+    var colorTexto = (document.getElementById('colorT') || {}).value || '#000000';
+    var lumTexto = _luminanciaHex(colorTexto);
+    var textoClaro = lumTexto !== null && lumTexto > 0.55;
+    var angulo = textoClaro ? 90 : 270;
+
+    var s = Math.max(0.12, Math.min(0.85, sat));
+    var l = Math.max(0.15, Math.min(0.85, lum));
+    var color1, color2;
+
+    if (textoClaro) {
+        /* arranque luminoso arriba y caída oscura abajo, donde va el texto */
+        color1 = _hslAHex(tono + 8, Math.min(0.5, Math.max(0.14, s * 0.7)),
+            Math.min(0.8, Math.max(0.66, 0.48 + l * 0.35)));
+        color2 = _hslAHex(tono - 8, Math.min(0.85, Math.max(0.32, s * 1.1)),
+            Math.min(0.32, Math.max(0.16, 0.06 + l * 0.3)));
+    } else {
+        /* texto oscuro: el degradado se queda en tonos claros para que el
+           negro siga teniendo contraste en la zona del titular */
+        color1 = _hslAHex(tono + 8, Math.min(0.45, Math.max(0.1, s * 0.5)),
+            Math.min(0.95, Math.max(0.86, 0.8 + l * 0.15)));
+        color2 = _hslAHex(tono - 8, Math.min(0.6, Math.max(0.2, s * 0.85)),
+            Math.min(0.68, Math.max(0.52, 0.38 + l * 0.3)));
+    }
+
+    return {
+        color1: color1,
+        color2: color2,
+        angulo: angulo,
+        tono: Math.round(tono),
+        saturacion: Math.round(s * 100)
+    };
+}
+
+/* Imagen que se analiza: la seleccionada o, si no, la última que se colocó. */
+function imagenParaSugerencia() {
+    var activo = canvas.getActiveObject();
+    if (activo && activo.type === 'image') return activo;
+    var objs = canvas.getObjects();
+    for (var i = objs.length - 1; i >= 0; i--) {
+        if (objs[i].type === 'image') return objs[i];
+    }
+    return null;
+}
+
+/* Aplica la sugerencia. `silencioso` evita el aviso (lo usa el modo
+   automático, que ya avisa al insertar la foto). Devuelve la sugerencia. */
+function aplicarSugerenciaDeImagen(img, silencioso) {
+    var sug = _sugerenciaDeImagen(img);
+    if (!sug) {
+        if (!silencioso && window.mostrarAviso) {
+            window.mostrarAviso('No se han podido leer los colores de esta imagen', 'warning');
+        }
+        return null;
+    }
+
+    DECO.tipoFondo = 'degradado';
+    DECO.color1 = sug.color1;
+    DECO.color2 = sug.color2;
+    DECO.angulo = sug.angulo;
+    var selector = document.getElementById('color');
+    if (selector) selector.value = sug.color1;
+
+    aplicarDecoracion();
+    if (window.tetGuardarEstado) window.tetGuardarEstado();
+    document.dispatchEvent(new CustomEvent('tet:degradado-sugerido', { detail: sug }));
+    if (!silencioso && window.mostrarAviso) {
+        window.mostrarAviso('Degradado sugerido según la foto · Ctrl+Z para volver', 'success');
+    }
+    return sug;
+}
+
+/* Botón «Sugerir según la foto»: siempre aplica. */
+window.tetSugerirDegradado = function () {
+    var img = imagenParaSugerencia();
+    if (!img) {
+        if (window.mostrarAviso) {
+            window.mostrarAviso('Coloca una imagen para sugerir un degradado', 'warning');
+        }
+        return null;
+    }
+    return aplicarSugerenciaDeImagen(img, false);
+};
+
+/* Opción «Automático al colocar la foto» (panel Plantilla). El estado vive en
+   localStorage para que siga activo al recargar. */
+function autoDegradadoActivo() {
+    try {
+        return localStorage.getItem('tet-auto-degradado') === '1';
+    } catch (e) {
+        return false;
+    }
+}
+window.tetAutoDegradadoActivo = autoDegradadoActivo;
+
+window.tetSugerirDegradadoAuto = function (img) {
+    if (!autoDegradadoActivo()) return null;
+    var objetivo = img || imagenParaSugerencia();
+    if (!objetivo) return null;
+    return aplicarSugerenciaDeImagen(objetivo, true);
+};
 
 
 /* =========================================================================
@@ -374,7 +713,10 @@ var PLANTILLAS = [
     { img: TT, barra: TT, color: 'color', arte: false },
     { img: TF, barra: TF, color: 'color', arte: false },
     { img: Art, barra: Art, color: 'color', arte: false },
-    { img: Blan, barra: Blan, color: 'color', arte: false }
+    { img: Blan, barra: Blan, color: 'color', arte: false },
+    { img: barTetNewsNuevo, barra: barTetNewsNuevo, color: 'color', arte: false },
+    { img: barRecomendaciones, barra: barRecomendaciones, color: 'color', arte: false },
+    { img: barEstrenos, barra: barEstrenos, color: 'color', arte: false }
 ];
 
 /* Imagen de la plantilla que toca: solo si es el dibujo. */
@@ -444,6 +786,87 @@ function remover() {
     }
 }
 
+/* -------------------------------------------------------------------------
+   CARGA RÁPIDA DE IMÁGENES
+
+   Antes: FileReader.readAsDataURL() guardaba la foto entera (un 33 % más
+   grande en base64) y generate() volvía a decodificarla cada vez que se
+   insertaba. Con una foto de móvil de 12 Mpx eso se nota y, si se pulsaba
+   «Insertar imagen» varias veces, se pagaba la decodificación en cada pulsación.
+
+   Ahora se decodifica UNA vez fuera del hilo principal (createImageBitmap),
+   se reduce a un tamaño útil para el lienzo (2× el lado mayor, máximo 3200 px)
+   y se guarda el canvas resultante. Fabric lo usa directamente: insertar la
+   misma imagen o componerla con el botón automático es casi instantáneo.
+   ------------------------------------------------------------------------- */
+function limiteImagen() {
+    var lado = Math.max(canvas.getWidth(), canvas.getHeight());
+    return Math.max(1000, Math.min(3200, Math.round(lado * 2)));
+}
+
+function rasterizarImagen(origen, tipo, ancho, alto) {
+    var max = limiteImagen();
+    var esc = Math.min(1, max / Math.max(ancho || 1, alto || 1));
+    var w = Math.max(1, Math.round((ancho || 1) * esc));
+    var h = Math.max(1, Math.round((alto || 1) * esc));
+    var lienzo = document.createElement('canvas');
+    lienzo.width = w;
+    lienzo.height = h;
+    var ctx = lienzo.getContext('2d');
+    if (!ctx) throw new Error('El navegador no ha podido crear el lienzo de la imagen');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(origen, 0, 0, w, h);
+
+    /* PNG/WebP/GIF conservan transparencia; una foto JPEG se guarda como JPEG
+       para que el historial no cargue con PNG gigantes. */
+    var conAlfa = /png|webp|gif|svg/i.test(tipo || '');
+    return {
+        fuente: lienzo,
+        url: lienzo.toDataURL(conAlfa ? 'image/png' : 'image/jpeg', 0.92),
+        optimizada: esc < 1
+    };
+}
+
+function prepararImagen(file) {
+    return new Promise(function (resolve, reject) {
+        var terminado = false;
+        function listo(origen, w, h) {
+            if (terminado) return;
+            terminado = true;
+            try { resolve(rasterizarImagen(origen, file.type, w, h)); }
+            catch (err) { reject(err); }
+        }
+        function clasico() {
+            var url = URL.createObjectURL(file);
+            var im = new Image();
+            im.onload = function () {
+                URL.revokeObjectURL(url);
+                listo(im, im.naturalWidth, im.naturalHeight);
+            };
+            im.onerror = function () {
+                URL.revokeObjectURL(url);
+                reject(new Error('No se pudo decodificar la imagen'));
+            };
+            im.src = url;
+        }
+        if (window.createImageBitmap) {
+            try {
+                createImageBitmap(file, { imageOrientation: 'from-image' })
+                    .then(function (bmp) {
+                        listo(bmp, bmp.width, bmp.height);
+                        if (bmp.close) bmp.close();
+                    })
+                    .catch(clasico);
+            } catch (e) {
+                clasico();
+            }
+        } else {
+            clasico();
+        }
+    });
+}
+
 // Cargar URL de la imagen a subir
 function picload() {
     /* por id, no por 'input[type=file]': capas.js inyecta otro input (el del
@@ -455,26 +878,38 @@ function picload() {
     if (!file) {
         if (window.mostrarAviso) { window.mostrarAviso('El archivo no es soportado'); }
         else { console.warn('El archivo no es soportado'); }
-        return;
+        return Promise.resolve(null);
     }
 
-    var reader = new FileReader();
-    reader.onloadend = function () {
-        globalpic = reader.result;
+    var token = ++picToken;
+    globalpic = null;
+    globalpicFuente = null;
+    if (fileName) fileName.textContent = file.name + ' · preparando…';
+
+    picPromesa = prepararImagen(file).then(function (res) {
+        if (token !== picToken) return;      // llegó tarde: manda la última elegida
+        globalpic = res.url;
+        globalpicFuente = res.fuente;
+        if (fileName) {
+            fileName.textContent = file.name + (res.optimizada ? ' · optimizada' : '');
+        }
+        if (window.mostrarAviso) { window.mostrarAviso('Imagen lista', 'success'); }
+    }).catch(function (err) {
+        if (token !== picToken) return;
+        globalpic = null;
+        globalpicFuente = null;
+        if (fileName) fileName.textContent = 'Ninguna imagen seleccionada';
+        if (window.mostrarAviso) { window.mostrarAviso('No se pudo leer la imagen', 'danger'); }
+        console.warn('tet: no se pudo preparar la imagen', err);
+    }).then(function () {
         /* se vacía el input para que volver a elegir EL MISMO archivo dispare
            otro onchange: sin esto, elegir dos veces la misma imagen no hacía
            nada (el navegador no vuelve a lanzar el evento si no cambia el
            valor) */
         try { input.value = ''; } catch (e) { /* algunos navegadores lo impiden */ }
-    }
-    reader.onerror = function () {
-        globalpic = null;
-        if (window.mostrarAviso) { window.mostrarAviso('No se pudo leer la imagen', 'danger'); }
-        try { input.value = ''; } catch (e) { }
-    };
+    });
 
-    reader.readAsDataURL(file);
-    if (fileName) fileName.textContent = file.name;
+    return picPromesa;
 }
 
 
@@ -649,6 +1084,9 @@ window.tetAjustarLienzoA = function (d) {
     canvas.renderAll();
 
     if (window.tetReubicarTextos) window.tetReubicarTextos();
+    /* la imagen del botón automático también se reencaja en el formato nuevo
+       (la franja y el titular ya cambiaron de sitio) */
+    if (window.tetReubicarImagenAuto) window.tetReubicarImagenAuto();
     if (window.tetReajustarAlLienzo) window.tetReajustarAlLienzo();
     if (window.tetAjustarGuias) window.tetAjustarGuias();
     /* la barra de estado de la shell anuncia el tamaño del lienzo: sin esto
@@ -683,32 +1121,16 @@ window.tetAdaptarAlFormato = function () {
     return true;
 };
 
-// Colocar titulo
-function set_title() {
-    var col = colorT.value;
-    var titulo = titular.value;
-    var size = parseInt(font_size.value, 10);
+/* Titular: se crea y, si el texto real no cabe en su hueco, se encoge de 4 en
+   4 px. Se mide sobre el Textbox ya creado (alto real del texto) y no con una
+   estimación de líneas × tamaño. */
+function crearTitulo(texto) {
+    var col = document.getElementById('colorT').value;
+    var size = parseInt(document.getElementById('font_size').value, 10) || 72;
     var maxW = anchoTexto();
     var maxH = huecoTitulo();
 
-    /* Q1a · el titular se parte en líneas y encoge si no cabe: antes era
-       IText sin ancho —no partía nunca— y centrado se salía por los dos
-       bordes del lienzo (se comían letras de los lados) */
-    var tmp = document.createElement('canvas').getContext('2d');
-    function parteTitulo(s) {
-        tmp.font = 'bold ' + s + 'px sans-serif';
-        var palabras = titulo.split(/\s+/).filter(Boolean);
-        if (!palabras.length) return [''];
-        var lineas = [], actual = palabras[0];
-        for (var i = 1; i < palabras.length; i++) {
-            var prueba = actual + ' ' + palabras[i];
-            if (tmp.measureText(prueba).width <= maxW) actual = prueba;
-            else { lineas.push(actual); actual = palabras[i]; }
-        }
-        lineas.push(actual);
-        return lineas;
-    }
-    var obj = new fabric.Textbox(titulo, {
+    var obj = new fabric.Textbox(texto, {
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
         textAlign: 'center',
@@ -724,47 +1146,70 @@ function set_title() {
         transparentCorners: false
     });
 
-    /* El encoge se mide sobre el objeto ya creado (alto real del texto) en vez
-       de estimarlo con «líneas × tamaño × 1,16»: la estimación se quedaba
-       corta y el titular se pegaba al detalle. Se baja de 4 en 4 hasta que el
-       texto que de verdad dibuja Fabric cabe en el hueco. */
     while (obj.fontSize > 24 && altoTexto(obj) > maxH) {
         size -= 4;
         obj.set({ fontSize: size, width: maxW });
     }
 
     situarEnZona(obj, 'titulo');
-    canvas.add(obj);
+    return obj;
+}
 
-    var canvas_objects = canvas._objects;
-    if (canvas_objects.length !== 0) {
-        var last = canvas_objects[canvas_objects.length - 1]; //Get last object
-        last.centerH();
-        last.lockMovementX = true;
-        //last.lockMovementY=true;
-        last.lockRotation = true;
-        canvas.renderAll();
+function actualizarTitulo(obj, texto) {
+    obj.set({
+        text: texto,
+        fill: document.getElementById('colorT').value,
+        fontWeight: 'bold',
+        fontFamily: 'sans-serif',
+        textAlign: 'center',
+        fontSize: parseInt(document.getElementById('font_size').value, 10) || 72,
+        width: anchoTexto(),
+        hasControls: false
+    });
+    if (obj.initDimensions) obj.initDimensions();
+    situarEnZona(obj, 'titulo');
+    var maxH = huecoTitulo();
+    var size = obj.fontSize;
+    while (obj.fontSize > 24 && altoTexto(obj) > maxH) {
+        size -= 4;
+        obj.set({ fontSize: size, width: anchoTexto() });
     }
+    obj.setCoords();
+    return obj;
+}
 
+// Colocar titulo
+function set_title() {
+    var txt = (document.getElementById('titular').value || '').trim();
+    if (!txt) {
+        if (window.mostrarAviso) window.mostrarAviso('Escribe un título primero', 'warning');
+        return null;
+    }
+    var obj = crearTitulo(txt);
+    canvas.add(obj);
+    obj.centerH();
+    obj.lockMovementX = true;
+    obj.lockRotation = true;
+    obj.setCoords();
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
+    return obj;
 }
 
 
-// Colocar detalles
-function set_detail() {
-    var detail = detalles.value;
-    var col = colorT.value;
-    var size = parseInt(font_sizeD.value, 10);
-
+/* Detalle: mismo criterio que el titular. Además se encoge si el texto real
+   no cabe en la zona, para que no se salga por abajo al componer en automático. */
+function crearDetalle(texto) {
     var H = canvas.getHeight();
     var maxW = anchoTexto();
     var altoZona = Math.round(ZONAS.detalle.alto * H);
+    var size = parseInt(document.getElementById('font_sizeD').value, 10) || 48;
 
-    var obj = new fabric.Textbox(detail, {
+    var obj = new fabric.Textbox(texto, {
         width: maxW,
         left: Math.round((canvas.getWidth() - maxW) / 2),
         fontFamily: 'sans-serif',
-        //fontWeight: 'bold',
-        fill: col,
+        fill: document.getElementById('colorT').value,
         textAlign: 'center',
         fontSize: size,
         top: Math.round(H * ZONAS.detalle.top),
@@ -777,55 +1222,375 @@ function set_detail() {
         borderColor: 'black',
         transparentCorners: false
     });
-    situarEnZona(obj, 'detalle');
-    canvas.add(obj);
-    separarTextos();   /* el detalle acaba de entrar: comprueba el aire con el titular */
 
-    var canvas_objects = canvas._objects;
-    if (canvas_objects.length !== 0) {
-        var last = canvas_objects[canvas_objects.length - 1]; //Get last object
-        last.centerH();
-        last.lockMovementX = true;
-        //last.lockMovementY=true;
-        last.lockRotation = true;
-        canvas.renderAll();
+    while (obj.fontSize > 18 && altoTexto(obj) > altoZona) {
+        size -= 2;
+        obj.set({ fontSize: size, width: maxW });
     }
 
+    situarEnZona(obj, 'detalle');
+    return obj;
+}
+
+function actualizarDetalle(obj, texto) {
+    obj.set({
+        text: texto,
+        fill: document.getElementById('colorT').value,
+        fontFamily: 'sans-serif',
+        textAlign: 'center',
+        fontSize: parseInt(document.getElementById('font_sizeD').value, 10) || 48,
+        width: anchoTexto(),
+        hasControls: false
+    });
+    if (obj.initDimensions) obj.initDimensions();
+    situarEnZona(obj, 'detalle');
+    var altoZona = Math.round(ZONAS.detalle.alto * canvas.getHeight());
+    var size = obj.fontSize;
+    while (obj.fontSize > 18 && altoTexto(obj) > altoZona) {
+        size -= 2;
+        obj.set({ fontSize: size, width: anchoTexto() });
+    }
+    obj.setCoords();
+    return obj;
+}
+
+// Colocar detalles
+function set_detail() {
+    var txt = (document.getElementById('detalles').value || '').trim();
+    if (!txt) {
+        if (window.mostrarAviso) window.mostrarAviso('Escribe el detalle primero', 'warning');
+        return null;
+    }
+    var obj = crearDetalle(txt);
+    canvas.add(obj);
+    separarTextos();   /* el detalle acaba de entrar: comprueba el aire con el titular */
+    obj.centerH();
+    obj.lockMovementX = true;
+    obj.lockRotation = true;
+    obj.setCoords();
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
+    return obj;
 }
 
 
 /* =========================================================================
    6 · INSERTAR IMAGEN AL CANVAS
    ========================================================================= */
+function nuevaImagenFabric() {
+    if (!globalpicFuente) return null;
+    /* Fabric acepta directamente el canvas ya preparado: no se vuelve a
+       decodificar el archivo, que es la parte lenta. */
+    var img = new fabric.Image(globalpicFuente);
+    if (globalpic) {
+        /* Al serializar, Fabric haría un PNG nuevo del canvas en CADA guardado
+           del historial (varios MB y una pausa perceptible). Se le da el JPEG
+           ya reducido: el historial y el .json pesan mucho menos y reconocen la
+           imagen aunque se haya deshecho/rehecho. */
+        var fuenteUrl = globalpic;
+        img._originalSrc = fuenteUrl;
+        img.getSrc = function (paraFiltro) {
+            if (paraFiltro) return fabric.Image.prototype.getSrc.call(this, true);
+            return fuenteUrl;
+        };
+    }
+    return img;
+}
+
+/* ¿Esta imagen del lienzo viene del archivo cargado ahora? Se compara el
+   canvas preparado y también el src serializado, porque tras deshacer/rehacer
+   (o al abrir un proyecto) la imagen revive como <img>, no como canvas. */
+function mismaFuente(img) {
+    if (!img || !globalpicFuente) return false;
+    if (img._originalElement === globalpicFuente || img._element === globalpicFuente) return true;
+    var actual = img._originalSrc || (img._element && img._element.src) ||
+        (img._originalElement && img._originalElement.src) || '';
+    return !!globalpic && actual === globalpic;
+}
+
+function colocarImagenNueva(img) {
+    if (!img) return null;
+    if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(img);
+    img.set({ lockRotation: true });
+    img.setCoords();
+    canvas.add(img);
+    canvas.setActiveObject(img);
+    canvas.renderAll();
+    /* con la opción del panel activada, el fondo se adapta a la foto recién
+       colocada. Va después de añadirla para que el lienzo ya tenga sus colores. */
+    if (window.tetSugerirDegradadoAuto) window.tetSugerirDegradadoAuto(img);
+    return img;
+}
+
+/* Inserción normal (botón «Insertar imagen»). Devuelve una promesa por si
+   quien llama quiere esperar (el modo automático). */
 function generate() {
-    if (!globalpic) {
+    if (!globalpic && !globalpicFuente) {
         if (window.mostrarAviso) { window.mostrarAviso('Primero carga una imagen'); }
         else { console.warn('Primero carga una imagen'); }
-        return;
+        return Promise.resolve(null);
     }
+    var img = nuevaImagenFabric();
+    if (img) return Promise.resolve(colocarImagenNueva(img));
+    return new Promise(function (resolve) {
+        fabric.Image.fromURL(globalpic, function (oImg) {
+            resolve(colocarImagenNueva(oImg));
+        });
+    });
+}
 
-    //var shad = sombra.value;
-    //var col = color.value;
-    // var filter = new fabric.Image.filters.Resize({
-    //     blur: shad
-    // });
 
-    fabric.Image.fromURL(globalpic, function (oImg) {
-        ///oImg.filters.push(filter);
-        //oImg.applyFilters();
+/* =========================================================================
+   6b · COMPOSICIÓN AUTOMÁTICA (título + detalle + imagen)
 
-        /* contain con margen y centrada; nunca por encima del nativo
-           (antes scaleToWidth(1200) pixelaba las fotos pequeñas) */
-        if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(oImg);
-        canvas.add(oImg.set({
-            //hasControls: false,
-            //lockMovementY: true,
-            lockRotation: true
-        }));
+   Un solo botón coloca las tres piezas con aire entre ellas:
+     franja → imagen → titular → detalle
+   La imagen ocupa exactamente el hueco entre la franja y el titular; si su
+   proporción es parecida a la del hueco se recorta para rellenarlo (cover) y,
+   si es muy distinta, se ajusta entera (contain) para no comerse la foto.
+   ========================================================================= */
 
+/* Objeto de texto que ya está en el lienzo y pertenece a una zona. */
+function objetoDeZona(zona) {
+    var lista = canvas.getObjects().filter(function (o) {
+        return o.tetZona === zona && o.type !== 'image';
+    });
+    return lista.length ? lista[lista.length - 1] : null;
+}
+
+function quitarImagenAuto(excepto) {
+    canvas.getObjects().slice().forEach(function (o) {
+        if (o.tetAutoImagen && o !== excepto) canvas.remove(o);
+    });
+}
+
+/* Imagen que gestiona el botón automático (o la última que coincida con el
+   archivo cargado). Reutilizarla evita duplicados al pulsar dos veces y, sobre
+   todo, conserva el recorte manual (_tetBase) al recomponer. */
+function imagenParaAuto() {
+    var imgs = canvas.getObjects().filter(function (o) { return o.type === 'image'; });
+    var i, auto = null;
+    for (i = imgs.length - 1; i >= 0; i--) {
+        if (imgs[i].tetAutoImagen) { auto = imgs[i]; break; }
+    }
+    if (auto) {
+        /* si se acaba de cargar OTRO archivo, la imagen automática vieja ya no
+           sirve: se descarta y se crea una nueva con la fuente actual */
+        if (globalpicFuente && !mismaFuente(auto)) return null;
+        return auto;
+    }
+    if (globalpicFuente) {
+        for (i = imgs.length - 1; i >= 0; i--) {
+            if (mismaFuente(imgs[i])) return imgs[i];
+        }
+        return null;
+    }
+    return imgs.length ? imgs[imgs.length - 1] : null;
+}
+
+/* Región de origen que debe usar el ajuste automático. Se guarda la primera
+   vez para que cambiar de formato no vaya recortando la foto en cada pasada. */
+function baseDeImagen(img) {
+    if (!img._tetBase) {
+        img._tetBase = {
+            cropX: img.cropX || 0,
+            cropY: img.cropY || 0,
+            width: img.width,
+            height: img.height
+        };
+    }
+    return img._tetBase;
+}
+
+/* Hueco libre entre la franja superior y el titular (o el detalle). */
+function huecoImagen() {
+    var W = canvas.getWidth(), H = canvas.getHeight();
+    var aireCabecera = Math.max(8, Math.round(H * 0.012));
+    var aire = Math.max(12, Math.round(H * 0.022));
+    var arriba = (DECO.conBarra ? rectBarra().h : 0) + aireCabecera;
+    var abajo = H - aire;
+
+    var t = objetoDeZona('titulo');
+    var d = objetoDeZona('detalle');
+    if (t) abajo = Math.min(abajo, t.top - aire);
+    else if (d) abajo = Math.min(abajo, d.top - aire);
+
+    if (abajo - arriba < H * 0.1) return null;
+    return { x: 0, y: arriba, w: W, h: abajo - arriba };
+}
+
+/* Encaja la imagen en el hueco. Cover si la proporción es parecida (así no
+   queda un marco vacío); contain si es muy apaisada o muy vertical. */
+function encajarImagen(img, hueco) {
+    var base = baseDeImagen(img);
+    img.set({
+        cropX: base.cropX,
+        cropY: base.cropY,
+        width: base.width,
+        height: base.height,
+        originX: 'left',
+        originY: 'top'
     });
 
+    var dispW = img.width, dispH = img.height;
+    if (!(dispW > 0) || !(dispH > 0) || !hueco) return img;
+    var aspectoImg = dispW / dispH;
+    var aspectoHueco = hueco.w / hueco.h;
+    var rellenar = aspectoImg > aspectoHueco / 1.6 && aspectoImg < aspectoHueco * 1.6;
+
+    if (rellenar) {
+        var cw, ch;
+        if (aspectoImg > aspectoHueco) {
+            ch = dispH;
+            cw = ch * aspectoHueco;
+        } else {
+            cw = dispW;
+            ch = cw / aspectoHueco;
+        }
+        img.set({
+            cropX: base.cropX + (dispW - cw) / 2,
+            cropY: base.cropY + (dispH - ch) / 2,
+            width: cw,
+            height: ch,
+            scaleX: hueco.w / cw,
+            scaleY: hueco.h / ch,
+            left: hueco.x,
+            top: hueco.y
+        });
+    } else {
+        var e = Math.min(hueco.w / dispW, hueco.h / dispH);
+        img.set({
+            scaleX: e,
+            scaleY: e,
+            left: Math.round(hueco.x + (hueco.w - dispW * e) / 2),
+            top: Math.round(hueco.y)
+        });
+    }
+    img.setCoords();
+    return img;
 }
+
+/* Recoloca la imagen automática tras cambiar de formato. */
+window.tetReubicarImagenAuto = function () {
+    var img = null;
+    canvas.getObjects().some(function (o) {
+        if (o.tetAutoImagen) { img = o; return true; }
+        return false;
+    });
+    if (!img) return false;
+    var hueco = huecoImagen();
+    if (!hueco) return false;
+    encajarImagen(img, hueco);
+    canvas.renderAll();
+    return true;
+};
+
+function componerTodo() {
+    var texto = (document.getElementById('titular').value || '').trim();
+    var detalle = (document.getElementById('detalles').value || '').trim();
+    if (!texto && !detalle && !globalpicFuente && !globalpic && !imagenParaAuto()) {
+        if (window.mostrarAviso) {
+            window.mostrarAviso('Escribe un título, el detalle o carga una imagen', 'warning');
+        }
+        return false;
+    }
+
+    /* Todo entra en el historial como UN solo paso: Ctrl+Z deshace la
+       composición completa, no tres cambios sueltos. */
+    window.tetHistorialBloque(function () {
+        /* se busca ANTES de retirar la imagen automática anterior: así se
+           reutiliza el mismo objeto y su recorte manual no se pierde */
+        var img = imagenParaAuto();
+        quitarImagenAuto(img);
+
+        var titulo = null;
+        if (texto) {
+            titulo = objetoDeZona('titulo');
+            if (titulo) actualizarTitulo(titulo, texto);
+            else {
+                titulo = crearTitulo(texto);
+                canvas.add(titulo);
+            }
+            titulo.centerH();
+            titulo.lockMovementX = true;
+            titulo.lockRotation = true;
+            titulo.setCoords();
+        }
+
+        var desc = null;
+        if (detalle) {
+            desc = objetoDeZona('detalle');
+            if (desc) actualizarDetalle(desc, detalle);
+            else {
+                desc = crearDetalle(detalle);
+                canvas.add(desc);
+            }
+            desc.centerH();
+            desc.lockMovementX = true;
+            desc.lockRotation = true;
+            desc.setCoords();
+        }
+
+        separarTextos();
+
+        if (!img && globalpicFuente) img = nuevaImagenFabric();
+        if (img) {
+            var hueco = huecoImagen();
+            if (hueco) encajarImagen(img, hueco);
+            img.set({ tetAutoImagen: true, tetZona: 'imagen', lockRotation: true });
+            if (!img.canvas) canvas.add(img);
+            /* los textos, por delante: si el hueco se quedara corto por una
+               foto contain, nunca tapan el titular */
+            if (titulo) canvas.bringToFront(titulo);
+            if (desc) canvas.bringToFront(desc);
+            canvas.setActiveObject(img);
+        }
+
+        canvas.renderAll();
+        /* la composición automática también puede adaptar el fondo a la foto */
+        if (img && window.tetSugerirDegradadoAuto) window.tetSugerirDegradadoAuto(img);
+    });
+
+    return true;
+}
+
+window.tetAutoComponer = function () {
+    if (window.tetModoRecorte) {
+        if (window.mostrarAviso) {
+            window.mostrarAviso('Aplica o cancela el recorte antes de componer', 'warning');
+        }
+        return Promise.resolve(false);
+    }
+
+    var btn = document.getElementById('btn-auto');
+    var restaurar = function () {
+        if (!btn) return;
+        btn.disabled = false;
+        btn.classList.remove('is-cargando');
+    };
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('is-cargando');
+    }
+
+    /* Si la imagen todavía se está decodificando, se espera: así el botón
+       funciona aunque se pulse justo después de elegir el archivo. */
+    var espera = picPromesa || Promise.resolve();
+    return espera.then(function () {
+        var ok = componerTodo();
+        if (ok && window.mostrarAviso) {
+            window.mostrarAviso('Composición automática lista · Ctrl+Z deshace', 'success');
+        }
+        return ok;
+    }).catch(function (err) {
+        console.warn('tet: no se pudo componer', err);
+        if (window.mostrarAviso) window.mostrarAviso('No se pudo componer la imagen', 'danger');
+        return false;
+    }).then(function (r) {
+        restaurar();
+        return r;
+    });
+};
 
 
 /* =========================================================================

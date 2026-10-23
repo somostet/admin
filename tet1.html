@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css?v=r30">
-    <link rel="stylesheet" href="./public/css/shell.css?v=sp52">
+    <link rel="stylesheet" href="./public/css/shell.css?v=sp54">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
@@ -89,10 +89,21 @@
                                             <option value="8">2079: Tecnología del futuro</option>
                                             <option value="9">Artículo</option>
                                             <option value="10">Blanco</option>
+                                            <option value="11">tet news (nuevo)</option>
+                                            <option value="12">Recomendaciones</option>
+                                            <option value="13">Estrenos streaming</option>
                                         </select>
                                     </div>
                                     <div class="col-sm">
                                         <button type="button" class="btn btn-info" data-bs-toggle="tooltip" data-bs-placement="right" title="Cargar plantilla" onclick="reload()" aria-label="Cargar plantilla"><i class="fas fa-sync"></i><span class="ms-1">Cargar plantilla</span></button>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-warning w-100" id="btn-auto" data-bs-toggle="tooltip" data-bs-placement="right" title="Coloca título, detalle e imagen de una vez, con sus espacios" onclick="tetAutoComponer()" aria-label="Componer todo automáticamente">
+                                            <i class="fas fa-magic" aria-hidden="true"></i><span class="ms-1">Componer todo (auto)</span>
+                                        </button>
+                                        <div class="form-text">Título, detalle e imagen de una vez. La imagen queda justo debajo del encabezado y ajustada a la plantilla.</div>
                                     </div>
                                 </div>
                                 <div class="row mt-2">
@@ -302,6 +313,18 @@
                             <img src="./public/img/bars/ElegantKat.png" class=" img-fluid" alt="Logo">
                         </div>
                     </div>
+                    <h6 class="text-light text-center mt-3 mb-2">Última hora y estrenos</h6>
+                    <div class="row text-center">
+                        <div class="col">
+                            <img src="./public/img/bars/ultima_hora.png" class=" img-fluid" alt="Última hora">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/disponible.png" class=" img-fluid" alt="Disponible en Netflix">
+                        </div>
+                        <div class="col">
+                            <img src="./public/img/bars/popcorn.png" class=" img-fluid" alt="Palomitas de estrenos">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -310,16 +333,16 @@
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
 
     <script src="./public/vendor/fabricjs/fabric.min.js"></script>
-    <script src="./public/js/plantillas-data.js"></script>
+    <script src="./public/js/plantillas-data.js?v=pl1"></script>
     <script src="./public/vendor/reimg/reimg.js"></script>
-    <script src="./public/js/main.js?v=r32"></script>
-    <script src="./public/js/capas.js?v=p8"></script>
+    <script src="./public/js/main.js?v=r39"></script>
+    <script src="./public/js/capas.js?v=p9"></script>
     <script src="./public/js/formatos.js?v=a3d"></script>
-    <script src="./public/js/shell.js?v=sh25"></script>
-    <script src="./public/js/editar.js?v=e7"></script>
-    <script src="./public/js/tet1-editor.js?v=e2d"></script>
+    <script src="./public/js/shell.js?v=sh34"></script>
+    <script src="./public/js/editar.js?v=e11"></script>
+    <script src="./public/js/tet1-editor.js?v=e30"></script>
     <script src="./public/js/publicacion.js?v=p5"></script>
-    <script src="./public/js/galeria.js?v=g3"></script>
+    <script src="./public/js/galeria.js?v=g4"></script>
     <script>
         // document.getElementById("sombra").step = "1";
         document.addEventListener('DOMContentLoaded', function() {

@@ -819,6 +819,7 @@
                 canvas.add(img);            // object:added → historial + render
                 canvas.setActiveObject(img);
                 canvas.renderAll();
+                if (window.tetSugerirDegradadoAuto) window.tetSugerirDegradadoAuto(img);
                 if (window.mostrarAviso) window.mostrarAviso('Imagen pegada · Ctrl+Z deshace', 'success');
             });
         };

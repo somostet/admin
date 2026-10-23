@@ -1072,6 +1072,176 @@
        así que no se vuelve a decodificar ni a perder calidad. */
     var modoRecorte = false, entrando = false;
     var marco = null, imgRecorte = null;
+    var capaRecorte = { marco: null, foto: null, pintado: false, seleccion: undefined, uniScale: undefined };
+
+    /* ---------------- tiradores «de recorte» ----------------
+       Fabric 2.4.3 dibuja siempre las mismas asas cuadradas para escalar.
+       Para que el gesto se lea como un recorte clásico (y no como cambiar
+       el tamaño de la foto) las asas se ocultan y se pinta encima del
+       lienzo: oscurecido fuera del marco, rejilla de tercios y esquinas en
+       forma de L. El objeto Fabric sigue haciendo la interacción (mover y
+       escalar desde cada tirador), solo cambia el dibujo.
+       El dibujo va en el lienzo superior (contextTop), que no se exporta:
+       descargar o guardar el diseño nunca se lleva el velo del recorte. */
+    function rectVisible(m) {
+        var sx = Math.abs(m.scaleX || 1), sy = Math.abs(m.scaleY || 1);
+        return {
+            left: m.left, top: m.top,
+            width: m.width * sx, height: m.height * sy
+        };
+    }
+
+    function tiradoresRecorte(ctx, x0, y0, x1, y1) {
+        var w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
+        var L = Math.max(10, Math.min(26, Math.min(w, h) * 0.28));
+        var Lm = L * 0.9;
+        var mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+        ctx.beginPath();
+        /* esquinas: dos brazos hacia dentro, como en un recorte clásico */
+        ctx.moveTo(x0, y0); ctx.lineTo(x0 + L, y0);
+        ctx.moveTo(x0, y0); ctx.lineTo(x0, y0 + L);
+        ctx.moveTo(x1, y0); ctx.lineTo(x1 - L, y0);
+        ctx.moveTo(x1, y0); ctx.lineTo(x1, y0 + L);
+        ctx.moveTo(x0, y1); ctx.lineTo(x0 + L, y1);
+        ctx.moveTo(x0, y1); ctx.lineTo(x0, y1 - L);
+        ctx.moveTo(x1, y1); ctx.lineTo(x1 - L, y1);
+        ctx.moveTo(x1, y1); ctx.lineTo(x1, y1 - L);
+        /* bordes: una barra centrada en cada lado */
+        ctx.moveTo(mx - Lm / 2, y0); ctx.lineTo(mx + Lm / 2, y0);
+        ctx.moveTo(mx - Lm / 2, y1); ctx.lineTo(mx + Lm / 2, y1);
+        ctx.moveTo(x0, my - Lm / 2); ctx.lineTo(x0, my + Lm / 2);
+        ctx.moveTo(x1, my - Lm / 2); ctx.lineTo(x1, my + Lm / 2);
+    }
+
+    function pintarRecorteClasico() {
+        var top = canvas.contextTop;
+        if (!top) return;
+        var m = capaRecorte.marco;
+        if (!m) {
+            if (capaRecorte.pintado) {
+                canvas.clearContext(top);
+                capaRecorte.pintado = false;
+            }
+            return;
+        }
+        canvas.clearContext(top);
+        var r = rectVisible(m);
+        var vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
+        var a = fabric.util.transformPoint(new fabric.Point(r.left, r.top), vpt);
+        var b = fabric.util.transformPoint(
+            new fabric.Point(r.left + r.width, r.top + r.height), vpt);
+        var x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y);
+        var x1 = Math.max(a.x, b.x), y1 = Math.max(a.y, b.y);
+        var W = canvas.getWidth(), H = canvas.getHeight();
+        var ctx = top;
+        ctx.save();
+        /* Velo sobre la FOTO fuera del recorte; la plantilla que la rodea se
+           queda como está para no oscurecer el diseño. */
+        var bx0 = 0, by0 = 0, bx1 = W, by1 = H;
+        if (capaRecorte.foto) {
+            var fb = capaRecorte.foto.getBoundingRect();
+            var fa = fabric.util.transformPoint(new fabric.Point(fb.left, fb.top), vpt);
+            var fz = fabric.util.transformPoint(
+                new fabric.Point(fb.left + fb.width, fb.top + fb.height), vpt);
+            bx0 = Math.max(0, Math.min(fa.x, fz.x));
+            by0 = Math.max(0, Math.min(fa.y, fz.y));
+            bx1 = Math.min(W, Math.max(fa.x, fz.x));
+            by1 = Math.min(H, Math.max(fa.y, fz.y));
+        }
+        var c0x = Math.max(x0, bx0), c0y = Math.max(y0, by0);
+        var c1x = Math.min(x1, bx1), c1y = Math.min(y1, by1);
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.58)';
+        if (c1x > c0x && c1y > c0y) {
+            if (c0y > by0) ctx.fillRect(bx0, by0, bx1 - bx0, c0y - by0);
+            if (c1y < by1) ctx.fillRect(bx0, c1y, bx1 - bx0, by1 - c1y);
+            if (c0x > bx0) ctx.fillRect(bx0, c0y, c0x - bx0, c1y - c0y);
+            if (c1x < bx1) ctx.fillRect(c1x, c0y, bx1 - c1x, c1y - c0y);
+        } else {
+            ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
+        }
+        /* rejilla de tercios */
+        var i, gx, gy;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (i = 1; i <= 2; i++) {
+            gx = Math.round(x0 + (x1 - x0) * i / 3) + 0.5;
+            gy = Math.round(y0 + (y1 - y0) * i / 3) + 0.5;
+            ctx.moveTo(gx, y0); ctx.lineTo(gx, y1);
+            ctx.moveTo(x0, gy); ctx.lineTo(x1, gy);
+        }
+        ctx.stroke();
+        /* borde y tiradores, con sombra para que se vean sobre fotos claras */
+        ctx.lineJoin = 'miter';
+        ctx.lineCap = 'square';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x0 - 1, y0 - 1, x1 - x0 + 2, y1 - y0 + 2);
+        tiradoresRecorte(ctx, x0, y0, x1, y1);
+        ctx.lineWidth = 5.5;
+        ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+        tiradoresRecorte(ctx, x0, y0, x1, y1);
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+        capaRecorte.pintado = true;
+    }
+    canvas.on('after:render', pintarRecorteClasico);
+
+    /* Lo usan tanto la barra flotante como el panel «Editar imagen». */
+    window.tetRecorteClasico = {
+        activar: function (m, opciones) {
+            if (!m) return;
+            opciones = opciones || {};
+            var tactil = opciones.tactil;
+            if (typeof tactil !== 'boolean') {
+                tactil = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+                    (!window.matchMedia && navigator.maxTouchPoints > 0);
+            }
+            m.set({
+                fill: 'rgba(0, 0, 0, 0)',
+                stroke: null, strokeWidth: 0,
+                hasBorders: false, hasControls: true,
+                transparentCorners: true,
+                cornerColor: 'rgba(0, 0, 0, 0)',
+                cornerStrokeColor: 'rgba(0, 0, 0, 0)',
+                borderColor: 'rgba(0, 0, 0, 0)',
+                cornerSize: opciones.cornerSize || (tactil ? 44 : 30),
+                padding: 0,
+                lockScalingFlip: true,
+                objectCaching: false
+            });
+            m.setControlsVisibility({ mtr: false });
+            m.setCoords();
+            capaRecorte.seleccion = canvas.selection;
+            canvas.selection = false; /* sin lazo azul de selección múltiple */
+            /* esquinas libres: en un recorte cada esquina ajusta sus dos
+               lados, no se escala la foto proporcionalmente */
+            capaRecorte.uniScale = canvas.uniScaleTransform;
+            canvas.uniScaleTransform = true;
+            capaRecorte.marco = m;
+            capaRecorte.foto = opciones.foto || null;
+            canvas.renderAll();
+        },
+        desactivar: function () {
+            if (capaRecorte.seleccion !== undefined) {
+                canvas.selection = capaRecorte.seleccion;
+                capaRecorte.seleccion = undefined;
+            }
+            if (capaRecorte.uniScale !== undefined) {
+                canvas.uniScaleTransform = capaRecorte.uniScale;
+                capaRecorte.uniScale = undefined;
+            }
+            capaRecorte.marco = null;
+            capaRecorte.foto = null;
+            if (canvas.contextTop) canvas.clearContext(canvas.contextTop);
+            capaRecorte.pintado = false;
+            canvas.renderAll();
+        }
+    };
 
     function iniciarRecorte() {
         var img = canvas.getActiveObject();
@@ -1080,18 +1250,15 @@
         modoRecorte = true;
         window.tetModoRecorte = true;
         var r = img.getBoundingRect();
-        var tactil = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
-            (!window.matchMedia && navigator.maxTouchPoints > 0);
+        /* El marco nace cubriendo la imagen exacta. Sin trazo, left/top es
+           la esquina visible del rectángulo. */
         marco = new fabric.Rect({
-            left: r.left, top: r.top, width: r.width, height: r.height,
-            fill: 'rgba(13, 110, 253, 0.10)',
-            stroke: '#ffffff', strokeWidth: 2, strokeDashArray: [8, 6],
-            borderColor: '#0d6efd',
-            cornerColor: '#ffffff', cornerStrokeColor: '#0d6efd',
-            cornerSize: tactil ? 36 : 22,
-            transparentCorners: false,
+            left: r.left, top: r.top,
+            width: r.width, height: r.height,
+            originX: 'left', originY: 'top',
+            fill: 'rgba(0, 0, 0, 0)',
+            stroke: null, strokeWidth: 0,
             lockRotation: true, hasRotatingPoint: false,
-            padding: 6,
             objectCaching: false,
             excludeFromExport: true
         });
@@ -1100,13 +1267,51 @@
         entrando = true;
         canvas.add(marco);
         canvas.setActiveObject(marco);
+        window.tetRecorteClasico.activar(marco, { foto: img });
         entrando = false;
         grupoAcciones.hidden = true;
         grupoRecorte.hidden = false;
         canvas.renderAll();
         if (window.mostrarAviso) {
-            window.mostrarAviso('Mueve el marco y escala con las asas; Aplicar deja solo lo que encierres', 'info');
+            window.mostrarAviso('Ajusta los tiradores como en un recorte; Aplicar deja solo lo que encierres', 'info');
         }
+    }
+
+    /* El marco no puede salirse de la imagen, ni crecer más que ella, ni
+       voltearse al arrastrar un tirador más allá del lado contrario. */
+    function limitarMarco() {
+        if (!modoRecorte || !marco || !imgRecorte) return;
+        var b = imgRecorte.getBoundingRect();
+        var minW = Math.min(28, b.width), minH = Math.min(28, b.height);
+        var sx = Math.abs(marco.scaleX || 1);
+        var sy = Math.abs(marco.scaleY || 1);
+        var sxMax = b.width / marco.width;
+        var syMax = b.height / marco.height;
+        sx = Math.max(minW / marco.width, Math.min(sx, sxMax));
+        sy = Math.max(minH / marco.height, Math.min(sy, syMax));
+        if (sx !== marco.scaleX || sy !== marco.scaleY) {
+            marco.set({ scaleX: sx, scaleY: sy });
+        }
+        var w = marco.width * sx, h = marco.height * sy;
+        var x = Math.min(Math.max(marco.left, b.left), b.left + b.width - w);
+        var y = Math.min(Math.max(marco.top, b.top), b.top + b.height - h);
+        marco.set({ left: x, top: y });
+        marco.setCoords();
+    }
+
+    /* Rectángulo VISIBLE del marco en coordenadas de lienzo. El marco no
+       lleva trazo (lo pinta la capa superior), así que left/top ya son la
+       esquina del recorte. */
+    function rectMarco() {
+        return rectVisible(marco);
+    }
+
+    /* Pasa un punto del lienzo al sistema local de la imagen (0,0 = esquina
+       superior izquierda tal y como se ve, con giro y volteo incluidos). */
+    function puntoLocal(img, x, y) {
+        var inv = fabric.util.invertTransform(img.calcTransformMatrix());
+        var p = fabric.util.transformPoint(new fabric.Point(x, y), inv);
+        return { x: p.x + img.width / 2, y: p.y + img.height / 2 };
     }
 
     function aplicarRecorte() {
@@ -1114,7 +1319,7 @@
         imgRecorte.setCoords();
         marco.setCoords();
         var ir = imgRecorte.getBoundingRect();
-        var fr = marco.getBoundingRect();
+        var fr = rectMarco();
         var x0 = Math.max(ir.left, fr.left);
         var y0 = Math.max(ir.top, fr.top);
         var x1 = Math.min(ir.left + ir.width, fr.left + fr.width);
@@ -1123,33 +1328,76 @@
             if (window.mostrarAviso) window.mostrarAviso('El marco debe tocar la imagen', 'warning');
             return; /* sigue en modo recorte */
         }
-        var escX = ir.width / imgRecorte.width;
-        var escY = ir.height / imgRecorte.height;
-        if (!(escX > 0)) escX = imgRecorte.scaleX || 1;
-        if (!(escY > 0)) escY = imgRecorte.scaleY || 1;
+
+        /* Las cuatro esquinas de la intersección, en el sistema local de la
+           imagen. Funciona también si la foto está girada o volteada: antes se
+           dividía por la escala y se ignoraba el giro, así que el resultado no
+           coincidía con lo marcado. */
+        var pts = [
+            puntoLocal(imgRecorte, x0, y0),
+            puntoLocal(imgRecorte, x1, y0),
+            puntoLocal(imgRecorte, x1, y1),
+            puntoLocal(imgRecorte, x0, y1)
+        ];
+        var lx0 = Math.min(pts[0].x, pts[1].x, pts[2].x, pts[3].x);
+        var lx1 = Math.max(pts[0].x, pts[1].x, pts[2].x, pts[3].x);
+        var ly0 = Math.min(pts[0].y, pts[1].y, pts[2].y, pts[3].y);
+        var ly1 = Math.max(pts[0].y, pts[1].y, pts[2].y, pts[3].y);
+        lx0 = Math.max(0, Math.min(lx0, imgRecorte.width - 1));
+        lx1 = Math.max(lx0 + 1, Math.min(lx1, imgRecorte.width));
+        ly0 = Math.max(0, Math.min(ly0, imgRecorte.height - 1));
+        ly1 = Math.max(ly0 + 1, Math.min(ly1, imgRecorte.height));
+
+        /* El eje local ya viene en la orientación que se ve: calcTransformMatrix
+           incluye flipX/flipY, así que el punto local ES la coordenada de
+           origen (0..width). Antes se deshacía el volteo otra vez y el recorte
+           de una foto volteada se llevaba la mitad contraria. */
+        var sx0 = lx0;
+        var sx1 = lx1;
+        var sy0 = ly0;
+        var sy1 = ly1;
+
         var cx = imgRecorte.cropX || 0;
         var cy = imgRecorte.cropY || 0;
-        var elem = imgRecorte._element;
-        var natW = (elem && elem.width) || imgRecorte.width + cx;
-        var natH = (elem && elem.height) || imgRecorte.height + cy;
-        var srcX = Math.max(0, Math.min(cx + (x0 - ir.left) / escX, natW - 2));
-        var srcY = Math.max(0, Math.min(cy + (y0 - ir.top) / escY, natH - 2));
-        var srcW = Math.min((x1 - x0) / escX, natW - srcX);
-        var srcH = Math.min((y1 - y0) / escY, natH - srcY);
+        var elem = imgRecorte._element || imgRecorte._originalElement;
+        var natW = (elem && (elem.naturalWidth || elem.width)) || (cx + imgRecorte.width);
+        var natH = (elem && (elem.naturalHeight || elem.height)) || (cy + imgRecorte.height);
+        /* coordenadas de origen enteras: un cropX fraccionario obliga al
+           navegador a remuestrear y la foto se ve algo borrosa */
+        var srcX = Math.max(0, Math.min(Math.round(cx + sx0), natW - 1));
+        var srcY = Math.max(0, Math.min(Math.round(cy + sy0), natH - 1));
+        var srcW = Math.max(1, Math.min(Math.round(sx1 - sx0), natW - srcX));
+        var srcH = Math.max(1, Math.min(Math.round(sy1 - sy0), natH - srcY));
         if (!(srcW > 1) || !(srcH > 1)) {
             if (window.mostrarAviso) window.mostrarAviso('El recorte queda demasiado pequeño', 'warning');
             return;
         }
-        /* normaliza a origen superior izquierdo: la caja visible pasa a ser
-           exactamente la intersección con el marco, con la escala intacta */
-        imgRecorte.set({
-            originX: 'left', originY: 'top',
-            left: x0, top: y0,
-            cropX: srcX, cropY: srcY,
-            width: srcW, height: srcH
-        });
-        imgRecorte.setCoords();
+
+        /* Centro del trozo recortado, en coordenadas de lienzo. Se recoloca por
+           centro para que el resultado caiga justo donde estaba el marco. */
+        var ctm = imgRecorte.calcTransformMatrix();
+        var centro = fabric.util.transformPoint(
+            new fabric.Point(
+                (lx0 + lx1) / 2 - imgRecorte.width / 2,
+                (ly0 + ly1) / 2 - imgRecorte.height / 2),
+            ctm);
+
         var img = imgRecorte;
+        img.set({
+            originX: 'center', originY: 'center',
+            left: centro.x, top: centro.y,
+            cropX: srcX, cropY: srcY,
+            width: srcW, height: srcH,
+            /* un recorte anterior (clipPath del panel «Editar imagen») se
+               sustituye por este: dejar los dos movía el resultado */
+            clipPath: null
+        });
+        /* Si la imagen la gestiona el botón automático, el recorte manual pasa
+           a ser su nueva zona de origen: al recomponer no se deshace. */
+        if (img.tetAutoImagen) {
+            img._tetBase = { cropX: srcX, cropY: srcY, width: srcW, height: srcH };
+        }
+        img.setCoords();
         cancelarRecorte(false);
         canvas.setActiveObject(img);
         canvas.renderAll();
@@ -1166,6 +1414,7 @@
         var img = imgRecorte;
         if (marco) { canvas.remove(marco); marco = null; }
         imgRecorte = null;
+        if (window.tetRecorteClasico) window.tetRecorteClasico.desactivar();
         grupoAcciones.hidden = false;
         grupoRecorte.hidden = true;
         if (eraMarco) {
@@ -1195,19 +1444,30 @@
     }, true);
 
     document.addEventListener('keydown', function (e) {
-        if (modoRecorte && (e.key === 'Escape' || e.key === 'Esc')) cancelarRecorte(true);
+        if (!modoRecorte) return;
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            e.preventDefault();
+            cancelarRecorte(true);
+        } else if (e.key === 'Enter') {
+            /* Enter aplica: con el teclado no había forma de terminar el
+               recorte sin ir al botón de la barra flotante */
+            e.preventDefault();
+            aplicarRecorte();
+        }
     });
 
-    /* al arrastrarlo el marco no puede salirse de la imagen */
+    /* al arrastrarlo o escalarlo, el marco no puede salirse de la imagen */
     canvas.on('object:moving', function (e) {
         if (!modoRecorte || e.target !== marco || !imgRecorte) return;
-        var b = imgRecorte.getBoundingRect();
-        var w = marco.getScaledWidth(), h = marco.getScaledHeight();
-        marco.set({
-            left: Math.min(Math.max(marco.left, b.left), Math.max(b.left, b.left + b.width - w)),
-            top: Math.min(Math.max(marco.top, b.top), Math.max(b.top, b.top + b.height - h))
-        });
-        marco.setCoords();
+        limitarMarco();
+    });
+    canvas.on('object:scaling', function (e) {
+        if (!modoRecorte || e.target !== marco || !imgRecorte) return;
+        limitarMarco();
+    });
+    canvas.on('object:modified', function (e) {
+        if (!modoRecorte || e.target !== marco || !imgRecorte) return;
+        limitarMarco();
     });
 
     /* ---------------- montaje del DOM ---------------- */
@@ -1270,10 +1530,17 @@
        el lote S3, pero ningún JS creaba el elemento, así que la barra no
        existía— y al pasar a escritorio vuelven a su sitio en Propiedades. */
     var mqBarra = window.matchMedia('(max-width: 991.98px)');
-    var barra = el('div', 'sh-movil');
-    barra.hidden = true;
-    barra.setAttribute('role', 'group');
-    barra.setAttribute('aria-label', 'Título');
+    /* OJO: esta variable NO puede llamarse `barra`. En este mismo IIFE ya hay
+       un `barra` que es la barra flotante de acciones (la de Recortar / Aplicar).
+       Al redeclararla, el `var` se reutilizaba y, a partir de aquí, el clic
+       fuera del lienzo comparaba contra la barra del móvil —así que el primer
+       clic en «Aplicar» cancelaba el recorte antes de aplicarlo— y el
+       `is-on` de la barra flotante se ponía en la barra móvil, con lo que la
+       barra de acciones no llegaba a verse nunca. */
+    var barraMovil = el('div', 'sh-movil');
+    barraMovil.hidden = true;
+    barraMovil.setAttribute('role', 'group');
+    barraMovil.setAttribute('aria-label', 'Título');
     var mudado = [];
 
     var campoTitulo = document.getElementById('titular');
@@ -1299,8 +1566,8 @@
     if (campoTitulo && !mantenerTituloEnPropiedades) {
         var caja = campoTitulo.closest('.input-group, .form-group') || campoTitulo;
         mudado.push({ nodo: caja, casa: caja.parentNode, sitio: caja.nextSibling });
-        if (caja === campoTitulo) barra.appendChild(el('span', 'sh-mv-lbl', 'Título'));
-        barra.appendChild(caja);
+        if (caja === campoTitulo) barraMovil.appendChild(el('span', 'sh-mv-lbl', 'Título'));
+        barraMovil.appendChild(caja);
 
         if (btnTitulo) {
             btnTitulo.classList.add('btn-ghost');
@@ -1315,7 +1582,7 @@
         if (!mudado.length) return;
         mudado.forEach(function (m) {
             if (movil && m.aBarra !== false) {
-                if (m.nodo.parentNode !== barra) barra.appendChild(m.nodo);
+                if (m.nodo.parentNode !== barraMovil) barraMovil.appendChild(m.nodo);
                 /* la columna que alojaba el campo se queda marcada: sin esto
                    limpiarVacios() se la lleva por estar vacía y, al volver a
                    escritorio, el campo se restauraba en un=nodo desligado
@@ -1338,14 +1605,14 @@
                 }
             }
         });
-        barra.hidden = !movil;
+        barraMovil.hidden = !movil;
         document.body.classList.toggle('tet-barra-movil', movil);
         limpiarVacios();
         setTimeout(autoAjustarPronto, 60);
     }
 
     if (mudado.length) {
-        document.body.appendChild(barra);
+        document.body.appendChild(barraMovil);
         colocarBarra(mqBarra.matches);
         if (mqBarra.addEventListener) {
             mqBarra.addEventListener('change', function () { colocarBarra(mqBarra.matches); });

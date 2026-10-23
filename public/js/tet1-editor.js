@@ -378,6 +378,12 @@
         '    </label>',
         '  </div>',
         '  <div class="tet-gradient-preview" id="tet-gradient-preview" role="img" aria-label="Vista previa del degradado"></div>',
+        '  <button type="button" class="tet-sugerir" id="tet-sugerir" title="Analiza la foto del lienzo y propone un degradado que combine con sus colores">',
+        '    <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Sugerir según la foto',
+        '  </button>',
+        '  <label class="tet-check tet-auto-deg" for="tet-auto-deg" title="Al insertar, componer o pegar una foto, el fondo se adapta a sus colores">',
+        '    <input type="checkbox" id="tet-auto-deg"> <span>Automático al colocar la foto</span>',
+        '  </label>',
         '  <div class="tet-fila" id="tet-fila-angulo" hidden>',
         '    <label class="tet-lbl" for="tet-angulo">Ángulo</label>',
         '    <input type="range" class="tet-range" id="tet-angulo" min="0" max="360" step="5" value="150">',
@@ -400,6 +406,7 @@
     var inColor1 = panelTpl.querySelector('#tet-color1');
     var inColor2 = panelTpl.querySelector('#tet-color2');
     var previewDegradado = panelTpl.querySelector('#tet-gradient-preview');
+    var btnSugerir = panelTpl.querySelector('#tet-sugerir');
     var inAngulo = panelTpl.querySelector('#tet-angulo');
     var outAngulo = panelTpl.querySelector('#tet-angulo-n');
     var inOpacidad = panelTpl.querySelector('#tet-opacidad');
@@ -441,10 +448,43 @@
         if (chkOpFondo) chkOpFondo.checked = !!DECO.opacidadFondo;
         inColor2.value = DECO.color2;
         chkBarra.checked = !!DECO.conBarra;
+        /* el ángulo de Fabric va de izquierda a derecha con 0; el de CSS
+           (linear-gradient) empieza arriba y gira en el sentido del reloj:
+           90° de diferencia. Sin esto la vista previa no coincidía con el
+           degradado real del lienzo. */
         previewDegradado.style.background =
-            'linear-gradient(' + DECO.angulo + 'deg, ' + DECO.color1 + ', ' + DECO.color2 + ')';
+            'linear-gradient(' + (DECO.angulo + 90) + 'deg, ' + DECO.color1 + ', ' + DECO.color2 + ')';
         previewDegradado.hidden = !esGrad;
     }
+
+    btnSugerir.addEventListener('click', function () {
+        if (window.tetSugerirDegradado) window.tetSugerirDegradado();
+    });
+
+    /* La opción se recuerda entre sesiones; el estado real lo lee main.js antes
+       de cada inserción (window.tetSugerirDegradadoAuto). */
+    var chkAutoDeg = panelTpl.querySelector('#tet-auto-deg');
+    if (chkAutoDeg) {
+        chkAutoDeg.checked = !!(window.tetAutoDegradadoActivo && window.tetAutoDegradadoActivo());
+        chkAutoDeg.addEventListener('change', function () {
+            try {
+                localStorage.setItem('tet-auto-degradado', chkAutoDeg.checked ? '1' : '0');
+            } catch (e) { /* modo privado sin almacenamiento: solo dura la sesión */ }
+            if (window.mostrarAviso) {
+                window.mostrarAviso(chkAutoDeg.checked
+                    ? 'Degradado automático activado: se aplicará al colocar una foto'
+                    : 'Degradado automático desactivado', 'info');
+            }
+        });
+    }
+    document.addEventListener('tet:degradado-sugerido', function () {
+        refrescarPanelTpl();
+    });
+    /* deshacer o abrir un proyecto puede devolver otro fondo: el panel
+       refleja los colores restaurados */
+    document.addEventListener('tet:deco-restaurada', function () {
+        refrescarPanelTpl();
+    });
 
     /* Cada ajuste repinta la decoración; el historial se guarda una vez al
        soltar, no en cada pixel del deslizador. */

@@ -1766,6 +1766,49 @@ body.tet-barra-movil {
     display: none;
 }
 
+/* Botón que propone un degradado a partir de los colores de la foto. */
+.tet-sugerir {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    width: 100%;
+    padding: .38rem .5rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .35rem;
+    background: var(--sh-input-bg);
+    color: var(--sh-text);
+    font-size: .74rem;
+    cursor: pointer;
+}
+
+.tet-sugerir:hover {
+    border-color: var(--sh-accent);
+    background: var(--sh-hover);
+}
+
+.tet-sugerir:active {
+    transform: translateY(1px);
+}
+
+.tet-sugerir i {
+    color: var(--sh-accent);
+}
+
+/* Casilla del degradado automático: ocupa el ancho y puede partir en dos
+   líneas en el móvil sin empujar el resto del panel. */
+.tet-auto-deg {
+    width: 100%;
+    margin-top: .1rem;
+    white-space: normal;
+    line-height: 1.25;
+    color: var(--sh-muted);
+}
+
+.tet-auto-deg input {
+    flex: 0 0 auto;
+}
+
 .tet-range {
     flex: 1 1 auto;
     min-width: 0;
