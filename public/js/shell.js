@@ -213,6 +213,10 @@
         /* la guía de recorte va dentro de #img: hay que recalcularla con cada
            zoom o se queda desalineada */
         if (window.formatosActualizar) window.formatosActualizar();
+        /* al ampliar cambia la escala CSS del lienzo: las asas se reajustan
+           para seguir midiendo lo mismo en pantalla (salvo durante el
+           pellizco, donde se hace una sola vez al soltar) */
+        if (!pinchVisto && window.tetAjustarAsas) window.tetAjustarAsas();
     }
     /* caja real del lienzo (sin contar el zoom): se mide el contenedor del
        canvas y no #img, que se dimensiona al tamaño escalado y realimentaría
@@ -306,6 +310,9 @@
         /* sin esto Fabric sigue creyendo que el lienzo está donde estaba y
            al mover un elemento con el dedo se desplaza */
         if (typeof c.calcOffset === 'function') c.calcOffset();
+        /* el lienzo cambia de tamaño en pantalla: las asas se recalculan para
+           no encogerse con él (en un móvil quedaban de 6 px) */
+        if (window.tetAjustarAsas) window.tetAjustarAsas();
     }
     btnZoomOut.addEventListener('click', function () { pasoZoom(-1); });
     btnZoomIn.addEventListener('click', function () { pasoZoom(1); });
@@ -382,6 +389,8 @@
         /* si Fabric tenía un gesto a medias por el primer dedo, se cancela
            aquí para que no haya saltos del objeto al soltar */
         if (canvas._currentTransform) canvas._currentTransform = null;
+        /* el pellizco no reajusta las asas en cada fotograma: se hace al soltar */
+        if (window.tetAjustarAsas) window.tetAjustarAsas();
     }
 
     work.addEventListener('touchstart', function (e) {
@@ -1091,9 +1100,18 @@
         };
     }
 
+    function escalaRecorte() {
+        return (window.tetEscalaPantalla && window.tetEscalaPantalla()) || 1;
+    }
+
     function tiradoresRecorte(ctx, x0, y0, x1, y1) {
         var w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
-        var L = Math.max(10, Math.min(26, Math.min(w, h) * 0.28));
+        /* brazos de ~26 px DE PANTALLA: el lienzo se pinta a 1200 px internos
+           y se muestra a ~360-440, así que 26 px internos eran 8 px reales y
+           los tiradores no se veían ni se podían agarrar en el móvil */
+        var esc = escalaRecorte();
+        var L = Math.min(26 * esc, Math.max(10 * esc, Math.min(w, h) * 0.28));
+        L = Math.min(L, Math.min(w, h) * 0.45);
         var Lm = L * 0.9;
         var mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
         ctx.beginPath();
@@ -1161,8 +1179,9 @@
         }
         /* rejilla de tercios */
         var i, gx, gy;
+        var esc = escalaRecorte();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = Math.max(1, Math.min(4, esc));
         ctx.beginPath();
         for (i = 1; i <= 2; i++) {
             gx = Math.round(x0 + (x1 - x0) * i / 3) + 0.5;
@@ -1171,20 +1190,22 @@
             ctx.moveTo(x0, gy); ctx.lineTo(x1, gy);
         }
         ctx.stroke();
-        /* borde y tiradores, con sombra para que se vean sobre fotos claras */
+        /* borde y tiradores, con sombra para que se vean sobre fotos claras.
+           Los grosores van en px DE PANTALLA por el mismo motivo que L. */
+        var off = Math.max(1, esc * 0.5);
         ctx.lineJoin = 'miter';
         ctx.lineCap = 'square';
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x0 - 1, y0 - 1, x1 - x0 + 2, y1 - y0 + 2);
+        ctx.lineWidth = 2.4 * esc;
+        ctx.strokeRect(x0 - off, y0 - off, x1 - x0 + off * 2, y1 - y0 + off * 2);
         tiradoresRecorte(ctx, x0, y0, x1, y1);
-        ctx.lineWidth = 5.5;
+        ctx.lineWidth = 4.5 * esc;
         ctx.stroke();
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.2 * esc;
         ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
         tiradoresRecorte(ctx, x0, y0, x1, y1);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.4 * esc;
         ctx.stroke();
         ctx.restore();
         capaRecorte.pintado = true;
@@ -1209,11 +1230,17 @@
                 cornerColor: 'rgba(0, 0, 0, 0)',
                 cornerStrokeColor: 'rgba(0, 0, 0, 0)',
                 borderColor: 'rgba(0, 0, 0, 0)',
-                cornerSize: opciones.cornerSize || (tactil ? 44 : 30),
+                /* la zona sensible del tirador también se mide en px internos:
+                   se multiplica por la escala para que en el móvil siga
+                   midiendo ~44 px reales y no 13 */
+                cornerSize: Math.round((opciones.cornerSize || (tactil ? 44 : 30)) * escalaRecorte()),
                 padding: 0,
                 lockScalingFlip: true,
                 objectCaching: false
             });
+            /* sus asas las pinta pintarRecorteClasico: el ajuste global no
+               debe cambiarlas de tamaño por su cuenta */
+            m.tetAsasFijas = true;
             m.setControlsVisibility({ mtr: false });
             m.setCoords();
             capaRecorte.seleccion = canvas.selection;

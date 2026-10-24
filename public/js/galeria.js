@@ -94,11 +94,24 @@
                 }
                 /* contain al 90 % y centrada; nunca por encima del tamaño
                    nativo, para que no salga pixelada */
-                if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(foto, 0.9);
+                if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(foto, 0.75);
                 foto.set({
                     lockRotation: true,
-                    strokeUniform: true
+                    strokeUniform: true,
+                    hasControls: true,
+                    hasBorders: true,
+                    /* una pegatina recién insertada tiene que poder moverse
+                       siempre: si venía de un estado bloqueado (o de una capa
+                       que quedó con lockMovement) se desbloquea aquí */
+                    selectable: true,
+                    evented: true,
+                    lockMovementX: false,
+                    lockMovementY: false,
+                    lockScalingX: false,
+                    lockScalingY: false,
+                    visible: true
                 });
+                foto.capaBloqueada = false;
                 /* preservObjectStacking: enlaza sobre lo que el usuario haya
                    puesto, que es lo que espera al pulsar una miniatura */
                 canvas.add(foto);

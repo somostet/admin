@@ -1139,6 +1139,8 @@ function crearTitulo(texto) {
         width: maxW,
         left: Math.round((canvas.getWidth() - maxW) / 2),
         top: Math.round(canvas.getHeight() * ZONAS.titulo.top),
+        lockMovementX: false,
+        lockMovementY: false,
         hasControls: false,
         cornerColor: 'black',
         cornerSize: 20,
@@ -1164,6 +1166,8 @@ function actualizarTitulo(obj, texto) {
         textAlign: 'center',
         fontSize: parseInt(document.getElementById('font_size').value, 10) || 72,
         width: anchoTexto(),
+        lockMovementX: false,
+        lockMovementY: false,
         hasControls: false
     });
     if (obj.initDimensions) obj.initDimensions();
@@ -1188,7 +1192,6 @@ function set_title() {
     var obj = crearTitulo(txt);
     canvas.add(obj);
     obj.centerH();
-    obj.lockMovementX = true;
     obj.lockRotation = true;
     obj.setCoords();
     canvas.setActiveObject(obj);
@@ -1215,6 +1218,8 @@ function crearDetalle(texto) {
         top: Math.round(H * ZONAS.detalle.top),
         // el alto de la zona hace que el cuadro no se salga por abajo
         height: altoZona,
+        lockMovementX: false,
+        lockMovementY: false,
         splitByGrapheme: false,
         hasControls: false,
         cornerColor: 'black',
@@ -1240,6 +1245,8 @@ function actualizarDetalle(obj, texto) {
         textAlign: 'center',
         fontSize: parseInt(document.getElementById('font_sizeD').value, 10) || 48,
         width: anchoTexto(),
+        lockMovementX: false,
+        lockMovementY: false,
         hasControls: false
     });
     if (obj.initDimensions) obj.initDimensions();
@@ -1265,7 +1272,6 @@ function set_detail() {
     canvas.add(obj);
     separarTextos();   /* el detalle acaba de entrar: comprueba el aire con el titular */
     obj.centerH();
-    obj.lockMovementX = true;
     obj.lockRotation = true;
     obj.setCoords();
     canvas.setActiveObject(obj);
@@ -1311,7 +1317,19 @@ function mismaFuente(img) {
 function colocarImagenNueva(img) {
     if (!img) return null;
     if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(img);
-    img.set({ lockRotation: true });
+    /* recién insertada: nunca bloqueada (un candado heredado la dejaba fija
+       y parecía que el arrastre no funcionaba) */
+    img.set({
+        lockRotation: true,
+        selectable: true,
+        evented: true,
+        lockMovementX: false,
+        lockMovementY: false,
+        lockScalingX: false,
+        lockScalingY: false,
+        visible: true
+    });
+    img.capaBloqueada = false;
     img.setCoords();
     canvas.add(img);
     canvas.setActiveObject(img);
@@ -1512,7 +1530,6 @@ function componerTodo() {
                 canvas.add(titulo);
             }
             titulo.centerH();
-            titulo.lockMovementX = true;
             titulo.lockRotation = true;
             titulo.setCoords();
         }
@@ -1526,7 +1543,6 @@ function componerTodo() {
                 canvas.add(desc);
             }
             desc.centerH();
-            desc.lockMovementX = true;
             desc.lockRotation = true;
             desc.setCoords();
         }

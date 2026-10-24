@@ -1348,24 +1348,58 @@ body.tet-barra-movil {
     max-height: calc(100dvh - 1rem);
 }
 
+/* El cuerpo es una lista de SECCIONES: cada <h6> ocupa todo el ancho y las
+   filas van debajo. Antes el cuerpo era una rejilla de 3 columnas con
+   `.row { display: contents }`, así que los títulos caían dentro de una celda
+   (al lado de las imágenes) y la última sección quedaba descolocada. */
 .modal.galeria-modal .modal-body {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-content: start;
-    gap: .6rem;
+    display: block;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 
+.modal.galeria-modal .modal-body h6 {
+    margin: 1rem 0 .55rem;
+    padding-top: .8rem;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.modal.galeria-modal .modal-body h6:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
 .modal.galeria-modal .modal-body .row {
-    display: contents;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin: 0 0 .35rem;
 }
 
 .modal.galeria-modal .modal-body .row > * {
+    flex: 1 1 130px;
     width: auto;
     max-width: none;
-    flex: initial;
+    min-width: 130px;
     padding: 0;
+}
+
+/* una barra ocupa toda la fila: se muestra entera (sin el hueco de 132 px
+   que deja una miniatura cuadrada) y conserva su proporción */
+.modal.galeria-modal .modal-body .row > .col-12 .galeria-item {
+    height: auto;
+}
+
+.modal.galeria-modal .modal-body .row > .col-12 .galeria-item img {
+    height: auto;
+    flex-basis: auto;
 }
 
 @media (max-width: 575.98px) {
@@ -1468,6 +1502,25 @@ body.tet-barra-movil {
 }
 
 @media (max-width: 575.98px) {
+    /* Las acciones de una imagen seleccionada son una cuadrícula compacta:
+       evita que sus nueve botones ensanchen el escenario en teléfonos. */
+    .sh-barra {
+        box-sizing: border-box;
+        width: calc(100% - 1rem);
+        max-width: 320px;
+        overflow-x: hidden;
+    }
+
+    .sh-barra-grupo:not([hidden]) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, 44px);
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+        flex: 1 1 100%;
+        gap: .3rem;
+    }
+
     /* Barra superior ordenada en tres filas, sin depender del ancho restante:
        zoom, selectores de salida y acciones. */
     .shell-top {

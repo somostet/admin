@@ -7,19 +7,65 @@
     }
 
     /* ---------- controles de objetos: asas visibles y táctiles ----------
-       Fabric usa esquinas transparentes de 13 px por defecto: las imágenes
-       pegadas/copiadas eran casi imposibles de escalar en móvil. Se unifica
-       aquí (este script se carga en los 6 editores); los objetos que ya
-       fijan sus propias asas no se ven afectados. */
+       Fabric mide las asas en píxeles INTERNOS del lienzo, pero este editor
+       encaja el lienzo con CSS: 1200 px internos acaban en ~440 px de
+       pantalla (y en un móvil, en ~360). Un cornerSize de 22 se veía a 8 px
+       reales, así que las asas no se podían agarrar y parecían rotas.
+       Aquí se mide cuántos px internos hay por px de pantalla y se fija un
+       tamaño de asa CONSTANTE en pantalla, se amplíe o no (shell.js llama a
+       window.tetAjustarAsas al encajar y al cambiar el zoom). */
     var tactil = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
         (!window.matchMedia && navigator.maxTouchPoints > 0);
+    var ASA_CSS = tactil ? 30 : 16;      /* lado del asa en píxeles de pantalla */
+    var GROSOR_CSS = tactil ? 2 : 1.2;   /* trazo del aro, también en pantalla */
+    /* Las asas se separan del borde del objeto: si quedan encima, al arrastrar
+       una franja o un sticker fino se agarra sin querer un tirador y el objeto
+       se estira en vez de moverse. */
+    var PADDING_CSS = tactil ? 8 : 4;    /* hueco del asa, en píxeles de pantalla */
+
     fabric.Object.prototype.transparentCorners = false;
     fabric.Object.prototype.cornerStyle = 'circle';
     fabric.Object.prototype.cornerColor = '#ffffff';
     fabric.Object.prototype.cornerStrokeColor = '#0d6efd';
     fabric.Object.prototype.borderColor = '#0d6efd';
-    fabric.Object.prototype.cornerSize = tactil ? 36 : 22;
-    if (tactil) fabric.Object.prototype.padding = 10;
+
+    /* px internos por px de pantalla (1 si no se puede medir: pestaña oculta) */
+    function escalaPantalla() {
+        var el = canvas.upperCanvasEl || canvas.lowerCanvasEl;
+        if (!el) return 1;
+        var r = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+        var css = r && (r.width || r.height);
+        var interno = el.width || (canvas.getWidth && canvas.getWidth());
+        if (!css || !interno) return 1;
+        return Math.min(8, Math.max(1, interno / css));
+    }
+    window.tetEscalaPantalla = escalaPantalla;
+
+    function tamanoAsas(o) {
+        if (!o) return;
+        /* objetos con asas propias (el marco de recorte) no se tocan */
+        if (o.tetAsasFijas) return;
+        var esc = escalaPantalla();
+        o.cornerSize = Math.round(ASA_CSS * esc);
+        /* el asa de giro se separa 40 px internos del borde: en pantalla
+           serían 12 px y quedaba pegada a la esquina */
+        o.rotatingPointOffset = Math.round(40 * esc);
+        /* el borde de selección se dibuja con 1 px interno (0.3 px reales) */
+        o.borderScaleFactor = Math.max(1, Math.min(6, esc));
+        o.padding = Math.round(PADDING_CSS * esc);
+        if (typeof o.setCoords === 'function') o.setCoords();
+    }
+
+    window.tetAjustarAsas = function () {
+        var esc = escalaPantalla();
+        fabric.Object.prototype.cornerSize = Math.round(ASA_CSS * esc);
+        fabric.Object.prototype.rotatingPointOffset = Math.round(40 * esc);
+        fabric.Object.prototype.borderScaleFactor = Math.max(1, Math.min(6, esc));
+        fabric.Object.prototype.padding = Math.round(PADDING_CSS * esc);
+        var objs = canvas.getObjects();
+        for (var i = 0; i < objs.length; i++) tamanoAsas(objs[i]);
+        canvas.renderAll();
+    };
 
     /* asas más gordas: Fabric dibuja el trazo de los círculos con el
        lineWidth que hereda del contexto (1 px); se fija un grosor mayor
@@ -27,11 +73,54 @@
     var drawControls0 = fabric.Object.prototype.drawControls;
     fabric.Object.prototype.drawControls = function (ctx, estilo) {
         var previo = ctx.lineWidth;
-        ctx.lineWidth = tactil ? 3 : 2;
+        ctx.lineWidth = GROSOR_CSS * escalaPantalla();
         var r = drawControls0.call(this, ctx, estilo);
         ctx.lineWidth = previo;
         return r;
     };
+
+    /* En imágenes, los controles de esquina deben responder también desde el
+       borde interior visible. En el resto de objetos, el clic interior mueve
+       la capa y evita agarrar un tirador por accidente. */
+    var findCorner0 = fabric.Object.prototype._findTargetCorner;
+    fabric.Object.prototype._findTargetCorner = function (pointer) {
+        if (!this.tetAsasFijas && !this.group && pointer &&
+            typeof this.containsPoint === 'function') {
+            /* containsPoint() lee oCoords: si el objeto viene de un JSON
+               restaurado o aún no tiene coordenadas, lanzaría y el clic
+               dejaría de funcionar (ni mover ni seleccionar). */
+            var dentro = false;
+            try { dentro = this.containsPoint(pointer); } catch (err) { dentro = false; }
+            if (dentro && this.type !== 'image') {
+                this.__corner = 0;
+                return false;
+            }
+        }
+        return findCorner0.call(this, pointer);
+    };
+
+    /* Una capa bloqueada no se mueve y, hasta ahora, tampoco decía por qué:
+       parecía que el arrastre estaba roto. Se avisa al pulsarla. */
+    var avisoBloqueo = 0;
+    canvas.on('mouse:down', function (e) {
+        var o = e && e.target;
+        if (!o || (!o.lockMovementX && !o.lockMovementY)) return;
+        var ahora = Date.now();
+        if (ahora - avisoBloqueo < 2500) return;
+        avisoBloqueo = ahora;
+        var msg = 'Esa capa está bloqueada: pulsa el candado en el panel de capas para moverla';
+        if (window.mostrarAviso) window.mostrarAviso(msg, 'warning');
+        else console.info(msg);
+    });
+
+    window.tetAjustarAsas();
+    window.addEventListener('resize', function () { window.tetAjustarAsas(); });
+    ['object:added', 'selection:created', 'selection:updated'].forEach(function (ev) {
+        canvas.on(ev, function (e) {
+            var o = (e && e.target) || canvas.getActiveObject();
+            if (o) tamanoAsas(o);
+        });
+    });
 
     // Botones de capa globales para paginas que no los definan (tet1, tet2, dictet)
     if (typeof window.toFullBack !== 'function') {

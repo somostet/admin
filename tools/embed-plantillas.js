@@ -31,6 +31,7 @@ var plantillas = [
     './public/img/bars/tetnews_nuevo.jpg',
     './public/img/bars/recomendaciones.jpg',
     './public/img/bars/estrenos_streaming.png',
+    './public/img/bars/recomendaciones_geek_bar.jpg',
 
     './public/img/Plantillas/tet1/TBtet.png',
     './public/img/Plantillas/tet1/TBtet2.png',
