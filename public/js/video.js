@@ -103,7 +103,8 @@
     var btnCentrarContenido = document.getElementById('vid-contenido-centrar'); // F5d
     var btnCentrarContH = document.getElementById('vid-contenido-centrar-h');   // N4
     var btnCentrarContV = document.getElementById('vid-contenido-centrar-v');   // N4
-    var wrapContenido = document.getElementById('vid-contenido-controles'); // M1: barra junto al lienzo
+    var wrapContenido = document.getElementById('vid-contenido-controles'); // M1: pestaña «Tamaño»
+    var tamVacio = document.getElementById('vid-tamano-vacio');             // M1: aviso sin plantilla
     var valContenido = document.getElementById('vid-contenido-valor');     // M1: lectura del deslizador
     var btnLlenar = document.getElementById('vid-contenido-llenar');       // M2: atajo «Llenar»
     var btnAjustar = document.getElementById('vid-contenido-ajustar');     // M2: atajo «Ajustar»
@@ -2631,7 +2632,8 @@
         btnCentrarContV.disabled = !noticiaActiva;   // N4
         inpEscContenido.value = String(Math.round(contEsc * 100));
         valContenido.textContent = inpEscContenido.value + ' %';   // M1
-        wrapContenido.hidden = !noticiaActiva;   // M1: la barra vive junto al lienzo
+        wrapContenido.hidden = !noticiaActiva;   // M1: controles en la pestaña «Tamaño»
+        if (tamVacio) tamVacio.hidden = noticiaActiva;
         if (noticiaActiva && selAjuste.value === 'cover') {
             // cover recortaría los bordes del cuerpo: mejor contenerlo
             selAjuste.value = 'contain';
@@ -5336,6 +5338,94 @@
             p(d.getSeconds()) + '.' + ext;
     }
 
+    /* R10 · miniatura del resultado: el reproductor se quedaba en negro hasta
+       pulsar play, porque el MP4/WebM de MediaRecorder no trae póster. */
+    function ponMiniaturaResultado(url, usarLienzoComoRespaldo) {
+        repro.removeAttribute('poster');
+        var esperado = urlVideo;
+        var hecho = false;
+        var esperandoSeek = false;
+        var esperaPoster = null;
+        var tmp = document.createElement('video');
+        tmp.muted = true;
+        tmp.playsInline = true;
+        tmp.preload = 'auto';
+        var limpia = function () {
+            if (esperaPoster) {
+                clearTimeout(esperaPoster);
+                esperaPoster = null;
+            }
+            try { tmp.pause(); } catch (e) { }
+            tmp.removeAttribute('src');
+            try { tmp.load(); } catch (e) { }
+        };
+        var pinta = function () {
+            if (hecho) return;
+            if (urlVideo !== esperado) { hecho = true; limpia(); return; }
+            if (!tmp.videoWidth || !tmp.videoHeight) return;
+            hecho = true;
+            try {
+                var w = Math.min(640, tmp.videoWidth);
+                var h = Math.max(1, Math.round(w * tmp.videoHeight / tmp.videoWidth));
+                var c = document.createElement('canvas');
+                c.width = w;
+                c.height = h;
+                var cx = c.getContext('2d');
+                cx.drawImage(tmp, 0, 0, w, h);
+                repro.poster = c.toDataURL('image/jpeg', 0.82);
+            } catch (e) { /* sin póster: el reproductor sigue funcionando igual */ }
+            limpia();
+        };
+        if (usarLienzoComoRespaldo) {
+            try {
+                if (lienzo.width && lienzo.height) {
+                    var wRespaldo = Math.min(640, lienzo.width);
+                    var hRespaldo = Math.max(1,
+                        Math.round(wRespaldo * lienzo.height / lienzo.width));
+                    var cRespaldo = document.createElement('canvas');
+                    cRespaldo.width = wRespaldo;
+                    cRespaldo.height = hRespaldo;
+                    cRespaldo.getContext('2d').drawImage(
+                        lienzo, 0, 0, wRespaldo, hRespaldo);
+                    repro.poster = cRespaldo.toDataURL('image/jpeg', 0.82);
+                }
+            } catch (e) { /* se intentará obtener la portada del archivo */ }
+        }
+        tmp.addEventListener('loadedmetadata', function () {
+            var t = 0;
+            try {
+                var d = tmp.duration;
+                if (isFinite(d) && d > 0.1) t = Math.min(0.5, d / 3);
+            } catch (e) { }
+            /* Espera seeked antes de capturar: loadeddata puede llegar para el
+               fotograma negro inicial mientras el navegador busca el nuevo. */
+            if (t > 0) {
+                esperandoSeek = true;
+                try {
+                    tmp.currentTime = t;
+                    esperaPoster = setTimeout(function () {
+                        esperandoSeek = false;
+                        pinta();
+                    }, 2500);
+                    return;
+                } catch (e) {
+                    esperandoSeek = false;
+                }
+            }
+            pinta();
+        });
+        tmp.addEventListener('loadeddata', function () {
+            if (!esperandoSeek) pinta();
+        });
+        tmp.addEventListener('seeked', function () {
+            esperandoSeek = false;
+            pinta();
+        });
+        tmp.addEventListener('error', function () { hecho = true; limpia(); });
+        tmp.src = url;
+        try { tmp.load(); } catch (e) { }
+    }
+
     /* pinta el bloque de resultado desde un blob (recién grabado o
        recuperado de IndexedDB); sinScroll = al restaurar al abrir.
        Q5: nombre opcional —al recuperar manda el guardado, porque la
@@ -5352,6 +5442,7 @@
             ' (' + Math.round(blob.size / 1024) + ' KB)';
         repro.src = urlVideo;
         repro.hidden = false;
+        ponMiniaturaResultado(urlVideo, !sinScroll);   // R10: portada inmediata y extracción del archivo
         resWrap.hidden = false;
         pintaStatsResultado(blob, tipo, segs);   // Q: qué salió realmente
         if (!sinScroll) {
@@ -5501,6 +5592,7 @@
 
     btnDescartar.addEventListener('click', function () {
         repro.pause();
+        repro.removeAttribute('poster');
         repro.removeAttribute('src');
         repro.load();
         if (urlVideo) URL.revokeObjectURL(urlVideo);
