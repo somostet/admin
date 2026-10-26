@@ -148,6 +148,7 @@
     var btnCentrarContenido = document.getElementById('vid-contenido-centrar'); // F5d
     var btnCentrarContH = document.getElementById('vid-contenido-centrar-h');   // N4
     var btnCentrarContV = document.getElementById('vid-contenido-centrar-v');   // N4
+    var btnBloquearContenido = document.getElementById('vid-contenido-bloquear');
     var wrapContenido = document.getElementById('vid-contenido-controles'); // M1: pestaña «Tamaño»
     var tamVacio = document.getElementById('vid-tamano-vacio');             // M1: aviso sin plantilla
     var valContenido = document.getElementById('vid-contenido-valor');     // M1: lectura del deslizador
@@ -157,6 +158,7 @@
     var noticiaActiva = false;   // F5d/R6: hay plantilla con barra (Tet News o somostet)
     var contPos = null;          // F5d: centro del contenido en fracciones (null = automático)
     var contEsc = 1;             // F5d: multiplicador del ajuste automático (1 = auto)
+    var contBloq = false;       // Q1g: impide mover o escalar el contenido en el lienzo
     var cajaContenido = null;    // F5d: última caja dibujada del contenido
     var contArrastrando = false; // F5d: puntero sobre la manija del contenido
     var textoArrastreBase = null; // M2: punto de agarre del texto (mover sin salto)
@@ -2671,10 +2673,7 @@
         plantillaActiva = selPlantilla.value;
         noticiaActiva = (plantillaActiva !== 'ninguna');
         barraPos = (selBarraPos.value === 'abajo') ? 'abajo' : 'arriba';   // R8
-        inpEscContenido.disabled = !noticiaActiva;
-        btnCentrarContenido.disabled = !noticiaActiva;
-        btnCentrarContH.disabled = !noticiaActiva;   // N4
-        btnCentrarContV.disabled = !noticiaActiva;   // N4
+        actualizaBloqueoContenido();
         inpEscContenido.value = String(Math.round(contEsc * 100));
         valContenido.textContent = inpEscContenido.value + ' %';   // M1
         wrapContenido.hidden = !noticiaActiva;   // M1: controles en la pestaña «Tamaño»
@@ -2690,6 +2689,38 @@
     }
     selPlantilla.addEventListener('change', aplicaPlantilla);
 
+    function actualizaBloqueoContenido() {
+        var habilitado = noticiaActiva && !contBloq;
+        inpEscContenido.disabled = !habilitado;
+        btnCentrarContenido.disabled = !habilitado;
+        btnCentrarContH.disabled = !habilitado;
+        btnCentrarContV.disabled = !habilitado;
+        btnLlenar.disabled = !habilitado;
+        btnAjustar.disabled = !habilitado;
+        btnBloquearContenido.disabled = !noticiaActiva;
+        btnBloquearContenido.setAttribute('aria-pressed', String(contBloq));
+        btnBloquearContenido.classList.toggle('active', contBloq);
+        btnBloquearContenido.innerHTML = '<i class="fas ' +
+            (contBloq ? 'fa-lock' : 'fa-lock-open') +
+            '" aria-hidden="true"></i> ' +
+            (contBloq ? 'Desbloquear vídeo' : 'Bloquear vídeo en el lienzo');
+        btnBloquearContenido.title = contBloq
+            ? 'Desbloquear para mover o cambiar el tamaño del vídeo'
+            : 'Impedir que el vídeo se mueva o cambie de tamaño en el lienzo';
+        actualizaManijaContenido();
+    }
+
+    btnBloquearContenido.addEventListener('click', function () {
+        if (!noticiaActiva) return;
+        contBloq = !contBloq;
+        anulaGestosContenido();
+        actualizaBloqueoContenido();
+        histMarca();
+        aviso(contBloq
+            ? 'Vídeo bloqueado: no se puede mover ni cambiar de tamaño en el lienzo'
+            : 'Vídeo desbloqueado', 'info');
+    });
+
     /* R6 · posición de la barra: arriba, abajo o ambas */
     selBarraPos.addEventListener('change', function () {
         barraPos = (selBarraPos.value === 'abajo') ? 'abajo' : 'arriba';   // R8
@@ -2698,6 +2729,10 @@
     });
 
     inpEscContenido.addEventListener('input', function () {
+        if (contBloq) {
+            inpEscContenido.value = String(Math.round(contEsc * 100));
+            return;
+        }
         contEsc = (parseFloat(inpEscContenido.value) || 100) / 100;
         valContenido.textContent = inpEscContenido.value + ' %';   // M1
         redibujarArrastre();
@@ -2714,6 +2749,7 @@
     }
 
     btnCentrarContenido.addEventListener('click', function () {
+        if (contBloq) return;
         anulaGestosContenido();         // N3a: el botón siempre gana
         contPos = null;                 // vuelve al centrado automático del cuerpo
         contEsc = 1;
@@ -2731,6 +2767,7 @@
                  y: (z.y + z.h / 2) / lienzo.height };
     }
     function centrarPorEje(eje) {
+        if (contBloq) return;
         anulaGestosContenido();   // N3a: igual de blindado que «Centrar contenido»
         var c = centroCuerpoFracc();
         var actual = contPos || c;   // en automático el centro ya es el del cuerpo
@@ -2753,6 +2790,7 @@
         btnAjustar.setAttribute('aria-pressed', String(a));
     }
     function ajusteRapido(v) {
+        if (contBloq) return;
         if (selAjuste.value === v) return;
         selAjuste.value = v;
         selAjuste.dispatchEvent(new Event('change', { bubbles: true }));
@@ -4006,7 +4044,7 @@
        parte visible. Como en F5b, cubre solo su caja y usa touch-action:none,
        así que en móvil no roba el desplazamiento vertical de la página. */
     function actualizaManijaContenido() {
-        var activa = noticiaActiva && !!cajaContenido &&
+        var activa = noticiaActiva && !contBloq && !!cajaContenido &&
             lienzo.style.display !== 'none' && (imagenes.length > 0 || videoCargado);
         manijaContenido.hidden = !activa;
         if (!activa) return;
@@ -4043,6 +4081,7 @@
     }
 
     function iniciaArrastreContenido(e) {
+        if (contBloq) return;
         contArrastreBase = {
             x: e.clientX, y: e.clientY,
             px: cajaContenido.x / lienzo.width,   // M2: el centro tal y como se dibuja
@@ -4051,6 +4090,7 @@
     }
 
     function iniciaRedimContenido(e, esq) {
+        if (contBloq) return;
         var rr = lienzo.getBoundingClientRect();
         var f = rr.width / lienzo.width;
         var sX = (esq === 'se' || esq === 'ne') ? 1 : -1;
@@ -4071,6 +4111,7 @@
     }
 
     function redimContenidoA(e) {
+        if (contBloq) return;
         var b = contRedimBase;
         if (!b) return;
         var dx = e.clientX - b.q.x, dy = e.clientY - b.q.y;
@@ -4090,7 +4131,7 @@
     }
 
     manijaContenido.addEventListener('pointerdown', function (e) {
-        if (!noticiaActiva || grabando) return;
+        if (!noticiaActiva || contBloq || grabando) return;
         desenfocaCampo();   // M2: el campo con foco no debe tirar de la página
         /* N3: un gesto anterior que no cerró (pointercancel perdido en táctil)
            no debe secuestrar este toque: cada rama vuelve a declarar su estado */
@@ -4137,6 +4178,7 @@
         else if (hit.i !== capaImgSel) seleccionaCapaImg(hit.i);
     });
     manijaContenido.addEventListener('pointermove', function (e) {
+        if (contBloq) return;
         if (contAsa) { redimContenidoA(e); return; }
         if (!contArrastrando) return;
         var b = contArrastreBase;
@@ -7121,6 +7163,7 @@
             capaImgSel: capaImgSel,
             contPos: contPos ? JSON.parse(JSON.stringify(contPos)) : null,
             contEsc: contEsc,
+            contBloq: contBloq,
             logoImg: logoImg, logoUrl: logoUrl, logoBlob: logoBlob,
             logoNombre: supLogoNombre.textContent,
             logoEstado: supLogoEstado.hidden,
@@ -7161,7 +7204,7 @@
                     c.z + '|' + c.inicio + '|' + c.dur + '|' + (c.bloq ? 1 : 0);
             }),
             capasSel: e.capaImgSel,
-            cp: e.contPos, ce: e.contEsc,
+            cp: e.contPos, ce: e.contEsc, cb: e.contBloq === true,
             logo: e.logoUrl, logon: e.logoNombre, logoe: e.logoEstado,
             mus: e.musicaId, musv: e.musicaVol,
             vid: e.videoCargado, durv: e.durVideo, act: e.idxActivo,
@@ -7279,6 +7322,7 @@
         capaImgSel = (e.capaImgSel >= 0 && e.capaImgSel < capasImg.length) ? e.capaImgSel : -1;
         contPos = e.contPos ? JSON.parse(JSON.stringify(e.contPos)) : null;
         contEsc = e.contEsc;
+        contBloq = e.contBloq === true;
         /* Formulario: se escriben los valores y se lanza «change» para que
            cada control haga su refresco como si lo hubiera movido el usuario.
            El selector de modo lleva modoAnterior atrás para que su conversión

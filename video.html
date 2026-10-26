@@ -355,6 +355,10 @@
                         ajusta cuando hay una plantilla activa. Elige una en «Ajustes» para
                         escalar, centrar, llenar o ajustar el contenido.</p>
                     <div class="vid-contenido-controles" id="vid-contenido-controles" hidden>
+                        <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
+                                id="vid-contenido-bloquear" aria-pressed="false" disabled>
+                            <i class="fas fa-lock-open" aria-hidden="true"></i> Bloquear vídeo en el lienzo
+                        </button>
                         <label class="vid-contenido-esc-lbl" for="vid-contenido-esc">Tamaño del contenido</label>
                         <input type="range" class="form-range" id="vid-contenido-esc"
                                min="30" max="300" step="5" value="100" disabled>
@@ -994,7 +998,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1b"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r24"></script>
+    <script src="./public/js/video.js?v=r25"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
