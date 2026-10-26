@@ -2,7 +2,7 @@
    Estrategias equivalentes al sw.js anterior:
    - html/js: NetworkFirst (y 5xx -> copia en caché)   - css: StaleWhileRevalidate
    - imágenes y fuentes: CacheFirst (máx 20, 7 días) */
-const VERSION = 'tet-admin-v12';
+const VERSION = 'tet-admin-v13';
 
 const CACHE_HTML = 'tet-html-' + VERSION;
 const CACHE_JS = 'tet-js-' + VERSION;

@@ -526,6 +526,18 @@
     cursor: pointer;
 }
 
+/* Q1e · candado de capa: el botón se enciende y la fila se atenúa para que
+   se vea de un vistazo qué capas no se pueden mover ni escalar */
+.vid-texto-acciones button.vid-capa-bloq {
+    color: #ffc107;
+    background: rgba(255, 193, 7, .12);
+}
+
+.vid-texto-fila.vid-capa-bloqueada .vid-texto-nombre,
+.vid-texto-fila.vid-capa-bloqueada .vid-texto-tiempo {
+    opacity: .6;
+}
+
 /* F5f · riel de la línea de tiempo de salida (barras de texto + cabezal) */
 .vid-riel-salida {
     position: relative;

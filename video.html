@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css?v=r30">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
-    <link rel="stylesheet" href="./public/css/video.css?v=r5">
+    <link rel="stylesheet" href="./public/css/video.css?v=r6">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -487,7 +487,10 @@
                             <select class="form-select" id="vid-plantilla">
                                 <option value="ninguna" selected>Sin plantilla</option>
                                 <option value="news">Tet News (noticias)</option>
+                                <option value="newsnuevo">Tet News (nuevo)</option>
                                 <option value="somostet">somostet</option>
+                                <option value="estrenosrojo">Estrenos Streaming (rojo)</option>
+                                <option value="estrenosazul">Estrenos Streaming (azul)</option>
                             </select>
                             <div class="form-label mt-2">Posición de la barra</div>
                             <select class="form-select" id="vid-barra-pos">
@@ -601,7 +604,7 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label" for="vid-txt-contenido">Contenido</label>
-                                    <textarea class="form-control" id="vid-txt-contenido" rows="2" maxlength="300"
+                                    <textarea class="form-control" id="vid-txt-contenido" rows="2" maxlength="1000"
                                               placeholder="Ingresa texto" autocomplete="off"></textarea>
                                 </div>
                                 <!-- N2 · tipo de texto: presets de un toque (el select
@@ -979,7 +982,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1b"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r15"></script>
+    <script src="./public/js/video.js?v=r19"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {

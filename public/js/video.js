@@ -121,6 +121,14 @@
     var barraNewsLista = false;
     var barraSomostet = new Image(); // R6: barra «somostet» (407×93)
     var barraSomostetLista = false;
+    /* Q1f · encabezados nuevos (1200 × 93/97): Tet News azul y las dos
+       variantes de Estrenos Streaming */
+    var barraNewsNuevo = new Image();
+    var barraNewsNuevoLista = false;
+    var barraEstrenosRojo = new Image();
+    var barraEstrenosRojoLista = false;
+    var barraEstrenosAzul = new Image();
+    var barraEstrenosAzulLista = false;
     var vidTotal = document.getElementById('vid-total');
     var lienzo = document.getElementById('vid-lienzo');
     var ctx = lienzo.getContext('2d', { willReadFrequently: false });
@@ -2472,13 +2480,37 @@
        al ancho de la salida. */
     var RUTA_BARRA_NEWS = './public/img/bars/tetnews.png';
     var RUTA_BARRA_SOMOSTET = './public/img/bars/somostet.png';   // R6
+    var RUTA_BARRA_NEWS_NUEVO = './public/img/bars/tetnews_nuevo.jpg';        // Q1f
+    var RUTA_BARRA_ESTRENOS_ROJO = './public/img/bars/estrenos_streaming_rojo.png';   // Q1f
+    var RUTA_BARRA_ESTRENOS_AZUL = './public/img/bars/estrenos_streaming_azul.png';   // Q1f
     var RUTA_LOGO_DEFECTO = './public/img/Logotet.png';   // Q3: logo de tet
     var BARRA_RATIO = 93 / 1200;
-    var plantillaActiva = 'ninguna';   // R6: 'news' | 'somostet'
+    var plantillaActiva = 'ninguna';   // R6/Q1f: 'news' | 'newsnuevo' | 'somostet' | 'estrenosrojo' | 'estrenosazul'
     var barraPos = 'arriba';            // R8: 'arriba' | 'abajo' (sin «ambas»)
 
+    /* Q1f · barra que corresponde a la plantilla elegida. `segmento` solo lo
+       usa somostet: su PNG es un trozo (407×93) que se pega sobre negro; el
+       resto de encabezados ocupa el ancho completo. */
+    function barraDePlantilla() {
+        switch (plantillaActiva) {
+            case 'news': return { img: barraNews, lista: barraNewsLista };
+            case 'newsnuevo': return { img: barraNewsNuevo, lista: barraNewsNuevoLista };
+            case 'estrenosrojo': return { img: barraEstrenosRojo, lista: barraEstrenosRojoLista };
+            case 'estrenosazul': return { img: barraEstrenosAzul, lista: barraEstrenosAzulLista };
+            case 'somostet': return { img: barraSomostet, lista: barraSomostetLista, segmento: 407 };
+            default: return null;
+        }
+    }
+
     function altoBarraNews() {
-        var bh = Math.round(lienzo.width * BARRA_RATIO);
+        var b = barraDePlantilla();
+        var ratio = BARRA_RATIO;
+        /* Q1f: la variante azul mide 97 px de alto; usar su proporción real
+           evita que salga estirada o con una franja de otro grosor */
+        if (b && b.img && b.img.naturalWidth > 0 && b.img.naturalHeight > 0) {
+            ratio = b.img.naturalHeight / b.img.naturalWidth;
+        }
+        var bh = Math.round(lienzo.width * ratio);
         if (bh >= lienzo.height) bh = Math.round(lienzo.height * 0.1);   // nunca invade todo
         return bh;
     }
@@ -2501,20 +2533,20 @@
         // F5d/Q2/R6: plantilla = barra arriba y/o abajo + cuerpo (blanco
         // por defecto, igual que el editor de noticias)
         if (plantillaActiva === 'ninguna') return;
-        var img = (plantillaActiva === 'news') ? barraNews : barraSomostet;
-        var lista = (plantillaActiva === 'news') ? barraNewsLista : barraSomostetLista;
-        if (!lista || !img.naturalWidth) return;
+        var b = barraDePlantilla();   // Q1f: la barra de esta plantilla
+        if (!b || !b.lista || !b.img.naturalWidth) return;
+        var img = b.img;
         var bh = altoBarraNews();
         ctx.imageSmoothingQuality = 'high';   // Q2: la barra a la mayor nitidez
-        if (plantillaActiva === 'somostet') {
+        if (b.segmento) {
             // R6: la imagen es un segmento (407×93): franja negra con la
             // marca a la izquierda (su fondo ya es negro opaco)
             ctx.fillStyle = '#000';
             if (barraPos !== 'abajo') ctx.fillRect(0, 0, lienzo.width, bh);
             if (barraPos !== 'arriba') ctx.fillRect(0, lienzo.height - bh, lienzo.width, bh);
-            var esc = bh / 93;
-            if (barraPos !== 'abajo') ctx.drawImage(img, 0, 0, Math.round(407 * esc), bh);
-            if (barraPos !== 'arriba') ctx.drawImage(img, 0, lienzo.height - bh, Math.round(407 * esc), bh);
+            var esc = bh / img.naturalHeight;   // Q1f: alto real, no 93 fijo
+            if (barraPos !== 'abajo') ctx.drawImage(img, 0, 0, Math.round(b.segmento * esc), bh);
+            if (barraPos !== 'arriba') ctx.drawImage(img, 0, lienzo.height - bh, Math.round(b.segmento * esc), bh);
             return;
         }
         if (barraPos !== 'abajo') ctx.drawImage(img, 0, 0, lienzo.width, bh);              // cabecera
@@ -2528,25 +2560,32 @@
             window.TET_PLANTILLAS[ruta]) || ruta;
     }
 
-    function cargarBarraNews() {
-        barraNews.onload = function () {
-            barraNewsLista = true;
+    /* Q1f · carga una barra y marca su bandera; solo avisa si es la que se
+       está usando (evita un error rojo por plantillas que no tocan) */
+    function cargaBarra(img, ruta, ponLista, etiqueta) {
+        img.onload = function () {
+            ponLista(true);
             repintarSuperp();
         };
-        barraNews.onerror = function () {
-            barraNewsLista = false;
-            if (plantillaActiva === 'news') aviso('No se pudo cargar la barra de Tet News', 'danger');
+        img.onerror = function () {
+            ponLista(false);
+            var b = barraDePlantilla();
+            if (b && b.img === img) aviso('No se pudo cargar la barra de ' + etiqueta, 'danger');
         };
-        barraNews.src = urlRecurso(RUTA_BARRA_NEWS);
-        barraSomostet.onload = function () {
-            barraSomostetLista = true;
-            repintarSuperp();
-        };
-        barraSomostet.onerror = function () {
-            barraSomostetLista = false;
-            if (plantillaActiva === 'somostet') aviso('No se pudo cargar la barra de somostet', 'danger');
-        };
-        barraSomostet.src = urlRecurso(RUTA_BARRA_SOMOSTET);
+        img.src = urlRecurso(ruta);
+    }
+
+    function cargarBarras() {
+        cargaBarra(barraNews, RUTA_BARRA_NEWS,
+            function (v) { barraNewsLista = v; }, 'Tet News');
+        cargaBarra(barraSomostet, RUTA_BARRA_SOMOSTET,
+            function (v) { barraSomostetLista = v; }, 'somostet');
+        cargaBarra(barraNewsNuevo, RUTA_BARRA_NEWS_NUEVO,
+            function (v) { barraNewsNuevoLista = v; }, 'Tet News (nuevo)');
+        cargaBarra(barraEstrenosRojo, RUTA_BARRA_ESTRENOS_ROJO,
+            function (v) { barraEstrenosRojoLista = v; }, 'Estrenos Streaming (rojo)');
+        cargaBarra(barraEstrenosAzul, RUTA_BARRA_ESTRENOS_AZUL,
+            function (v) { barraEstrenosAzulLista = v; }, 'Estrenos Streaming (azul)');
     }
 
     /* Q3 · el mapa de plantillas data: puede llegar tarde (en file:// se
@@ -2570,13 +2609,13 @@
         // en doble clic no hay servidor: los data: URL evitan el lienzo
         // «tainted», que rompería la grabación y las descargas
         var scPlantillas = document.createElement('script');
-        scPlantillas.src = './public/js/plantillas-data.js?v=r2';
+        scPlantillas.src = './public/js/plantillas-data.js?v=r3';
         scPlantillas.async = true;
-        scPlantillas.onload = function () { cargarBarraNews(); marcaPlantillasListas(); };
-        scPlantillas.onerror = function () { cargarBarraNews(); marcaPlantillasListas(); };
+        scPlantillas.onload = function () { cargarBarras(); marcaPlantillasListas(); };
+        scPlantillas.onerror = function () { cargarBarras(); marcaPlantillasListas(); };
         document.head.appendChild(scPlantillas);
     } else {
-        cargarBarraNews();
+        cargarBarras();
         marcaPlantillasListas();
     }
 
@@ -3602,7 +3641,9 @@
        El centro se guarda en fracciones del lienzo: al cambiar de tamaño de
        salida el título queda en su sitio. */
     function actualizaManija() {
-        var activa = textoSel >= 0 && lienzo.style.display !== 'none' && !!cajaTextoSel;
+        var t = textoActual();
+        var bloq = !!(t && t.bloq === true);   // Q1e: sin manija si está bloqueado
+        var activa = textoSel >= 0 && !bloq && lienzo.style.display !== 'none' && !!cajaTextoSel;
         manijaTitulo.hidden = !activa;
         flotTexto.hidden = !activa;   // P2: la barra vive y muere con la manija
         if (!activa) return;
@@ -3633,6 +3674,8 @@
 
     manijaTitulo.addEventListener('pointerdown', function (e) {
         if (textoSel < 0 || grabando) return;
+        var t = textoActual();
+        if (!t || t.bloq === true) return;   // Q1e: bloqueado, no se arrastra
         desenfocaCampo();         // M2: el campo con foco no debe tirar de la página
         iniciaArrastreTexto(e);   // M2: delta desde donde se agarra
         manijaArrastrando = true;
@@ -3692,7 +3735,7 @@
        harían que el texto saltara en el primer agarre */
     function iniciaArrastreTexto(e) {
         var t = textos[textoSel];
-        if (!t) return;
+        if (!t || t.bloq === true) return;
         var cx = cajaTextoSel ? cajaTextoSel.x / lienzo.width : t.x;
         var cy = cajaTextoSel ? cajaTextoSel.y / lienzo.height : t.y;
         textoArrastreBase = { x: e.clientX, y: e.clientY, tx: cx, ty: cy };
@@ -3701,7 +3744,7 @@
     function arrastraTextoA(e) {
         if (textoSel < 0) return;
         var t = textos[textoSel];
-        if (!t) return;
+        if (!t || t.bloq === true) return;
         var b = textoArrastreBase;
         if (!b) return;   // M2: sin punto de agarre no se mueve
         var r = lienzo.getBoundingClientRect();
@@ -3747,9 +3790,11 @@
         if (!hit) return;
         if (hit.t === 't') {
             if (hit.i !== textoSel) seleccionaTexto(hit.i);
+            if (textos[hit.i].bloq === true) { actualizaManija(); return; }   // Q1e
             iniciaArrastreTexto(e);   // M2: delta desde donde se agarra
         } else {
             if (hit.i !== capaImgSel) seleccionaCapaImg(hit.i);
+            if (capasImg[hit.i].bloq === true) { actualizaManijaImg(); return; }   // Q1e
             iniciaArrastreImg(e);   // R5: mismo M2, delta desde donde se agarra
         }
         lienzoArrastrando = true;
@@ -3781,7 +3826,9 @@
        esquina opuesta clavada. La posición se guarda en fracciones del lienzo,
        así que al cambiar de tamaño de salida la imagen se queda en su sitio. */
     function actualizaManijaImg() {
-        var activa = capaImgSel >= 0 && !!cajaCapaSel && lienzo.style.display !== 'none';
+        var c = (capaImgSel >= 0) ? capasImg[capaImgSel] : null;
+        var bloq = !!(c && c.bloq === true);   // Q1e: sin asas si está bloqueada
+        var activa = !!c && !bloq && !!cajaCapaSel && lienzo.style.display !== 'none';
         manijaImg.hidden = !activa;
         if (!activa) return;
         var f = lienzo.clientWidth / lienzo.width;
@@ -3798,7 +3845,7 @@
        imagen saltaría. Igual que hace iniciaArrastreTexto con cajaTextoSel. */
     function iniciaArrastreImg(e) {
         var c = capasImg[capaImgSel];
-        if (!c) return;
+        if (!c || c.bloq === true) return;
         var cx = cajaCapaSel ? cajaCapaSel.x / lienzo.width : c.x;
         var cy = cajaCapaSel ? cajaCapaSel.y / lienzo.height : c.y;
         imgArrastreBase = { x: e.clientX, y: e.clientY, cx: cx, cy: cy };
@@ -3817,7 +3864,7 @@
     function arrastraImgA(e) {
         var c = capasImg[capaImgSel];
         var b = imgArrastreBase;
-        if (!c || !b) return;
+        if (!c || !b || c.bloq === true) return;
         var r = lienzo.getBoundingClientRect();
         if (!r.width || !r.height) return;
         var p = imgPosClamp(b.cx + (e.clientX - b.x) / r.width,
@@ -3832,7 +3879,7 @@
        escalado va en pasos del 5 % con el mismo rango que el deslizador. */
     function iniciaRedimImg(e, esq) {
         var c = capasImg[capaImgSel];
-        if (!c || !cajaCapaSel) return;
+        if (!c || c.bloq === true || !cajaCapaSel) return;
         var rr = lienzo.getBoundingClientRect();
         var f = rr.width / lienzo.width;
         var sX = (esq === 'se' || esq === 'ne') ? 1 : -1;
@@ -3853,7 +3900,7 @@
     function redimImgA(e) {
         var c = capasImg[capaImgSel];
         var b = imgRedimBase;
-        if (!c || !b) return;
+        if (!c || !b || c.bloq === true) return;
         var dx = e.clientX - b.q.x, dy = e.clientY - b.q.y;
         var k = Math.sqrt(dx * dx + dy * dy) / b.k0;
         c.esc = Math.max(0.1, Math.min(4, Math.round(b.esc0 * k * 20) / 20));
@@ -3872,7 +3919,8 @@
     }
 
     manijaImg.addEventListener('pointerdown', function (e) {
-        if (capaImgSel < 0 || grabando) return;
+        var c = (capaImgSel >= 0) ? capasImg[capaImgSel] : null;
+        if (!c || c.bloq === true || grabando) return;   // Q1e: bloqueada, no se mueve
         desenfocaCampo();   // M2: el campo con foco no debe tirar de la página
         imgArrastrando = false;
         imgAsa = null;
@@ -4268,6 +4316,12 @@
             ini = (prev.dur > 0) ? prev.inicio + prev.dur : prev.inicio + 10;
             ini = Math.round(ini * 10) / 10;
         }
+        /* Q1d · si la salida es más corta que los textos anteriores, el nuevo
+           nacería fuera de su ventana y no se vería nunca (p. ej. un texto
+           añadido a un vídeo de 2 s después del texto de 10 s). En ese caso
+           empieza al principio y se solapa, en vez de quedar invisible. */
+        var total = totalSalida();
+        if (ini > 0 && total > 0 && ini >= total - 0.2) ini = 0;
         var t = {
             txt: txt || '',
             tipo: tipo || 'cuerpo',   // N2
@@ -4286,7 +4340,8 @@
             peso: 'negrita',    // F9
             sombra: 0,               // P9/R4: sin sombra por defecto
             borde: 0,                // P3.2: sin borde por defecto
-            bordeColor: '#000000'    // P3.2
+            bordeColor: '#000000',   // P3.2
+            bloq: false              // Q1e: candado de capa (no mover ni escalar)
         };
         if (tipo) aplicaTipo(t);   // N2: el título/subtítulo nace donde debe
         return t;
@@ -4422,6 +4477,7 @@
     function duplicaTexto(i) {
         if (!textos[i]) return;
         var copia = JSON.parse(JSON.stringify(textos[i]));   // campos planos: copia profunda barata
+        copia.bloq = false;   // Q1e: la copia nace suelta aunque el original esté bloqueado
         textos.splice(i + 1, 0, copia);
         redistribuyeTextos();   // N3b
         seleccionaTexto(i + 1); // el clon queda seleccionado y pintado
@@ -4431,6 +4487,12 @@
         var t = textoActual();
         editTexto.hidden = !t;
         if (!t) return;
+        var bloq = (t.bloq === true);   // Q1e: candado de capa
+        inpTxtTam.disabled = bloq;
+        selTxtPos.disabled = bloq;
+        selTxtTipo.disabled = bloq;     // el preset también mueve y cambia el tamaño
+        btnTxtCentrarH.disabled = bloq;
+        btnTxtCentrarV.disabled = bloq;
         inpTxtContenido.value = t.txt;
         selTxtTipo.value = TIPOS_TEXTO[t.tipo] ? t.tipo : 'cuerpo';   // N2
         selTxtPos.value = t.pos;
@@ -4465,6 +4527,7 @@
         par[0].addEventListener('change', function () {
             var t = textoActual();
             if (!t) return;
+            if (par[1] === 'pos' && t.bloq === true) { cargaEditor(); return; }   // Q1e
             t[par[1]] = par[0].value;
             if (par[1] === 'pos' && par[0].value === 'personalizada') {
                 aviso('Arrastra el texto en la vista previa para colocarlo donde quieras', 'info');
@@ -4478,6 +4541,7 @@
     selTxtTipo.addEventListener('change', function () {
         var t = textoActual();
         if (!t) return;
+        if (t.bloq === true) { cargaEditor(); return; }   // Q1e
         t.tipo = selTxtTipo.value;
         aplicaTipo(t);
         cargaEditor();
@@ -4494,7 +4558,7 @@
        t.x/t.y, donde los textos nuevos y los arrastrados guardan su centro. */
     function centraTextoPorEje(eje) {
         var t = textoActual();
-        if (!t) return;
+        if (!t || t.bloq === true) return;   // Q1e: bloqueado, no se mueve
         var w = lienzo.width;
         var h = lienzo.height;
         var c = t.cajaDib;
@@ -4550,7 +4614,8 @@
                 url: url, img: img, blob: file, nombre: file.name || 'imagen',
                 x: 0.5, y: (zc.y + zc.h / 2) / lienzo.height, esc: 1,
                 z: zTope(),
-                inicio: 0, dur: 0
+                inicio: 0, dur: 0,
+                bloq: false   // Q1e: candado de capa
             };
             capasImg.push(c);
             capaImgSel = capasImg.length - 1;
@@ -4598,9 +4663,11 @@
         var c = esImg ? capasImg[it.i] : null;
         var t = esImg ? null : textos[it.i];
         var sel = esImg ? capaImgSel : textoSel;
+        var bloq = !!(esImg ? (c && c.bloq) : (t && t.bloq));   // Q1e
 
         var fila = document.createElement('div');
-        fila.className = 'vid-texto-fila' + (sel === it.i ? ' vid-texto-activa' : '');
+        fila.className = 'vid-texto-fila' + (sel === it.i ? ' vid-texto-activa' : '') +
+            (bloq ? ' vid-capa-bloqueada' : '');
 
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -4639,7 +4706,18 @@
     function accionesCapa(it, pos) {
         var caja = document.createElement('div');
         caja.className = 'vid-texto-acciones';
+        var obj = (it.t === 'i') ? capasImg[it.i] : textos[it.i];
+        var bloq = !!(obj && obj.bloq === true);
+        var que = (it.t === 'i') ? 'la imagen' : 'el texto';
         var acc = [
+            {
+                icono: bloq ? 'fa-lock' : 'fa-lock-open',
+                titulo: bloq
+                    ? ('Desbloquear ' + que)
+                    : ('Bloquear ' + que + ' (no mover ni escalar)'),
+                activo: bloq,
+                accion: function () { alternaBloqueo(it); }
+            },
             {
                 icono: 'fa-arrow-up', titulo: 'Subir la capa',
                 accion: function () { mueveCapa(it, pos, 1); }
@@ -4665,14 +4743,33 @@
         acc.forEach(function (b) {
             var btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'btn';
+            btn.className = 'btn' + (b.activo ? ' vid-capa-bloq' : '');
             btn.title = b.titulo;
             btn.setAttribute('aria-label', b.titulo);
+            if (b.activo) btn.setAttribute('aria-pressed', 'true');
+            else btn.setAttribute('aria-pressed', 'false');
             btn.innerHTML = '<i class="fas ' + b.icono + '" aria-hidden="true"></i>';
             btn.addEventListener('click', b.accion);
             caja.appendChild(btn);
         });
         return caja;
+    }
+
+    /* Q1e · candado de capa: se puede seguir seleccionando (para
+       desbloquearla desde Capas) pero no se mueve ni se escala, ni desde el
+       lienzo ni desde los controles de posición/tamaño. El resto —contenido,
+       color, tiempos, orden o borrar— sigue disponible. */
+    function alternaBloqueo(it) {
+        var obj = (it.t === 'i') ? capasImg[it.i] : textos[it.i];
+        if (!obj) return;
+        obj.bloq = (obj.bloq !== true);
+        if (it.t === 'i') cargaEditorCapa();
+        else cargaEditor();
+        pintaPanelCapas();
+        repintarSuperp();
+        aviso(obj.bloq
+            ? 'Capa bloqueada: ya no se mueve ni se escala'
+            : 'Capa desbloqueada', 'info');
     }
 
     /* delta +1 = subir en el panel = más z. La capa nueva tiene que quedar por
@@ -4764,7 +4861,8 @@
                 /* por encima del original y por debajo del tope: promediar
                    garantiza que nunca comparte z con nadie */
                 z: (c.z + zTope()) / 2,
-                inicio: c.inicio, dur: c.dur
+                inicio: c.inicio, dur: c.dur,
+                bloq: false   // Q1e: la copia nace suelta aunque el original esté bloqueado
             };
             capasImg.splice(i + 1, 0, copia);
             seleccionaCapaImg(i + 1);
@@ -4781,6 +4879,7 @@
         inpCapaInicio.value = String(c.inicio);
         inpCapaDur.value = String(c.dur);
         inpCapaEsc.value = String(Math.round(c.esc * 100));
+        inpCapaEsc.disabled = (c.bloq === true);   // Q1e: candado de capa
         valCapaEsc.textContent = Math.round(c.esc * 100) + ' %';
     }
 
@@ -4807,6 +4906,10 @@
         inpCapaEsc.addEventListener('input', function () {
             var c = (capaImgSel >= 0) ? capasImg[capaImgSel] : null;
             if (!c) return;
+            if (c.bloq === true) {   // Q1e: bloqueada, no se escala
+                inpCapaEsc.value = String(Math.round(c.esc * 100));
+                return;
+            }
             var v = parseFloat(inpCapaEsc.value);
             if (!isFinite(v)) return;
             c.esc = Math.max(0.1, Math.min(4, v / 100));
@@ -4894,6 +4997,10 @@
         cfg[0].addEventListener('change', function () {
             var t = textoActual();
             if (!t) return;
+            if (cfg[1] === 'tam' && t.bloq === true) {   // Q1e: bloqueado, no cambia el tamaño
+                cfg[0].value = String(t.tam);
+                return;
+            }
             var v = parseFloat(cfg[0].value);
             if (!isFinite(v)) v = cfg[4];
             if (v < cfg[2]) v = cfg[2];
@@ -4914,9 +5021,14 @@
     });
 
     /* N2 · «Añadir título»: el texto nace ya como titular (arriba al centro,
-       con su entrada) — un toque desde el móvil para encabezar el vídeo */
+       con su entrada) — un toque desde el móvil para encabezar el vídeo.
+       Q1d: empieza en 0, no después del texto anterior: encabezar es salir
+       al principio (antes se iba a los 10 s del texto por defecto y en un
+       vídeo corto no se veía nunca). */
     btnAddTitulo.addEventListener('click', function () {
-        textos.push(nuevoTexto('', textos.length, 'titulo'));
+        var t = nuevoTexto('', textos.length, 'titulo');
+        t.inicio = 0;
+        textos.push(t);
         redistribuyeTextos();   // N3b
         seleccionaTexto(textos.length - 1);
         inpTxtContenido.focus();
@@ -6841,7 +6953,7 @@
             capasImg: capasImg.map(function (c) {
                 return { url: c.url, img: c.img, blob: c.blob, nombre: c.nombre,
                          x: c.x, y: c.y, esc: c.esc, z: c.z,
-                         inicio: c.inicio, dur: c.dur };
+                         inicio: c.inicio, dur: c.dur, bloq: c.bloq === true };
             }),
             capaImgSel: capaImgSel,
             contPos: contPos ? JSON.parse(JSON.stringify(contPos)) : null,
@@ -6883,7 +6995,7 @@
                ni añadir ni mover ni quitar una capa */
             capas: (e.capasImg || []).map(function (c) {
                 return c.url + '|' + c.x + '|' + c.y + '|' + c.esc + '|' +
-                    c.z + '|' + c.inicio + '|' + c.dur;
+                    c.z + '|' + c.inicio + '|' + c.dur + '|' + (c.bloq ? 1 : 0);
             }),
             capasSel: e.capaImgSel,
             cp: e.contPos, ce: e.contEsc,
@@ -6998,7 +7110,8 @@
                 img = nuevo;
             }
             return { url: url, img: img, blob: c.blob, nombre: c.nombre,
-                     x: c.x, y: c.y, esc: c.esc, z: c.z, inicio: c.inicio, dur: c.dur };
+                     x: c.x, y: c.y, esc: c.esc, z: c.z, inicio: c.inicio, dur: c.dur,
+                     bloq: c.bloq === true };
         });
         capaImgSel = (e.capaImgSel >= 0 && e.capaImgSel < capasImg.length) ? e.capaImgSel : -1;
         contPos = e.contPos ? JSON.parse(JSON.stringify(e.contPos)) : null;

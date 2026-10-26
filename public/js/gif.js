@@ -741,7 +741,7 @@
     } else {
         if (location.protocol === 'file:' && !window.TET_PLANTILLAS) {
             var scPl = document.createElement('script');
-            scPl.src = './public/js/plantillas-data.js?v=d3';
+            scPl.src = './public/js/plantillas-data.js?v=d4';
             scPl.async = true;
             document.head.appendChild(scPl);
         }
