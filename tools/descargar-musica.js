@@ -20,7 +20,6 @@ var PISTAS = [
     { id: '1024', slug: 'delayed-flight' },
     { id: '75', slug: 'almost-game-time' },
     { id: '720', slug: 'new-bass-01' },
-    { id: '1167', slug: 'close-up' },
     { id: '175', slug: 'digital-clouds' },
     { id: '464', slug: 'sci-fi-score' },
     { id: '76', slug: 'epic-games' },
