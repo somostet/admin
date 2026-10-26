@@ -26,6 +26,51 @@
     var MIN_POR_IMAGEN = 0.1;      // 10 fotogramas/s por imagen: menos no lo distingue el grabador
     var FPS = 30;
 
+    function creaCapturaLienzo() {
+        var stream;
+        try {
+            stream = lienzo.captureStream(0);
+            var pista = stream.getVideoTracks()[0];
+            if (pista && typeof pista.requestFrame === 'function') {
+                return { stream: stream, pista: pista, manual: true };
+            }
+        } catch (e) { /* algunos móviles solo admiten captura automática */ }
+        if (stream) {
+            stream.getTracks().forEach(function (tr) {
+                if (tr.kind === 'video') tr.stop();
+            });
+        }
+        stream = lienzo.captureStream(FPS);
+        return { stream: stream, pista: stream.getVideoTracks()[0], manual: false };
+    }
+
+    /* Los móviles pueden registrar el lienzo en negro si el grabador arranca
+       antes de recibir una captura real; solicita el primer frame ya iniciado. */
+    function sincronizaCapturaLienzo(rec, captura, dibujaInicial) {
+        var pista = captura.pista;
+        var solicitaFrame = pista && typeof pista.requestFrame === 'function'
+            ? pista.requestFrame.bind(pista)
+            : null;
+        var temporizador = null;
+        var pide = function () {
+            dibujaInicial();
+            if (!solicitaFrame) return;
+            solicitaFrame();
+            if (captura.manual) {
+                temporizador = window.setInterval(solicitaFrame, 1000 / FPS);
+            }
+        };
+        var limpia = function () {
+            if (temporizador !== null) {
+                window.clearInterval(temporizador);
+                temporizador = null;
+            }
+        };
+        rec.addEventListener('start', pide, { once: true });
+        rec.addEventListener('stop', limpia, { once: true });
+        return limpia;
+    }
+
     var imagenes = [];    // { url, img, nombre }
     var usosUrl = {};     // objectURL -> veces usada (al duplicar)
     var sel = -1;         // índice de la imagen seleccionada
@@ -5709,7 +5754,8 @@
 
         dibujarEn(0, durMs);
 
-        var stream = lienzo.captureStream(FPS);
+        var captura = creaCapturaLienzo();
+        var stream = captura.stream;
         if (hayMusica && audioDest) {
             audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
         }
@@ -5727,7 +5773,9 @@
                 return fallo('No se pudo iniciar la grabación en este navegador');
             }
             try {
-                stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
+                if (captura.pista) captura.pista.stop();
+                captura = creaCapturaLienzo();
+                stream = captura.stream;             // stream limpio, sin audio
                 rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
                 mimeUsado = mv;
                 detenerMusica();                     // la música no entra: no iniciarla
@@ -5754,6 +5802,9 @@
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
         };
+        sincronizaCapturaLienzo(rec, captura, function () {
+            dibujarEn(0, durMs);
+        });
 
         progWrap.hidden = false;
         barra.style.width = '0%';
@@ -5898,7 +5949,8 @@
             }
         }
 
-        var stream = lienzo.captureStream(FPS);
+        var captura = creaCapturaLienzo();
+        var stream = captura.stream;
         if ((audio || hayMusica) && audioDest) {
             audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
         }
@@ -5916,7 +5968,9 @@
                 return fallo('No se pudo iniciar la grabación en este navegador');
             }
             try {
-                stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
+                if (captura.pista) captura.pista.stop();
+                captura = creaCapturaLienzo();
+                stream = captura.stream;             // stream limpio, sin audio
                 rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
                 mimeUsado = mv;
                 detenerMusica();                      // la música no entra: no iniciarla
@@ -5946,6 +6000,10 @@
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
         };
+        sincronizaCapturaLienzo(rec, captura, function () {
+            if (videoCargado) dibujarFrame(vidFuente);
+            else dibujarEn(0, durMsPorImagen());
+        });
 
         t0Directo = performance.now();
         rec.start(200);
@@ -6444,7 +6502,8 @@
         lienzo.width = d.w;
         lienzo.height = d.h;
 
-        var stream = lienzo.captureStream(FPS);
+        var captura = creaCapturaLienzo();
+        var stream = captura.stream;
         if ((audio || hayMusica) && audioDest) {
             audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
         }
@@ -6457,7 +6516,9 @@
             var mv = elegirMime(false);
             if (!audio || !mv) return fallo('No se pudo iniciar la grabación en este navegador');
             try {
-                stream = lienzo.captureStream(FPS);   // stream limpio, sin audio
+                if (captura.pista) captura.pista.stop();
+                captura = creaCapturaLienzo();
+                stream = captura.stream;             // stream limpio, sin audio
                 rec = new MediaRecorder(stream, { mimeType: mv, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
                 mimeUsado = mv;
                 detenerMusica();                      // F6: no entra, no se inicia
@@ -6483,6 +6544,9 @@
                 Math.round(blob.size / 1024) + ' KB', 'success');
             limpiar();
         };
+        sincronizaCapturaLienzo(rec, captura, function () {
+            dibujarFrame(vidFuente);
+        });
 
         progWrap.hidden = false;
         barra.style.width = '0%';
@@ -6666,7 +6730,8 @@
         lienzo.width = d.w;
         lienzo.height = d.h;
 
-        var stream = lienzo.captureStream(FPS);
+        var captura = creaCapturaLienzo();
+        var stream = captura.stream;
         if ((audio || hayMusica) && audioDest) {
             audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
         }
@@ -6677,7 +6742,9 @@
                 videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
         } catch (e1) {
             try {   // sin audio: el códec con pista de sonido puede no existir
-                stream = lienzo.captureStream(FPS);
+                if (captura.pista) captura.pista.stop();
+                captura = creaCapturaLienzo();
+                stream = captura.stream;
                 mimeUsado = elegirMime(false) || mimeUsado;
                 rec = new MediaRecorder(stream, { mimeType: mimeUsado,
                     videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
@@ -6722,6 +6789,7 @@
         function calientaYArranca(ya) {
             if (grabIniciado) { ya(); return; }
             grabIniciado = true;
+            sincronizaCapturaLienzo(rec, captura, pintaArranque);
             rec.start(200);
             iniciaMusica();
             pantallaDespierta(true);

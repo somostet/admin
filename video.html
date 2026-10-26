@@ -484,9 +484,9 @@
                             <label class="form-label" for="vid-arranque">Calentamiento al grabar vídeo</label>
                             <select class="form-select" id="vid-arranque">
                                 <option value="0">Sin calentamiento (más corto)</option>
-                                <option value="200" selected>200 ms (normal)</option>
+                                <option value="200">200 ms</option>
                                 <option value="400">400 ms</option>
-                                <option value="800">800 ms (el más seguro)</option>
+                                <option value="800" selected>800 ms (recomendado para móviles)</option>
                             </select>
                             <p class="form-text mb-0">Se mantiene el primer fotograma antes de iniciar la línea de tiempo.
                                 También al exportar solo imágenes; el vídeo dura ese tiempo adicional.</p>
@@ -994,7 +994,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1b"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r22"></script>
+    <script src="./public/js/video.js?v=r23"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
