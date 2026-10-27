@@ -112,6 +112,7 @@
     var musicaArchivo = null;   // P4: el File original (para reinyectarlo al deshacer)
     var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
     var musicaGanancia = null;  // GainNode (el volumen también funciona en vivo)
+var sfxBuf = []; // Array de AudioBuffer para efectos de sonido importados
 var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz importados
     /* F8 · captura de pestaña (getDisplayMedia) */
     var capturando = false;     // hay una captura de pestaña en curso
@@ -6180,6 +6181,29 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
         }
     }
 
+    function decodificaSfx(datos, idx, nombre) {
+        var yo = ++decMusicaToken;
+        var hecho = false;
+        var ok = function (buf) {
+            if (hecho || yo !== decMusicaToken) return;
+            hecho = true;
+            sfxBuf[idx] = buf;
+            // No conectar automáticamente al audioDest hasta el start de grabación
+            pintaSfx();
+        };
+        var mal = function () {
+            if (hecho || yo !== decMusicaToken) return;
+            hecho = true;
+            aviso('No se pudo decodificar ' + nombre + ': prueba con WAV', 'danger');
+        };
+        try {
+            var r = audioCtx.decodeAudioData(datos, ok, mal);
+            if (r && r.then) r.then(ok).catch(mal);
+        } catch (e) {
+            mal();
+        }
+    }
+
     inpMusica.addEventListener('change', function () {
         var f = inpMusica.files && inpMusica.files[0];
         musicaArchivo = f || null;   // P4
@@ -6212,6 +6236,23 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
             }
             var lector = new FileReader();
             lector.onload = function () { decodificaVoz(lector.result, vocesBuf.length, f.name); };
+            lector.onerror = function () { aviso("No se pudo leer " + f.name + "", "danger"); };
+            lector.readAsArrayBuffer(f);
+        });
+    }
+
+    // Handler for sound effects WAV import (Voz tab)
+    var sfxWavInput = document.getElementById("voz-sfx-input");
+    if (sfxWavInput) {
+        sfxWavInput.addEventListener("change", function () {
+            var f = sfxWavInput.files && sfxWavInput.files[0];
+            if (!f) return;
+            if (!preparaCtxAudio()) {
+                aviso("Tu navegador no soporta Web Audio", "warning");
+                return;
+            }
+            var lector = new FileReader();
+            lector.onload = function () { decodificaSfx(lector.result, sfxBuf.length, f.name); };
             lector.onerror = function () { aviso("No se pudo leer " + f.name + "", "danger"); };
             lector.readAsArrayBuffer(f);
         });
@@ -6435,6 +6476,14 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
             gan.gain.value = parseInt(volMusica.value, 10) / 100;
             nodo.connect(gan);
             gan.connect(audioDest);   // al grabador, no a los altavoces
+            // Conectar efectos de sonido también
+            sfxBuf.forEach(function (buf, idx) {
+                var snodo = audioCtx.createBufferSource();
+                snodo.buffer = buf;
+                snodo.loop = false;
+                snodo.connect(audioDest);   // al grabador
+                snodo.start(0, idx * (buf.duration || 0)); // offset para evitar solapes
+            });
             musicaNodo = nodo;
             musicaGanancia = gan;
             // Conectar segmentos de voz también
