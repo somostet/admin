@@ -1,0 +1,108 @@
+/* ============================================================
+   voz.css — pestaña «Voz» del editor de vídeo (video.html)
+   Usa los tokens --sh-* de shell.css (que video.html también carga),
+   así que funciona en el tema oscuro y en el claro. Aquí NO hay dock:
+   el panel vive dentro de una pestaña Bootstrap del formulario, por eso
+   los controles se dejan con el aspecto normal de Bootstrap.
+   ============================================================ */
+
+.voz-caja {
+    padding: .2rem 0 .5rem;
+}
+
+.voz-intro {
+    margin: 0 0 .8rem;
+    font-size: .9rem;
+    line-height: 1.45;
+    color: var(--sh-text);
+    opacity: .85;
+}
+
+/* Contadores de caracteres y duración estimada */
+.voz-cuenta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .15rem .9rem;
+    margin-top: .3rem;
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted);
+}
+
+.voz-nota {
+    margin: .3rem 0 0;
+    font-size: .8rem;
+    line-height: 1.4;
+    color: var(--sh-muted);
+}
+
+/* Velocidad, tono y volumen: en columnas mientras quepan */
+.voz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: .25rem 1rem;
+    margin-top: .3rem;
+}
+
+.voz-grid .form-range {
+    margin: .15rem 0 .35rem;
+}
+
+/* Bootstrap deja .form-label en inline-block y el valor no podría ir a la
+   derecha de la columna: se fuerza bloque */
+.voz-grid .form-label {
+    display: block;
+}
+
+/* El valor va a la derecha de la etiqueta, sin gritar */
+.voz-val {
+    float: right;
+    font-weight: 600;
+    color: var(--sh-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.voz-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin-top: 1rem;
+}
+
+.voz-acciones .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-height: 44px;   /* mismo objetivo táctil que el resto del editor */
+}
+
+.voz-estado {
+    margin: .8rem 0 0;
+    font-size: .85rem;
+    color: var(--sh-text);
+    opacity: .8;
+}
+
+.voz-estado.es-error {
+    color: #ff9a9a;
+    opacity: 1;
+}
+
+:root[data-theme="light"] .voz-estado.es-error {
+    color: #b02a37;
+}
+
+/* Aviso de que la voz no se puede exportar (Bootstrap alert-warning) */
+.voz-aviso {
+    margin-top: 1rem;
+}
+
+.voz-aviso p {
+    margin: 0;
+}
+
+.voz-aviso a {
+    color: inherit;
+    text-decoration: underline;
+    font-weight: 600;
+}

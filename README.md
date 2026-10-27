@@ -33,6 +33,7 @@ En producción, GitHub Pages sirve `master/` en `/admin/`.
 | `gif.html` | GIF animado a partir de imágenes (lote D) |
 | `video.html` | Vídeo MP4/WebM a partir de imágenes (lote E) |
 | `collage.html` | Collage: varias fotos en una sola imagen con plantillas de celdas |
+| `piper.html` | Voz neuronal con Piper (español) — no está en la portada; se llega desde la pestaña «Voz» de `video.html`; `noindex` |
 
 ## Portada (`index.html`)
 
@@ -49,6 +50,34 @@ powershell -ExecutionPolicy Bypass -File tools/optimizar-imagenes-portada.ps1
 
 que aplana el alfa, las deja en 760 px de ancho y las guarda en JPEG (las
 cuadras, en PNG). El script borra la versión que no mejora.
+
+## Voz
+
+- **Pestaña «Voz» del editor de vídeo** (`video.html` + `public/js/voz.js` +
+  `public/css/voz.css`): una pestaña más del formulario, junto a «Ajustes» y
+  «Exportar». Escribe el texto, elige una de las voces del sistema (prioriza las
+  españolas), ajusta velocidad, tono y volumen y reproduce. Trocea por frases
+  (máx. 180 caracteres) porque Chrome corta las locuciones largas, estima la
+  duración y guarda texto y ajustes en `localStorage` (`tetVoz:<ruta>`). Expone
+  `window.tetVoz.leer(texto)` y `.detener()` para que otra página pida la
+  locución.
+  - Usa la **Web Speech API**: 0 KB, gratis y sin servidor. La contrapartida es
+    que el navegador **no deja exportar la voz a un archivo** (no pasa por Web
+    Audio). Para el vídeo se graba la pestaña con «Grabar pestaña (vídeo)» de
+    `video.html` marcando «Compartir audio de la pestaña»; para un WAV, la
+    prueba de Piper.
+  - `voz.css` reutiliza los tokens `--sh-*` de `shell.css` (que `video.html`
+    también carga), así que el panel sigue el tema oscuro/claro del editor.
+- **Prueba de Piper** (`piper.html`): página suelta y `noindex` que carga
+  `@mintplex-labs/piper-tts-web` desde jsDelivr (con ONNX Runtime WASM y espeak-ng
+  desde jsDelivr y cdnjs) y el modelo `es_ES-davefx-medium` desde Hugging Face.
+  Su CSP es la única abierta del sitio (código de terceros, `wasm-unsafe-eval` y los
+  hosts de HF/CDN). Genera WAV de 16 bits y 24 kHz en el navegador. **De momento solo
+  español** (`es_ES`, `es_MX`); cada voz se descarga una vez y queda en la caché del
+  navegador (OPFS). Para narrar en español y descargar el audio, el siguiente paso
+  es integrar Piper en el editor de vídeo.
+  - El modelo se guarda en la caché del navegador (OPFS), así que la segunda
+    generación con la misma voz es rápida.
 
 ## Funciones del editor
 

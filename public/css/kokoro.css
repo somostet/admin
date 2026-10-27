@@ -1,0 +1,266 @@
+/* ============================================================
+   kokoro.css — página de prueba de la voz neuronal (kokoro.html)
+   ============================================================ */
+
+.kok-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.2rem;
+    align-items: start;
+}
+
+@media (min-width: 992px) {
+    .kok-wrap {
+        grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    }
+}
+
+.kok-panel,
+.kok-nota {
+    background: #fff;
+    border: 1px solid var(--tet-linea);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(28, 36, 51, .06);
+}
+
+.kok-panel {
+    padding: 1.3rem;
+}
+
+.kok-nota {
+    padding: 1.1rem 1.2rem;
+}
+
+.kok-cabecera {
+    margin-bottom: 1.1rem;
+}
+
+.kok-titulo {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--tet-texto);
+}
+
+.kok-sub {
+    margin: .35rem 0 0;
+    font-size: .86rem;
+    line-height: 1.5;
+    color: var(--tet-texto-suave);
+}
+
+.kok-aviso {
+    display: flex;
+    gap: .55rem;
+    margin: 0 0 1.1rem;
+    padding: .7rem .8rem;
+    border: 1px solid #f3d9a4;
+    border-radius: 10px;
+    background: #fff8e9;
+    font-size: .8rem;
+    line-height: 1.5;
+    color: #7a5a12;
+}
+
+.kok-aviso > i {
+    margin-top: .15rem;
+    color: #b8860b;
+}
+
+.kok-aviso p {
+    margin: 0;
+}
+
+.kok-aviso a {
+    color: #8a5a00;
+    text-decoration: underline;
+}
+
+.kok-aviso code {
+    padding: .05rem .25rem;
+    border-radius: 4px;
+    background: rgba(122, 90, 18, .1);
+    font-size: .92em;
+}
+
+.kok-fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 .9rem;
+}@media (min-width: 560px) {
+    .kok-fila {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+.kok-campo {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    margin-bottom: .9rem;
+    min-width: 0;
+}
+
+.kok-campo label {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--tet-texto-suave);
+}
+
+.kok-val {
+    float: right;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--tet-texto);
+    font-variant-numeric: tabular-nums;
+}
+
+.kok-panel .form-control,
+.kok-panel .form-select {
+    border-radius: 8px;
+    border-color: var(--tet-linea);
+    color: var(--tet-texto);
+}
+
+.kok-panel .form-control:focus,
+.kok-panel .form-select:focus {
+    border-color: var(--tet-acento);
+    box-shadow: 0 0 0 .18rem rgba(47, 111, 208, .15);
+}
+
+.kok-panel textarea.form-control {
+    min-height: 118px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.kok-cuenta {
+    font-size: .72rem;
+    color: var(--tet-texto-suave);
+    font-variant-numeric: tabular-nums;
+}
+
+.kok-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .2rem;
+}
+
+.kok-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .87rem;
+    font-weight: 600;
+    padding: .5rem .8rem;
+    border: 1px solid var(--tet-linea);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--tet-texto);
+}
+
+.kok-btn:hover {
+    background: var(--tet-acento-claro);
+    color: var(--tet-acento);
+}
+
+.kok-btn:disabled {
+    opacity: .5;
+}
+
+.kok-btn-principal {
+    background: var(--tet-acento);
+    border-color: var(--tet-acento);
+    color: #fff;
+}
+
+.kok-btn-principal:hover {
+    background: #2760b8;
+    color: #fff;
+}
+
+.kok-barra {
+    height: 8px;
+    margin-top: 1rem;
+    border-radius: 999px;
+    background: #eef2f8;
+    overflow: hidden;
+}
+
+.kok-barra-relleno {
+    height: 100%;
+    width: 0;
+    background: var(--tet-acento);
+    transition: width .2s ease;
+}
+
+.kok-estado {
+    margin: .7rem 0 0;
+    font-size: .82rem;
+    color: var(--tet-texto-suave);
+}
+
+.kok-estado.es-ok {
+    color: #2f9e63;
+}
+
+.kok-estado.es-error {
+    color: #c0392b;
+}
+
+#kok-audio {
+    width: 100%;
+    margin-top: .9rem;
+}
+
+.kok-log {
+    max-height: 150px;
+    margin: .9rem 0 0;
+    padding: .6rem .7rem;
+    border: 1px solid var(--tet-linea);
+    border-radius: 8px;
+    background: #f6f8fc;
+    font-size: .72rem;
+    line-height: 1.5;
+    color: var(--tet-texto-suave);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: auto;
+}
+
+.kok-nota h3 {
+    margin: 0 0 .6rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--tet-texto);
+}
+
+.kok-nota ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: .84rem;
+    line-height: 1.55;
+    color: var(--tet-texto-suave);
+}
+
+.kok-nota li + li {
+    margin-top: .45rem;
+}
+
+.kok-volver {
+    margin: 1rem 0 0;
+    font-size: .85rem;
+}
+
+.kok-volver a {
+    color: var(--tet-acento);
+    text-decoration: none;
+}
+
+.kok-volver a:hover {
+    text-decoration: underline;
+}

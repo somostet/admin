@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Página de voz neuronal (Piper): la prueba que hace `video.html` enlaza
+         desde la pestaña «Voz». Es la única página del sitio que carga código de
+         terceros (piper-tts-web desde jsDelivr, ONNX Runtime y espeak-ng WASM desde
+         jsDelivr + cdnjs, modelo desde Hugging Face). Por eso su CSP es más abierta
+         que la del resto de editores. -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';">
+    <script type="importmap">
+    {
+        "imports": {
+            "onnxruntime-web/wasm": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/esm/ort.wasm.min.js"
+        }
+    }
+    </script>
+    <meta charset="utf-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="robots" content="noindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1d2b43">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <title>Voz neuronal (Piper) · tet admin</title>
+
+    <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/css/style.css?v=r30">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
+    <link rel="stylesheet" href="./public/css/piper.css?v=p1">
+</head>
+
+<body class="portada">
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item">
+                <a class="nav-link" href="index.html">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    <span class="tet-nav-toggle-txt">Volver</span></a>
+            </li>
+        </ul>
+    </nav>
+
+    <main>
+        <section class="portada-hero">
+            <div class="container">
+                <h1 class="portada-titulo">Voz neuronal</h1>
+                <p class="portada-lead">Escribe un texto en español y Piper lo convierte en voz dentro del
+                    navegador. Sin servidor, sin cuenta y con el audio descargable en WAV.</p>
+                <ul class="portada-datos">
+                    <li><i class="fas fa-check" aria-hidden="true"></i> Voces en español (es_ES, es_MX)</li>
+                    <li><i class="fas fa-check" aria-hidden="true"></i> Todo se ejecuta en tu equipo</li>
+                    <li><i class="fas fa-flask" aria-hidden="true"></i> Modelo local, se descarga una vez</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="portada-seccion">
+            <div class="container piper-wrap">
+                <div class="piper-panel">
+                    <div class="piper-cabecera">
+                        <h2 class="piper-titulo">Probar Piper</h2>
+                        <p class="piper-sub">La primera vez descarga el modelo en español (unos 63 MB).
+                            Después queda guardado en la caché del navegador y arranca al instante.</p>
+                    </div>
+
+                    <div class="piper-aviso">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                        <p><strong>Esta prueba habla español.</strong> El modelo <code>es_ES-davefx-medium</code>
+                            y otras voces de <code>es_ES</code> / <code>es_MX</code> funcionan con Piper en el
+                            navegador. El audio se genera en WAV de 16 bits para subirlo al editor de vídeo
+                            (<strong>Ajustes → música</strong>) y que se mezcle con el MP4.</p>
+                    </div>
+
+                    <div class="piper-fila">
+                        <div class="piper-campo">
+                            <label for="piper-voz">Voz</label>
+                            <select id="piper-voz" class="form-select">
+                                <option value="es_ES-davefx-medium">Español · España · hombre · Davefx</option>
+                                <option value="es_ES-sharvard-medium">Español · España · mujer · Sharvard</option>
+                                <option value="es_MX-claude-high">Español · México · mujer · Claude</option>
+                                <option value="es_MX-ald-medium">Español · México · hombre · Aldo</option>
+                                <option value="es_ES-carlfm-x_low">Español · España · hombre · CarlFM (ligera)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="piper-campo">
+                        <label for="piper-texto">Texto</label>
+                        <textarea id="piper-texto" class="form-control" rows="6">Hola, bienvenidos a tet. Esta es una prueba de la voz en español generada con Piper dentro del navegador.</textarea>
+                        <div class="piper-cuenta"><span id="piper-chars"></span></div>
+                    </div>
+
+                    <div class="piper-acciones">
+                        <button type="button" class="btn piper-btn piper-btn-principal" id="piper-cargar">
+                            <i class="fas fa-download" aria-hidden="true"></i> 1 · Cargar modelo</button>
+                        <button type="button" class="btn piper-btn" id="piper-generar" disabled>
+                            <i class="fas fa-microphone-alt" aria-hidden="true"></i> 2 · Generar voz</button>
+                        <a class="btn piper-btn" id="piper-descargar" href="#" download="voz-piper.wav" hidden>
+                            <i class="fas fa-file-audio" aria-hidden="true"></i> Descargar WAV</a>
+                    </div>
+
+                    <div class="piper-barra" id="piper-barra-caja" hidden>
+                        <div class="piper-barra-relleno" id="piper-barra"></div>
+                    </div>
+                    <p class="piper-estado" id="piper-estado" aria-live="polite">Pulsa «Cargar modelo» para empezar.</p>
+
+                    <audio id="piper-audio" controls hidden></audio>
+
+                    <pre class="piper-log" id="piper-log" aria-live="polite"></pre>
+                </div>
+
+                <aside class="piper-nota">
+                    <h3>Qué tener en cuenta</h3>
+                    <ul>
+                        <li>Necesita red la primera vez: el modelo se baja de Hugging Face y se guarda en
+                            la caché del navegador.</li>
+                        <li>En el móvil, WASM funciona; la GPU (WebGPU) no está en todos los equipos.</li>
+                        <li>Las voces son de Piper (VITS), una generación con modelo local: de momento la
+                            calidad es buena pero no es una voz de IA comercial.</li>
+                        <li>El WAV se genera en 16 bits y 24 kHz, listo para el editor de vídeo.</li>
+                    </ul>
+                    <p class="piper-volver"><a href="index.html"><i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        Volver a los editores</a></p>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import * as tts from 'https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.5/dist/piper-tts-web.js';
+
+        var MODELO = 'es_ES-davefx-medium';
+        var TROZO = 400;            // caracteres por locución (el modelo corta solos los bloques)
+
+        function porId(id) { return document.getElementById(id); }
+        var selVoz = porId('piper-voz');
+        var inTexto = porId('piper-texto');
+        var cuChars = porId('piper-chars');
+        var btnCargar = porId('piper-cargar');
+        var btnGenerar = porId('piper-generar');
+        var enlaceWav = porId('piper-descargar');
+        var cajaBarra = porId('piper-barra-caja');
+        var barra = porId('piper-barra');
+        var estado = porId('piper-estado');
+        var audio = porId('piper-audio');
+        var log = porId('piper-log');
+
+        var generando = false;
+        var urlWav = null;
+
+        var VOCES = {
+            'es_ES-davefx-medium': { nombre: 'Español · España · hombre · Davefx', tamano: '63 MB' },
+            'es_ES-sharvard-medium': { nombre: 'Español · España · mujer · Sharvard', tamano: '77 MB' },
+            'es_MX-claude-high': { nombre: 'Español · México · mujer · Claude', tamano: '63 MB' },
+            'es_MX-ald-medium': { nombre: 'Español · México · hombre · Aldo', tamano: '63 MB' },
+            'es_ES-carlfm-x_low': { nombre: 'Español · España · hombre · CarlFM (ligera)', tamano: '28 MB' }
+        };
+        var idVozActual = null;
+        var generado = false;
+
+        function escribe(linea) {
+            var t = new Date().toLocaleTimeString('es-ES');
+            log.textContent += '[' + t + '] ' + linea + '\n';
+            log.scrollTop = log.scrollHeight;
+        }
+        function di(msg, tipo) {
+            estado.textContent = msg;
+            estado.className = 'piper-estado' + (tipo ? ' es-' + tipo : '');
+        }
+        function pintarBarra(pct) {
+            if (pct == null) {
+                cajaBarra.hidden = true;
+                barra.style.width = '0%';
+                return;
+            }
+            cajaBarra.hidden = false;
+            barra.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        }
+
+        function actualizarCuenta() {
+            var n = inTexto.value.length;
+            cuChars.textContent = n + (n === 1 ? ' carácter' : ' caracteres');
+        }
+        inTexto.addEventListener('input', actualizarCuenta);
+        actualizarCuenta();
+
+        selVoz.addEventListener('change', function () {
+            idVozActual = selVoz.value;
+            if (generado) {
+                /* La sesión de Piper se mantiene por voz: al cambiarla la vuelve a
+                   montar, así que basta con recargar (el modelo ya está en caché) */
+                location.reload();
+            }
+        });
+
+        function elegirDispositivo() {
+            return { device: 'wasm', dtype: 'q8' };
+        }
+
+        async function cargarModelo() {
+            try {
+                var t0 = performance.now();
+                di('Cargando ' + MODELO + ' (wasm · q8)…');
+                escribe('Cargando modelo: ' + MODELO);
+                pintarBarra(0);
+                await tts.download(MODELO, function (p) {
+                    if (p && p.status === 'progress' && p.total) {
+                        pintarBarra((p.loaded / p.total) * 100);
+                        di('Descargando modelo… ' + Math.round((p.loaded / p.total) * 100) + ' %');
+                    } else if (p && p.status === 'done') {
+                        escribe('Descarga del modelo listo en ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s.');
+                    }
+                });
+                var seg = ((performance.now() - t0) / 1000).toFixed(1);
+                pintarBarra(null);
+                di('Modelo cargado en ' + seg + ' s. Ya puedes generar la voz.', 'ok');
+                escribe('Modelo listo en ' + seg + ' s.');
+                btnGenerar.disabled = false;
+            } catch (e) {
+                pintarBarra(null);
+                console.error(e);
+                di('No se pudo cargar el modelo.', 'error');
+                escribe('ERROR al cargar: ' + (e && e.message ? e.message : e));
+            }
+        }
+
+        function trocear(txt) {
+            var limpio = String(txt || '').replace(/\s+/g, ' ').trim();
+            if (!limpio) return [];
+            var frases = limpio.match(/[^.!?…]+[.!?…]*/g) || [limpio];
+            var out = [];
+            frases.forEach(function (f) {
+                f = f.trim();
+                while (f.length > TROZO) {
+                    var corte = f.lastIndexOf(' ', TROZO);
+                    if (corte < 80) corte = TROZO;
+                    out.push(f.slice(0, corte).trim());
+                    f = f.slice(corte).trim();
+                }
+                if (f) out.push(f);
+            });
+            return out;
+        }
+
+        async function generar() {
+            if (!tts) return;
+            if (generando) return;
+            var text = inTexto.value.trim();
+            if (!text) {
+                di('Escribe algo primero.', 'error');
+                return;
+            }
+            generando = true;
+            btnGenerar.disabled = true;
+            btnCargar.disabled = true;
+            enlaceWav.hidden = true;
+            var voz = selVoz.value;
+            var t0 = performance.now();
+            escribe('Generando ' + voz + '…');
+            pintarBarra(0);
+            try {
+                await tts.download(voz, function (p) {
+                    if (p && p.status === 'progress' && p.total) pintarBarra((p.loaded / p.total) * 100);
+                });
+                var blob = await tts.predict({ text: text, voiceId: voz }, function () { });
+                var url = URL.createObjectURL(blob);
+                if (urlWav) URL.revokeObjectURL(urlWav);
+                urlWav = url;
+                audio.src = url;
+                audio.hidden = false;
+                enlaceWav.href = url;
+                enlaceWav.hidden = false;
+                var seg = ((performance.now() - t0) / 1000).toFixed(1);
+                var kb = Math.round(blob.size / 1024);
+                pintarBarra(null);
+                di('Voz generada en ' + seg + ' s. Descárgala y súbela a «Ajustes → música».', 'ok');
+                escribe('WAV listo · ' + kb + ' KB · 16 bits · lista para el editor.');
+                generado = true;
+                // --- DEVOLVER LA VOZ AL PÁDRE (video.html) ---
+                try {
+                    window.opener.tetPiperWavBlob = blob;
+                    window.opener.tetPiperWavName = voz;
+                    window.opener.document.getElementById('voz-importar-estado').textContent = 'Voz generada con Piper: ' + voz + ' · ' + Math.round(blob.duration) + ' s';
+                } catch (e) {
+                    console.log('No se pudo notificar al padre (¿popup bloqueado?)');
+                }
+            } catch (e) {
+                pintarBarra(null);
+                console.error(e);
+                di('No se pudo generar la voz.', 'error');
+                escribe('ERROR al generar: ' + (e && e.message ? e.message : e));
+            } finally {
+                generando = false;
+                btnGenerar.disabled = false;
+                btnCargar.disabled = false;
+            }
+        }
+
+        btnCargar.addEventListener('click', function () { if (!generando) cargarModelo(); });
+        btnGenerar.addEventListener('click', generar);
+
+        escribe('piper-tts-web 1.0.5 · modelo ' + MODELO);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,262 @@
+/* ============================================================
+   piper.css — página de voz neuronal (piper.html)
+   ============================================================ */
+
+.piper-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.2rem;
+    align-items: start;
+}
+
+@media (min-width: 992px) {
+    .piper-wrap {
+        grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    }
+}
+
+.piper-panel,
+.piper-nota {
+    background: #fff;
+    border: 1px solid var(--tet-linea);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(28, 36, 51, .06);
+}
+
+.piper-panel {
+    padding: 1.3rem;
+}
+
+.piper-nota {
+    padding: 1.1rem 1.2rem;
+}
+
+.piper-cabecera {
+    margin-bottom: 1.1rem;
+}
+
+.piper-titulo {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--tet-texto);
+}
+
+.piper-sub {
+    margin: .35rem 0 0;
+    font-size: .86rem;
+    line-height: 1.5;
+    color: var(--tet-texto-suave);
+}
+
+.piper-aviso {
+    display: flex;
+    gap: .55rem;
+    margin: 0 0 1.1rem;
+    padding: .7rem .8rem;
+    border: 1px solid #f3d9a4;
+    border-radius: 10px;
+    background: #fff8e9;
+    font-size: .8rem;
+    line-height: 1.5;
+    color: #7a5a12;
+}
+
+.piper-aviso > i {
+    margin-top: .15rem;
+    color: #b8860b;
+}
+
+.piper-aviso p {
+    margin: 0;
+}
+
+.piper-aviso code {
+    padding: .05rem .25rem;
+    border-radius: 4px;
+    background: rgba(122, 90, 18, .1);
+    font-size: .92em;
+}
+
+.piper-fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 .9rem;
+}
+@media (min-width: 560px) {
+    .piper-fila {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+.piper-campo {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    margin-bottom: .9rem;
+    min-width: 0;
+}
+
+.piper-campo label {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--tet-texto-suave);
+}
+
+.piper-val {
+    float: right;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--tet-texto);
+    font-variant-numeric: tabular-nums;
+}
+
+.piper-panel .form-control,
+.piper-panel .form-select {
+    border-radius: 8px;
+    border-color: var(--tet-linea);
+    color: var(--tet-texto);
+}
+
+.piper-panel .form-control:focus,
+.piper-panel .form-select:focus {
+    border-color: var(--tet-acento);
+    box-shadow: 0 0 0 .18rem rgba(47, 111, 208, .15);
+}
+
+.piper-panel textarea.form-control {
+    min-height: 118px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.piper-cuenta {
+    font-size: .72rem;
+    color: var(--tet-texto-suave);
+    font-variant-numeric: tabular-nums;
+}
+
+.piper-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .2rem;
+}
+
+.piper-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .87rem;
+    font-weight: 600;
+    padding: .5rem .8rem;
+    border: 1px solid var(--tet-linea);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--tet-texto);
+}
+
+.piper-btn:hover {
+    background: var(--tet-acento-claro);
+    color: var(--tet-acento);
+}
+
+.piper-btn:disabled {
+    opacity: .5;
+}
+
+.piper-btn-principal {
+    background: var(--tet-acento);
+    border-color: var(--tet-acento);
+    color: #fff;
+}
+
+.piper-btn-principal:hover {
+    background: #2760b8;
+    color: #fff;
+}
+
+.piper-barra {
+    height: 8px;
+    margin-top: 1rem;
+    border-radius: 999px;
+    background: #eef2f8;
+    overflow: hidden;
+}
+
+.piper-barra-relleno {
+    height: 100%;
+    width: 0;
+    background: var(--tet-acento);
+    transition: width .2s ease;
+}
+
+.piper-estado {
+    margin: .7rem 0 0;
+    font-size: .82rem;
+    color: var(--tet-texto-suave);
+}
+
+.piper-estado.es-ok {
+    color: #2f9e63;
+}
+
+.piper-estado.es-error {
+    color: #c0392b;
+}
+
+#piper-audio {
+    width: 100%;
+    margin-top: .9rem;
+}
+
+.piper-log {
+    max-height: 150px;
+    margin: .9rem 0 0;
+    padding: .6rem .7rem;
+    border: 1px solid var(--tet-linea);
+    border-radius: 8px;
+    background: #f6f8fc;
+    font-size: .72rem;
+    line-height: 1.5;
+    color: var(--tet-texto-suave);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: auto;
+}
+
+.piper-nota h3 {
+    margin: 0 0 .6rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--tet-texto);
+}
+
+.piper-nota ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: .84rem;
+    line-height: 1.55;
+    color: var(--tet-texto-suave);
+}
+
+.piper-nota li + li {
+    margin-top: .45rem;
+}
+
+.piper-volver {
+    margin: 1rem 0 0;
+    font-size: .85rem;
+}
+
+.piper-volver a {
+    color: var(--tet-acento);
+    text-decoration: none;
+}
+
+.piper-volver a:hover {
+    text-decoration: underline;
+}

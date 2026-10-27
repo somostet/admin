@@ -112,6 +112,7 @@
     var musicaArchivo = null;   // P4: el File original (para reinyectarlo al deshacer)
     var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
     var musicaGanancia = null;  // GainNode (el volumen también funciona en vivo)
+var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz importados
     /* F8 · captura de pestaña (getDisplayMedia) */
     var capturando = false;     // hay una captura de pestaña en curso
     var pidiendo = false;       // selector de pestaña abierto (evita doble clic)
@@ -6150,6 +6151,35 @@
         }
     }
 
+    function decodificaVoz(datos, idx, nombre) {
+        var yo = ++decMusicaToken;
+        var hecho = false;
+        var ok = function (buf) {
+            if (hecho || yo !== decMusicaToken) return;
+            hecho = true;
+            vocesBuf[idx] = buf;
+            if (audioDest) {
+                var nodo = audioCtx.createBufferSource();
+                nodo.buffer = buf;
+                nodo.loop = false;
+                nodo.connect(audioDest);
+                nodo.start();
+            }
+            pintaVoz();
+        };
+        var mal = function () {
+            if (hecho || yo !== decMusicaToken) return;
+            hecho = true;
+            aviso('No se pudo decodificar ' + nombre + ': prueba con WAV', 'danger');
+        };
+        try {
+            var r = audioCtx.decodeAudioData(datos, ok, mal);
+            if (r && r.then) r.then(ok).catch(mal);
+        } catch (e) {
+            mal();
+        }
+    }
+
     inpMusica.addEventListener('change', function () {
         var f = inpMusica.files && inpMusica.files[0];
         musicaArchivo = f || null;   // P4
@@ -6169,6 +6199,23 @@
         lector.onerror = function () { aviso('No se pudo leer «' + f.name + '»', 'danger'); };
         lector.readAsArrayBuffer(f);
     });
+
+    // Handler for voice WAV import (Voz tab)
+    var vozWavInput = document.getElementById("voz-wav-input");
+    if (vozWavInput) {
+        vozWavInput.addEventListener("change", function () {
+            var f = vozWavInput.files && vozWavInput.files[0];
+            if (!f) return;
+            if (!preparaCtxAudio()) {
+                aviso("Tu navegador no soporta Web Audio", "warning");
+                return;
+            }
+            var lector = new FileReader();
+            lector.onload = function () { decodificaVoz(lector.result, vocesBuf.length, f.name); };
+            lector.onerror = function () { aviso("No se pudo leer " + f.name + "", "danger"); };
+            lector.readAsArrayBuffer(f);
+        });
+    }
 
     btnQuitarMusica.addEventListener('click', function () {
         inpMusica.value = '';
@@ -6390,6 +6437,14 @@
             gan.connect(audioDest);   // al grabador, no a los altavoces
             musicaNodo = nodo;
             musicaGanancia = gan;
+            // Conectar segmentos de voz también
+            vocesBuf.forEach(function (buf, idx) {
+                var vnodo = audioCtx.createBufferSource();
+                vnodo.buffer = buf;
+                vnodo.loop = false;
+                vnodo.connect(audioDest);   // al grabador
+                vnodo.start(0, idx * (buf.duration || 0)); // offset para evitar solapes
+            });
             return true;
         } catch (e) {
             detenerMusica();

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Página de PRUEBA: es la única del sitio que carga código de terceros
+         (kokoro-js desde jsDelivr y el modelo desde Hugging Face). Por eso su
+         CSP es más abierta que la del resto de editores. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co; worker-src 'self' blob: https://cdn.jsdelivr.net; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';">
+    <meta charset="utf-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="robots" content="noindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1d2b43">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <title>Voz neuronal (prueba) · tet admin</title>
+
+    <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/css/style.css?v=r30">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
+    <link rel="stylesheet" href="./public/css/kokoro.css?v=k1">
+</head>
+
+<body class="portada">
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item">
+                <a class="nav-link" href="index.html">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    <span class="tet-nav-toggle-txt">Volver</span></a>
+            </li>
+        </ul>
+    </nav>
+
+    <main>
+        <section class="portada-hero">
+            <div class="container">
+                <h1 class="portada-titulo">Voz neuronal</h1>
+                <p class="portada-lead">Escribe un texto y Kokoro lo convierte en voz dentro del navegador.
+                    Sin servidor, sin cuenta y con el audio descargable en WAV.</p>
+                <ul class="portada-datos">
+                    <li><i class="fas fa-check" aria-hidden="true"></i> 82 M de parámetros · Apache-2.0</li>
+                    <li><i class="fas fa-check" aria-hidden="true"></i> Todo se ejecuta en tu equipo</li>
+                    <li><i class="fas fa-flask" aria-hidden="true"></i> De momento, voces en inglés</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="portada-seccion">
+            <div class="container kok-wrap">
+                <div class="kok-panel">
+                    <div class="kok-cabecera">
+                        <h2 class="kok-titulo">Probar Kokoro</h2>
+                        <p class="kok-sub">La primera vez descarga el modelo (unos 92 MB). Después queda
+                            guardado en la caché del navegador y arranca al instante.</p>
+                    </div>
+
+                    <div class="kok-aviso">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                        <p><strong>Esta prueba va en inglés.</strong> El modelo Kokoro v1.0 sí incluye las
+                            voces españolas <code>ef_dora</code>, <code>em_alex</code> y
+                            <code>em_santa</code>, pero la librería <code>kokoro-js</code> 1.2.1 todavía no
+                            las habilita: su fonemizador solo trae eSpeak en inglés
+                            (<a href="https://github.com/hexgrad/kokoro/pull/262" target="_blank"
+                                rel="noopener">PR&nbsp;#262</a>). Para narrar en español y descargar el
+                            audio, el siguiente paso es <strong>Piper</strong>; para oírlo ya, la pestaña
+                            <strong>Voz</strong> de los editores.</p>
+                    </div>
+
+                    <div class="kok-fila">
+                        <div class="kok-campo">
+                            <label for="kok-motor">Motor</label>
+                            <select id="kok-motor" class="form-select">
+                                <option value="wasm|q8">WASM · q8 · ~92 MB (recomendado)</option>
+                                <option value="webgpu|fp32">WebGPU · fp32 · ~326 MB (más rápido en PC)</option>
+                            </select>
+                        </div>
+                        <div class="kok-campo">
+                            <label for="kok-voz">Voz</label>
+                            <select id="kok-voz" class="form-select">
+                                <option value="af_heart">Heart · inglés (EE. UU.) · mujer</option>
+                                <option value="af_bella">Bella · inglés (EE. UU.) · mujer</option>
+                                <option value="am_michael">Michael · inglés (EE. UU.) · hombre</option>
+                                <option value="bf_emma">Emma · inglés (RU) · mujer</option>
+                                <option value="bm_george">George · inglés (RU) · hombre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="kok-campo">
+                        <label for="kok-texto">Texto</label>
+                        <textarea id="kok-texto" class="form-control" rows="6">Hello, this is a test of neural speech inside the browser. The text becomes audio without sending anything to a server.</textarea>
+                        <div class="kok-cuenta"><span id="kok-chars"></span></div>
+                    </div>
+
+                    <div class="kok-campo">
+                        <label for="kok-speed">Velocidad <span class="kok-val" id="kok-speed-val">1,00×</span></label>
+                        <input type="range" class="form-range" id="kok-speed" min="0.6" max="1.6" step="0.05" value="1">
+                    </div>
+
+                    <div class="kok-acciones">
+                        <button type="button" class="btn kok-btn kok-btn-principal" id="kok-cargar">
+                            <i class="fas fa-download" aria-hidden="true"></i> 1 · Cargar modelo</button>
+                        <button type="button" class="btn kok-btn" id="kok-generar" disabled>
+                            <i class="fas fa-microphone-alt" aria-hidden="true"></i> 2 · Generar voz</button>
+                        <a class="btn kok-btn" id="kok-descargar" href="#" download="voz-kokoro.wav" hidden>
+                            <i class="fas fa-file-audio" aria-hidden="true"></i> Descargar WAV</a>
+                    </div>
+
+                    <div class="kok-barra" id="kok-barra-caja" hidden>
+                        <div class="kok-barra-relleno" id="kok-barra"></div>
+                    </div>
+                    <p class="kok-estado" id="kok-estado" aria-live="polite">Pulsa «Cargar modelo» para empezar.</p>
+
+                    <audio id="kok-audio" controls hidden></audio>
+
+                    <pre class="kok-log" id="kok-log" aria-live="polite"></pre>
+                </div>
+
+                <aside class="kok-nota">
+                    <h3>Qué tener en cuenta</h3>
+                    <ul>
+                        <li>Necesita red la primera vez: el modelo se baja de Hugging Face y se guarda en
+                            la caché del navegador.</li>
+                        <li>En el móvil, WASM + q8 funciona; WebGPU todavía no está en todos los equipos.</li>
+                        <li>Idioma: la prueba va en inglés porque <code>kokoro-js</code> aún no fonemiza
+                            en español. La pestaña <strong>Voz</strong> del editor sí lee en español con
+                            las voces del sistema (0 MB).</li>
+                        <li>El WAV se genera en 16 bits y 24 kHz, listo para el editor de vídeo.</li>
+                    </ul>
+                    <p class="kok-volver"><a href="index.html"><i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        Volver a los editores</a></p>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { KokoroTTS } from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js';
+
+        var MODELO = 'onnx-community/Kokoro-82M-v1.0-ONNX';
+        var TROZO = 300;            // caracteres por locución (el modelo corta a 510 tokens)
+
+        function porId(id) { return document.getElementById(id); }
+        var selMotor = porId('kok-motor');
+        var selVoz = porId('kok-voz');
+        var inTexto = porId('kok-texto');
+        var cuChars = porId('kok-chars');
+        var inSpeed = porId('kok-speed');
+        var valSpeed = porId('kok-speed-val');
+        var btnCargar = porId('kok-cargar');
+        var btnGenerar = porId('kok-generar');
+        var enlaceWav = porId('kok-descargar');
+        var cajaBarra = porId('kok-barra-caja');
+        var barra = porId('kok-barra');
+        var estado = porId('kok-estado');
+        var audio = porId('kok-audio');
+        var log = porId('kok-log');
+
+        var tts = null;
+        var cargando = false;
+        var generando = false;
+        var urlWav = null;
+
+        /* WebGPU solo en contextos seguros y con adaptador. */
+        if (!navigator.gpu) {
+            var op = selMotor.querySelector('option[value="webgpu|fp32"]');
+            if (op) {
+                op.disabled = true;
+                op.textContent = 'WebGPU · no disponible en este navegador';
+            }
+        }
+
+        function escribe(linea) {
+            var t = new Date().toLocaleTimeString('es-ES');
+            log.textContent += '[' + t + '] ' + linea + '\n';
+            log.scrollTop = log.scrollHeight;
+        }
+        function di(msg, tipo) {
+            estado.textContent = msg;
+            estado.className = 'kok-estado' + (tipo ? ' es-' + tipo : '');
+        }
+        function pintarBarra(pct) {
+            if (pct == null) {
+                cajaBarra.hidden = true;
+                barra.style.width = '0%';
+                return;
+            }
+            cajaBarra.hidden = false;
+            barra.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        }
+
+        function actualizarCuenta() {
+            var n = inTexto.value.length;
+            cuChars.textContent = n + (n === 1 ? ' carácter' : ' caracteres');
+        }
+        inTexto.addEventListener('input', actualizarCuenta);
+        actualizarCuenta();
+
+        inSpeed.addEventListener('input', function () {
+            valSpeed.textContent = parseFloat(inSpeed.value).toFixed(2).replace('.', ',') + '×';
+        });
+
+        function elegirDispositivo() {
+            var partes = selMotor.value.split('|');
+            if (partes[0] === 'webgpu' && !navigator.gpu) return { device: 'wasm', dtype: 'q8' };
+            return { device: partes[0], dtype: partes[1] };
+        }
+
+        async function cargarModelo() {
+            if (cargando || generando) return;
+            cargando = true;
+            btnCargar.disabled = true;
+            btnGenerar.disabled = true;
+            enlaceWav.hidden = true;
+            var cfg = elegirDispositivo();
+            var t0 = performance.now();
+            di('Cargando ' + MODELO + ' (' + cfg.device + ' · ' + cfg.dtype + ')…');
+            escribe('Cargando modelo: ' + cfg.device + ' · ' + cfg.dtype);
+            pintarBarra(0);
+
+            var ultimoAviso = 0;
+            try {
+                tts = await KokoroTTS.from_pretrained(MODELO, {
+                    dtype: cfg.dtype,
+                    device: cfg.device,
+                    progress_callback: function (p) {
+                        if (p.status === 'progress' && p.total) {
+                            var pct = (p.loaded / p.total) * 100;
+                            pintarBarra(pct);
+                            var ahora = performance.now();
+                            if (ahora - ultimoAviso > 700) {
+                                ultimoAviso = ahora;
+                                di('Descargando ' + (p.file || 'modelo') + ': ' + Math.round(pct) + ' %');
+                            }
+                        } else if (p.status === 'done') {
+                            escribe('Listo: ' + p.file);
+                        }
+                    }
+                });
+                var seg = ((performance.now() - t0) / 1000).toFixed(1);
+                pintarBarra(null);
+                di('Modelo cargado en ' + seg + ' s. Ya puedes generar la voz.', 'ok');
+                escribe('Modelo listo en ' + seg + ' s.');
+                btnGenerar.disabled = false;
+            } catch (e) {
+                pintarBarra(null);
+                console.error(e);
+                di('No se pudo cargar el modelo.', 'error');
+                escribe('ERROR al cargar: ' + (e && e.message ? e.message : e));
+                escribe('Comprueba la conexión y que el navegador permita WASM. ' +
+                    'Si estás en file://, prueba con un servidor local.');
+            } finally {
+                cargando = false;
+                btnCargar.disabled = false;
+            }
+        }
+
+        function trocear(txt) {
+            var limpio = String(txt || '').replace(/\s+/g, ' ').trim();
+            if (!limpio) return [];
+            var frases = limpio.match(/[^.!?…]+[.!?…]*/g) || [limpio];
+            var out = [];
+            frases.forEach(function (f) {
+                f = f.trim();
+                while (f.length > TROZO) {
+                    var corte = f.lastIndexOf(' ', TROZO);
+                    if (corte < 80) corte = TROZO;
+                    out.push(f.slice(0, corte).trim());
+                    f = f.slice(corte).trim();
+                }
+                if (f) out.push(f);
+            });
+            return out;
+        }
+
+        /* WAV PCM 16 bits a partir de un Float32Array. */
+        function aWav(muestras, hz) {
+            var n = muestras.length;
+            var buf = new ArrayBuffer(44 + n * 2);
+            var v = new DataView(buf);
+            function txt(off, s) {
+                for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i));
+            }
+            txt(0, 'RIFF');
+            v.setUint32(4, 36 + n * 2, true);
+            txt(8, 'WAVE');
+            txt(12, 'fmt ');
+            v.setUint32(16, 16, true);
+            v.setUint16(20, 1, true);
+            v.setUint16(22, 1, true);
+            v.setUint32(24, hz, true);
+            v.setUint32(28, hz * 2, true);
+            v.setUint16(32, 2, true);
+            v.setUint16(34, 16, true);
+            txt(36, 'data');
+            v.setUint32(40, n * 2, true);
+            var o = 44;
+            for (var i = 0; i < n; i++, o += 2) {
+                var s = Math.max(-1, Math.min(1, muestras[i] || 0));
+                v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+            }
+            return new Blob([buf], { type: 'audio/wav' });
+        }
+
+        async function generar() {
+            if (!tts || generando || cargando) return;
+            var trozos = trocear(inTexto.value);
+            if (!trozos.length) {
+                di('Escribe algo primero.', 'error');
+                return;
+            }
+            generando = true;
+            btnGenerar.disabled = true;
+            btnCargar.disabled = true;
+            enlaceWav.hidden = true;
+            var voz = selVoz.value;
+            var speed = parseFloat(inSpeed.value) || 1;
+            var t0 = performance.now();
+            escribe('Generando ' + trozos.length + ' fragmento(s) con «' + voz + '»…');
+            pintarBarra(0);
+
+            try {
+                var partes = [];
+                var hz = 24000;
+                for (var i = 0; i < trozos.length; i++) {
+                    di('Generando ' + (i + 1) + ' de ' + trozos.length + '…');
+                    pintarBarra((i / trozos.length) * 100);
+                    var salida = await tts.generate(trozos[i], { voice: voz, speed: speed });
+                    hz = salida.sampling_rate || hz;
+                    partes.push(salida.audio);
+                    /* deja respirar a la interfaz entre fragmentos */
+                    await new Promise(function (r) { setTimeout(r, 0); });
+                }
+
+                var total = 0;
+                partes.forEach(function (p) { total += p.length; });
+                var mezcla = new Float32Array(total);
+                var off = 0;
+                partes.forEach(function (p) {
+                    mezcla.set(p, off);
+                    off += p.length;
+                });
+
+                var blob = aWav(mezcla, hz);
+                if (urlWav) URL.revokeObjectURL(urlWav);
+                urlWav = URL.createObjectURL(blob);
+                audio.src = urlWav;
+                audio.hidden = false;
+                enlaceWav.href = urlWav;
+                enlaceWav.hidden = false;
+
+                var seg = ((performance.now() - t0) / 1000).toFixed(1);
+                var dur = (total / hz).toFixed(1);
+                pintarBarra(100);
+                di('Voz generada: ' + dur + ' s de audio en ' + seg + ' s.', 'ok');
+                escribe('WAV de ' + dur + ' s · ' + Math.round(blob.size / 1024) + ' KB · ' + hz + ' Hz');
+            } catch (e) {
+                pintarBarra(null);
+                console.error(e);
+                di('No se pudo generar la voz.', 'error');
+                escribe('ERROR al generar: ' + (e && e.message ? e.message : e));
+            } finally {
+                generando = false;
+                btnGenerar.disabled = false;
+                btnCargar.disabled = false;
+            }
+        }
+
+        btnCargar.addEventListener('click', cargarModelo);
+        btnGenerar.addEventListener('click', generar);
+
+        escribe('kokoro-js 1.2.1 · modelo ' + MODELO);
+    </script>
+</body>
+
+</html>
