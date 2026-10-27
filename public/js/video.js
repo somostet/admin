@@ -112,8 +112,18 @@
     var musicaArchivo = null;   // P4: el File original (para reinyectarlo al deshacer)
     var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
     var musicaGanancia = null;  // GainNode (el volumen también funciona en vivo)
-var sfxBuf = []; // Array de AudioBuffer para efectos de sonido importados
-var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz importados
+    var sfxBuf = [];            // Array de AudioBuffer para efectos de sonido importados
+    var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz importados
+    var vocesNombres = [];
+    var nodosProgramados = [];
+    var bloquesVoz = [];
+    var timelineVozConfigurada = false;
+    var vozTimelineSelect = document.getElementById('voz-timeline-fuente');
+    var vozTimelineInicio = document.getElementById('voz-timeline-inicio');
+    var vozTimelineDur = document.getElementById('voz-timeline-dur');
+    var vozTimelineCanvas = document.getElementById('voz-timeline-canvas');
+    var vozTimelineBloques = document.getElementById('voz-timeline-bloques');
+    var vozTimelineVacia = document.getElementById('voz-timeline-vacia');
     /* F8 · captura de pestaña (getDisplayMedia) */
     var capturando = false;     // hay una captura de pestaña en curso
     var pidiendo = false;       // selector de pestaña abierto (evita doble clic)
@@ -6130,6 +6140,235 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
     }
 
     var decMusicaToken = 0;   // Q4: con dos decodificaciones seguidas gana la última
+    function leeBloquesVoz() {
+        try {
+            var valorGuardado = localStorage.getItem('vozSegmentos');
+            timelineVozConfigurada = valorGuardado !== null;
+            var guardados = JSON.parse(valorGuardado || '[]');
+            if (!Array.isArray(guardados)) return [];
+            return guardados.reduce(function (lista, bloque, idx) {
+                var inicio = Number(bloque && bloque.inicio);
+                var dur = Number(bloque && bloque.dur);
+                var voz = bloque && Number.isInteger(Number(bloque.vozIndex))
+                    ? Number(bloque.vozIndex) : idx;
+                if (isFinite(inicio) && inicio >= 0 && isFinite(dur) && dur > 0 && voz >= 0) {
+                    lista.push({ vozIndex: voz, inicio: inicio, dur: dur });
+                }
+                return lista;
+            }, []);
+        } catch (e) {
+            aviso('No se pudieron leer los bloques de voz guardados.', 'warning');
+            return [];
+        }
+    }
+
+    bloquesVoz = leeBloquesVoz();
+
+    function guardaBloquesVoz() {
+        try {
+            localStorage.setItem('vozSegmentos', JSON.stringify(bloquesVoz));
+            return true;
+        } catch (e) {
+            aviso('No se pudieron guardar los bloques de voz en este navegador.', 'warning');
+            return false;
+        }
+    }
+
+    function dibujaTimelineVoz() {
+        if (!vozTimelineCanvas || !vozTimelineBloques) return;
+
+        var selectValue = vozTimelineSelect ? vozTimelineSelect.value : '';
+        if (vozTimelineSelect) {
+            vozTimelineSelect.innerHTML = '';
+            if (!vocesBuf.length) {
+                var vacio = document.createElement('option');
+                vacio.value = '';
+                vacio.textContent = 'Importa un WAV para empezar';
+                vozTimelineSelect.appendChild(vacio);
+                vozTimelineSelect.disabled = true;
+            } else {
+                vocesBuf.forEach(function (buf, idx) {
+                    var opcion = document.createElement('option');
+                    opcion.value = String(idx);
+                    opcion.textContent = (idx + 1) + '. ' + (vocesNombres[idx] || 'Voz importada') +
+                        ' · ' + formatoAudio(buf.duration);
+                    vozTimelineSelect.appendChild(opcion);
+                });
+                vozTimelineSelect.disabled = false;
+                if (selectValue && vocesBuf[Number(selectValue)]) {
+                    vozTimelineSelect.value = selectValue;
+                } else {
+                    vozTimelineSelect.value = String(vocesBuf.length - 1);
+                }
+            }
+        }
+
+        var btnAgregar = document.getElementById('voz-agregar-bloque');
+        if (btnAgregar) btnAgregar.disabled = !vocesBuf.length;
+        vozTimelineBloques.innerHTML = '';
+        if (vozTimelineVacia) vozTimelineVacia.hidden = bloquesVoz.length > 0;
+        bloquesVoz.forEach(function (bloque, idx) {
+            var fila = document.createElement('div');
+            fila.className = 'voz-timeline-bloque';
+            var fuente = vocesNombres[bloque.vozIndex] ||
+                ('Voz ' + (bloque.vozIndex + 1) + ' (vuelve a importar el WAV)');
+            var titulo = document.createElement('strong');
+            titulo.className = 'voz-timeline-nombre';
+            titulo.textContent = fuente;
+            fila.appendChild(titulo);
+            var inicioLabel = document.createElement('label');
+            inicioLabel.className = 'voz-timeline-campo';
+            inicioLabel.appendChild(document.createTextNode('Inicio (s)'));
+            var inicioInput = document.createElement('input');
+            inicioInput.type = 'number';
+            inicioInput.className = 'form-control form-control-sm';
+            inicioInput.min = '0';
+            inicioInput.step = '0.1';
+            inicioInput.value = bloque.inicio.toFixed(1);
+            inicioInput.setAttribute('aria-label', 'Inicio de ' + fuente + ' en segundos');
+            inicioInput.addEventListener('change', function () {
+                var valor = Number(inicioInput.value);
+                if (!isFinite(valor) || valor < 0) {
+                    inicioInput.value = bloque.inicio.toFixed(1);
+                    aviso('El inicio debe ser cero o mayor.', 'warning');
+                    return;
+                }
+                timelineVozConfigurada = true;
+                bloque.inicio = valor;
+                guardaBloquesVoz();
+                dibujaTimelineVoz();
+            });
+            inicioLabel.appendChild(inicioInput);
+            fila.appendChild(inicioLabel);
+            var duracionLabel = document.createElement('label');
+            duracionLabel.className = 'voz-timeline-campo';
+            duracionLabel.appendChild(document.createTextNode('Duración máx. (s)'));
+            var duracionInput = document.createElement('input');
+            duracionInput.type = 'number';
+            duracionInput.className = 'form-control form-control-sm';
+            duracionInput.min = '0.1';
+            duracionInput.step = '0.1';
+            duracionInput.value = bloque.dur.toFixed(1);
+            duracionInput.setAttribute('aria-label', 'Duración de ' + fuente + ' en segundos');
+            duracionInput.addEventListener('change', function () {
+                var valor = Number(duracionInput.value);
+                if (!isFinite(valor) || valor <= 0) {
+                    duracionInput.value = bloque.dur.toFixed(1);
+                    aviso('La duración debe ser mayor que cero.', 'warning');
+                    return;
+                }
+                timelineVozConfigurada = true;
+                bloque.dur = valor;
+                guardaBloquesVoz();
+                dibujaTimelineVoz();
+            });
+            duracionLabel.appendChild(duracionInput);
+            fila.appendChild(duracionLabel);
+            var quitar = document.createElement('button');
+            quitar.type = 'button';
+            quitar.className = 'btn btn-sm btn-outline-danger';
+            quitar.textContent = 'Quitar';
+            quitar.setAttribute('aria-label', 'Quitar bloque de voz ' + (idx + 1));
+            quitar.addEventListener('click', function () {
+                timelineVozConfigurada = true;
+                bloquesVoz.splice(idx, 1);
+                guardaBloquesVoz();
+                dibujaTimelineVoz();
+            });
+            fila.appendChild(quitar);
+            vozTimelineBloques.appendChild(fila);
+        });
+
+        var rect = vozTimelineCanvas.getBoundingClientRect();
+        if (!rect.width) return;
+        var ratio = window.devicePixelRatio || 1;
+        var height = Math.max(110, 45 + bloquesVoz.length * 30);
+        vozTimelineCanvas.style.height = height + 'px';
+        vozTimelineCanvas.width = Math.round(rect.width * ratio);
+        vozTimelineCanvas.height = Math.round(height * ratio);
+        var ctx = vozTimelineCanvas.getContext('2d');
+        if (!ctx) return;
+        ctx.scale(ratio, ratio);
+        var width = rect.width;
+        var margenIzq = 38;
+        var margenDer = 8;
+        var anchoUtil = Math.max(1, width - margenIzq - margenDer);
+        var ultimoSegundo = bloquesVoz.reduce(function (maximo, bloque) {
+            return Math.max(maximo, bloque.inicio + bloque.dur);
+        }, 10);
+        var escalaFin = Math.ceil(ultimoSegundo / 5) * 5;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.font = '12px sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = 'rgba(127, 127, 127, .35)';
+        ctx.fillStyle = '#888';
+        for (var segundo = 0; segundo <= escalaFin; segundo += 5) {
+            var x = margenIzq + segundo / escalaFin * anchoUtil;
+            ctx.beginPath();
+            ctx.moveTo(x, 24);
+            ctx.lineTo(x, height - 8);
+            ctx.stroke();
+            ctx.fillText(segundo + ' s', Math.max(0, x - 8), 13);
+        }
+        bloquesVoz.forEach(function (bloque, idx) {
+            var x = margenIzq + bloque.inicio / escalaFin * anchoUtil;
+            var w = Math.max(4, Math.min(bloque.dur / escalaFin * anchoUtil,
+                margenIzq + anchoUtil - x));
+            var y = 31 + idx * 30;
+            ctx.fillStyle = '#0d6efd';
+            ctx.fillRect(x, y, w, 22);
+            ctx.fillStyle = '#fff';
+            ctx.fillText('Voz ' + (bloque.vozIndex + 1), x + 5, y + 11);
+        });
+    }
+
+    if (vozTimelineSelect) {
+        vozTimelineSelect.addEventListener('change', function () {
+            var buf = vocesBuf[Number(vozTimelineSelect.value)];
+            if (buf && vozTimelineDur) vozTimelineDur.value = buf.duration.toFixed(1);
+        });
+    }
+    var btnAgregarBloqueVoz = document.getElementById('voz-agregar-bloque');
+    if (btnAgregarBloqueVoz) {
+        btnAgregarBloqueVoz.addEventListener('click', function () {
+            var vozIndex = vozTimelineSelect ? Number(vozTimelineSelect.value) : -1;
+            var inicio = vozTimelineInicio ? Number(vozTimelineInicio.value) : NaN;
+            var dur = vozTimelineDur ? Number(vozTimelineDur.value) : NaN;
+            if (!vocesBuf[vozIndex]) {
+                aviso('Importa o selecciona una voz antes de agregar un bloque.', 'warning');
+                return;
+            }
+            if (!isFinite(inicio) || inicio < 0 || !isFinite(dur) || dur <= 0) {
+                aviso('El inicio debe ser cero o mayor y la duración debe ser mayor que cero.', 'warning');
+                return;
+            }
+            timelineVozConfigurada = true;
+            bloquesVoz.push({ vozIndex: vozIndex, inicio: inicio, dur: dur });
+            guardaBloquesVoz();
+            dibujaTimelineVoz();
+            if (vozTimelineInicio) vozTimelineInicio.value = (inicio + dur).toFixed(1);
+        });
+    }
+    var btnLimpiarBloquesVoz = document.getElementById('voz-limpiar-bloques');
+    if (btnLimpiarBloquesVoz) {
+        btnLimpiarBloquesVoz.addEventListener('click', function () {
+            timelineVozConfigurada = true;
+            bloquesVoz = [];
+            guardaBloquesVoz();
+            dibujaTimelineVoz();
+        });
+    }
+    if (vozTimelineCanvas) {
+        dibujaTimelineVoz();
+        window.addEventListener('resize', dibujaTimelineVoz);
+        document.addEventListener('shown.bs.tab', function (evento) {
+            if (evento.target && evento.target.getAttribute('data-bs-target') === '#vid-pane-voz') {
+                dibujaTimelineVoz();
+            }
+        });
+    }
+
     function decodificaMusica(datos, nombre) {
         var yo = ++decMusicaToken;
         var hecho = false;
@@ -6159,6 +6398,9 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
                 if (hecho) return;
                 hecho = true;
                 vocesBuf.push(buf);
+                vocesNombres.push(nombre);
+                dibujaTimelineVoz();
+                if (vozTimelineDur) vozTimelineDur.value = buf.duration.toFixed(1);
                 var estadoVoz = document.getElementById('voz-importar-estado');
                 if (estadoVoz) {
                     estadoVoz.textContent = nombre + ' importada · ' + formatoAudio(buf.duration) +
@@ -6255,12 +6497,42 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
     var vozWavInput = document.getElementById("voz-wav-input");
     if (vozWavInput) {
         vozWavInput.addEventListener("change", function () {
-            var f = vozWavInput.files && vozWavInput.files[0];
-            if (!f) return;
-            importaVozBlob(f, f.name).catch(function (error) {
-                var estadoVoz = document.getElementById('voz-importar-estado');
-                if (estadoVoz && error && error.message) estadoVoz.textContent = error.message;
-            });
+            var archivos = Array.prototype.slice.call(vozWavInput.files || []);
+            if (!archivos.length) return;
+            vozWavInput.value = '';
+            var estadoVoz = document.getElementById('voz-importar-estado');
+            var correctos = 0;
+            var indice = 0;
+            function importarSiguiente() {
+                if (indice >= archivos.length) {
+                    if (estadoVoz) {
+                        estadoVoz.textContent = correctos + ' de ' + archivos.length +
+                            ' voces WAV importadas. Selecciona cada voz en la línea de tiempo para acomodarla.';
+                    }
+                    return;
+                }
+                var archivo = archivos[indice++];
+                if (!(/^audio\/wav$/i.test(archivo.type) || /\.wav(e)?$/i.test(archivo.name))) {
+                    aviso('«' + archivo.name + '» no parece un archivo WAV; se omitió.', 'warning');
+                    importarSiguiente();
+                    return;
+                }
+                if (estadoVoz) {
+                    estadoVoz.textContent = 'Importando ' + indice + ' de ' + archivos.length +
+                        ': ' + archivo.name + '…';
+                }
+                importaVozBlob(archivo, archivo.name).then(function () {
+                    correctos++;
+                    importarSiguiente();
+                }).catch(function (error) {
+                    if (estadoVoz) {
+                        estadoVoz.textContent = 'No se pudo importar «' + archivo.name + '»: ' +
+                            (error && error.message ? error.message : 'error al leer el WAV.');
+                    }
+                    importarSiguiente();
+                });
+            }
+            importarSiguiente();
         });
     }
 
@@ -6485,38 +6757,58 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
     function preparaMusica(segTotal) {
         detenPreviewMusica();   // Q4: que no suene el ▶ mientras se graba
         detenerMusica();   // por si quedó algo de una grabación anterior
-        if (!musicaBuf) return false;
+        if (!musicaBuf && !sfxBuf.length && !vocesBuf.length) return false;
         try {
             if (!preparaCtxAudio()) return false;
             if (audioCtx.state === 'suspended') {
                 var p = audioCtx.resume();
                 if (p && p.catch) p.catch(function () { });
             }
-            var nodo = audioCtx.createBufferSource();
-            nodo.buffer = musicaBuf;
-            nodo.loop = musicaBuf.duration < segTotal;   // más corta ⇒ bucle
-            var gan = audioCtx.createGain();
-            gan.gain.value = parseInt(volMusica.value, 10) / 100;
-            nodo.connect(gan);
-            gan.connect(audioDest);   // al grabador, no a los altavoces
-            // Conectar efectos de sonido también
+            if (musicaBuf) {
+                musicaNodo = audioCtx.createBufferSource();
+                musicaNodo.buffer = musicaBuf;
+                musicaNodo.loop = musicaBuf.duration < segTotal;   // más corta ⇒ bucle
+                musicaGanancia = audioCtx.createGain();
+                musicaGanancia.gain.value = parseInt(volMusica.value, 10) / 100;
+                musicaNodo.connect(musicaGanancia);
+                musicaGanancia.connect(audioDest);   // al grabador, no a los altavoces
+            }
             sfxBuf.forEach(function (buf, idx) {
                 var snodo = audioCtx.createBufferSource();
                 snodo.buffer = buf;
                 snodo.loop = false;
                 snodo.connect(audioDest);   // al grabador
-                snodo.start(0, idx * (buf.duration || 0)); // offset para evitar solapes
+                nodosProgramados.push({
+                    nodo: snodo,
+                    desfase: idx * (buf.duration || 0)
+                });
             });
-            musicaNodo = nodo;
-            musicaGanancia = gan;
-            // Conectar segmentos de voz también
-            vocesBuf.forEach(function (buf, idx) {
-                var vnodo = audioCtx.createBufferSource();
-                vnodo.buffer = buf;
-                vnodo.loop = false;
-                vnodo.connect(audioDest);   // al grabador
-                vnodo.start(0, idx * (buf.duration || 0)); // offset para evitar solapes
-            });
+            if (timelineVozConfigurada) {
+                bloquesVoz.forEach(function (bloque) {
+                    var buf = vocesBuf[bloque.vozIndex];
+                    if (!buf) return;
+                    var vnodo = audioCtx.createBufferSource();
+                    vnodo.buffer = buf;
+                    vnodo.loop = false;
+                    vnodo.connect(audioDest);
+                    nodosProgramados.push({
+                        nodo: vnodo,
+                        desfase: bloque.inicio,
+                        duracion: Math.min(buf.duration, bloque.dur)
+                    });
+                });
+            } else {
+                vocesBuf.forEach(function (buf, idx) {
+                    var vnodo = audioCtx.createBufferSource();
+                    vnodo.buffer = buf;
+                    vnodo.loop = false;
+                    vnodo.connect(audioDest);
+                    nodosProgramados.push({
+                        nodo: vnodo,
+                        desfase: idx * (buf.duration || 0)
+                    });
+                });
+            }
             return true;
         } catch (e) {
             detenerMusica();
@@ -6525,8 +6817,16 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
     }
 
     function iniciaMusica() {
-        if (!musicaNodo) return;
-        try { musicaNodo.start(0); } catch (e) { }
+        var inicio = audioCtx ? audioCtx.currentTime : 0;
+        if (musicaNodo) musicaNodo.start(inicio);
+        nodosProgramados.forEach(function (programado) {
+            var cuando = inicio + programado.desfase;
+            if (programado.duracion) {
+                programado.nodo.start(cuando, 0, programado.duracion);
+            } else {
+                programado.nodo.start(cuando);
+            }
+        });
     }
 
     function detenerMusica() {
@@ -6537,6 +6837,11 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
         if (musicaGanancia) {
             try { musicaGanancia.disconnect(); } catch (e) { }
         }
+        nodosProgramados.forEach(function (programado) {
+            try { programado.nodo.stop(); } catch (e) { }
+            try { programado.nodo.disconnect(); } catch (e) { }
+        });
+        nodosProgramados = [];
         musicaNodo = null;
         musicaGanancia = null;
     }

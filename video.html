@@ -41,7 +41,7 @@
     <link rel="stylesheet" href="./public/css/style.css?v=r30">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
     <link rel="stylesheet" href="./public/css/video.css?v=r6">
-    <link rel="stylesheet" href="./public/css/voz.css?v=v4">
+    <link rel="stylesheet" href="./public/css/voz.css?v=v6">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Crea vídeos MP4 o WebM a partir de tus imágenes. Todo se procesa en tu dispositivo.">
@@ -855,117 +855,44 @@
                     <div class="tab-pane fade" id="vid-pane-voz" role="tabpanel"
                          aria-labelledby="vid-tab-voz" tabindex="0">
                         <div class="voz-caja" id="voz-caja"></div>
-<div class="voz-timeline" style="margin-top: 1rem; display: block;">
+<section class="voz-timeline" aria-labelledby="voz-timeline-titulo">
   <hr class="my-3">
-  <h6 class="mb-2">Línea de tiempo de voz</h6>
+  <h6 class="mb-2" id="voz-timeline-titulo">Línea de tiempo de voz</h6>
+  <p class="form-text">Selecciona varios archivos WAV a la vez. Después añade cada voz y define su inicio y duración.</p>
   <div class="voz-timeline-controls">
-    <div class="form-row">
-      <div class="form-group col-md-4">
-        <label>Tiempo inicio (s)</label>
-        <input type="number" class="form-control" id="voz-timeline-inicio" min="0" step="0.1" value="0">
-      </div>
-      <div class="form-group col-md-4">
-        <label>Duración (s)</label>
-        <input type="number" class="form-control" id="voz-timeline-dur" min="0.1" step="0.1" value="30">
-      </div>
-      <div class="form-group col-md-4">
-        <button type="button" class="btn btn-primary btn-block" id="voz-agregar-bloque">Agregar bloque</button>
-      </div>
+    <div class="form-group">
+      <label for="voz-timeline-fuente">Voz importada</label>
+      <select class="form-select" id="voz-timeline-fuente" disabled>
+        <option value="">Importa un WAV para empezar</option>
+      </select>
     </div>
+    <div class="form-group">
+      <label for="voz-timeline-inicio">Tiempo de inicio (s)</label>
+      <input type="number" class="form-control" id="voz-timeline-inicio" min="0" step="0.1" value="0">
+    </div>
+    <div class="form-group">
+      <label for="voz-timeline-dur">Duración máxima (s)</label>
+      <input type="number" class="form-control" id="voz-timeline-dur" min="0.1" step="0.1" value="30">
+    </div>
+    <button type="button" class="btn btn-primary" id="voz-agregar-bloque" disabled>Agregar bloque</button>
   </div>
-  <canvas id="voz-timeline-canvas" height="80"></canvas>
-  <div class="voz-timeline-bloques" id="voz-timeline-bloques"></div>
+  <canvas id="voz-timeline-canvas" height="110" role="img" aria-label="Línea de tiempo de las voces importadas"></canvas>
+  <div class="voz-timeline-bloques" id="voz-timeline-bloques" aria-live="polite"></div>
+  <p class="voz-timeline-vacia" id="voz-timeline-vacia">Todavía no hay voces en la línea de tiempo.</p>
   <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="voz-limpiar-bloques">Limpiar todos los bloques</button>
-</div>
+</section>
 <div class="voz-importar" style="margin-top: 1rem;">
   <hr class="my-3">
-  <h6 class="mb-2">Importar voz generada (WAV)</h6>
+  <h6 class="mb-2">Importar voces (WAV)</h6>
   <div class="voz-importar-controles">
-    <label class="form-label">Importar voz generada (WAV)</label>
-    <input type="file" class="form-control" id="voz-wav-input" accept="audio/wav">
+    <label class="form-label" for="voz-wav-input">Selecciona uno o varios archivos WAV</label>
+    <input type="file" class="form-control" id="voz-wav-input" accept=".wav,.wave,audio/wav" multiple>
     <div class="voz-importar-estado mt-2" id="voz-importar-estado"></div>
     <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="voz-detener-importar" disabled>
       <i class="fas fa-stop" aria-hidden="true"></i> Detener
     </button>
   </div>
 </div>
-<div class="voz-seg-panel" style="margin-top: 1rem; display: none;">
-  <hr class="my-3">
-  <h6 class="mb-2">Segmentos de voz</h6>
-  <div class="voz-seg-form">
-    <div class="form-row">
-      <div class="form-group col-md-6">
-        <label>Tiempo inicio (s)</label>
-        <input type="number" class="form-control" id="voz-seg-inicio" min="0" step="0.1" value="0">
-      </div>
-      <div class="form-group col-md-6">
-        <label>Duración (s)</label>
-        <input type="number" class="form-control" id="voz-seg-dur" min="0.1" step="0.1" value="30">
-      </div>
-    </div>
-  </div>
-  <button type="button" class="btn btn-primary btn-sm mt-2" id="voz-agregar-seg">Agregar segmento</button>
-  <table class="table table-sm mt-3">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Inicio (s)</th>
-        <th>Duración (s)</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="voz-seg-body"></tbody>
-  </table>
-</div>
-
-<script>
-let segments = JSON.parse(localStorage.getItem('vozSegmentos') || '[]');
-const tbody = document.getElementById('voz-seg-body');
-tbody.innerHTML = '';
-segments.forEach((s, i) => {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td>${i + 1}</td><td><input type="number" class="form-control form-control-sm" value="${s.inicio}" min="0" step="0.1" style="width: 60px"></td><td><input type="number" class="form-control form-control-sm" value="${s.dur}" min="0.1" step="0.1" style="width: 60px"></td><td><button type="button" class="btn btn-link text-danger btn-sm btn-elimina">Eliminar</button></td>`;
-  tbody.appendChild(tr);
-});
-document.querySelectorAll('.btn-elimina').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const row = btn.closest('tr');
-    const idx = Array.from(tbody.children).indexOf(row);
-    segments.splice(idx, 1);
-    localStorage.setItem('vozSegmentos', JSON.stringify(segments));
-    renderSegments();
-  });
-});
-function renderSegments() {
-  tbody.innerHTML = '';
-  segments.forEach((s, i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i + 1}</td><td><input type="number" class="form-control form-control-sm" value="${s.inicio}" min="0" step="0.1" style="width: 60px"></td><td><input type="number" class="form-control form-control-sm" value="${s.dur}" min="0.1" step="0.1" style="width: 60px"></td><td><button type="button" class="btn btn-link text-danger btn-sm btn-elimina">Eliminar</button></td>`;
-    tbody.appendChild(tr);
-  });
-  document.querySelectorAll('.btn-elimina').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const row = btn.closest('tr');
-      const idx = Array.from(tbody.children).indexOf(row);
-      segments.splice(idx, 1);
-      localStorage.setItem('vozSegmentos', JSON.stringify(segments));
-      renderSegments();
-    });
-  });
-}
-renderSegments();
-
-document.getElementById('voz-agregar-seg').addEventListener('click', function() {
-  const inicio = parseFloat(document.getElementById('voz-seg-inicio').value) || 0;
-  const dur = parseFloat(document.getElementById('voz-seg-dur').value) || 1;
-  if (inicio < 0 || dur < 0.1) return;
-  segments.push({ inicio, dur });
-  localStorage.setItem('vozSegmentos', JSON.stringify(segments));
-  renderSegments();
-  document.getElementById('voz-seg-inicio').value = 0;
-  document.getElementById('voz-seg-dur').value = 30;
-});
-</script>
                     </div>
                     <div class="tab-pane fade" id="vid-pane-exportar" role="tabpanel"
                          aria-labelledby="vid-tab-exportar" tabindex="0">
@@ -1130,7 +1057,7 @@ document.getElementById('voz-agregar-seg').addEventListener('click', function() 
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1b"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r25"></script>
+    <script src="./public/js/video.js?v=r27"></script>
     <!-- Voz: lee la narración con las voces del sistema (pestaña «Voz») -->
     <script src="./public/js/voz.js?v=v5"></script>
     <script src="./public/js/piper-editor.js?v=p1"></script>
