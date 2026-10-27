@@ -6,7 +6,8 @@
 
    La voz del sistema NO se puede exportar a archivo (no pasa por Web
    Audio), así que aquí sirve para ensayar la narración y medir cuánto
-   dura; para un WAV descargable está la prueba de Piper (piper.html).
+   dura. El bloque Piper de esta misma pestaña genera e importa el WAV
+   para la exportación.
 
    El marcado de la pestaña está en video.html; este archivo solo rellena
    el contenedor #voz-caja.
@@ -41,8 +42,8 @@
     }
 
     caja.innerHTML =
-        '<p class="voz-intro">Escribe la narración y escúchala antes de montar el vídeo. ' +
-            'Usa las voces del sistema: sin instalar nada.</p>' +
+        '<p class="voz-intro">Escribe la narración una sola vez. Puedes ensayarla con la voz del sistema ' +
+            'o generar un WAV con Piper para incluirlo en el vídeo.</p>' +
 
         '<label class="form-label" for="voz-texto">Texto</label>' +
         '<textarea class="form-control" id="voz-texto" rows="6" ' +
@@ -90,12 +91,38 @@
 
         '<p class="voz-estado" id="voz-estado" aria-live="polite">Listo.</p>' +
 
+        '<section class="voz-piper" aria-labelledby="voz-piper-titulo">' +
+            '<h3 id="voz-piper-titulo">Generar voz neuronal para el vídeo</h3>' +
+            '<p class="voz-nota">Piper usará el mismo texto de arriba. La primera vez descarga el modelo de voz; ' +
+                'necesita conexión y abrir el editor desde HTTPS o localhost.</p>' +
+            '<label class="form-label" for="voz-piper-modelo">Voz de Piper</label>' +
+            '<select class="form-select" id="voz-piper-modelo">' +
+                '<option value="es_ES-davefx-medium">Español · España · hombre · Davefx</option>' +
+                '<option value="es_ES-sharvard-medium">Español · España · mujer · Sharvard</option>' +
+                '<option value="es_MX-claude-high">Español · México · mujer · Claude</option>' +
+                '<option value="es_MX-ald-medium">Español · México · hombre · Aldo</option>' +
+                '<option value="es_ES-carlfm-x_low">Español · España · hombre · CarlFM (ligera)</option>' +
+            '</select>' +
+            '<div class="voz-acciones">' +
+                '<button type="button" class="btn btn-outline-primary btn-sm" id="voz-piper-cargar">' +
+                    '<i class="fas fa-download" aria-hidden="true"></i> Cargar modelo</button>' +
+                '<button type="button" class="btn btn-primary btn-sm" id="voz-piper-generar" disabled>' +
+                    '<i class="fas fa-microphone-alt" aria-hidden="true"></i> Generar e importar WAV</button>' +
+                '<a class="btn btn-outline-secondary btn-sm" id="voz-piper-descargar" ' +
+                    'href="#" download="voz-piper.wav" hidden>Descargar WAV</a>' +
+            '</div>' +
+            '<div class="progress voz-piper-progreso" id="voz-piper-progreso-caja" hidden ' +
+                'role="progressbar" aria-label="Progreso de Piper" aria-valuemin="0" aria-valuemax="100">' +
+                '<div class="progress-bar" id="voz-piper-progreso"></div>' +
+            '</div>' +
+            '<audio class="voz-piper-audio" id="voz-piper-audio" controls hidden></audio>' +
+            '<p class="voz-estado" id="voz-piper-estado" aria-live="polite">Carga un modelo para empezar.</p>' +
+        '</section>' +
+
         '<div class="alert alert-warning voz-aviso">' +
             '<p><i class="fas fa-info-circle" aria-hidden="true"></i> ' +
-                'El navegador reproduce la voz pero <strong>no deja exportarla</strong>: ' +
-                'sirve para ensayar y medir la duración de cada diapositiva. Para un WAV ' +
-                'descargable, prueba <a href="./piper.html">la voz neuronal</a> y súbelo ' +
-                'como música en <strong>Ajustes</strong>.</p>' +
+                'La voz del sistema solo sirve para ensayar y medir la duración. El WAV generado con Piper ' +
+                'se importa automáticamente como voz para la exportación del vídeo.</p>' +
         '</div>';
 
     var inTexto = porId('voz-texto');

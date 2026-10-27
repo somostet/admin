@@ -2,11 +2,11 @@
 <html lang="es">
 
 <head>
-    <!-- Página de voz neuronal (Piper): la prueba que hace `video.html` enlaza
-         desde la pestaña «Voz». Es la única página del sitio que carga código de
-         terceros (piper-tts-web desde jsDelivr, ONNX Runtime y espeak-ng WASM desde
-         jsDelivr + cdnjs, modelo desde Hugging Face). Por eso su CSP es más abierta
-         que la del resto de editores. -->
+    <!-- Página independiente de voz neuronal (Piper). El editor de vídeo también
+         integra este motor en «Voz». Esta página carga código de terceros
+         (piper-tts-web desde jsDelivr, ONNX Runtime y espeak-ng WASM desde
+         jsDelivr + cdnjs, modelo desde Hugging Face), por eso su CSP es más
+         abierta que la del resto de editores. -->
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';">
     <script type="importmap">
@@ -72,8 +72,8 @@
                         <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                         <p><strong>Esta prueba habla español.</strong> El modelo <code>es_ES-davefx-medium</code>
                             y otras voces de <code>es_ES</code> / <code>es_MX</code> funcionan con Piper en el
-                            navegador. El audio se genera en WAV de 16 bits para subirlo al editor de vídeo
-                            (<strong>Ajustes → música</strong>) y que se mezcle con el MP4.</p>
+                            navegador. El audio se genera en WAV de 16 bits para importarlo al editor de vídeo
+                            (<strong>Voz → Importar voz generada (WAV)</strong>) y mezclarlo con el MP4.</p>
                     </div>
 
                     <div class="piper-fila">
@@ -132,9 +132,9 @@
     </main>
 
     <script type="module">
-        import * as tts from 'https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.5/dist/piper-tts-web.js';
+        import { cargarModeloPiper, generarAudioPiper } from './public/js/piper-core.js';
 
-        var MODELO = 'es_ES-davefx-medium';
+        var MODELO = null;
         var TROZO = 400;            // caracteres por locución (el modelo corta solos los bloques)
 
         function porId(id) { return document.getElementById(id); }
@@ -151,7 +151,9 @@
         var log = porId('piper-log');
 
         var generando = false;
+        var cargando = false;
         var urlWav = null;
+        var modeloCargado = null;
 
         var VOCES = {
             'es_ES-davefx-medium': { nombre: 'Español · España · hombre · Davefx', tamano: '63 MB' },
@@ -160,9 +162,6 @@
             'es_MX-ald-medium': { nombre: 'Español · México · hombre · Aldo', tamano: '63 MB' },
             'es_ES-carlfm-x_low': { nombre: 'Español · España · hombre · CarlFM (ligera)', tamano: '28 MB' }
         };
-        var idVozActual = null;
-        var generado = false;
-
         function escribe(linea) {
             var t = new Date().toLocaleTimeString('es-ES');
             log.textContent += '[' + t + '] ' + linea + '\n';
@@ -190,25 +189,29 @@
         actualizarCuenta();
 
         selVoz.addEventListener('change', function () {
-            idVozActual = selVoz.value;
-            if (generado) {
-                /* La sesión de Piper se mantiene por voz: al cambiarla la vuelve a
-                   montar, así que basta con recargar (el modelo ya está en caché) */
-                location.reload();
+            modeloCargado = null;
+            btnGenerar.disabled = true;
+            enlaceWav.hidden = true;
+            audio.hidden = true;
+            if (urlWav) {
+                URL.revokeObjectURL(urlWav);
+                urlWav = null;
             }
+            di('Carga el modelo de esta voz para poder generar audio.');
         });
 
-        function elegirDispositivo() {
-            return { device: 'wasm', dtype: 'q8' };
-        }
-
         async function cargarModelo() {
+            if (cargando || generando) return;
+            MODELO = selVoz.value;
+            cargando = true;
+            selVoz.disabled = true;
             try {
                 var t0 = performance.now();
                 di('Cargando ' + MODELO + ' (wasm · q8)…');
                 escribe('Cargando modelo: ' + MODELO);
                 pintarBarra(0);
-                await tts.download(MODELO, function (p) {
+                btnCargar.disabled = true;
+                await cargarModeloPiper(MODELO, function (p) {
                     if (p && p.status === 'progress' && p.total) {
                         pintarBarra((p.loaded / p.total) * 100);
                         di('Descargando modelo… ' + Math.round((p.loaded / p.total) * 100) + ' %');
@@ -220,12 +223,17 @@
                 pintarBarra(null);
                 di('Modelo cargado en ' + seg + ' s. Ya puedes generar la voz.', 'ok');
                 escribe('Modelo listo en ' + seg + ' s.');
-                btnGenerar.disabled = false;
+                modeloCargado = MODELO;
             } catch (e) {
                 pintarBarra(null);
                 console.error(e);
-                di('No se pudo cargar el modelo.', 'error');
+                di(e && e.message ? e.message : 'No se pudo cargar el modelo.', 'error');
                 escribe('ERROR al cargar: ' + (e && e.message ? e.message : e));
+            } finally {
+                cargando = false;
+                selVoz.disabled = false;
+                btnGenerar.disabled = modeloCargado !== selVoz.value;
+                btnCargar.disabled = false;
             }
         }
 
@@ -248,14 +256,14 @@
         }
 
         async function generar() {
-            if (!tts) return;
-            if (generando) return;
+            if (generando || cargando) return;
             var text = inTexto.value.trim();
             if (!text) {
                 di('Escribe algo primero.', 'error');
                 return;
             }
             generando = true;
+            selVoz.disabled = true;
             btnGenerar.disabled = true;
             btnCargar.disabled = true;
             enlaceWav.hidden = true;
@@ -264,10 +272,10 @@
             escribe('Generando ' + voz + '…');
             pintarBarra(0);
             try {
-                await tts.download(voz, function (p) {
+                await cargarModeloPiper(voz, function (p) {
                     if (p && p.status === 'progress' && p.total) pintarBarra((p.loaded / p.total) * 100);
                 });
-                var blob = await tts.predict({ text: text, voiceId: voz }, function () { });
+                var blob = await generarAudioPiper(text, voz);
                 var url = URL.createObjectURL(blob);
                 if (urlWav) URL.revokeObjectURL(urlWav);
                 urlWav = url;
@@ -278,25 +286,17 @@
                 var seg = ((performance.now() - t0) / 1000).toFixed(1);
                 var kb = Math.round(blob.size / 1024);
                 pintarBarra(null);
-                di('Voz generada en ' + seg + ' s. Descárgala y súbela a «Ajustes → música».', 'ok');
+                di('Voz generada en ' + seg + ' s. Descárgala para importarla en el editor de vídeo.', 'ok');
                 escribe('WAV listo · ' + kb + ' KB · 16 bits · lista para el editor.');
-                generado = true;
-                // --- DEVOLVER LA VOZ AL PÁDRE (video.html) ---
-                try {
-                    window.opener.tetPiperWavBlob = blob;
-                    window.opener.tetPiperWavName = voz;
-                    window.opener.document.getElementById('voz-importar-estado').textContent = 'Voz generada con Piper: ' + voz + ' · ' + Math.round(blob.duration) + ' s';
-                } catch (e) {
-                    console.log('No se pudo notificar al padre (¿popup bloqueado?)');
-                }
             } catch (e) {
                 pintarBarra(null);
                 console.error(e);
-                di('No se pudo generar la voz.', 'error');
+                di(e && e.message ? e.message : 'No se pudo generar la voz.', 'error');
                 escribe('ERROR al generar: ' + (e && e.message ? e.message : e));
             } finally {
                 generando = false;
-                btnGenerar.disabled = false;
+                selVoz.disabled = false;
+                btnGenerar.disabled = modeloCargado !== selVoz.value;
                 btnCargar.disabled = false;
             }
         }
@@ -304,7 +304,7 @@
         btnCargar.addEventListener('click', function () { if (!generando) cargarModelo(); });
         btnGenerar.addEventListener('click', generar);
 
-        escribe('piper-tts-web 1.0.5 · modelo ' + MODELO);
+        escribe('piper-tts-web 1.0.5 · selecciona y carga una voz para empezar');
     </script>
 </body>
 

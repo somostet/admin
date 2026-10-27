@@ -106,3 +106,35 @@
     text-decoration: underline;
     font-weight: 600;
 }
+
+.voz-piper {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--sh-border, rgba(255, 255, 255, .16));
+    border-radius: .75rem;
+    background: var(--sh-surface, rgba(255, 255, 255, .04));
+}
+
+.voz-piper h3 {
+    margin: 0 0 .45rem;
+    font-size: 1rem;
+    color: var(--sh-text);
+}
+
+.voz-piper .voz-acciones {
+    margin-top: .75rem;
+}
+
+.voz-piper-progreso {
+    margin-top: .9rem;
+}
+
+.voz-piper-audio {
+    display: block;
+    width: 100%;
+    margin-top: .8rem;
+}
+
+.voz-piper [hidden] {
+    display: none !important;
+}

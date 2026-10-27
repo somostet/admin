@@ -6152,34 +6152,61 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
         }
     }
 
-    function decodificaVoz(datos, idx, nombre) {
-        var yo = ++decMusicaToken;
-        var hecho = false;
-        var ok = function (buf) {
-            if (hecho || yo !== decMusicaToken) return;
-            hecho = true;
-            vocesBuf[idx] = buf;
-            if (audioDest) {
-                var nodo = audioCtx.createBufferSource();
-                nodo.buffer = buf;
-                nodo.loop = false;
-                nodo.connect(audioDest);
-                nodo.start();
+    function decodificaVoz(datos, nombre) {
+        return new Promise(function (resolve, reject) {
+            var hecho = false;
+            var ok = function (buf) {
+                if (hecho) return;
+                hecho = true;
+                vocesBuf.push(buf);
+                var estadoVoz = document.getElementById('voz-importar-estado');
+                if (estadoVoz) {
+                    estadoVoz.textContent = nombre + ' importada · ' + formatoAudio(buf.duration) +
+                        ' · se incluirá en la exportación.';
+                }
+                resolve(buf);
+            };
+            var mal = function (error) {
+                if (hecho) return;
+                hecho = true;
+                var mensaje = 'No se pudo decodificar ' + nombre + ': prueba con WAV.';
+                aviso(mensaje, 'danger');
+                reject(error instanceof Error ? error : new Error(mensaje));
+            };
+            try {
+                var r = audioCtx.decodeAudioData(datos, ok, mal);
+                if (r && r.then) r.then(ok).catch(mal);
+            } catch (e) {
+                mal(e);
             }
-            pintaVoz();
-        };
-        var mal = function () {
-            if (hecho || yo !== decMusicaToken) return;
-            hecho = true;
-            aviso('No se pudo decodificar ' + nombre + ': prueba con WAV', 'danger');
-        };
-        try {
-            var r = audioCtx.decodeAudioData(datos, ok, mal);
-            if (r && r.then) r.then(ok).catch(mal);
-        } catch (e) {
-            mal();
-        }
+        });
     }
+
+    function importaVozBlob(blob, nombre) {
+        if (!blob || typeof blob.size !== 'number' || !blob.size) {
+            return Promise.reject(new Error('El archivo WAV está vacío o no es válido.'));
+        }
+        if (!preparaCtxAudio()) {
+            aviso('Tu navegador no soporta Web Audio', 'warning');
+            return Promise.reject(new Error('Tu navegador no soporta Web Audio.'));
+        }
+        return new Promise(function (resolve, reject) {
+            var lector = new FileReader();
+            lector.onload = function () {
+                decodificaVoz(lector.result, nombre).then(resolve, reject);
+            };
+            lector.onerror = function () {
+                var mensaje = 'No se pudo leer ' + nombre + '.';
+                aviso(mensaje, 'danger');
+                reject(new Error(mensaje));
+            };
+            lector.readAsArrayBuffer(blob);
+        });
+    }
+
+    window.tetImportaVozGenerada = function (blob, nombre) {
+        return importaVozBlob(blob, nombre || 'voz-piper.wav');
+    };
 
     function decodificaSfx(datos, idx, nombre) {
         var yo = ++decMusicaToken;
@@ -6230,14 +6257,10 @@ var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz import
         vozWavInput.addEventListener("change", function () {
             var f = vozWavInput.files && vozWavInput.files[0];
             if (!f) return;
-            if (!preparaCtxAudio()) {
-                aviso("Tu navegador no soporta Web Audio", "warning");
-                return;
-            }
-            var lector = new FileReader();
-            lector.onload = function () { decodificaVoz(lector.result, vocesBuf.length, f.name); };
-            lector.onerror = function () { aviso("No se pudo leer " + f.name + "", "danger"); };
-            lector.readAsArrayBuffer(f);
+            importaVozBlob(f, f.name).catch(function (error) {
+                var estadoVoz = document.getElementById('voz-importar-estado');
+                if (estadoVoz && error && error.message) estadoVoz.textContent = error.message;
+            });
         });
     }
 

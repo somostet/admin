@@ -8,10 +8,17 @@
         if (location.protocol === 'http:' || location.protocol === 'https:') {
             var csp = document.createElement('meta');
             csp.setAttribute('http-equiv', 'Content-Security-Policy');
-            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
             document.head.appendChild(csp);
             /* frame-buster: en http/https el admin no se deja embeber en un iframe */
             if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
+        }
+    </script>
+    <script type="importmap">
+        {
+            "imports": {
+                "onnxruntime-web/wasm": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/esm/ort.wasm.min.js"
+            }
         }
     </script>
     <meta charset="UTF-8">
@@ -1125,7 +1132,8 @@ document.getElementById('voz-agregar-seg').addEventListener('click', function() 
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/video.js?v=r25"></script>
     <!-- Voz: lee la narración con las voces del sistema (pestaña «Voz») -->
-    <script src="./public/js/voz.js?v=v4"></script>
+    <script src="./public/js/voz.js?v=v5"></script>
+    <script src="./public/js/piper-editor.js?v=p1"></script>
 
     <script>
         if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
