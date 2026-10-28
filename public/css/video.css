@@ -881,12 +881,16 @@
     }
 }
 
-/* P3 · pestañas del formulario: objetivo táctil de 44 px como el resto
-   de controles; se parten en dos filas antes que en scroll oculto */
+/* P3 · pestañas del formulario: objetivo táctil amplio y distribución
+   adaptable sin ocultar pestañas en un carril de scroll */
 .vid-pestanas .nav-link {
     min-height: 44px;
     display: flex;
     align-items: center;
+}
+
+.vid-pestanas {
+    flex: 1 1 auto;
 }
 
 /* P4 · deshacer/rehacer en la misma fila que las pestañas: si no caben,
@@ -934,6 +938,27 @@
 @media (max-width: 575.98px) {
     .vid-caja {
         padding: .75rem;
+    }
+
+    .vid-pestanas {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .vid-pestanas .nav-item,
+    .vid-pestanas .nav-link {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .vid-pestanas .nav-link {
+        justify-content: center;
+        padding-right: .25rem;
+        padding-left: .25rem;
+        font-size: .82rem;
+        white-space: nowrap;
     }
 
     .vid-foto,

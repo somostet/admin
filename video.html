@@ -40,7 +40,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css?v=r30">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
-    <link rel="stylesheet" href="./public/css/video.css?v=r6">
+    <link rel="stylesheet" href="./public/css/video.css?v=r8">
     <link rel="stylesheet" href="./public/css/voz.css?v=v6">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
@@ -150,17 +150,19 @@
                         sobre la vista previa para seleccionarlo y arrastra su manija para colocarlo; deslizar
                         sobre el lienzo sigue moviendo la página.</p>
 
-                    <!-- P3 · pestañas del formulario: el lienzo y la barra de acción
-                         quedan fuera para verlos siempre; el resto se organiza por pestañas.
-                         El orden físico de los paneles sigue el del formulario original
-                         (Ajustes antes que Textos) y la barra los reordena por flujo:
-                         Bootstrap los enlaza por id, no por posición -->
+                    <!-- P3 · el lienzo y la acción principal quedan siempre visibles.
+                         Bootstrap enlaza los paneles por id. -->
                     <div class="vid-pestanas-fila">
                     <ul class="nav nav-tabs vid-pestanas" id="vid-pestanas" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="vid-tab-contenido" data-bs-toggle="tab"
                                     data-bs-target="#vid-pane-contenido" type="button" role="tab"
                                     aria-controls="vid-pane-contenido" aria-selected="true">Contenido</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="vid-tab-ajustes" data-bs-toggle="tab"
+                                    data-bs-target="#vid-pane-ajustes" type="button" role="tab"
+                                    aria-controls="vid-pane-ajustes" aria-selected="false" tabindex="-1">Ajustes</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="vid-tab-tamano" data-bs-toggle="tab"
@@ -178,9 +180,9 @@
                                     aria-controls="vid-pane-capas" aria-selected="false" tabindex="-1">Capas</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="vid-tab-ajustes" data-bs-toggle="tab"
-                                    data-bs-target="#vid-pane-ajustes" type="button" role="tab"
-                                    aria-controls="vid-pane-ajustes" aria-selected="false" tabindex="-1">Ajustes</button>
+                            <button class="nav-link" id="vid-tab-musica" data-bs-toggle="tab"
+                                    data-bs-target="#vid-pane-musica" type="button" role="tab"
+                                    aria-controls="vid-pane-musica" aria-selected="false" tabindex="-1">Música</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="vid-tab-voz" data-bs-toggle="tab"
@@ -363,9 +365,73 @@
                     <div class="tab-pane fade" id="vid-pane-tamano" role="tabpanel"
                          aria-labelledby="vid-tab-tamano" tabindex="0">
 
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label class="form-label" for="vid-plataforma">Formato de salida</label>
+                            <select class="form-select" id="vid-plataforma">
+                                <option value="orig" selected>Original (primera imagen o vídeo)</option>
+                                <option value="tiktok">TikTok — 1080×1920</option>
+                                <option value="reel">Reel (Instagram) — 1080×1920</option>
+                                <option value="short">Short (YouTube) — 1080×1920</option>
+                                <option value="youtube">YouTube (16:9) — 1920×1080</option>
+                                <option value="ig1">Feed de IG (1:1) — 1080×1080</option>
+                                <option value="ig45">Feed de IG (4:5) — 1080×1350</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                            <div id="vid-plat-custom" hidden>
+                                <div class="d-flex gap-2 mt-2">
+                                    <div class="flex-fill">
+                                        <label class="form-label mb-1" for="vid-plat-ancho">Ancho (px)</label>
+                                        <input type="number" class="form-control" id="vid-plat-ancho"
+                                               min="160" max="1920" step="2" value="1080" inputmode="numeric">
+                                    </div>
+                                    <div class="flex-fill">
+                                        <label class="form-label mb-1" for="vid-plat-alto">Alto (px)</label>
+                                        <input type="number" class="form-control" id="vid-plat-alto"
+                                               min="160" max="1920" step="2" value="1920" inputmode="numeric">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12" hidden>
+                            <label class="form-label" for="vid-tamano">Resolución de salida</label>
+                            <select class="form-select" id="vid-tamano"></select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="vid-ajuste">Ajuste del contenido</label>
+                            <select class="form-select" id="vid-ajuste">
+                                <option value="cover">Cubrir (recorta los bordes)</option>
+                                <option value="contain">Contener (con fondo)</option>
+                                <option value="blur">Contener con fondo desenfocado</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="vid-fondo">Fondo</label>
+                            <input type="color" class="form-control form-control-color w-100"
+                                   id="vid-fondo" value="#ffffff" title="Color de fondo">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="vid-plantilla">Plantilla</label>
+                            <select class="form-select" id="vid-plantilla">
+                                <option value="ninguna" selected>Sin plantilla</option>
+                                <option value="news">Tet News (noticias)</option>
+                                <option value="newsnuevo">Tet News (nuevo)</option>
+                                <option value="somostet">somostet</option>
+                                <option value="estrenosrojo">Estrenos Streaming (rojo)</option>
+                                <option value="estrenosazul">Estrenos Streaming (azul)</option>
+                            </select>
+                            <label class="form-label mt-2" for="vid-barra-pos">Posición de la barra</label>
+                            <select class="form-select" id="vid-barra-pos">
+                                <option value="arriba" selected>Solo arriba</option>
+                                <option value="abajo">Solo abajo</option>
+                            </select>
+                            <div class="form-text">Con plantilla, el contenido se coloca dentro del cuerpo.</div>
+                        </div>
+                    </div>
+
                     <!-- M1 · controles del contenido, ahora en su propia pestaña -->
                     <p class="form-text mb-0" id="vid-tamano-vacio">El tamaño del contenido se
-                        ajusta cuando hay una plantilla activa. Elige una en «Ajustes» para
+                        ajusta cuando hay una plantilla activa. Elige una arriba para
                         escalar, centrar, llenar o ajustar el contenido.</p>
                     <div class="vid-contenido-controles" id="vid-contenido-controles" hidden>
                         <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
@@ -409,41 +475,6 @@
 
                     <div class="row g-3 vid-ajustes mt-1">
                         <div class="col-12 col-sm-6 col-lg-4">
-                            <label class="form-label" for="vid-plataforma">Plataforma</label>
-                            <select class="form-select" id="vid-plataforma">
-                                <option value="orig" selected>Original (primera imagen o vídeo)</option>
-                                <option value="tiktok">TikTok — 1080×1920</option>
-                                <option value="reel">Reel (Instagram) — 1080×1920</option>
-                                <option value="short">Short (YouTube) — 1080×1920</option>
-                                <option value="youtube">YouTube (16:9) — 1920×1080</option>
-                                <option value="ig1">Feed de IG (1:1) — 1080×1080</option>
-                                <option value="ig45">Feed de IG (4:5) — 1080×1350</option>
-                                <option value="custom">Personalizado (a mano)…</option>
-                            </select>
-                            <!-- Q2 · control manual del tamaño cuando hace falta -->
-                            <div id="vid-plat-custom" hidden>
-                                <div class="d-flex gap-2 mt-1">
-                                    <div class="flex-fill">
-                                        <label class="form-label mb-1" for="vid-plat-ancho">Ancho (px)</label>
-                                        <input type="number" class="form-control" id="vid-plat-ancho"
-                                               min="160" max="1920" step="2" value="1080" inputmode="numeric">
-                                    </div>
-                                    <div class="flex-fill">
-                                        <label class="form-label mb-1" for="vid-plat-alto">Alto (px)</label>
-                                        <input type="number" class="form-control" id="vid-plat-alto"
-                                               min="160" max="1920" step="2" value="1920" inputmode="numeric">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Q2 · la lista detallada de tamaños sigue viva detrás
-                             (es la fuente de verdad del valor) pero la oculta en
-                             la interfaz para no duplicar controles en móvil -->
-                        <div class="col-12 col-sm-6 col-lg-4 d-none">
-                            <label class="form-label" for="vid-tamano">Tamaño de salida</label>
-                            <select class="form-select" id="vid-tamano"></select>
-                        </div>
-                        <div class="col-12 col-sm-6 col-lg-4">
                             <label class="form-label" for="vid-duracion">Duración</label>
                             <div class="vid-duracion-grupo">
                                 <select class="form-select vid-duracion-modo" id="vid-modo-dur" aria-label="Modo de duración">
@@ -466,18 +497,6 @@
                                 <option value="kenburns">Ken Burns (zoom lento)</option>
                             </select>
                             <p class="form-text mb-0" id="vid-trans-nota" aria-live="polite"></p>
-                        </div>
-                        <div class="col-6 col-lg-6">
-                            <label class="form-label" for="vid-ajuste">Ajuste de cada imagen</label>
-                            <select class="form-select" id="vid-ajuste">
-                                <option value="cover">Cubrir (recorta los bordes)</option>
-                                <option value="contain">Contener (con fondo)</option>
-                                <option value="blur">Contener con fondo desenfocado</option>
-                            </select>
-                        </div>
-                        <div class="col-6 col-lg-6">
-                            <label class="form-label" for="vid-fondo">Fondo</label>
-                            <input type="color" class="form-control form-control-color w-100" id="vid-fondo" value="#ffffff" title="Color de fondo">
                         </div>
                         <!-- M4 · la calidad manda en la tasa de bits de las tres
                              grabaciones (crear, directo y recorte) y de la
@@ -507,98 +526,6 @@
                             </select>
                             <p class="form-text mb-0">Se mantiene el primer fotograma antes de iniciar la línea de tiempo.
                                 También al exportar solo imágenes; el vídeo dura ese tiempo adicional.</p>
-                        </div>
-                        <!-- F5d · plantilla Tet News: única plantilla, replicando el
-                             canvas de noticias (barra + cuerpo) con el contenido dentro.
-                             Tamaño y centrar del contenido viven JUNTO al lienzo (M1) -->
-                        <div class="col-12">
-                            <div class="form-label">Plantilla</div>
-                            <select class="form-select" id="vid-plantilla">
-                                <option value="ninguna" selected>Sin plantilla</option>
-                                <option value="news">Tet News (noticias)</option>
-                                <option value="newsnuevo">Tet News (nuevo)</option>
-                                <option value="somostet">somostet</option>
-                                <option value="estrenosrojo">Estrenos Streaming (rojo)</option>
-                                <option value="estrenosazul">Estrenos Streaming (azul)</option>
-                            </select>
-                            <div class="form-label mt-2">Posición de la barra</div>
-                            <select class="form-select" id="vid-barra-pos">
-                                <option value="arriba" selected>Solo arriba</option>
-                                <option value="abajo">Solo abajo</option>
-                            </select>
-                            <div class="form-text">Con plantilla, el contenido vive
-                                dentro del cuerpo (como en el editor de noticias).</div>
-                        </div>
-                    </div>
-
-                    <!-- F4 · superposiciones: logo + línea de título durante todo el vídeo -->
-                    <div class="row g-3 mt-1" id="vid-superp">
-                        <div class="col-12">
-                            <div class="form-label">Superposiciones (van en todo el vídeo)</div>
-                        </div>
-                        <div class="col-12 col-lg-6">
-                            <label class="form-label" for="vid-logo-archivo">Logotipo (PNG con transparencia)</label>
-                            <input type="file" class="form-control" id="vid-logo-archivo"
-                                   accept="image/png,image/webp,image/svg+xml">
-                            <div class="d-flex align-items-center gap-2 mt-2" id="vid-logo-estado" hidden>
-                                <img id="vid-logo-mini" class="vid-logo-mini" alt="Vista previa del logo">
-                                <span class="small text-truncate flex-grow-1" id="vid-logo-nombre"></span>
-                                <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" id="vid-logo-quitar">
-                                    <i class="fas fa-trash" aria-hidden="true"></i> Quitar logo
-                                </button>
-                            </div>
-                            <!-- Q3/R4 · el logo NO se añade por defecto: solo si
-                                 activas la casilla o subes un archivo (la casilla
-                                 y el archivo se recuerdan) -->
-                            <div class="form-check form-switch vid-logofila mt-2">
-                                <input class="form-check-input" type="checkbox" role="switch"
-                                       id="vid-logo-auto">
-                                <label class="form-check-label" for="vid-logo-auto">
-                                    Logo automático (vuelve al abrir)
-                                </label>
-                            </div>
-                            <div class="form-text">Si nunca has subido ninguno, se pone el de tet.
-                                «Quitar logo» lo apaga.</div>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <label class="form-label" for="vid-logo-pos">Posición del logo</label>
-                            <select class="form-select" id="vid-logo-pos">
-                                <option value="arriba-izquierda">Arriba a la izquierda</option>
-                                <option value="arriba-derecha">Arriba a la derecha</option>
-                                <option value="abajo-izquierda">Abajo a la izquierda</option>
-                                <option value="abajo-derecha" selected>Abajo a la derecha</option>
-                                <option value="abajo-centro">Abajo al centro</option>
-                            </select>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <label class="form-label" for="vid-logo-tam">Tamaño del logo (% del alto)</label>
-                            <input type="number" class="form-control" id="vid-logo-tam" min="4" max="40"
-                                   step="1" value="12" inputmode="numeric">
-                        </div>
-                        <!-- F6 · música de fondo: AudioBuffer mezclado con Web Audio
-                             hacia el grabador (no suena en la vista previa) -->
-                        <div class="col-12">
-                            <div class="form-label" id="vid-musica-titulo">Música de fondo (opcional)</div>
-                            <!-- Q4 · la lista que viaja en el repo: se pinta desde
-                                 LISTA_MUSICA (video.js) y el audio embebido solo se
-                                 pide al primer uso (audio-data.js pesa MB) -->
-                            <div class="vid-musica-lista" id="vid-musica-lista" role="radiogroup"
-                                 aria-labelledby="vid-musica-titulo"></div>
-                            <label class="form-text" for="vid-audio-archivo">…o sube un MP3, WAV o M4A de tu equipo:</label>
-                            <input type="file" class="form-control" id="vid-audio-archivo" accept="audio/*">
-                            <div class="vid-audio-fila" id="vid-audio-fila" hidden>
-                                <span class="vid-audio-nombre" id="vid-audio-nombre"></span>
-                                <input type="range" class="form-range vid-audio-vol" id="vid-audio-vol"
-                                       min="0" max="100" step="5" value="100"
-                                       aria-label="Volumen de la música (%)">
-                                <span class="vid-audio-vol-valor" id="vid-audio-vol-valor">100 %</span>
-                                <button type="button" class="vid-audio-quitar" id="vid-audio-quitar"
-                                        title="Quitar la música" aria-label="Quitar la música">
-                                    <i class="fas fa-trash" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                            <p class="form-text mb-0">Se mezcla al grabar (no suena en la vista previa); si la canción
-                                es más corta que el vídeo, se repite en bucle.</p>
                         </div>
                     </div>
 
@@ -809,6 +736,39 @@
                          aria-labelledby="vid-tab-capas" tabindex="0">
                     <div class="row g-3 mt-1">
                         <div class="col-12">
+                            <div class="form-label">Logotipo</div>
+                            <label class="form-label" for="vid-logo-archivo">Logotipo (PNG con transparencia)</label>
+                            <input type="file" class="form-control" id="vid-logo-archivo"
+                                   accept="image/png,image/webp,image/svg+xml">
+                            <div class="d-flex align-items-center gap-2 mt-2" id="vid-logo-estado" hidden>
+                                <img id="vid-logo-mini" class="vid-logo-mini" alt="Vista previa del logo">
+                                <span class="small text-truncate flex-grow-1" id="vid-logo-nombre"></span>
+                                <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" id="vid-logo-quitar">
+                                    <i class="fas fa-trash" aria-hidden="true"></i> Quitar logo
+                                </button>
+                            </div>
+                            <div class="form-check form-switch vid-logofila mt-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="vid-logo-auto">
+                                <label class="form-check-label" for="vid-logo-auto">Logo automático (vuelve al abrir)</label>
+                            </div>
+                            <div class="form-text">Si no subes uno, se usa el logo de tet.</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="vid-logo-pos">Posición del logo</label>
+                            <select class="form-select" id="vid-logo-pos">
+                                <option value="arriba-izquierda">Arriba a la izquierda</option>
+                                <option value="arriba-derecha">Arriba a la derecha</option>
+                                <option value="abajo-izquierda">Abajo a la izquierda</option>
+                                <option value="abajo-derecha" selected>Abajo a la derecha</option>
+                                <option value="abajo-centro">Abajo al centro</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="vid-logo-tam">Tamaño del logo (% del alto)</label>
+                            <input type="number" class="form-control" id="vid-logo-tam" min="4" max="40"
+                                   step="1" value="12" inputmode="numeric">
+                        </div>
+                        <div class="col-12">
                             <label class="btn btn-outline-primary w-100" for="vid-capa-archivo">
                                 <i class="fas fa-image" aria-hidden="true"></i> Añadir imagen encima
                             </label>
@@ -852,6 +812,31 @@
                          sistema (Web Speech API). Sirve para ensayar y medir
                          cuánto dura; el navegador no permite exportarla.
                          voz.js rellena #voz-caja -->
+                    <div class="tab-pane fade" id="vid-pane-musica" role="tabpanel"
+                         aria-labelledby="vid-tab-musica" tabindex="0">
+                        <div class="row g-3 mt-1" id="vid-superp">
+                            <div class="col-12">
+                                <div class="form-label" id="vid-musica-titulo">Música de fondo (opcional)</div>
+                                <div class="vid-musica-lista" id="vid-musica-lista" role="radiogroup"
+                                     aria-labelledby="vid-musica-titulo"></div>
+                                <label class="form-text" for="vid-audio-archivo">…o sube un MP3, WAV o M4A:</label>
+                                <input type="file" class="form-control" id="vid-audio-archivo" accept="audio/*">
+                                <div class="vid-audio-fila" id="vid-audio-fila" hidden>
+                                    <span class="vid-audio-nombre" id="vid-audio-nombre"></span>
+                                    <input type="range" class="form-range vid-audio-vol" id="vid-audio-vol"
+                                           min="0" max="100" step="5" value="100"
+                                           aria-label="Volumen de la música (%)">
+                                    <span class="vid-audio-vol-valor" id="vid-audio-vol-valor">100 %</span>
+                                    <button type="button" class="vid-audio-quitar" id="vid-audio-quitar"
+                                            title="Quitar la música" aria-label="Quitar la música">
+                                        <i class="fas fa-trash" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <p class="form-text mb-0">Se mezcla al grabar (no suena en la vista previa); si la canción
+                                    es más corta que el vídeo, se repite en bucle.</p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="tab-pane fade" id="vid-pane-voz" role="tabpanel"
                          aria-labelledby="vid-tab-voz" tabindex="0">
                         <div class="voz-caja" id="voz-caja"></div>
@@ -896,9 +881,9 @@
                     </div>
                     <div class="tab-pane fade" id="vid-pane-exportar" role="tabpanel"
                          aria-labelledby="vid-tab-exportar" tabindex="0">
-                    <!-- Q5 · la plataforma al lado de «Crear vídeo»: lo mismo que
-                         Ajustes, aquí a un toque; la activa manda en el tamaño
-                         de salida y en el nombre del archivo -->
+                    <!-- Q5 · acceso rápido a la plataforma junto a «Crear vídeo»;
+                         el selector principal vive en Tamaño y esta opción manda
+                         en el tamaño de salida y en el nombre del archivo -->
                     <div class="mt-2">
                         <div class="form-label mb-1">Plataforma de salida</div>
                         <div class="vid-plat-chips" id="vid-plat-chips" role="radiogroup"
@@ -929,7 +914,7 @@
                             <label class="btn btn-outline-primary" for="vid-chip-custom">A mano</label>
                         </div>
                         <div class="form-text">Tamaño de salida: <span id="vid-plat-res"></span>.
-                            El personalizado se cambia en Ajustes; la plataforma también
+                            El tamaño personalizado se cambia en Tamaño; la plataforma también
                             se usa en el nombre del archivo.</div>
                     </div>
                     <div class="form-text mt-2" id="vid-total"></div>
@@ -1057,7 +1042,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1b"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r27"></script>
+    <script src="./public/js/video.js?v=r30"></script>
     <!-- Voz: lee la narración con las voces del sistema (pestaña «Voz») -->
     <script src="./public/js/voz.js?v=v5"></script>
     <script src="./public/js/piper-editor.js?v=p1"></script>
