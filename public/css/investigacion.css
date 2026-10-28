@@ -1,0 +1,311 @@
+/* ============================================================
+   investigacion.css — pestaña «Investigar» (solo tet1)
+   Reutiliza los tokens --sh-* de shell.css, así que sigue el tema
+   oscuro/claro del editor sin duplicar colores.
+   ============================================================ */
+
+.inv-caja {
+    padding: .8rem .75rem 1.2rem;
+}
+
+.inv-intro {
+    margin: 0 0 .75rem;
+    font-size: .8rem;
+    line-height: 1.4;
+    color: var(--sh-muted);
+}
+
+/* ---------- campo del tema ---------- */
+.inv-et {
+    display: block;
+    margin: .75rem 0 .3rem;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted);
+    flex: 1 1 auto;
+}
+
+.inv-campo {
+    display: flex;
+    gap: .35rem;
+    align-items: stretch;
+}
+
+.shell-dock .inv-caja .form-control {
+    font-size: .9rem;
+    padding: .42rem .6rem;
+    border-radius: 6px;
+    min-height: 38px;
+    background-color: var(--sh-input-bg);
+    color: var(--sh-text);
+    border-color: var(--sh-border);
+}
+
+/* botón-icono junto al campo (traer el título del lienzo) */
+.inv-mini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    flex: 0 0 auto;
+    min-width: 38px;
+    min-height: 38px;
+    padding: .2rem .5rem;
+    border: 1px solid var(--sh-border);
+    border-radius: 6px;
+    background: var(--sh-input-bg);
+    color: var(--sh-muted);
+    font-size: .72rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.inv-mini:hover,
+.inv-mini:focus-visible {
+    border-color: var(--sh-accent);
+    background: var(--sh-hover);
+    color: var(--sh-text);
+}
+
+.inv-mini i {
+    color: var(--sh-accent);
+}
+
+/* ---------- secciones ---------- */
+.inv-sec {
+    margin-top: 1rem;
+}
+
+.inv-sec-tit {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    margin: 0 0 .4rem;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--sh-muted);
+}
+
+.inv-sec-tit i {
+    color: var(--sh-accent);
+}
+
+.inv-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .35rem;
+}
+
+/* ---------- enlaces con aspecto de botón ---------- */
+/* Son <a> de verdad: se abren con el botón central, se copia la URL y el
+   navegador enseña el destino abajo. window.open escondería todo eso. */
+.inv-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    min-height: 38px;
+    padding: .3rem .4rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .4rem;
+    background: var(--sh-input-bg);
+    color: var(--sh-text);
+    font-size: .76rem;
+    line-height: 1.15;
+    text-align: center;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.inv-link i {
+    flex: 0 0 auto;
+    color: var(--sh-accent);
+}
+
+.inv-link:hover,
+.inv-link:focus-visible {
+    border-color: var(--sh-accent);
+    background: var(--sh-hover);
+    color: var(--sh-text);
+}
+
+.inv-link-ia {
+    border-style: dashed;
+}
+
+.inv-pista {
+    margin: .4rem 0 0;
+    font-size: .68rem;
+    line-height: 1.4;
+    color: var(--sh-muted);
+}
+
+.inv-pie {
+    margin-top: 1rem;
+    padding-top: .6rem;
+    border-top: 1px solid var(--sh-border);
+}
+
+/* ---------- generador de imagen ---------- */
+.inv-fila {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.inv-lbl {
+    flex: 0 0 auto;
+    font-size: .72rem;
+    color: var(--sh-muted);
+}
+
+.shell-dock .inv-caja .inv-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 34px;
+    padding: .25rem .5rem;
+    font-size: .78rem;
+    background-color: var(--sh-input-bg);
+    color: var(--sh-text);
+    border-color: var(--sh-border);
+}
+
+.inv-fila-prompt {
+    align-items: baseline;
+    margin-top: .6rem;
+}
+
+.inv-fila-prompt .inv-et {
+    margin: 0;
+}
+
+.shell-dock .inv-caja .inv-prompt {
+    width: 100%;
+    min-height: 5rem;
+    margin-top: .3rem;
+    padding: .45rem .55rem;
+    font-size: .76rem;
+    line-height: 1.4;
+    resize: vertical;
+    background-color: var(--sh-input-bg);
+    color: var(--sh-text);
+    border-color: var(--sh-border);
+}
+
+.inv-acciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .35rem;
+    margin-top: .4rem;
+}
+
+.inv-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    min-height: 40px;
+    padding: .3rem .45rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .4rem;
+    background: var(--sh-input-bg);
+    color: var(--sh-text);
+    font-size: .76rem;
+    line-height: 1.15;
+    text-align: center;
+    cursor: pointer;
+}
+
+.inv-boton:hover,
+.inv-boton:focus-visible {
+    border-color: var(--sh-accent);
+    background: var(--sh-hover);
+}
+
+.inv-boton i {
+    color: var(--sh-accent);
+}
+
+.inv-boton.primario {
+    background: var(--sh-accent);
+    border-color: var(--sh-accent);
+    color: #10151c;
+    font-weight: 600;
+}
+
+.inv-boton.primario i {
+    color: #10151c;
+}
+
+.inv-boton.primario:hover,
+.inv-boton.primario:focus-visible {
+    filter: brightness(1.08);
+    background: var(--sh-accent);
+}
+
+/* ---------- prompt de investigación (plegado) ---------- */
+.inv-detalles {
+    margin-top: 1rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .45rem;
+    background: var(--sh-input-bg);
+}
+
+.inv-detalles summary {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .5rem .6rem;
+    font-size: .76rem;
+    color: var(--sh-text);
+    cursor: pointer;
+}
+
+.inv-detalles summary i {
+    color: var(--sh-accent);
+}
+
+.inv-detalles summary:hover,
+.inv-detalles summary:focus-visible {
+    background: var(--sh-hover);
+}
+
+.inv-detalles[open] summary {
+    border-bottom: 1px solid var(--sh-border);
+}
+
+.inv-detalles .inv-prompt {
+    margin: .5rem .6rem 0;
+    width: calc(100% - 1.2rem);
+}
+
+.inv-detalles .inv-acciones {
+    margin: .4rem .6rem .6rem;
+}
+
+/* En el móvil el dock ocupa todo el ancho: dos columnas siguen cabiendo,
+   pero los enlaces largos pueden partirse sin romper la rejilla. */
+@media (max-width: 380px) {
+    .inv-grid,
+    .inv-acciones {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* El dock de escritorio mide 320 px fijos (shell.css): con cuatro pestañas
+   «Propiedades» ya no cabía y se cortaba a «Propiedade…». En dos filas de
+   160 px cada una se leen las cuatro enteras; por debajo de 992 px el dock
+   ocupa todo el ancho y sobra sitio, así que la fila única se queda. */
+@media (min-width: 992px) {
+    .dock-tabs {
+        flex-wrap: wrap;
+    }
+
+    .dock-tab {
+        flex: 1 1 50%;
+    }
+}

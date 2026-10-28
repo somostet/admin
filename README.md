@@ -86,6 +86,16 @@ cuadras, en PNG). El script borra la versión que no mejora.
 - **Panel de capas** (`capas.js`): deshacer/rehacer (Ctrl+Z / Ctrl+Shift+Z), duplicar, guardar/cargar proyecto `.json`, compartir (Web Share).
 - **Formatos sociales** (`formatos.js`): presets de Instagram, Facebook, X, YouTube, TikTok, LinkedIn y Pinterest con guía de recorte y zona segura; exporta PNG en píxeles exactos. Incluye el preset **Origen** (tamaño original del lienzo).
 - **Portapapeles**: Ctrl+V pega cualquier imagen sobre el lienzo (escalada al70% y centrada, con historial) en los 6 editores; botón "Pegar" en tet1.
+- **Pestaña «Investigar» en `tet1.html`** (`investigacion.js` + `investigacion.css`): el
+  título del lienzo alimenta un buscador que abre Google IA (modo IA), Perplexity,
+  Copilot, Gemini o ChatGPT con la consulta ya escrita, y galerías con licencia
+  (Google filtrado a Creative Commons, Openverse, Unsplash, Pexels, Pixabay,
+  Wikimedia). Compone el prompt de imagen con el estilo, la paleta y el tamaño del
+  lienzo, lo copia para Bing Image Creator / Ideogram / Leonardo o genera una imagen
+  gratis con Pollinations (sin cuenta ni clave); y arma un prompt de investigación
+  que pide datos con fecha y fuente, más titulares y palabras clave para imágenes.
+  Todo son enlaces y portapapeles: la CSP (`connect-src 'self'`) no se toca, el
+  editor no envía nada a ningún servidor y sigue funcionando en `file://`.
 - **UI estilo Inkscape en los 6 editores** (`shell.js`/`shell.css`): barra superior con plantilla/deshacer/zoom/formato+guía/descarga, rail de herramientas, reglas con coordenadas, dock Propiedades|Capas|Publicación, paleta de colores, tema oscuro/claro, navbar con rotación automática de plantillas ▶ y lienzo en blanco ajustado a la red elegida.
   - El **tamaño en pantalla del lienzo se calcula** (no es el 300/500 px fijo de
     el HTML): llena el espacio de trabajo sin pasar de 100 %, y el 100 % sigue
