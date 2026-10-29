@@ -74,7 +74,23 @@ var DECO = {
     angulo: 150,           // grados; 0 = de izquierda a derecha
     opacidad: 1,           // 0..1 sobre el fondo cuando se activa esa opción
     opacidadFondo: false,  // true = el deslizador también baja el fondo
-    conBarra: true         // mostrar / ocultar la franja
+    conBarra: true,        // mostrar / ocultar la franja
+
+    /* Texto que se adapta solo al fondo: si el fondo es oscuro pasa a blanco
+       y si es claro pasa a negro. Se puede desactivar desde el panel. */
+    textoAuto: true,
+
+    /* Imagen del botón automático. */
+    imagenBN: false,       // filtro blanco y negro al colocar/componer
+    ajusteImagen: 'auto',  // 'auto' | 'cover' | 'contain'
+
+    /* Relleno a los lados cuando la foto no ocupa todo el ancho: sirve para
+       que una foto pequeña no quede con dos huecos vacíos. */
+    lateralActivo: false,
+    lateralDegradado: true,
+    lateralColor1: '#1d3f7a',
+    lateralColor2: '#0b1020',
+    lateralAngulo: 90
 };
 
 /* Plantilla que está aplicada ahora mismo (la elige reload()). */
@@ -121,6 +137,7 @@ function descriptorDegradado() {
 function aplicarFondo(callback) {
     var cb = function () {
         canvas.renderAll();
+        if (window.tetAutoColorTexto) window.tetAutoColorTexto();
         if (callback) callback();
     };
     var v = (DECO.tipoFondo === 'degradado') ? descriptorDegradado() : colorFondo();
@@ -181,6 +198,7 @@ function aplicarBarra(url) {
 function aplicarImagenPlantilla(url, sinCallback) {
     var cb = function () {
         canvas.renderAll();
+        if (window.tetAutoColorTexto) window.tetAutoColorTexto();
         if (!sinCallback && window.tetGuardarEstado) window.tetGuardarEstado();
     };
     if (!url) {
@@ -386,6 +404,105 @@ function _colorAHex(c) {
     if (!m) return null;
     return _rgbAHex(+m[1], +m[2], +m[3]);
 }
+
+/* Luminancia media de una imagen del lienzo (0 = negro, 1 = blanco). Se
+   muestrea en pequeño, igual que la sugerencia de degradado, y se devuelve
+   null si el navegador no deja leer los píxeles (imagen de otro origen). */
+function _luminanciaMediaImagen(img) {
+    var el = img && (img._element || img._originalElement);
+    if (!el) return null;
+    var nw = el.naturalWidth || el.width || 0;
+    var nh = el.naturalHeight || el.height || 0;
+    if (!nw || !nh) return null;
+
+    var cx = Math.max(0, Math.round(img.cropX || 0));
+    var cy = Math.max(0, Math.round(img.cropY || 0));
+    var cw = Math.max(1, Math.round(img.width || nw));
+    var ch = Math.max(1, Math.round(img.height || nh));
+    cw = Math.min(cw, nw - cx);
+    ch = Math.min(ch, nh - cy);
+    if (cw < 2 || ch < 2) return null;
+
+    var esc = Math.min(1, 32 / Math.max(cw, ch));
+    var w = Math.max(8, Math.round(cw * esc));
+    var h = Math.max(8, Math.round(ch * esc));
+    var lienzo = document.createElement('canvas');
+    lienzo.width = w;
+    lienzo.height = h;
+    var ctx = lienzo.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return null;
+
+    try {
+        ctx.drawImage(el, cx, cy, cw, ch, 0, 0, w, h);
+    } catch (e) {
+        return null;
+    }
+
+    var datos;
+    try {
+        datos = ctx.getImageData(0, 0, w, h).data;
+    } catch (e) {
+        return null;
+    }
+
+    var suma = 0, n = 0;
+    for (var i = 0; i < datos.length; i += 4) {
+        if (datos[i + 3] < 96) continue;
+        suma += 0.2126 * (datos[i] / 255) +
+            0.7152 * (datos[i + 1] / 255) +
+            0.0722 * (datos[i + 2] / 255);
+        n++;
+    }
+    return n ? suma / n : null;
+}
+
+/* Luminancia de lo que hay detrás del texto. Si hay imagen de plantilla
+   manda ella; si no, el color plano o la media del degradado. */
+function _luminanciaDeFondo() {
+    if (canvas.backgroundImage) {
+        var lImg = _luminanciaMediaImagen(canvas.backgroundImage);
+        if (lImg != null) return lImg;
+    }
+    if (DECO.tipoFondo === 'degradado') {
+        var l1 = _luminanciaHex(DECO.color1);
+        var l2 = _luminanciaHex(DECO.color2);
+        if (l1 != null && l2 != null) return (l1 + l2) / 2;
+    }
+    var l = _luminanciaHex(colorFondo());
+    return l == null ? 1 : l;
+}
+
+/* Color que garantiza contraste con el fondo actual. */
+function colorTextoContraste() {
+    return _luminanciaDeFondo() < 0.52 ? '#ffffff' : '#000000';
+}
+
+/* Aplica el color automático a los textos del titular/detalle y al que esté
+   seleccionado. `forzar` lo aplica aunque la casilla esté desactivada. */
+window.tetAutoColorTexto = function (forzar) {
+    if (!DECO.textoAuto && !forzar) return null;
+    var color = colorTextoContraste();
+    var selector = document.getElementById('colorT');
+    if (selector) selector.value = color;
+
+    var activo = canvas.getActiveObject();
+    canvas.getObjects().forEach(function (o) {
+        if (typeof o.text !== 'string') return;
+        var esDeZona = o.tetZona === 'titulo' || o.tetZona === 'detalle';
+        if (!esDeZona && o !== activo) return;
+        /* si el texto lleva un cuadro de fondo, el contraste se calcula
+           contra ese cuadro, no contra el lienzo */
+        var fondo = o._tetFondo;
+        if (fondo && typeof fondo.fill === 'string') {
+            var lf = _luminanciaHex(fondo.fill);
+            o.set('fill', lf != null && lf < 0.52 ? '#ffffff' : '#000000');
+        } else {
+            o.set('fill', color);
+        }
+    });
+    canvas.renderAll();
+    return color;
+};
 
 /* El historial restaura el fondo tal cual estaba (sólido o degradado). Antes
    de volver a aplicar la decoración se copia ese estado a DECO para que los
@@ -624,9 +741,13 @@ window.tetSugerirDegradadoAuto = function (img) {
    2 · SELECTORES DE COLOR
    ========================================================================= */
 
-/* Color del TEXTO: se aplica en vivo a lo seleccionado. */
+/* Color del TEXTO: se aplica en vivo a lo seleccionado. Al elegirlo a mano se
+   apaga el contraste automático para no pisar la decisión del usuario. */
 document.getElementById('colorT').oninput = function colored() {
     var color = this.value;
+    DECO.textoAuto = false;
+    var chkAuto = document.getElementById('tet-texto-auto');
+    if (chkAuto) chkAuto.checked = false;
     var obj = canvas.getActiveObject();
     if (obj) {
         var style = {};
@@ -673,6 +794,10 @@ myFunction(x) // Call listener function at run time
    listener solo recalculaba hc/wc y nunca los aplicaba al lienzo */
     /* inicio canvas code*/
 var canvas = new fabric.Canvas('tetnews');
+/* Las capas deben respetarse también al seleccionar: sin esto Fabric pinta
+   el objeto seleccionado por encima de los demás mientras tiene las asas
+   puestas, y parece que «salta al frente» al tocar una foto. */
+canvas.preserveObjectStacking = true;
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
@@ -680,7 +805,8 @@ canvas.setDimensions({ width: 1200, height: 1200 }, { backstoreOnly: true });
    compartido sale con canal alfa (se ve negro en fuera del navegador) */
 canvas.backgroundColor = '#ffffff';
 
-plantillaActual = { img: './public/img/Plantilla3.png', barra: tetnews_bar, color: '#FFFFFF', arte: false };
+/* tet news (nuevo) es la plantilla por defecto: es la primera del selector. */
+plantillaActual = { img: barTetNewsNuevo, barra: barTetNewsNuevo, color: 'color', arte: false };
 aplicarDecoracion(true);
 /* fin canvas code*/
 
@@ -786,10 +912,16 @@ function download() {
 // Remover objeto
 function remover() {
     var obj = canvas.getActiveObject();
-    if (obj) {
-        canvas.remove(obj);
-        canvas.renderAll();
-    }
+    if (!obj) return;
+    var quitar = function (o) {
+        if (o.type === 'image') quitarLateralAuto();
+        if (o._tetFondo) canvas.remove(o._tetFondo);
+        canvas.remove(o);
+    };
+    if (obj.type === 'activeSelection') obj.getObjects().forEach(quitar);
+    else quitar(obj);
+    canvas.discardActiveObject();
+    canvas.renderAll();
 }
 
 /* -------------------------------------------------------------------------
@@ -1340,6 +1472,9 @@ function colocarImagenNueva(img) {
     canvas.add(img);
     canvas.setActiveObject(img);
     canvas.renderAll();
+    /* preferencias del panel «Imagen»: se aplican también a la inserción
+       normal, no solo al botón automático */
+    if (DECO.imagenBN && window.tetBlancoNegro) window.tetBlancoNegro(true, img);
     /* con la opción del panel activada, el fondo se adapta a la foto recién
        colocada. Va después de añadirla para que el lienzo ya tenga sus colores. */
     if (window.tetSugerirDegradadoAuto) window.tetSugerirDegradadoAuto(img);
@@ -1385,6 +1520,8 @@ function objetoDeZona(zona) {
 function quitarImagenAuto(excepto) {
     canvas.getObjects().slice().forEach(function (o) {
         if (o.tetAutoImagen && o !== excepto) canvas.remove(o);
+        /* el fondo lateral se vuelve a crear al recomponer */
+        if (o.tetLateral) canvas.remove(o);
     });
 }
 
@@ -1426,21 +1563,135 @@ function baseDeImagen(img) {
     return img._tetBase;
 }
 
-/* Hueco libre entre la franja superior y el titular (o el detalle). */
-function huecoImagen() {
-    var W = canvas.getWidth(), H = canvas.getHeight();
-    var aireCabecera = Math.max(8, Math.round(H * 0.012));
-    var aire = Math.max(12, Math.round(H * 0.022));
-    var arriba = (DECO.conBarra ? rectBarra().h : 0) + aireCabecera;
-    var abajo = H - aire;
+/* -------------------------------------------------------------------------
+   REPARTO AUTOMÁTICO DEL ALTO
 
+   Antes el titular y el detalle vivían en zonas fijas (60 % y 72 % de la
+   altura) y la imagen se estiraba hasta el titular. En un lienzo cuadrado
+   eso dejaba el título pegado a la foto y un tercio inferior vacío.
+
+   Ahora se mide el alto REAL de los dos textos y se reparte todo el alto:
+   franja → imagen (pegada a la franja) → aire → titular → aire → detalle →
+   margen inferior. La imagen se queda con todo el espacio que sobra, así que
+   no hay huecos muertos y el título nunca queda pegado a la foto.
+   ------------------------------------------------------------------------- */
+/* Cuadro de fondo de un texto: primero la referencia directa y, si no
+   existe (deshacer/rehacer), se busca por tetFondoDe. */
+function fondoDeTexto(t) {
+    if (!t) return null;
+    if (t._tetFondo && t._tetFondo.canvas) return t._tetFondo;
+    if (!t.tetId) return null;
+    var encontrado = null;
+    canvas.getObjects().some(function (o) {
+        if (o.tetFondoTexto && o.tetFondoDe === t.tetId) {
+            encontrado = o;
+            return true;
+        }
+        return false;
+    });
+    return encontrado;
+}
+
+/* Alto real del bloque de un texto: si tiene cuadro de fondo se cuenta el
+   cuadro completo (incluido su relleno) y el desfase entre el borde del
+   cuadro y el top del texto. Así el reparto automático no deja que el
+   cuadro del titular se coma el detalle. */
+function medidaTexto(t) {
+    if (!t) return { alto: 0, delta: 0, pad: 0 };
+    if (!fondoDeTexto(t)) return { alto: altoTexto(t), delta: 0, pad: 0 };
+    var pad = Math.max(6, Math.round((t.fontSize || 48) * 0.34));
+    var br = t.getBoundingRect();
+    return {
+        alto: br.height + pad * 2,
+        delta: br.top - t.top,
+        pad: pad
+    };
+}
+
+function layoutAuto(img, aplicar) {
+    var W = canvas.getWidth(), H = canvas.getHeight();
+    var barra = DECO.conBarra ? rectBarra().h : 0;
     var t = objetoDeZona('titulo');
     var d = objetoDeZona('detalle');
-    if (t) abajo = Math.min(abajo, t.top - aire);
-    else if (d) abajo = Math.min(abajo, d.top - aire);
+    var gapTD = Math.max(10, Math.round(H * 0.016));
+    var gapImagen = Math.max(20, Math.round(H * 0.034));
+    var margenAbajo = Math.max(14, Math.round(H * 0.035));
+    var mT = medidaTexto(t);
+    var mD = medidaTexto(d);
+    var altoT = mT.alto;
+    var altoD = mD.alto;
+    var bloque = altoT + (altoT && altoD ? gapTD : 0) + altoD;
+    var yTexto, hueco = null;
 
-    if (abajo - arriba < H * 0.1) return null;
-    return { x: 0, y: arriba, w: W, h: abajo - arriba };
+    if (img) {
+        /* la foto siempre empieza justo debajo de la franja */
+        var minImagen = Math.max(120, Math.round(H * 0.22));
+        yTexto = H - margenAbajo - bloque;
+
+        /* si el texto es muy largo, se encoge un poco antes de dejar la foto
+           en un hilo. Solo al componer de verdad, no al medir. */
+        if (aplicar) {
+            var guarda = 0;
+            while (guarda++ < 90 && yTexto - gapImagen - barra < minImagen) {
+                var cambiado = false;
+                if (t && t.fontSize > 24) {
+                    t.set('fontSize', t.fontSize - 2);
+                    if (t.initDimensions) t.initDimensions();
+                    cambiado = true;
+                }
+                if (d && d.fontSize > 18) {
+                    d.set('fontSize', d.fontSize - 2);
+                    if (d.initDimensions) d.initDimensions();
+                    cambiado = true;
+                }
+                if (!cambiado) break;
+                mT = medidaTexto(t);
+                mD = medidaTexto(d);
+                altoT = mT.alto;
+                altoD = mD.alto;
+                bloque = altoT + (altoT && altoD ? gapTD : 0) + altoD;
+                yTexto = H - margenAbajo - bloque;
+            }
+        }
+
+        var finImagen = Math.max(barra + minImagen, yTexto - gapImagen);
+        hueco = { x: 0, y: barra, w: W, h: Math.max(1, finImagen - barra) };
+        yTexto = finImagen + gapImagen;
+    } else {
+        /* sin foto, el bloque de texto se centra en el área útil */
+        yTexto = Math.round(barra + Math.max(0, (H - barra - margenAbajo - bloque) / 2));
+    }
+
+    if (aplicar) {
+        if (t) {
+            t.set({
+                top: Math.round(yTexto + (mT.pad || 0) - mT.delta),
+                left: Math.round((W - (t.width || W)) / 2)
+            });
+            t.setCoords();
+        }
+        if (d) {
+            d.set({
+                top: Math.round(yTexto + altoT + (altoT ? gapTD : 0) + (mD.pad || 0) - mD.delta),
+                left: Math.round((W - (d.width || W)) / 2)
+            });
+            d.setCoords();
+        }
+    }
+
+    return {
+        hueco: hueco,
+        tituloTop: Math.round(yTexto + (mT.pad || 0) - mT.delta),
+        detalleTop: Math.round(yTexto + altoT + (altoT ? gapTD : 0) + (mD.pad || 0) - mD.delta),
+        barra: barra,
+        margenAbajo: margenAbajo
+    };
+}
+
+/* Hueco libre entre la franja superior y el titular (o el detalle). */
+function huecoImagen(img) {
+    var r = layoutAuto(img || imagenParaAuto(), false);
+    return r.hueco;
 }
 
 /* Encaja la imagen en el hueco. Cover si la proporción es parecida (así no
@@ -1460,7 +1711,12 @@ function encajarImagen(img, hueco) {
     if (!(dispW > 0) || !(dispH > 0) || !hueco) return img;
     var aspectoImg = dispW / dispH;
     var aspectoHueco = hueco.w / hueco.h;
-    var rellenar = aspectoImg > aspectoHueco / 1.6 && aspectoImg < aspectoHueco * 1.6;
+    /* Modo elegido en el panel «Imagen». En automático se rellena cuando la
+       proporción se parece a la del hueco y se muestra entera cuando es muy
+       apaisada o muy vertical. */
+    var modo = DECO.ajusteImagen || 'auto';
+    var rellenar = modo === 'cover' ||
+        (modo === 'auto' && aspectoImg > aspectoHueco / 1.6 && aspectoImg < aspectoHueco * 1.6);
 
     if (rellenar) {
         var cw, ch;
@@ -1487,12 +1743,120 @@ function encajarImagen(img, hueco) {
             scaleX: e,
             scaleY: e,
             left: Math.round(hueco.x + (hueco.w - dispW * e) / 2),
-            top: Math.round(hueco.y)
+            top: Math.round(hueco.y + (hueco.h - dispH * e) / 2)
         });
     }
+    /* Se recuerda el hueco: el relleno lateral y el reencaje al cambiar de
+       formato necesitan saber dónde estaba la foto. */
+    img._tetHueco = { x: hueco.x, y: hueco.y, w: hueco.w, h: hueco.h };
     img.setCoords();
     return img;
 }
+
+/* -------------------------------------------------------------------------
+   FONDO LATERAL DE LA FOTO
+
+   Cuando la foto es muy pequeña o muy vertical, el modo «entera» deja dos
+   franjas vacías a los lados. Con esta opción se pinta un rectángulo detrás
+   (color plano o degradado) que rellena todo el hueco: la foto queda como
+   una ventana y los laterales con el color elegido.
+   ------------------------------------------------------------------------- */
+function descriptorDegradadoRect(w, h, angulo, c1, c2) {
+    var rad = (angulo || 0) * Math.PI / 180;
+    var dx = Math.cos(rad), dy = Math.sin(rad);
+    var ext = (Math.abs(dx) * w + Math.abs(dy) * h) / 2;
+    var cx = w / 2, cy = h / 2;
+    return {
+        type: 'linear',
+        coords: {
+            x1: cx - dx * ext, y1: cy - dy * ext,
+            x2: cx + dx * ext, y2: cy + dy * ext
+        },
+        colorStops: [
+            { offset: 0, color: c1 },
+            { offset: 1, color: c2 }
+        ]
+    };
+}
+
+function quitarLateralAuto() {
+    canvas.getObjects().slice().forEach(function (o) {
+        if (o.tetLateral) canvas.remove(o);
+    });
+}
+
+/* Crea o actualiza el rectángulo lateral. `hueco` es la zona de la foto. */
+function aplicarLateralAuto(img, hueco) {
+    quitarLateralAuto();
+    if (!DECO.lateralActivo || !img) return null;
+
+    var h = hueco || img._tetHueco || huecoImagen();
+    if (!h || !(h.w > 0) || !(h.h > 0)) return null;
+
+    var relleno;
+    if (DECO.lateralDegradado) {
+        relleno = descriptorDegradadoRect(h.w, h.h, DECO.lateralAngulo,
+            DECO.lateralColor1, DECO.lateralColor2);
+    } else {
+        relleno = DECO.lateralColor1;
+    }
+
+    var rect = new fabric.Rect({
+        left: h.x,
+        top: h.y,
+        width: h.w,
+        height: h.h,
+        originX: 'left',
+        originY: 'top',
+        fill: relleno,
+        selectable: false,
+        evented: false,
+        hasControls: false,
+        lockMovementX: true,
+        lockMovementY: true,
+        lockRotation: true,
+        name: 'Bordes laterales',
+        tetLateral: true
+    });
+
+    /* justo debajo de la foto: encima del fondo y de otros objetos anteriores */
+    var idx = canvas.getObjects().indexOf(img);
+    if (idx >= 0) canvas.insertAt(rect, idx);
+    else canvas.add(rect);
+    canvas.renderAll();
+    return rect;
+}
+
+/* Filtro blanco y negro. Se puede aplicar a una foto concreta o a la del
+   botón automático. */
+function imagenObjetivo() {
+    var activo = canvas.getActiveObject();
+    if (activo && activo.type === 'image') return activo;
+    return imagenParaAuto();
+}
+
+window.tetBlancoNegro = function (on, img) {
+    var foto = img || imagenObjetivo();
+    if (!foto || foto.type !== 'image') {
+        if (window.mostrarAviso) window.mostrarAviso('Selecciona una imagen primero', 'warning');
+        return false;
+    }
+    var filtros = (foto.filters || []).filter(function (f) {
+        return f.type !== 'Grayscale';
+    });
+    if (on) {
+        if (!fabric.Image.filters.Grayscale) {
+            if (window.mostrarAviso) window.mostrarAviso('Este navegador no tiene el filtro blanco y negro', 'warning');
+            return false;
+        }
+        filtros.push(new fabric.Image.filters.Grayscale());
+    }
+    foto.filters = filtros;
+    foto.applyFilters();
+    canvas.renderAll();
+    if (window.tetGuardarEstado) window.tetGuardarEstado();
+    return true;
+};
 
 /* Recoloca la imagen automática tras cambiar de formato. */
 window.tetReubicarImagenAuto = function () {
@@ -1502,9 +1866,11 @@ window.tetReubicarImagenAuto = function () {
         return false;
     });
     if (!img) return false;
-    var hueco = huecoImagen();
-    if (!hueco) return false;
-    encajarImagen(img, hueco);
+    var layout = layoutAuto(img, true);
+    if (!layout.hueco) return false;
+    encajarImagen(img, layout.hueco);
+    aplicarLateralAuto(img, layout.hueco);
+    if (window.tetActualizarFondosTexto) window.tetActualizarFondosTexto();
     canvas.renderAll();
     return true;
 };
@@ -1553,21 +1919,30 @@ function componerTodo() {
             desc.setCoords();
         }
 
-        separarTextos();
-
         if (!img && globalpicFuente) img = nuevaImagenFabric();
         if (img) {
-            var hueco = huecoImagen();
-            if (hueco) encajarImagen(img, hueco);
             img.set({ tetAutoImagen: true, tetZona: 'imagen', lockRotation: true });
             if (!img.canvas) canvas.add(img);
-            /* los textos, por delante: si el hueco se quedara corto por una
-               foto contain, nunca tapan el titular */
+        }
+
+        /* el reparto se calcula con los textos ya medidos y la foto colocada
+           justo debajo de la franja; después se encaja la imagen en el hueco */
+        var layout = layoutAuto(img, true);
+        if (window.tetActualizarFondosTexto) window.tetActualizarFondosTexto();
+        if (img) {
+            if (layout.hueco) encajarImagen(img, layout.hueco);
+            aplicarLateralAuto(img, layout.hueco);
+            if (DECO.imagenBN && window.tetBlancoNegro) window.tetBlancoNegro(true, img);
+            /* los textos, por delante: la foto nunca tapa el titular */
             if (titulo) canvas.bringToFront(titulo);
             if (desc) canvas.bringToFront(desc);
+            if (window.tetReordenarFondosTexto) window.tetReordenarFondosTexto();
             canvas.setActiveObject(img);
         }
 
+        /* si el fondo es oscuro, el titular y el detalle pasan a blanco; si es
+           claro, a negro. Así no hay que elegir el color a mano cada vez. */
+        if (window.tetAutoColorTexto) window.tetAutoColorTexto();
         canvas.renderAll();
         /* la composición automática también puede adaptar el fondo a la foto */
         if (img && window.tetSugerirDegradadoAuto) window.tetSugerirDegradadoAuto(img);

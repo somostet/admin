@@ -38,6 +38,7 @@
     /* Un cambio hecho desde los paneles tiene que entrar en el historial:
        sin esto el deshacer no lo deshace (y los botones se desincronizan). */
     function confirmarCambio() {
+        actualizarFondosTexto();
         canvas.renderAll();
         if (window.tetGuardarEstado) window.tetGuardarEstado();
     }
@@ -82,6 +83,23 @@
         '    <input type="range" class="tet-range" id="tet-inter" min="0.8" max="2.4" step="0.05" value="1.16">',
         '    <output class="tet-out" id="tet-inter-n">1.16</output>',
         '  </div>',
+        '  <div class="tet-fila">',
+        '    <span class="tet-lbl">Fondo</span>',
+        '    <div class="tet-seg tet-seg-ancho" id="tet-fondo-texto" role="group" aria-label="Fondo del texto">',
+        '      <button type="button" class="tet-seg-btn is-on" data-fondo-texto="ninguno" title="Sin fondo">Ninguno</button>',
+        '      <button type="button" class="tet-seg-btn" data-fondo-texto="cuadro" title="Cuadro rectangular">Cuadro</button>',
+        '      <button type="button" class="tet-seg-btn" data-fondo-texto="redondeado" title="Cuadro con esquinas redondeadas">Redondeado</button>',
+        '      <button type="button" class="tet-seg-btn" data-fondo-texto="pildora" title="Forma de píldora">Píldora</button>',
+        '    </div>',
+        '  </div>',
+        '  <div class="tet-fila" id="tet-fila-fondo-texto" hidden>',
+        '    <label class="tet-color-parada" for="tet-fondo-color"><span>Color</span>',
+        '      <input type="color" id="tet-fondo-color" class="tet-color" value="#ffd43b" aria-label="Color del fondo del texto">',
+        '    </label>',
+        '    <label class="tet-lbl" for="tet-fondo-opacidad">Opacidad</label>',
+        '    <input type="range" class="tet-range" id="tet-fondo-opacidad" min="20" max="100" step="5" value="100">',
+        '    <output class="tet-out" id="tet-fondo-opacidad-n">100%</output>',
+        '  </div>',
         '  <p class="tet-pista">Doble clic en el lienzo para editar el texto. Ctrl+Z deshace.</p>',
         '</div>'
     ].join(''));
@@ -92,6 +110,11 @@
     var outInter = panelTexto.querySelector('#tet-inter-n');
     var btnNeg = panelTexto.querySelector('#tet-negrita');
     var segAlinear = panelTexto.querySelector('#tet-alinear');
+    var segFondoTexto = panelTexto.querySelector('#tet-fondo-texto');
+    var filaFondoTexto = panelTexto.querySelector('#tet-fila-fondo-texto');
+    var inFondoColor = panelTexto.querySelector('#tet-fondo-color');
+    var inFondoOpacidad = panelTexto.querySelector('#tet-fondo-opacidad');
+    var outFondoOpacidad = panelTexto.querySelector('#tet-fondo-opacidad-n');
 
     alineaciones.forEach(function (a) {
         var b = el('button', 'tet-seg-btn',
@@ -114,6 +137,143 @@
         });
         confirmarCambio();
     }
+
+    /* ---------- cuadro / rectángulo / píldora detrás del texto ----------
+       Se usa un rectángulo aparte (no `backgroundColor` de Fabric) porque así
+       se pueden redondear las esquinas y cambiar la forma sin tocar el texto.
+       El rectángulo va justo debajo del texto y se actualiza cuando el texto
+       se mueve, se escala o se edita. */
+    function idDeTexto(t) {
+        if (!t.tetId) {
+            t.tetId = 'txt-' + Date.now().toString(36) + '-' +
+                Math.random().toString(36).slice(2, 7);
+        }
+        return t.tetId;
+    }
+
+    function geometriaFondo(t) {
+        var r = t.getBoundingRect();
+        var pad = Math.max(6, Math.round((t.fontSize || 48) * 0.34));
+        return {
+            left: r.left - pad,
+            top: r.top - pad,
+            width: Math.max(1, r.width + pad * 2),
+            height: Math.max(1, r.height + pad * 2)
+        };
+    }
+
+    function radioFondo(forma, alto) {
+        if (forma === 'pildora') return alto / 2;
+        if (forma === 'redondeado') return Math.min(28, alto * 0.22);
+        return 0;
+    }
+
+    function pintarFondoTexto(t) {
+        if (!t || !t._tetFondo) return;
+        var rect = t._tetFondo;
+        var g = geometriaFondo(t);
+        var radio = radioFondo(rect.tetFondoForma, g.height);
+        rect.set({
+            left: g.left,
+            top: g.top,
+            width: g.width,
+            height: g.height,
+            rx: radio,
+            ry: radio
+        });
+        rect.setCoords();
+    }
+
+    /* Vuelve a enlazar los cuadros con sus textos después de deshacer, rehacer
+       o abrir un proyecto: la referencia directa no viaja en el JSON. */
+    window.tetVincularFondosTexto = function () {
+        var porId = {};
+        canvas.getObjects().forEach(function (o) {
+            if (o.tetId) porId[o.tetId] = o;
+        });
+        canvas.getObjects().forEach(function (o) {
+            if (!o.tetFondoTexto) return;
+            var t = o.tetFondoDe ? porId[o.tetFondoDe] : null;
+            o._tetTexto = t || null;
+            if (t) t._tetFondo = o;
+        });
+    };
+
+    /* Deja cada cuadro justo debajo de su texto. Al recomponer, la foto se
+       vuelve a añadir al final de la pila y podía quedar por delante del
+       cuadro, ocultándolo. */
+    window.tetReordenarFondosTexto = function () {
+        var objs = canvas.getObjects();
+        objs.forEach(function (t) {
+            if (!t._tetFondo || !t._tetFondo.canvas) return;
+            var idx = canvas.getObjects().indexOf(t);
+            if (idx < 0) return;
+            canvas.moveTo(t._tetFondo, Math.max(0, idx - 1));
+        });
+    };
+
+    function quitarFondoTexto(t) {
+        if (!t || !t._tetFondo) return;
+        var rect = t._tetFondo;
+        t._tetFondo = null;
+        if (rect) {
+            rect._tetTexto = null;
+            if (rect.canvas) canvas.remove(rect);
+        }
+    }
+
+    function aplicarFondoTexto(forma) {
+        var ts = textosSeleccionados();
+        if (!ts.length) { aviso('Selecciona un texto primero', 'warning'); return; }
+        var color = inFondoColor.value || '#ffd43b';
+        var opacidad = Math.max(0.2, Math.min(1, (+inFondoOpacidad.value || 100) / 100));
+
+        ts.forEach(function (t) {
+            if (forma === 'ninguno') {
+                quitarFondoTexto(t);
+                return;
+            }
+            idDeTexto(t);
+            var rect = t._tetFondo;
+            if (!rect || !rect.canvas) {
+                rect = new fabric.Rect({
+                    fill: color,
+                    selectable: false,
+                    evented: false,
+                    hasControls: false,
+                    lockMovementX: true,
+                    lockMovementY: true,
+                    lockRotation: true,
+                    name: 'Fondo de texto',
+                    tetFondoTexto: true,
+                    tetFondoDe: t.tetId,
+                    tetFondoForma: forma
+                });
+                t._tetFondo = rect;
+                rect._tetTexto = t;
+                var idx = canvas.getObjects().indexOf(t);
+                if (idx >= 0) canvas.insertAt(rect, idx);
+                else canvas.add(rect);
+            }
+            rect._tetTexto = t;
+            rect.set({
+                fill: color,
+                opacity: opacidad,
+                tetFondoForma: forma,
+                tetFondoDe: t.tetId
+            });
+            pintarFondoTexto(t);
+        });
+        confirmarCambio();
+        pintarTexto();
+    }
+
+    function actualizarFondosTexto() {
+        canvas.getObjects().forEach(function (o) {
+            if (o._tetTexto && o.tetFondoTexto) pintarFondoTexto(o._tetTexto);
+        });
+    }
+    window.tetActualizarFondosTexto = actualizarFondosTexto;
 
     inTam.addEventListener('input', function () { aplicarA({ fontSize: +this.value }); });
     inTamN.addEventListener('input', function () {
@@ -140,6 +300,61 @@
         pintarTexto();
     });
 
+    segFondoTexto.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-fondo-texto]');
+        if (!b) return;
+        aplicarFondoTexto(b.dataset.fondoTexto);
+    });
+    inFondoColor.addEventListener('input', function () {
+        var ts = textosSeleccionados();
+        if (!ts.length) return;
+        ts.forEach(function (t) {
+            if (t._tetFondo) {
+                t._tetFondo.set('fill', this.value);
+                pintarFondoTexto(t);
+            }
+        }, this);
+        confirmarCambio();
+    });
+    inFondoOpacidad.addEventListener('input', function () {
+        var v = Math.max(0.2, Math.min(1, (+this.value || 100) / 100));
+        outFondoOpacidad.textContent = this.value + '%';
+        var ts = textosSeleccionados();
+        if (!ts.length) return;
+        ts.forEach(function (t) {
+            if (t._tetFondo) t._tetFondo.set('opacity', v);
+        });
+        confirmarCambio();
+    });
+
+    /* El cuadro tiene que seguir al texto cuando se mueve, se escala o se
+       edita. Durante el arrastre se pinta en cada frame; al soltar se guarda
+       el historial una sola vez. */
+    ['object:moving', 'object:scaling'].forEach(function (ev) {
+        canvas.on(ev, function () {
+            actualizarFondosTexto();
+            canvas.requestRenderAll();
+        });
+    });
+    ['object:modified', 'text:changed', 'selection:updated'].forEach(function (ev) {
+        canvas.on(ev, function () {
+            actualizarFondosTexto();
+            canvas.requestRenderAll();
+        });
+    });
+    canvas.on('object:removed', function (e) {
+        var o = e && e.target;
+        if (!o) return;
+        if (o.tetFondoTexto && o._tetTexto && o._tetTexto._tetFondo === o) {
+            o._tetTexto._tetFondo = null;
+        }
+        if (typeof o.text === 'string' && o._tetFondo) {
+            var rect = o._tetFondo;
+            o._tetFondo = null;
+            if (rect && rect.canvas) canvas.remove(rect);
+        }
+    });
+
     /* Refleja el texto seleccionado en los controles. Lo expone main.js para
        que el selector de color del formulario refresque la negrita. */
     function pintarTexto() {
@@ -162,6 +377,17 @@
         segAlinear.querySelectorAll('button[data-align]').forEach(function (b) {
             b.classList.toggle('is-on', b.dataset.align === (t.textAlign || 'left'));
         });
+        var forma = t._tetFondo ? (t._tetFondo.tetFondoForma || 'cuadro') : 'ninguno';
+        segFondoTexto.querySelectorAll('button[data-fondo-texto]').forEach(function (b) {
+            b.classList.toggle('is-on', b.dataset.fondoTexto === forma);
+        });
+        filaFondoTexto.hidden = forma === 'ninguno';
+        if (t._tetFondo) {
+            if (typeof t._tetFondo.fill === 'string') inFondoColor.value = t._tetFondo.fill;
+            var op = Math.round((t._tetFondo.opacity == null ? 1 : t._tetFondo.opacity) * 100);
+            inFondoOpacidad.value = op;
+            outFondoOpacidad.textContent = op + '%';
+        }
     }
     window.tetRefrescarPanelTexto = pintarTexto;
 
@@ -377,12 +603,23 @@
         '      <input type="color" id="tet-color2" class="tet-color" value="#1d3f7a" aria-label="Color final del degradado">',
         '    </label>',
         '  </div>',
+        '  <div class="tet-presets" id="tet-presets" role="group" aria-label="Degradados rápidos">',
+        '    <button type="button" class="tet-seg-btn" data-preset="invertir" title="Invertir los dos colores del degradado">Invertir</button>',
+        '    <button type="button" class="tet-seg-btn" data-preset="oscurecer" title="Oscurecer los dos colores">Oscurecer</button>',
+        '    <button type="button" class="tet-seg-btn" data-preset="aclarar" title="Aclarar los dos colores">Aclarar</button>',
+        '    <button type="button" class="tet-seg-btn" data-preset="azul" title="Degradado azul noche">Azul noche</button>',
+        '    <button type="button" class="tet-seg-btn" data-preset="rojo" title="Degradado rojo">Rojo</button>',
+        '    <button type="button" class="tet-seg-btn" data-preset="verde" title="Degradado verde">Verde</button>',
+        '  </div>',
         '  <div class="tet-gradient-preview" id="tet-gradient-preview" role="img" aria-label="Vista previa del degradado"></div>',
         '  <button type="button" class="tet-sugerir" id="tet-sugerir" title="Analiza la foto del lienzo y propone un degradado que combine con sus colores">',
         '    <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Sugerir según la foto',
         '  </button>',
         '  <label class="tet-check tet-auto-deg" for="tet-auto-deg" title="Al insertar, componer o pegar una foto, el fondo se adapta a sus colores">',
         '    <input type="checkbox" id="tet-auto-deg"> <span>Automático al colocar la foto</span>',
+        '  </label>',
+        '  <label class="tet-check tet-auto-deg" for="tet-texto-auto" title="Si el fondo es oscuro el texto pasa a blanco y si es claro pasa a negro">',
+        '    <input type="checkbox" id="tet-texto-auto" checked> <span>Texto automático (contraste)</span>',
         '  </label>',
         '  <div class="tet-fila" id="tet-fila-angulo" hidden>',
         '    <label class="tet-lbl" for="tet-angulo">Ángulo</label>',
@@ -431,6 +668,8 @@
     var chkTercios = panelTpl.querySelector('#tet-tercios');
     var filaColor2 = panelTpl.querySelector('#tet-fila-degradado');
     var filaAngulo = panelTpl.querySelector('#tet-fila-angulo');
+    var segPresets = panelTpl.querySelector('#tet-presets');
+    var chkTextoAuto = panelTpl.querySelector('#tet-texto-auto');
 
     function refrescarPanelTpl() {
         segFondo.querySelectorAll('button[data-fondo]').forEach(function (b) {
@@ -448,6 +687,7 @@
         if (chkOpFondo) chkOpFondo.checked = !!DECO.opacidadFondo;
         inColor2.value = DECO.color2;
         chkBarra.checked = !!DECO.conBarra;
+        if (chkTextoAuto) chkTextoAuto.checked = DECO.textoAuto !== false;
         /* el ángulo de Fabric va de izquierda a derecha con 0; el de CSS
            (linear-gradient) empieza arriba y gira en el sentido del reloj:
            90° de diferencia. Sin esto la vista previa no coincidía con el
@@ -515,6 +755,78 @@
         pintarDecoracion();
     });
 
+    /* Presets rápidos de degradado: invertir, oscurecer, aclarar y tres
+       paletas oscuras. Así no hay que empezar siempre desde el blanco. */
+    function ajustarLuz(hex, delta) {
+        var c = (hex || '#ffffff').replace('#', '');
+        if (c.length === 3) c = c.charAt(0) + c.charAt(0) + c.charAt(1) +
+            c.charAt(1) + c.charAt(2) + c.charAt(2);
+        if (c.length !== 6) return hex;
+        var r = parseInt(c.slice(0, 2), 16);
+        var g = parseInt(c.slice(2, 4), 16);
+        var b = parseInt(c.slice(4, 6), 16);
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return hex;
+        var hsl = _rgbAHsl(r, g, b);
+        return _hslAHex(hsl.h, hsl.s, Math.max(0.04, Math.min(0.96, hsl.l + delta)));
+    }
+
+    var PRESETS_DEG = {
+        invertir: function () {
+            var a = DECO.color1;
+            DECO.color1 = DECO.color2;
+            DECO.color2 = a;
+        },
+        oscurecer: function () {
+            DECO.color1 = ajustarLuz(DECO.color1, -0.18);
+            DECO.color2 = ajustarLuz(DECO.color2, -0.18);
+        },
+        aclarar: function () {
+            DECO.color1 = ajustarLuz(DECO.color1, 0.16);
+            DECO.color2 = ajustarLuz(DECO.color2, 0.16);
+        },
+        azul: function () {
+            DECO.color1 = '#061a3a';
+            DECO.color2 = '#0d6efd';
+            DECO.angulo = 135;
+        },
+        rojo: function () {
+            DECO.color1 = '#3a0606';
+            DECO.color2 = '#dc3545';
+            DECO.angulo = 135;
+        },
+        verde: function () {
+            DECO.color1 = '#062a1a';
+            DECO.color2 = '#198754';
+            DECO.angulo = 135;
+        }
+    };
+
+    if (segPresets) {
+        segPresets.addEventListener('click', function (e) {
+            var b = e.target.closest('button[data-preset]');
+            if (!b) return;
+            var fn = PRESETS_DEG[b.dataset.preset];
+            if (!fn) return;
+            DECO.tipoFondo = 'degradado';
+            fn();
+            var selectorFondo = document.getElementById('color');
+            if (selectorFondo) selectorFondo.value = DECO.color1;
+            refrescarPanelTpl();
+            pintarDecoracion();
+            if (window.tetAutoColorTexto) window.tetAutoColorTexto();
+            aviso('Degradado «' + b.textContent + '» aplicado', 'info');
+        });
+    }
+
+    if (chkTextoAuto) {
+        chkTextoAuto.addEventListener('change', function () {
+            DECO.textoAuto = this.checked;
+            if (this.checked && window.tetAutoColorTexto) {
+                window.tetAutoColorTexto(true);
+            }
+        });
+    }
+
     inColor1.addEventListener('input', function () {
         DECO.color1 = this.value;
         var selectorFondo = document.getElementById('color');
@@ -553,6 +865,134 @@
 
 
     /* ============================================================
+       3b · PANEL «IMAGEN» (blanco y negro · ajuste · bordes laterales)
+       ============================================================ */
+    var panelImagen = el('section', 'tet-panel', [
+        '<header class="tet-panel-head">',
+        '  <i class="fas fa-image" aria-hidden="true"></i><strong>Imagen</strong>',
+        '</header>',
+        '<div class="tet-panel-body">',
+        '  <div class="tet-seg tet-seg-ancho" id="tet-ajuste-img" role="group" aria-label="Ajuste de la imagen">',
+        '    <button type="button" class="tet-seg-btn is-on" data-ajuste="auto" title="Rellena si la proporción se parece; si no, la muestra entera">Auto</button>',
+        '    <button type="button" class="tet-seg-btn" data-ajuste="cover" title="Rellena todo el hueco recortando la foto">Rellenar</button>',
+        '    <button type="button" class="tet-seg-btn" data-ajuste="contain" title="Muestra la foto entera, sin recortarla">Entera</button>',
+        '  </div>',
+        '  <div class="tet-fila tet-checks">',
+        '    <label class="tet-check"><input type="checkbox" id="tet-img-bn"> <span>Blanco y negro</span></label>',
+        '    <label class="tet-check"><input type="checkbox" id="tet-img-lateral"> <span>Relleno lateral</span></label>',
+        '  </div>',
+        '  <div class="tet-fila tet-colores" id="tet-fila-lateral" hidden>',
+        '    <label class="tet-color-parada" for="tet-lateral-color1"><span>Lado</span>',
+        '      <input type="color" id="tet-lateral-color1" class="tet-color" value="#1d3f7a" aria-label="Color lateral inicial">',
+        '    </label>',
+        '    <label class="tet-color-parada" for="tet-lateral-color2"><span>Centro</span>',
+        '      <input type="color" id="tet-lateral-color2" class="tet-color" value="#0b1020" aria-label="Color lateral final">',
+        '    </label>',
+        '  </div>',
+        '  <label class="tet-check tet-auto-deg" for="tet-lateral-deg" title="Los laterales usan un degradado entre los dos colores">',
+        '    <input type="checkbox" id="tet-lateral-deg" checked> <span>Laterales en degradado</span>',
+        '  </label>',
+        '  <p class="tet-pista">El relleno lateral ocupa el hueco de la foto: útil cuando la imagen es pequeña o muy vertical.</p>',
+        '</div>'
+    ].join(''));
+
+    var segAjusteImg = panelImagen.querySelector('#tet-ajuste-img');
+    var chkImgBN = panelImagen.querySelector('#tet-img-bn');
+    var chkImgLateral = panelImagen.querySelector('#tet-img-lateral');
+    var filaLateral = panelImagen.querySelector('#tet-fila-lateral');
+    var inLateral1 = panelImagen.querySelector('#tet-lateral-color1');
+    var inLateral2 = panelImagen.querySelector('#tet-lateral-color2');
+    var chkLateralDeg = panelImagen.querySelector('#tet-lateral-deg');
+
+    function refrescarPanelImagen() {
+        segAjusteImg.querySelectorAll('button[data-ajuste]').forEach(function (b) {
+            b.classList.toggle('is-on', b.dataset.ajuste === (DECO.ajusteImagen || 'auto'));
+        });
+        chkImgBN.checked = !!DECO.imagenBN;
+        chkImgLateral.checked = !!DECO.lateralActivo;
+        filaLateral.hidden = !DECO.lateralActivo;
+        inLateral1.value = DECO.lateralColor1;
+        inLateral2.value = DECO.lateralColor2;
+        chkLateralDeg.checked = !!DECO.lateralDegradado;
+    }
+
+    function imagenAutoActual() {
+        return typeof imagenParaAuto === 'function' ? imagenParaAuto() : null;
+    }
+
+    function reencajarAuto() {
+        var img = imagenAutoActual();
+        if (!img) return false;
+        var layout = layoutAuto(img, true);
+        if (layout.hueco) encajarImagen(img, layout.hueco);
+        aplicarLateralAuto(img, layout.hueco);
+        if (window.tetActualizarFondosTexto) window.tetActualizarFondosTexto();
+        canvas.renderAll();
+        return true;
+    }
+
+    segAjusteImg.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-ajuste]');
+        if (!b) return;
+        DECO.ajusteImagen = b.dataset.ajuste;
+        refrescarPanelImagen();
+        if (!reencajarAuto()) {
+            aviso('Coloca una imagen para aplicar el ajuste', 'info');
+        }
+        if (window.tetGuardarEstado) window.tetGuardarEstado();
+    });
+
+    chkImgBN.addEventListener('change', function () {
+        DECO.imagenBN = this.checked;
+        var img = typeof imagenObjetivo === 'function' ? imagenObjetivo() : null;
+        if (img) window.tetBlancoNegro(this.checked, img);
+        else if (this.checked) aviso('Selecciona una imagen para aplicarle blanco y negro', 'info');
+    });
+
+    chkImgLateral.addEventListener('change', function () {
+        DECO.lateralActivo = this.checked;
+        filaLateral.hidden = !this.checked;
+        var img = imagenAutoActual();
+        if (img) {
+            aplicarLateralAuto(img);
+            if (window.tetGuardarEstado) window.tetGuardarEstado();
+        } else if (this.checked) {
+            aviso('El relleno lateral se aplica a la imagen del botón auto', 'info');
+        }
+    });
+
+    [inLateral1, inLateral2].forEach(function (inp) {
+        inp.addEventListener('input', function () {
+            DECO.lateralColor1 = inLateral1.value;
+            DECO.lateralColor2 = inLateral2.value;
+            var img = imagenAutoActual();
+            if (img && DECO.lateralActivo) aplicarLateralAuto(img);
+        });
+        inp.addEventListener('change', function () {
+            if (window.tetGuardarEstado) window.tetGuardarEstado();
+        });
+    });
+
+    chkLateralDeg.addEventListener('change', function () {
+        DECO.lateralDegradado = this.checked;
+        var img = imagenAutoActual();
+        if (img && DECO.lateralActivo) {
+            aplicarLateralAuto(img);
+            if (window.tetGuardarEstado) window.tetGuardarEstado();
+        }
+    });
+
+    canvas.on('selection:created', function () {
+        var o = canvas.getActiveObject();
+        if (o && o.type === 'image') {
+            chkImgBN.checked = (o.filters || []).some(function (f) {
+                return f.type === 'Grayscale';
+            });
+        }
+    });
+
+
+    /* ============================================================
        4 · MONTAJE EN EL DOCK
        ============================================================ */
 
@@ -580,9 +1020,11 @@
     if (panelBase) {
         paneProps.insertBefore(panelTexto, panelBase);
         paneProps.insertBefore(panelTpl, panelBase);
+        paneProps.insertBefore(panelImagen, panelBase);
     } else {
         paneProps.appendChild(panelTexto);
         paneProps.appendChild(panelTpl);
+        paneProps.appendChild(panelImagen);
     }
 
     panelTexto.hidden = true;
@@ -592,6 +1034,8 @@
         });
     pintarTexto();
     refrescarPanelTpl();
+    refrescarPanelImagen();
+    window.tetVincularFondosTexto();
 
     /* El fondo con degradado no es un color plano: formatos.js elegía el
        color del lienzo para pintar de opaco el lienzo de exportación y, al

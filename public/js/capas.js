@@ -242,6 +242,8 @@
     }
 
     function nameFor(obj) {
+        if (obj.tetLateral) return 'Bordes laterales';
+        if (obj.tetFondoTexto) return 'Fondo de texto';
         if (typeof obj.text === 'string' && obj.text.length) {
             return obj.text.substring(0, 24) + (obj.text.length > 24 ? '…' : '');
         }
@@ -500,7 +502,15 @@
          cambiar de formato vuelva a su sitio.
 
        En los otros editores la lista no cambia nada. */
-    var PROPS_PROPIAS = ['tetZona'];
+    var PROPS_PROPIAS = [
+        'tetZona',
+        'tetAutoImagen',
+        'tetLateral',
+        'tetFondoTexto',
+        'tetFondoDe',
+        'tetFondoForma',
+        'tetId'
+    ];
 
     function guardarEstado() {
         if (restaurando) return;
@@ -553,6 +563,9 @@
                    veria estirada a lo ancho entero; se vuelve a componer por
                    piezas (main.js). En el resto de editores no hace nada. */
                 if (window.tetRestaurarDecoracion) window.tetRestaurarDecoracion();
+                /* los cuadros de fondo de texto guardan una referencia al
+                   texto por id: al restaurar hay que volver a enlazarla */
+                if (window.tetVincularFondosTexto) window.tetVincularFondosTexto();
                 /* Tras un deshacer/rehacer el lienzo puede haber vuelto a un
                    estado anterior (en el collage, otro diseño y otro hueco).
                    Quien tenga estado propio aparte del lienzo (collage.js) se
@@ -724,6 +737,7 @@
                         render();
                         /* tet1: recompone la franja (ver restaurar) */
                         if (window.tetRestaurarDecoracion) window.tetRestaurarDecoracion();
+                        if (window.tetVincularFondosTexto) window.tetVincularFondosTexto();
                         aviso('Proyecto cargado', 'success');
                     });
                 } catch (err) {

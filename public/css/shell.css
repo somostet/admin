@@ -1939,6 +1939,28 @@ body.tet-barra-movil {
     font-weight: 600;
 }
 
+/* Presets rápidos del degradado: seis botones que caben en dos filas */
+.tet-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.tet-presets .tet-seg-btn {
+    flex: 1 1 30%;
+    min-width: 4.8rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .35rem;
+    background: var(--sh-input-bg);
+    padding: .34rem .35rem;
+}
+
+.tet-presets .tet-seg-btn:hover {
+    border-color: var(--sh-accent);
+    background: var(--sh-hover);
+    color: var(--sh-text);
+}
+
 /* ---------- botón conmutado (negrita) ---------- */
 .tet-toggle {
     flex: 0 0 auto;
