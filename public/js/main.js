@@ -808,6 +808,25 @@ canvas.backgroundColor = '#ffffff';
 /* tet news (nuevo) es la plantilla por defecto: es la primera del selector. */
 plantillaActual = { img: barTetNewsNuevo, barra: barTetNewsNuevo, color: 'color', arte: false };
 aplicarDecoracion(true);
+
+/* Centrado automático del texto: los textos marcados con tetAutoCentro se
+   vuelven a centrar al moverlos, escalarlos o terminar de editarlos. El botón
+   del panel «Texto» lo activa y lo quita por texto. */
+function centrarTextoAuto(obj) {
+    if (!obj || obj.tetAutoCentro !== true || typeof obj.text !== 'string') return;
+    var W = canvas.getWidth();
+    obj.set({ left: Math.round((W - obj.width * (obj.scaleX || 1)) / 2) });
+    obj.setCoords();
+}
+canvas.on('object:modified', function (e) {
+    var lista = (e.target && e.target.type === 'activeSelection') ? e.target.getObjects() : [e.target];
+    lista.forEach(centrarTextoAuto);
+    if (window.tetActualizarFondosTexto) window.tetActualizarFondosTexto();
+});
+canvas.on('editing:exited', function (e) {
+    centrarTextoAuto(e.target);
+    if (window.tetActualizarFondosTexto) window.tetActualizarFondosTexto();
+});
 /* fin canvas code*/
 
 
@@ -1277,6 +1296,7 @@ function crearTitulo(texto) {
         width: maxW,
         left: Math.round((canvas.getWidth() - maxW) / 2),
         top: Math.round(canvas.getHeight() * ZONAS.titulo.top),
+        tetAutoCentro: true,
         lockMovementX: false,
         lockMovementY: false,
         hasControls: false,
@@ -1356,6 +1376,7 @@ function crearDetalle(texto) {
         top: Math.round(H * ZONAS.detalle.top),
         // el alto de la zona hace que el cuadro no se salga por abajo
         height: altoZona,
+        tetAutoCentro: true,
         lockMovementX: false,
         lockMovementY: false,
         splitByGrapheme: false,
@@ -1614,8 +1635,8 @@ function layoutAuto(img, aplicar) {
     var t = objetoDeZona('titulo');
     var d = objetoDeZona('detalle');
     var gapTD = Math.max(10, Math.round(H * 0.016));
-    var gapImagen = Math.max(20, Math.round(H * 0.034));
-    var margenAbajo = Math.max(14, Math.round(H * 0.035));
+    var gapImagen = Math.max(24, Math.round(H * 0.05));
+    var margenAbajo = Math.max(14, Math.round(H * 0.03));
     var mT = medidaTexto(t);
     var mD = medidaTexto(d);
     var altoT = mT.alto;
@@ -1666,14 +1687,14 @@ function layoutAuto(img, aplicar) {
         if (t) {
             t.set({
                 top: Math.round(yTexto + (mT.pad || 0) - mT.delta),
-                left: Math.round((W - (t.width || W)) / 2)
+                left: t.tetAutoCentro === false ? t.left : Math.round((W - (t.width || W) * (t.scaleX || 1)) / 2)
             });
             t.setCoords();
         }
         if (d) {
             d.set({
                 top: Math.round(yTexto + altoT + (altoT ? gapTD : 0) + (mD.pad || 0) - mD.delta),
-                left: Math.round((W - (d.width || W)) / 2)
+                left: d.tetAutoCentro === false ? d.left : Math.round((W - (d.width || W) * (d.scaleX || 1)) / 2)
             });
             d.setCoords();
         }
@@ -1711,12 +1732,11 @@ function encajarImagen(img, hueco) {
     if (!(dispW > 0) || !(dispH > 0) || !hueco) return img;
     var aspectoImg = dispW / dispH;
     var aspectoHueco = hueco.w / hueco.h;
-    /* Modo elegido en el panel «Imagen». En automático se rellena cuando la
-       proporción se parece a la del hueco y se muestra entera cuando es muy
-       apaisada o muy vertical. */
+    /* Modo elegido en el panel «Imagen». En automático se rellena el hueco
+       (la foto empieza en la franja y no quedan marcos vacíos); «Entera»
+       muestra la foto completa y deja los laterales para el relleno. */
     var modo = DECO.ajusteImagen || 'auto';
-    var rellenar = modo === 'cover' ||
-        (modo === 'auto' && aspectoImg > aspectoHueco / 1.6 && aspectoImg < aspectoHueco * 1.6);
+    var rellenar = modo !== 'contain';
 
     if (rellenar) {
         var cw, ch;
@@ -1743,7 +1763,9 @@ function encajarImagen(img, hueco) {
             scaleX: e,
             scaleY: e,
             left: Math.round(hueco.x + (hueco.w - dispW * e) / 2),
-            top: Math.round(hueco.y + (hueco.h - dispH * e) / 2)
+            /* pegada arriba: si la foto es más baja que el hueco, debe empezar
+               justo debajo de la franja, no flotando en el centro */
+            top: Math.round(hueco.y)
         });
     }
     /* Se recuerda el hueco: el relleno lateral y el reencaje al cambiar de
@@ -1901,7 +1923,7 @@ function componerTodo() {
                 titulo = crearTitulo(texto);
                 canvas.add(titulo);
             }
-            titulo.centerH();
+            if (titulo.tetAutoCentro !== false) titulo.centerH();
             titulo.lockRotation = true;
             titulo.setCoords();
         }
@@ -1914,7 +1936,7 @@ function componerTodo() {
                 desc = crearDetalle(detalle);
                 canvas.add(desc);
             }
-            desc.centerH();
+            if (desc.tetAutoCentro !== false) desc.centerH();
             desc.lockRotation = true;
             desc.setCoords();
         }

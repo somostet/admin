@@ -77,6 +77,8 @@
         '    <span class="tet-lbl">Alineación</span>',
         '    <div class="tet-seg" id="tet-alinear" role="group" aria-label="Alineación del texto"></div>',
         '    <button type="button" class="tet-toggle" id="tet-negrita" title="Negrita" aria-label="Negrita" aria-pressed="false"><i class="fas fa-bold" aria-hidden="true"></i></button>',
+        '    <button type="button" class="tet-toggle" id="tet-italica" title="Cursiva" aria-label="Cursiva" aria-pressed="false"><i class="fas fa-italic" aria-hidden="true"></i></button>',
+        '    <button type="button" class="tet-toggle" id="tet-autocentro" title="Mantener el texto centrado (se puede quitar)" aria-label="Centrado automático" aria-pressed="false"><i class="fas fa-arrows-alt-h" aria-hidden="true"></i></button>',
         '  </div>',
         '  <div class="tet-fila">',
         '    <label class="tet-lbl" for="tet-inter">Interlineado</label>',
@@ -100,7 +102,7 @@
         '    <input type="range" class="tet-range" id="tet-fondo-opacidad" min="20" max="100" step="5" value="100">',
         '    <output class="tet-out" id="tet-fondo-opacidad-n">100%</output>',
         '  </div>',
-        '  <p class="tet-pista">Doble clic en el lienzo para editar el texto. Ctrl+Z deshace.</p>',
+        '  <p class="tet-pista">Doble clic en el lienzo para editar el texto. El botón de centrado mantiene el texto en el medio y se puede quitar. Ctrl+Z deshace.</p>',
         '</div>'
     ].join(''));
 
@@ -109,6 +111,8 @@
     var inInter = panelTexto.querySelector('#tet-inter');
     var outInter = panelTexto.querySelector('#tet-inter-n');
     var btnNeg = panelTexto.querySelector('#tet-negrita');
+    var btnItalica = panelTexto.querySelector('#tet-italica');
+    var btnAutoCentro = panelTexto.querySelector('#tet-autocentro');
     var segAlinear = panelTexto.querySelector('#tet-alinear');
     var segFondoTexto = panelTexto.querySelector('#tet-fondo-texto');
     var filaFondoTexto = panelTexto.querySelector('#tet-fila-fondo-texto');
@@ -217,6 +221,8 @@
         var rect = t._tetFondo;
         t._tetFondo = null;
         if (rect) {
+            /* la sombra del cuadro pasa al texto para no perderla */
+            if (rect.shadow) copiarSombra(rect, t);
             rect._tetTexto = null;
             if (rect.canvas) canvas.remove(rect);
         }
@@ -251,6 +257,16 @@
                 });
                 t._tetFondo = rect;
                 rect._tetTexto = t;
+                /* si el texto ya tenía sombra, ahora la lleva el cuadro */
+                if (t.shadow) {
+                    copiarSombra(t, rect);
+                    t.set('shadow', null);
+                    t.tetSombraColor = null;
+                    t.tetSombraOpacidad = null;
+                    t.tetSombraBlur = null;
+                    t.tetSombraX = null;
+                    t.tetSombraY = null;
+                }
                 var idx = canvas.getObjects().indexOf(t);
                 if (idx >= 0) canvas.insertAt(rect, idx);
                 else canvas.add(rect);
@@ -292,6 +308,29 @@
         var actual = (ts[0].fontWeight || 'normal') === 'bold';
         aplicarA({ fontWeight: actual ? 'normal' : 'bold' });
         pintarTexto();
+    });
+    btnItalica.addEventListener('click', function () {
+        var ts = textosSeleccionados();
+        if (!ts.length) { aviso('Selecciona un texto primero', 'warning'); return; }
+        var actual = (ts[0].fontStyle || 'normal') === 'italic';
+        aplicarA({ fontStyle: actual ? 'normal' : 'italic' });
+        pintarTexto();
+    });
+    btnAutoCentro.addEventListener('click', function () {
+        var ts = textosSeleccionados();
+        if (!ts.length) { aviso('Selecciona un texto primero', 'warning'); return; }
+        /* si alguno está suelto, el botón activa el centrado en todos */
+        var activar = !ts.every(function (t) { return t.tetAutoCentro; });
+        ts.forEach(function (t) {
+            t.tetAutoCentro = activar;
+            if (activar) {
+                t.centerH();
+                t.setCoords();
+            }
+        });
+        pintarTexto();
+        confirmarCambio();
+        aviso(activar ? 'Centrado automático activado' : 'Centrado automático desactivado', 'info');
     });
     segAlinear.addEventListener('click', function (e) {
         var b = e.target.closest('button[data-align]');
@@ -374,6 +413,11 @@
         }
         btnNeg.setAttribute('aria-pressed',
             (t.fontWeight || 'normal') === 'bold' ? 'true' : 'false');
+        btnItalica.setAttribute('aria-pressed',
+            (t.fontStyle || 'normal') === 'italic' ? 'true' : 'false');
+        btnAutoCentro.setAttribute('aria-pressed',
+            t.tetAutoCentro ? 'true' : 'false');
+        btnAutoCentro.classList.toggle('is-on', !!t.tetAutoCentro);
         segAlinear.querySelectorAll('button[data-align]').forEach(function (b) {
             b.classList.toggle('is-on', b.dataset.align === (t.textAlign || 'left'));
         });
@@ -873,7 +917,7 @@
         '</header>',
         '<div class="tet-panel-body">',
         '  <div class="tet-seg tet-seg-ancho" id="tet-ajuste-img" role="group" aria-label="Ajuste de la imagen">',
-        '    <button type="button" class="tet-seg-btn is-on" data-ajuste="auto" title="Rellena si la proporción se parece; si no, la muestra entera">Auto</button>',
+        '    <button type="button" class="tet-seg-btn is-on" data-ajuste="auto" title="Rellena el hueco: la foto empieza en la franja y no deja marcos">Auto</button>',
         '    <button type="button" class="tet-seg-btn" data-ajuste="cover" title="Rellena todo el hueco recortando la foto">Rellenar</button>',
         '    <button type="button" class="tet-seg-btn" data-ajuste="contain" title="Muestra la foto entera, sin recortarla">Entera</button>',
         '  </div>',
@@ -993,6 +1037,209 @@
 
 
     /* ============================================================
+       3c · PANEL «SOMBRA» (imágenes y textos)
+       ============================================================ */
+    var panelSombra = el('section', 'tet-panel', [
+        '<header class="tet-panel-head">',
+        '  <i class="fas fa-clone" aria-hidden="true"></i><strong>Sombra</strong>',
+        '</header>',
+        '<div class="tet-panel-body">',
+        '  <div class="tet-fila tet-checks">',
+        '    <label class="tet-check"><input type="checkbox" id="tet-sombra-on"> <span>Sombra</span></label>',
+        '    <label class="tet-color-parada" for="tet-sombra-color"><span>Color</span>',
+        '      <input type="color" id="tet-sombra-color" class="tet-color" value="#000000" aria-label="Color de la sombra">',
+        '    </label>',
+        '  </div>',
+        '  <div class="tet-fila">',
+        '    <label class="tet-lbl" for="tet-sombra-blur">Difuminado</label>',
+        '    <input type="range" class="tet-range" id="tet-sombra-blur" min="0" max="80" step="1" value="18">',
+        '    <output class="tet-out" id="tet-sombra-blur-n">18</output>',
+        '  </div>',
+        '  <div class="tet-fila">',
+        '    <span class="tet-lbl">Desplazar</span>',
+        '    <label class="tet-lbl-mini" for="tet-sombra-x">X</label>',
+        '    <input type="number" class="tet-num" id="tet-sombra-x" min="-100" max="100" step="1" value="0" aria-label="Desplazamiento horizontal de la sombra">',
+        '    <label class="tet-lbl-mini" for="tet-sombra-y">Y</label>',
+        '    <input type="number" class="tet-num" id="tet-sombra-y" min="-100" max="100" step="1" value="12" aria-label="Desplazamiento vertical de la sombra">',
+        '  </div>',
+        '  <div class="tet-fila">',
+        '    <label class="tet-lbl" for="tet-sombra-op">Opacidad</label>',
+        '    <input type="range" class="tet-range" id="tet-sombra-op" min="0" max="100" step="5" value="45">',
+        '    <output class="tet-out" id="tet-sombra-op-n">45%</output>',
+        '  </div>',
+        '  <div class="tet-fila tet-presets" id="tet-sombra-presets" role="group" aria-label="Sombras rápidas">',
+        '    <button type="button" class="tet-seg-btn" data-sombra="suave" title="Sombra suave">Suave</button>',
+        '    <button type="button" class="tet-seg-btn" data-sombra="media" title="Sombra media">Media</button>',
+        '    <button type="button" class="tet-seg-btn" data-sombra="fuerte" title="Sombra fuerte">Fuerte</button>',
+        '    <button type="button" class="tet-seg-btn" data-sombra="ninguna" title="Quitar la sombra">Ninguna</button>',
+        '  </div>',
+        '  <p class="tet-pista">Se aplica a la imagen o al texto seleccionado. Si el texto tiene cuadro, la sombra va al cuadro.</p>',
+        '</div>'
+    ].join(''));
+
+    var chkSombra = panelSombra.querySelector('#tet-sombra-on');
+    var inSombraColor = panelSombra.querySelector('#tet-sombra-color');
+    var inSombraBlur = panelSombra.querySelector('#tet-sombra-blur');
+    var outSombraBlur = panelSombra.querySelector('#tet-sombra-blur-n');
+    var inSombraX = panelSombra.querySelector('#tet-sombra-x');
+    var inSombraY = panelSombra.querySelector('#tet-sombra-y');
+    var inSombraOp = panelSombra.querySelector('#tet-sombra-op');
+    var outSombraOp = panelSombra.querySelector('#tet-sombra-op-n');
+    var segSombraPresets = panelSombra.querySelector('#tet-sombra-presets');
+
+    function objetosSombra() {
+        var o = canvas.getActiveObject();
+        if (!o) return [];
+        var lista = (o.type === 'activeSelection') ? o.getObjects() : [o];
+        return lista.filter(function (x) {
+            return x && (x.type === 'image' || typeof x.text === 'string');
+        });
+    }
+
+    /* En un texto con cuadro la sombra va al cuadro (es la forma que se ve). */
+    function destinoSombra(o) {
+        if (typeof o.text === 'string' && o._tetFondo) return o._tetFondo;
+        return o;
+    }
+
+    /* Pasa la sombra de un objeto a otro (texto ↔ cuadro de fondo). */
+    function copiarSombra(origen, destino) {
+        if (!origen || !origen.shadow || !destino) return false;
+        var s = origen.shadow;
+        destino.set('shadow', new fabric.Shadow({
+            color: s.color,
+            blur: s.blur,
+            offsetX: s.offsetX,
+            offsetY: s.offsetY
+        }));
+        destino.tetSombraColor = origen.tetSombraColor;
+        destino.tetSombraOpacidad = origen.tetSombraOpacidad;
+        destino.tetSombraBlur = origen.tetSombraBlur;
+        destino.tetSombraX = origen.tetSombraX;
+        destino.tetSombraY = origen.tetSombraY;
+        return true;
+    }
+
+    function colorConAlfa(hex, alfa) {        var h = (hex || '#000000').replace('#', '');
+        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        var r = parseInt(h.slice(0, 2), 16) || 0;
+        var g = parseInt(h.slice(2, 4), 16) || 0;
+        var b = parseInt(h.slice(4, 6), 16) || 0;
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alfa + ')';
+    }
+
+    function configSombra() {
+        return {
+            activa: !!chkSombra.checked,
+            color: inSombraColor.value || '#000000',
+            blur: Math.max(0, +inSombraBlur.value || 0),
+            x: +inSombraX.value || 0,
+            y: +inSombraY.value || 0,
+            op: Math.max(0, Math.min(1, (+inSombraOp.value || 0) / 100))
+        };
+    }
+
+    function aplicarSombra(cfg) {
+        var objs = objetosSombra();
+        if (!objs.length) { aviso('Selecciona una imagen o un texto', 'warning'); return; }
+        objs.forEach(function (o) {
+            var dest = destinoSombra(o);
+            if (!cfg.activa || cfg.op <= 0) {
+                dest.set('shadow', null);
+                dest.tetSombraColor = null;
+                dest.tetSombraOpacidad = null;
+                dest.tetSombraBlur = null;
+                dest.tetSombraX = null;
+                dest.tetSombraY = null;
+                return;
+            }
+            dest.set('shadow', new fabric.Shadow({
+                color: colorConAlfa(cfg.color, cfg.op),
+                blur: cfg.blur,
+                offsetX: cfg.x,
+                offsetY: cfg.y
+            }));
+            dest.tetSombraColor = cfg.color;
+            dest.tetSombraOpacidad = cfg.op;
+            dest.tetSombraBlur = cfg.blur;
+            dest.tetSombraX = cfg.x;
+            dest.tetSombraY = cfg.y;
+        });
+        confirmarCambio();
+    }
+
+    function refrescarPanelSombra() {
+        var objs = objetosSombra();
+        panelSombra.hidden = !objs.length;
+        panelSombra.classList.toggle('is-on', objs.length > 0);
+        if (!objs.length) return;
+
+        var dest = destinoSombra(objs[0]);
+        var sh = dest.shadow;
+        chkSombra.checked = !!sh;
+        var color = dest.tetSombraColor || '#000000';
+        var blur = (sh && sh.blur != null) ? sh.blur : 18;
+        var x = (sh && sh.offsetX != null) ? sh.offsetX : 0;
+        var y = (sh && sh.offsetY != null) ? sh.offsetY : 12;
+        var op = (dest.tetSombraOpacidad != null) ? dest.tetSombraOpacidad :
+            (sh ? 0.45 : 0.45);
+        inSombraColor.value = color;
+        inSombraBlur.value = blur;
+        outSombraBlur.textContent = blur;
+        inSombraX.value = x;
+        inSombraY.value = y;
+        inSombraOp.value = Math.round(op * 100);
+        outSombraOp.textContent = Math.round(op * 100) + '%';
+        segSombraPresets.querySelectorAll('button[data-sombra]').forEach(function (b) {
+            b.classList.toggle('is-on', false);
+        });
+    }
+    window.tetRefrescarPanelSombra = refrescarPanelSombra;
+
+    chkSombra.addEventListener('change', function () {
+        aplicarSombra(configSombra());
+    });
+    [inSombraColor, inSombraBlur, inSombraX, inSombraY, inSombraOp].forEach(function (inp) {
+        inp.addEventListener('input', function () {
+            outSombraBlur.textContent = inSombraBlur.value;
+            outSombraOp.textContent = inSombraOp.value + '%';
+            if (!chkSombra.checked) chkSombra.checked = true;
+            aplicarSombra(configSombra());
+        });
+    });
+    segSombraPresets.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-sombra]');
+        if (!b) return;
+        var presets = {
+            suave: { color: '#000000', blur: 14, x: 0, y: 8, op: 0.35 },
+            media: { color: '#000000', blur: 26, x: 0, y: 14, op: 0.5 },
+            fuerte: { color: '#000000', blur: 40, x: 0, y: 22, op: 0.6 }
+        };
+        var cfg;
+        if (b.dataset.sombra === 'ninguna') {
+            chkSombra.checked = false;
+            cfg = configSombra();
+        } else {
+            cfg = presets[b.dataset.sombra];
+            if (!cfg) return;
+            chkSombra.checked = true;
+            inSombraColor.value = cfg.color;
+            inSombraBlur.value = cfg.blur;
+            inSombraX.value = cfg.x;
+            inSombraY.value = cfg.y;
+            inSombraOp.value = Math.round(cfg.op * 100);
+            outSombraBlur.textContent = cfg.blur;
+            outSombraOp.textContent = Math.round(cfg.op * 100) + '%';
+            cfg = { activa: true, color: cfg.color, blur: cfg.blur, x: cfg.x, y: cfg.y, op: cfg.op };
+        }
+        aplicarSombra(cfg);
+        segSombraPresets.querySelectorAll('button[data-sombra]').forEach(function (x) {
+            x.classList.toggle('is-on', x === b && b.dataset.sombra !== 'ninguna');
+        });
+    });
+
+
+    /* ============================================================
        4 · MONTAJE EN EL DOCK
        ============================================================ */
 
@@ -1021,20 +1268,25 @@
         paneProps.insertBefore(panelTexto, panelBase);
         paneProps.insertBefore(panelTpl, panelBase);
         paneProps.insertBefore(panelImagen, panelBase);
+        paneProps.insertBefore(panelSombra, panelBase);
     } else {
         paneProps.appendChild(panelTexto);
         paneProps.appendChild(panelTpl);
         paneProps.appendChild(panelImagen);
+        paneProps.appendChild(panelSombra);
     }
 
     panelTexto.hidden = true;
+    panelSombra.hidden = true;
     ['selection:created', 'selection:updated', 'selection:cleared',
         'object:modified', 'object:removed', 'text:changed'].forEach(function (ev) {
             canvas.on(ev, pintarTexto);
+            canvas.on(ev, refrescarPanelSombra);
         });
     pintarTexto();
     refrescarPanelTpl();
     refrescarPanelImagen();
+    refrescarPanelSombra();
     window.tetVincularFondosTexto();
 
     /* El fondo con degradado no es un color plano: formatos.js elegía el

@@ -1781,6 +1781,7 @@ body.tet-barra-movil {
     display: flex;
     align-items: center;
     gap: .4rem;
+    flex-wrap: wrap;
 }
 
 .tet-lbl {
@@ -1788,6 +1789,14 @@ body.tet-barra-movil {
     color: var(--sh-muted);
     white-space: nowrap;
     min-width: 5.4rem;
+}
+
+.tet-lbl-mini {
+    font-size: .72rem;
+    color: var(--sh-muted);
+    flex: 0 0 auto;
+    min-width: .7rem;
+    text-align: right;
 }
 
 .tet-fila .tet-lbl {

@@ -509,7 +509,13 @@
         'tetFondoTexto',
         'tetFondoDe',
         'tetFondoForma',
-        'tetId'
+        'tetId',
+        'tetAutoCentro',
+        'tetSombraColor',
+        'tetSombraOpacidad',
+        'tetSombraBlur',
+        'tetSombraX',
+        'tetSombraY'
     ];
 
     function guardarEstado() {
