@@ -642,10 +642,17 @@
     window.eliminarSeleccion = function () {
         var o = canvas.getActiveObject();
         if (!o) return;
+        /* el cuadro de fondo del texto viaja con él: si se quedara suelto,
+           quedaría una forma en el lienzo que no se puede seleccionar ni
+           cambiar de color (parecía que el selector de color no funcionaba) */
+        var quitar = function (x) {
+            if (x && x._tetFondo) canvas.remove(x._tetFondo);
+            canvas.remove(x);
+        };
         if (o.type === 'activeSelection') {
-            o.getObjects().forEach(function (x) { canvas.remove(x); });
+            o.getObjects().forEach(quitar);
         } else {
-            canvas.remove(o);
+            quitar(o);
         }
         canvas.discardActiveObject();
         canvas.renderAll();

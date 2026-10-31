@@ -430,22 +430,26 @@
         var t = tema();
         var det = detalleCorto();
         var lineas = [
-            'Actúa como documentalista del proyecto tet: divulgación de tecnología en ' +
-                'español, tono cercano y riguroso.',
+            'Actúa como administrador de noticias de somostet: divulgación de tecnología ' +
+                'en español, con tono cercano y divertido según el tema, pero siempre ' +
+                'riguroso y fácil de explicar.',
             t ? 'Tema: «' + t + '».' : 'Tema: (escríbelo aquí).',
-            det ? 'Contexto que ya tengo: ' + det : '',
             '',
             'Necesito, para una tarjeta de noticias:',
             '1. Cinco datos clave y verificables, cada uno con su fecha y un enlace a la fuente original.',
             '2. Contexto en tres frases: qué ha pasado, por qué importa ahora y a quién afecta.',
-            '3. Tres titulares posibles, claros y sin clickbait.',
+            '3. Tres titulares posibles, claros y sin clickbait. Uno de ellos llamativo para redes sociales.',
             '4. Cinco palabras clave en inglés para buscar imágenes con licencia libre.',
             '5. Qué dato conviene comprobar antes de publicar y qué riesgo hay si es falso.',
+            '6. Fuentes: lista de enlaces con medio, fecha y qué dato concreto respalda cada una.',
+            '7. Descripción para Instagram: un gancho de una línea, dos o tres frases de contexto y entre cinco y ocho hashtags relevantes.',
+            '8. Formato de hilo para X y Threads: entre seis y ocho publicaciones numeradas, con gancho inicial, datos y cierre. Para X, cada publicación debe caber en 280 caracteres.',
+            '9. Título para YouTube Shorts: máximo 60 caracteres, con gancho y sin prometer algo que el vídeo no cuente.',
             '',
-            'Si no estás seguro de un dato o de una fuente, dilo en vez de inventarlo. ' +
-                'Responde en español.'
+            'No inventes fechas, cifras, declaraciones ni enlaces. Si no puedes verificar un dato o una fuente, dilo expresamente y marca ese punto como «[sin verificar]». Responde en español.'
         ];
-        return lineas.filter(function (l) { return l !== ''; }).join('\n');
+        if (det) lineas.splice(2, 0, 'Contexto que ya tengo: ' + det);
+        return lineas.join('\n');
     }
 
     /* Se respeta lo que el usuario haya escrito: solo se recompone solo

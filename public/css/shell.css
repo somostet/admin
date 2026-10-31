@@ -1805,8 +1805,7 @@ body.tet-barra-movil {
 
 .tet-color-parada {
     display: flex;
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 1 1 auto;
     align-items: center;
     gap: .4rem;
     font-size: .72rem;
@@ -1873,7 +1872,8 @@ body.tet-barra-movil {
 
 .tet-range {
     flex: 1 1 auto;
-    min-width: 0;
+    /* en el dock estrecho el deslizador también se aplastaba a 0 px */
+    min-width: 3.5rem;
     accent-color: var(--sh-accent);
     /* 24 px de alto en vez de 20: es el mínimo cómodo para acertar con el
        dedo (WCAG 2.5.8, objetivo táctil) */
@@ -2011,9 +2011,14 @@ body.tet-barra-movil {
     cursor: pointer;
 }
 
+/* El selector de color nunca puede encogerse a 0: en el dock estrecho de
+   escritorio la fila «Color · Opacidad» se repartía el poco ancho que sobraba
+   y el cuadro de color quedaba en 2 px, imposible de pulsar. Con un mínimo
+   fijo la muestra siempre se ve y la fila pasa a la línea siguiente. */
 .tet-color {
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 1 1 2.2rem;
+    width: 2.2rem;
+    min-width: 2.2rem;
     height: 1.7rem;
     padding: 0;
     border: 1px solid var(--sh-border);
