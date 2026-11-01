@@ -483,6 +483,14 @@
                                 </select>
                                 <input type="number" class="form-control vid-duracion-num" id="vid-duracion" value="2" min="0.5" max="30" step="0.5" inputmode="decimal">
                             </div>
+                            <!-- R11 · automatización: reparte la duración total
+                                 entre las imágenes según lo que dura la música
+                                 o la narración importada -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-2"
+                                    id="vid-auto-duracion" disabled
+                                    title="Ajusta la duración total a la música o a la narración importada">
+                                <i class="fas fa-magic" aria-hidden="true"></i> Ajustar a la música/voz
+                            </button>
                         </div>
                         <div class="col-12 col-lg-4">
                             <!-- R6c · con fotos y vídeos en la misma pista, la
@@ -968,6 +976,19 @@
                         </button>
                     </div>
 
+                    <!-- R11 · automatización opcional: al acabar el render se
+                         descarga solo, sin tener que bajar a pulsar el botón.
+                         La preferencia se recuerda en este navegador. -->
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="vid-auto-descarga">
+                        <label class="form-check-label" for="vid-auto-descarga">
+                            Descargar automáticamente al terminar
+                        </label>
+                    </div>
+                    <p class="form-text mb-0">Se recuerda para la próxima vez. El vídeo también queda
+                        guardado en este dispositivo.</p>
+
                     <div class="mt-2" id="vid-resultado" hidden>
                         <a class="btn btn-primary w-100 vid-cargar" id="vid-descargar" href="#" download="tet.mp4">
                             <i class="fas fa-download" aria-hidden="true"></i> <span id="vid-descargar-texto">Descargar vídeo</span>
@@ -1042,7 +1063,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1b"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r30"></script>
+    <script src="./public/js/video.js?v=r31"></script>
     <!-- Voz: lee la narración con las voces del sistema (pestaña «Voz») -->
     <script src="./public/js/voz.js?v=v5"></script>
     <script src="./public/js/piper-editor.js?v=p1"></script>

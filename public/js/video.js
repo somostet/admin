@@ -112,6 +112,7 @@
     var musicaArchivo = null;   // P4: el File original (para reinyectarlo al deshacer)
     var musicaNodo = null;      // AudioBufferSourceNode de la grabación en curso
     var musicaGanancia = null;  // GainNode (el volumen también funciona en vivo)
+    var audioProgramado = false; // R11: el sonido de esta grabación ya tiene hora
     var sfxBuf = [];            // Array de AudioBuffer para efectos de sonido importados
     var vocesBuf = [];          // Array de AudioBuffer para segmentos de voz importados
     var vocesNombres = [];
@@ -149,6 +150,8 @@
     var inpPlatAlto = document.getElementById('vid-plat-alto');
     var inpDur = document.getElementById('vid-duracion');
     var selModoDur = document.getElementById('vid-modo-dur');
+    var btnAutoDur = document.getElementById('vid-auto-duracion');   // R11
+    var chkAutoDesc = document.getElementById('vid-auto-descarga');  // R11
     var selAjuste = document.getElementById('vid-ajuste');
     var selTrans = document.getElementById('vid-transicion');
     var lblTrans = document.getElementById('vid-lbl-trans');      // R6c
@@ -2815,27 +2818,53 @@
     btnLlenar.addEventListener('click', function () { ajusteRapido('cover'); });
     btnAjustar.addEventListener('click', function () { ajusteRapido('contain'); });
 
-    /* estilo «stories»: la propia imagen en cover, desenfocada, como fondo */
+    /* estilo «stories»: la propia imagen en cover, desenfocada, como fondo.
+       R11 · el desenfoque se calcula en una copia pequeña (≈256 px) y se
+       estira: `ctx.filter: blur(54px)` sobre 1080×1920 en cada fotograma era
+       la operación más cara del render y la causa de tirones en el móvil.
+       A tamaño de muestra son ~1/16 de píxeles y el resultado, al escalarlo,
+       es indistinguible. */
+    var lienzoBlur = document.createElement('canvas');
+    var ctxBlur = lienzoBlur.getContext('2d');
+
     function pintarDesenfado(img, alpha) {
-        if (!soportaFilter) return;
+        if (!ctxBlur) return;
         var z = zonaDibujo();   // F5d: con Tet News, solo el cuerpo
         var w = lienzo.width;
         var h = lienzo.height;
         var iw = img.naturalWidth || img.videoWidth;   // el <video> trae videoWidth
         var ih = img.naturalHeight || img.videoHeight;
+        if (!iw || !ih) return;
         // 15% más grande que cover: el halo del desenfoque cae fuera de la zona
         var esc = Math.max(z.w / iw, z.h / ih) * 1.15;
         var dw = iw * esc;
         var dh = ih * esc;
+        /* muestra a ~256 px de lado y radio escalado con ella */
+        var k = Math.min(1, 256 / Math.max(dw, dh));
+        var bw = Math.max(2, Math.round(dw * k));
+        var bh = Math.max(2, Math.round(dh * k));
+        var radio = Math.max(2, Math.round(Math.max(16, Math.min(w, h) / 20) * k));
+        var pad = radio * 2;
+        if (lienzoBlur.width !== bw + pad * 2) lienzoBlur.width = bw + pad * 2;
+        if (lienzoBlur.height !== bh + pad * 2) lienzoBlur.height = bh + pad * 2;
+        ctxBlur.setTransform(1, 0, 0, 1, 0, 0);
+        ctxBlur.clearRect(0, 0, lienzoBlur.width, lienzoBlur.height);
+        ctxBlur.save();
+        if (soportaFilter) ctxBlur.filter = 'blur(' + radio + 'px)';
+        /* 8 % de margen: el borde del desenfoque queda fuera del recorte */
+        ctxBlur.drawImage(img, pad - bw * 0.08, pad - bh * 0.08,
+            bw * 1.16, bh * 1.16);
+        ctxBlur.restore();
+        var ox = z.x + (z.w - dw) / 2;
+        var oy = z.y + (z.h - dh) / 2;
         ctx.save();
         if (noticiaActiva) {   // F5d: el contenido nunca tapa la barra
             ctx.beginPath();
             ctx.rect(z.x, z.y, z.w, z.h);
             ctx.clip();
         }
-        ctx.filter = 'blur(' + Math.max(16, Math.round(Math.min(w, h) / 20)) + 'px)';
         if (alpha != null && alpha < 1) ctx.globalAlpha = alpha;
-        ctx.drawImage(img, z.x + (z.w - dw) / 2, z.y + (z.h - dh) / 2, dw, dh);
+        ctx.drawImage(lienzoBlur, pad, pad, bw, bh, ox, oy, dw, dh);
         ctx.restore();
     }
 
@@ -3336,10 +3365,48 @@
         return rangoRecorte();
     }
 
+    /* R11 · duración del audio que va a sonar: manda la narración (la música
+       se repite debajo); si no hay voz, la música; y si no, los efectos.
+       Alimenta el botón «Ajustar a la música/voz» para que el vídeo dure lo
+       mismo que el sonido sin hacer cuentas a mano. */
+    function duracionAudioUtil() {
+        var voz = 0;
+        if (timelineVozConfigurada && bloquesVoz.length) {
+            bloquesVoz.forEach(function (b) {
+                var buf = vocesBuf[b.vozIndex];
+                if (!buf) return;
+                var dur = Math.min(buf.duration || 0,
+                    (b.dur > 0) ? b.dur : (buf.duration || 0));
+                voz = Math.max(voz, (b.inicio || 0) + dur);
+            });
+        } else {
+            vocesBuf.forEach(function (buf) { voz += buf.duration || 0; });
+        }
+        if (voz > 0.2) return voz;
+        if (musicaBuf && musicaBuf.duration > 0.2) return musicaBuf.duration;
+        var sfx = 0;
+        sfxBuf.forEach(function (buf) { sfx += buf.duration || 0; });
+        return sfx;
+    }
+
+    function actualizaAutoDuracion() {
+        if (!btnAutoDur) return;
+        var durAudio = duracionAudioUtil();
+        var puede = !grabando && !capturando && imagenes.length > 0 &&
+            !videoCargado && durAudio > 0.2;
+        btnAutoDur.disabled = !puede;
+        btnAutoDur.title = puede
+            ? 'Duración total = ' + fmt(durAudio) + ' s (música/voz)'
+            : videoCargado
+                ? 'Solo para vídeos hechos con imágenes'
+                : 'Añade música o narración para ajustar la duración';
+    }
+
     function actualizaCrear() {
         histBotones();   // P4: deshacer/rehacer al día con el estado global
         histMarca();     // P4
         actualizaInfoCalidad();   // Q: el bitrate a la vista con cada cambio
+        actualizaAutoDuracion();  // R11: el botón automático sigue al audio
         pintaBotonDirecto();   // E2: el botón de directo refleja el estado global
         /* F5f: el total de la salida cambia → barras, regla y cabezal se
            recolocan (vale para recorte de vídeo y duración de imágenes) */
@@ -3719,9 +3786,6 @@
 
     [selTam, inpDur, selAjuste, selTrans, inpFondo].forEach(function (el) {
         el.addEventListener('change', function () {
-            if (el === selAjuste && selAjuste.value === 'blur' && !soportaFilter) {
-                aviso('Tu navegador no hace desenfoque: se usará el color de fondo', 'info');
-            }
             if (el === selAjuste) pintaAjusteRapido();   // M2: resalta el atajo activo
             /* R6b: cambiar la transición cambia dónde va el fundido, así que
                el riel tiene que redibujar sus marcas entre fotos.
@@ -5203,6 +5267,34 @@
         if (!grabando) reiniciarPreview();
     });
 
+    /* R11 · un toque: reparte el vídeo entero entre las imágenes según lo que
+       dure la música o la narración (el caso normal es narrar y montar fotos
+       encima, sin calcular «cuántos segundos por imagen» a mano). */
+    if (btnAutoDur) btnAutoDur.addEventListener('click', function () {
+        if (grabando || capturando || !imagenes.length || videoCargado) return;
+        var durAudio = duracionAudioUtil();
+        if (!(durAudio > 0.2)) {
+            aviso('Añade música o una narración para ajustar la duración', 'info');
+            return;
+        }
+        var total = Math.max(imagenes.length * MIN_POR_IMAGEN, durAudio);
+        if (total > MAX_TOTAL_SEG) {
+            total = MAX_TOTAL_SEG;
+            aviso('La música dura más de ' + MINUTOS_MAX + ' min: se ajusta al máximo permitido', 'warning');
+        }
+        total = Math.max(1, Math.round(total * 10) / 10);
+        /* el valor ya va en segundos totales: poner modoAnterior a «total»
+           hace que la conversión del selector sea identidad */
+        selModoDur.value = 'total';
+        modoAnterior = 'total';
+        inpDur.min = '1';
+        inpDur.max = String(MAX_TOTAL_SEG);
+        inpDur.value = String(total);
+        selModoDur.dispatchEvent(new Event('change', { bubbles: true }));
+        aviso('Duración ajustada a ' + fmtSeg(total) + ' s: ' +
+            fmtSeg(total / imagenes.length) + ' s por imagen', 'success');
+    });
+
     /* ---------- grabación ---------- */
     /* conAudio: lista con códecs de sonido delante (el sonido del recorte
        viaja en la pista añadida desde Web Audio). F10: avc1 va primero y
@@ -5446,6 +5538,22 @@
             p(d.getSeconds()) + '.' + ext;
     }
 
+    /* R11 · automatización opcional: recordar si el usuario quiere que la
+       descarga arranque sola al terminar el render. No se activa por defecto
+       (un render puede ser una prueba y no quiere llenar Descargas). */
+    var CLAVE_AUTO_DESC = 'tetVideoAutoDescarga';
+    function autoDescargaActiva() {
+        return !!(chkAutoDesc && chkAutoDesc.checked);
+    }
+    if (chkAutoDesc) {
+        try { chkAutoDesc.checked = localStorage.getItem(CLAVE_AUTO_DESC) === '1'; } catch (e) { }
+        chkAutoDesc.addEventListener('change', function () {
+            try {
+                localStorage.setItem(CLAVE_AUTO_DESC, chkAutoDesc.checked ? '1' : '0');
+            } catch (e) { }
+        });
+    }
+
     /* R10 · miniatura del resultado: el reproductor se quedaba en negro hasta
        pulsar play, porque el MP4/WebM de MediaRecorder no trae póster. */
     function ponMiniaturaResultado(url, usarLienzoComoRespaldo) {
@@ -5558,6 +5666,14 @@
             vibra([15, 60, 15]);   // P1d: tiro hecho (no vibra al restaurar al abrir)
         }
         guardaUltimo(blob, aDesc.download, tipo);
+        /* R11 · con la casilla marcada, el archivo se descarga sin bajar a
+           pulsar «Descargar vídeo». Se espera un poco para que P10 haya
+           reescrito la duración del MP4 (si le da tiempo). */
+        if (!sinScroll && autoDescargaActiva()) {
+            setTimeout(function () {
+                try { aDesc.click(); } catch (e) { }
+            }, 700);
+        }
     }
 
     /* Q · stats reales del archivo (recién grabado o recuperado de IDB):
@@ -5784,6 +5900,12 @@
         /* el navegador suelta el wake lock al ocultar la pestaña: al volver,
            si aún estamos grabando, hay que pedirlo otra vez */
         if (document.visibilityState === 'visible' && quiereDespierta) pantallaDespierta(true);
+        /* R11 · ocultar la pestaña congela rAF (y con él la imagen grabada)
+           mientras el codificador sigue: el resultado se ve trabado. Mejor
+           avisar a quien esté grabando que dejar que el render salga mal. */
+        if (document.visibilityState === 'hidden' && (grabando || capturando)) {
+            aviso('No cambies de pestaña hasta que termine: el render se puede congelar', 'warning');
+        }
     });
 
     function crearVideo() {
@@ -5827,6 +5949,12 @@
         var rec;
         var calRaf = null;
         var t0 = 0;
+        var inicioAudio = 0;         // R11: instante 0 de la salida en el reloj de audio
+        var usaRelojAudio = false;
+        var ultimoDibujo = -1e6;     // R11: tope de FPS al pintar
+        var tPedido = 0;             // R11: instante del clic (base del calentamiento)
+        var padLinea = PAD;          // R11: calentamiento que queda tras arrancar el grabador
+        var padTotal = PAD;          // R11: calentamiento real que acaba dentro del vídeo
         try {
             rec = new MediaRecorder(stream, { mimeType: mimeUsado, videoBitsPerSecond: bitrateSalida(lienzo.width, lienzo.height, FPS) });
         } catch (e) {
@@ -5853,6 +5981,7 @@
             if (e.data && e.data.size) chunks.push(e.data);
         };
         rec.onstop = function () {
+            if (vigiaFin) { clearInterval(vigiaFin); vigiaFin = null; }
             if (cancelado) {
                 aviso('Grabación cancelada', 'info');
                 return limpiar();
@@ -5894,29 +6023,96 @@
         }
 
         calienta();
+        /* R11 · el audio se programa cuando el grabador ya está capturando
+           (evento `start`), no en el mismo instante de `rec.start()`: si el
+           navegador tarda en arrancar, el primer trozo de música se perdía y
+           el resultado empezaba con el sonido atrasado. */
+        rec.addEventListener('start', function () {
+            if (!grabando) return;   // se canceló mientras el grabador arrancaba
+            /* R11 · el grabador tarda `retraso` ms en arrancar desde el clic,
+               y ese trozo ya queda dentro del archivo. Se descuenta del
+               calentamiento para que el vídeo dure lo pedido (PAD + línea de
+               tiempo) en vez de salir unos décimas más largo. Si tarda más
+               que el propio calentamiento, no queda nada que descontar: se
+               suma la diferencia al total para que la duración anunciada
+               cuadre con el archivo. */
+            var retraso = Math.max(0, performance.now() - tPedido);
+            padLinea = Math.max(0, PAD - retraso);
+            padTotal = Math.max(PAD, retraso);
+            if (padTotal > PAD) total += padTotal - PAD;
+            if (hayMusica) iniciaMusica(padLinea, arrancaLinea);   // F6/R11
+            else arrancaLinea();
+        }, { once: true });
+        tPedido = performance.now();
         rec.start(200);
-        iniciaMusica();   // F6: la música entra al empezar a grabar
         pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
 
-        setTimeout(function () {
-            paraCalentar();
+        /* R11 · la línea de tiempo arranca cuando arranca el sonido, no al
+           pulsar el botón: si resume() o el propio start del grabador tardan,
+           la imagen espera y el audio no se adelanta. */
+        function arrancaLinea(inicioAudioReloj) {
             if (!grabando) return;
-            t0 = performance.now();
-            estado.textContent = 'Grabando…';
-            rafAct = requestAnimationFrame(tick);
-        }, PAD);
+            t0 = performance.now();   // respaldo si el reloj de audio no corre
+            if (typeof inicioAudioReloj === 'number' && audioCtx) {
+                inicioAudio = inicioAudioReloj;
+                usaRelojAudio = true;
+            }
+            setTimeout(function () {
+                paraCalentar();
+                if (!grabando) return;
+                estado.textContent = 'Grabando…';
+                rafAct = requestAnimationFrame(tick);
+                vigiaFin = setInterval(cierraSiToca, 200);   // R11
+            }, padLinea);
+        }
+
+        /* R11 · red de seguridad: si rAF se para (pestaña oculta, app en
+           segundo plano, móvil bloqueado) el `tick` deja de correr y el
+           grabador se quedaba en «Grabando…» para siempre. Este vigía mira el
+           mismo reloj desde un temporizador y cierra la toma a tiempo. */
+        var vigiaFin = null;
+        function cierraSiToca() {
+            if (!grabando) {
+                if (vigiaFin) { clearInterval(vigiaFin); vigiaFin = null; }
+                return;
+            }
+            if (ahoraLinea() >= durLineaMs) {
+                dibujarEn(durLineaMs - 1, durMs);
+                grabando = false;
+                if (vigiaFin) { clearInterval(vigiaFin); vigiaFin = null; }
+                if (recAct && recAct.state !== 'inactive') recAct.stop();
+            }
+        }
+
+        /* Un solo reloj para imagen y sonido: el del AudioContext mueve la
+           música, los efectos y la voz; si la pestaña se atasca, el siguiente
+           fotograma se pinta en el punto que toca (se saltan fotogramas, no
+           se descuadra el audio). Sin audio se usa el reloj normal. */
+        function ahoraLinea() {
+            if (usaRelojAudio && audioCtx && audioCtx.state === 'running') {
+                return Math.max(0, (audioCtx.currentTime - inicioAudio) * 1000);
+            }
+            return Math.max(0, performance.now() - t0);
+        }
 
         function tick() {
             if (!grabando) return;
-            var t = performance.now() - t0;
+            var t = ahoraLinea();
             if (t >= durLineaMs) {
                 dibujarEn(durLineaMs - 1, durMs);
                 grabando = false;
                 if (recAct && recAct.state !== 'inactive') recAct.stop();
                 return;
             }
-            dibujarEn(t, durMs);
-            var transcurrido = PAD + t;
+            /* R11 · como mucho un fotograma por cada FPS de salida: a 60 Hz
+               se pintaba el doble de lo que el grabador captura y el móvil se
+               quedaba sin tiempo para codificar (tirones y audio atrasado). */
+            var ahora = performance.now();
+            if (ahora - ultimoDibujo >= (1000 / FPS) - 1.5) {
+                ultimoDibujo = ahora;
+                dibujarEn(t, durMs);
+            }
+            var transcurrido = padTotal + t;
             var pct = Math.round(transcurrido / total * 100);
             barra.style.width = pct + '%';
             barra.textContent = pct + '%';
@@ -6068,9 +6264,17 @@
             else dibujarEn(0, durMsPorImagen());
         });
 
-        t0Directo = performance.now();
+        /* R11 · el reloj de la toma y la música arrancan cuando el grabador
+           ya está capturando (evento `start`). Si el navegador tarda unos
+           cientos de ms en arrancar, el audio se adelantaba al vídeo justo
+           ese tiempo; ahora los dos empiezan en el mismo instante. */
+        rec.addEventListener('start', function () {
+            if (!grabandoDirecto) return;   // se detuvo mientras arrancaba
+            t0Directo = performance.now();
+            iniciaMusica(0);   // F6
+            rafAct = requestAnimationFrame(tickDirecto);
+        }, { once: true });
         rec.start(200);
-        iniciaMusica();   // F6: la música entra al empezar a grabar
         pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
         pintaBotonDirecto();
         aviso('Grabando el lienzo… pulsa «Detener» cuando quieras parar (máx. ' + MINUTOS_MAX + ' min)', 'info');
@@ -6102,7 +6306,6 @@
             }
             rafAct = requestAnimationFrame(tickDirecto);
         }
-        rafAct = requestAnimationFrame(tickDirecto);
     }
 
     function paraDirecto() {
@@ -6137,6 +6340,7 @@
         filaMusica.hidden = !hay;
         nombreMusica.textContent = hay ? f.name + ' · ' + formatoAudio(musicaBuf.duration) : '';
         sincListaMusica();   // Q4: el radio de la lista acompaña al archivo activo
+        actualizaAutoDuracion();   // R11: la duración automática ya tiene audio
     }
 
     function preparaCtxAudio() {
@@ -6176,6 +6380,7 @@
     function guardaBloquesVoz() {
         try {
             localStorage.setItem('vozSegmentos', JSON.stringify(bloquesVoz));
+            actualizaAutoDuracion();   // R11: cambia el final de la narración
             return true;
         } catch (e) {
             aviso('No se pudieron guardar los bloques de voz en este navegador.', 'warning');
@@ -6409,6 +6614,7 @@
                 vocesBuf.push(buf);
                 vocesNombres.push(nombre);
                 dibujaTimelineVoz();
+                actualizaAutoDuracion();   // R11
                 if (vozTimelineDur) vozTimelineDur.value = buf.duration.toFixed(1);
                 var estadoVoz = document.getElementById('voz-importar-estado');
                 if (estadoVoz) {
@@ -6825,17 +7031,56 @@
         }
     }
 
-    function iniciaMusica() {
-        var inicio = audioCtx ? audioCtx.currentTime : 0;
-        if (musicaNodo) musicaNodo.start(inicio);
-        nodosProgramados.forEach(function (programado) {
-            var cuando = inicio + programado.desfase;
-            if (programado.duracion) {
-                programado.nodo.start(cuando, 0, programado.duracion);
-            } else {
-                programado.nodo.start(cuando);
+    /* R11 · el sonido arranca con un retraso opcional (el calentamiento) y
+       avisa del instante exacto —en el reloj del AudioContext— en el que
+       empieza la línea de tiempo. Quien graba imágenes usa ese mismo instante
+       para dibujar. Antes la música se programaba al pulsar «Crear» y la
+       imagen esperaba el calentamiento, así que el audio salía adelantado
+       justo ese tiempo (800 ms por defecto) y cada render sonaba distinto. */
+    function iniciaMusica(retrasoMs, alEmpezar) {
+        if (audioProgramado) return;
+        audioProgramado = true;
+        var espera = Math.max(0, retrasoMs || 0) / 1000;
+        var hecho = false;
+        var arranca = function () {
+            if (hecho) return;   // resume() y la red de seguridad pueden coincidir
+            hecho = true;
+            var inicio = audioCtx ? audioCtx.currentTime + espera : 0;
+            if (musicaNodo) {
+                try { musicaNodo.start(inicio); } catch (e) { }
             }
-        });
+            nodosProgramados.forEach(function (programado) {
+                var cuando = inicio + programado.desfase;
+                try {
+                    if (programado.duracion) {
+                        programado.nodo.start(cuando, 0, programado.duracion);
+                    } else {
+                        programado.nodo.start(cuando);
+                    }
+                } catch (e) { }
+            });
+            if (alEmpezar) alEmpezar(inicio);
+        };
+        /* En iOS el contexto puede estar suspendido: programar antes de
+           reanudarlo deja el sonido para más tarde (y descuadra el vídeo).
+           Se espera a resume() y solo entonces se agenda. Con una red de
+           seguridad: si resume() no contesta (algunos navegadores lo dejan
+           pendiente hasta un gesto), la grabación sigue sin música antes que
+           quedarse colgada en «Preparando…». */
+        if (audioCtx && audioCtx.state === 'suspended' && audioCtx.resume) {
+            var red = setTimeout(arranca, 500);
+            var p;
+            try { p = audioCtx.resume(); } catch (e) { p = null; }
+            if (p && p.then) {
+                p.then(function () { clearTimeout(red); arranca(); },
+                       function () { clearTimeout(red); arranca(); });
+            } else {
+                clearTimeout(red);
+                arranca();
+            }
+        } else {
+            arranca();
+        }
     }
 
     function detenerMusica() {
@@ -6853,6 +7098,7 @@
         nodosProgramados = [];
         musicaNodo = null;
         musicaGanancia = null;
+        audioProgramado = false;   // R11: la próxima grabación agenda de nuevo
     }
 
     /* ---------- E3 · recorte: regrabar el rango elegido ---------- */
@@ -6967,6 +7213,16 @@
         var cambiando = false;   // E5: cambio de clip → el lienzo se congela
         var primerSeg = true;
         var calRaf = null;        // R6d: fotograma del calentamiento (no es rafAct)
+        var musicaYa = false;     // R11: la música entra con el primer fotograma real
+        var ultimoDibujo = -1e6;  // R11: tope de FPS al pintar
+        var tLinea = 0;           // R11: arranque real de la toma (para el vigía)
+        var vigiaFin = null;      // R11: cierra la toma aunque rAF se pare
+
+        function arrancaMusica() {
+            if (musicaYa || !hayMusica) return;
+            musicaYa = true;
+            iniciaMusica(0);
+        }
 
         grabando = true;
         cancelado = false;
@@ -7018,6 +7274,7 @@
             if (e.data && e.data.size) chunks.push(e.data);
         };
         rec.onstop = function () {
+            if (vigiaFin) { clearInterval(vigiaFin); vigiaFin = null; }
             if (cancelado) {
                 aviso('Grabación cancelada', 'info');
                 return limpiar();
@@ -7087,19 +7344,38 @@
                    el codificador reciba imagen desde el principio */
                 calienta();
                 recAct.start(200);
-                iniciaMusica();   // F6: la música entra al empezar a grabar
                 pantallaDespierta(true);   // M4: que no se apague la pantalla al grabar
                 estado.textContent = 'Grabando…';
                 setTimeout(function () {
                     paraCalentar();
                     if (!grabando) return;
+                    /* R11 · la música entra a la vez que el primer fotograma
+                       real del clip, no PAD ms antes (era el descuadre). */
+                    arrancaMusica();
                     var p0 = vidFuente.play();
                     if (p0 && p0.catch) {
                         p0.catch(function () {
                             fallo('El navegador no dejó reproducir el vídeo: toca el vídeo una vez y reintenta');
                         });
                     }
+                    tLinea = performance.now();
                     rafAct = requestAnimationFrame(tickRec);
+                    /* R11 · si rAF se detiene, el clip sigue reproduciéndose y
+                       nadie cerraba la toma: el vigía la cierra a tiempo. */
+                    vigiaFin = setInterval(function () {
+                        if (!grabando) {
+                            if (vigiaFin) { clearInterval(vigiaFin); vigiaFin = null; }
+                            return;
+                        }
+                        if (performance.now() - tLinea >= (total - PAD)) {
+                            if (rafAct) { cancelAnimationFrame(rafAct); rafAct = null; }
+                            dibujarFrame(vidFuente);
+                            grabando = false;
+                            vidFuente.pause();
+                            if (vigiaFin) { clearInterval(vigiaFin); vigiaFin = null; }
+                            if (recAct && recAct.state !== 'inactive') recAct.stop();
+                        }
+                    }, 200);
                 }, PAD);
                 return;
             }
@@ -7153,7 +7429,11 @@
                 if (recAct && recAct.state !== 'inactive') recAct.stop();
                 return;
             }
-            dibujarFrame(vidFuente);
+            var ahora = performance.now();
+            if (ahora - ultimoDibujo >= (1000 / FPS) - 1.5) {
+                ultimoDibujo = ahora;
+                dibujarFrame(vidFuente);
+            }
             /* R6d · el progreso cuenta también el calentamiento */
             var t = Math.max(0, s.desde + (vidFuente.currentTime - s.a)) + PAD / 1000;
             var secs = total / 1000;   // E5b + R6d: la salida con el calentamiento
@@ -7273,12 +7553,20 @@
            Es lo mismo que hace `crearVideoRecorte` desde R6d. */
         var grabIniciado = false;
         var calRafP = null;
+        var musicaYa = false;      // R11: la música entra con la primera imagen real
+        var ultimoPintado = -1e6;  // R11: tope de FPS al pintar el plan
+
+        function arrancaMusica() {
+            if (musicaYa || !hayMusica) return;
+            musicaYa = true;
+            iniciaMusica(0);
+        }
+
         function calientaYArranca(ya) {
             if (grabIniciado) { ya(); return; }
             grabIniciado = true;
             sincronizaCapturaLienzo(rec, captura, pintaArranque);
             rec.start(200);
-            iniciaMusica();
             pantallaDespierta(true);
             calT0 = performance.now();
             (function paso() {
@@ -7313,7 +7601,13 @@
         var tIniSeg = 0;    // reloj del segmento de imagen en curso
         var clipAjuste = 0; // R6c · retraso del clip al tomar el mando
 
-        function dibujaPlan(t) {
+        /* R11 · el plan se pinta como mucho una vez por FPS de salida. A 60 Hz
+           se duplicaba el trabajo de dibujo y el codificador se quedaba sin
+           tiempo; los cambios de segmento y el final fuerzan el fotograma. */
+        function dibujaPlan(t, forzar) {
+            var ahora = performance.now();
+            if (!forzar && ahora - ultimoPintado < (1000 / FPS) - 1.5) return;
+            ultimoPintado = ahora;
             pintaPlanPista(segs, t);
         }
 
@@ -7386,8 +7680,9 @@
             cargando = -1;
             segIdx = k;
             var lleva = Math.max(0, tEntrada - s.desde);
+            arrancaMusica();   // R11: la música empieza con esta primera imagen
             tIniSeg = performance.now() - lleva * 1000;
-            dibujaPlan(tEntrada);
+            dibujaPlan(tEntrada, true);
             estado.textContent = 'Grabando…';
             pideBucle();
             preparaSiguienteClip(k);
@@ -7489,13 +7784,14 @@
             desfaseActivo = s.desde;   // el reloj global que usa dibujarFrame
             poneRecorteActivo();
             rampaAudio(s.solIn > 0 ? 0 : 1, 1, s.solIn * 1000, e);
+            arrancaMusica();   // R11: la música empieza con el primer clip real
             var p = el.play();
             if (p && p.catch) {
                 p.catch(function () {
                     fallo('El navegador no dejó reproducir el vídeo: toca el vídeo una vez y reintenta');
                 });
             }
-            dibujaPlan(tEntrada);
+            dibujaPlan(tEntrada, true);
             estado.textContent = 'Grabando…';
             pideBucle();
             preparaSiguienteClip(k);
@@ -7577,7 +7873,7 @@
                 return;
             }
             if (!sig && t >= fin - 0.004) {
-                dibujaPlan(fin);
+                dibujaPlan(fin, true);
                 grabando = false;
                 sueltaVids();          // R6d: los dos <video> y sus ganancias
                 if (recAct && recAct.state !== 'inactive') recAct.stop();
