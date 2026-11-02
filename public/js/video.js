@@ -690,15 +690,18 @@
         validos.forEach(function (f) {
             cola = cola.then(function () {
                 return new Promise(function (resolver) {
-                    duraDe(f, function (d, url) {
+                    duraDe(f, function (d, url, dims) {
                         if (!d) {
                             URL.revokeObjectURL(url);
                             aviso('No se pudo leer la duración de «' + f.name + '»', 'danger');
                         } else {
                             /* E5b: recorte por defecto = todo el clip, salvo el
-                               tope de 5 min de E4 (se aplica por clip) */
+                               tope de 5 min de E4 (se aplica por clip).
+                               Q3: `ancho`/`alto` son del clip, para el suelo de
+                               bitrate (cada clip puede tener su resolución) */
                             colaVideos.push({ nombre: f.name, url: url, dur: d,
-                                ini: 0, fin: Math.min(d, MAX_TOTAL_SEG), blob: f });
+                                ini: 0, fin: Math.min(d, MAX_TOTAL_SEG), blob: f,
+                                ancho: (dims && dims.w) || 0, alto: (dims && dims.h) || 0 });
                             pistaInserta('clip', colaVideos.length - 1);   // R6
                         }
                         resolver();
@@ -727,7 +730,10 @@
         var cierra = function (d) {
             if (cerrado) return;
             cerrado = true;
-            cb(d > 0 && isFinite(d) ? d : 0, url);
+            /* Q3: además de la duración se devuelven las medidas del clip: el
+               suelo de bitrate de la salida las necesita para no pedir la tasa
+               entera al grabar a menos píxeles */
+            cb(d > 0 && isFinite(d) ? d : 0, url, { w: v.videoWidth || 0, h: v.videoHeight || 0 });
         };
         v.addEventListener('loadedmetadata', function oy() {
             v.removeEventListener('loadedmetadata', oy);
@@ -1169,6 +1175,9 @@
             if (portadaImg) return;   // R9: con portada de imagen no se busca (taparía el poster)
             if (!vidFuente.currentTime) vidFuente.currentTime = (portadaT != null) ? portadaT : 0;
         });
+        /* Q3: hasta que el clip no tiene medidas, dimsSalida() no puede decir
+           la resolución real de la salida ni su suelo de bitrate */
+        vidFuente.addEventListener('loadedmetadata', actualizaInfoCalidad);
         reiniciarPreview();
         trasActivaClip();   // E5b: riel y miniaturas del clip que acaba de entrar
     }
@@ -5843,10 +5852,35 @@
        la grabación en tiempo real, los rAF se congelaban y el vídeo se
        perdía. Todo protegido: sin la API o sin permiso, se avisa y sigue. */
     var BPP_CALIDAD = { ligiana: 0.03, media: 0.06, alta: 0.1, maxima: 0.15 };
+    /* Q3 · el clip subido ya viene comprimido. Recodificarlo por debajo de su
+       propia tasa no recupera nada: solo añade artefactos al detalle que el
+       original ya había pagado. Se usa su tasa como suelo (ajustada al área de
+       salida y con techo, para no generar archivos absurdos) salvo en
+       «Ligiana», que existe precisamente para pesar poco. El sonido del clip
+       viaja aparte, así que se descuenta un audio típico antes de comparar. */
+    var TECHO_BITRATE_FUENTE = 12000000;
+    var AUDIO_FUENTE_ESTIMADO = 128000;
+    function bitrateFuente(ancho, alto) {
+        if (!videoCargado || selCalidad.value === 'ligiana') return 0;
+        var tasa = 0;
+        for (var i = 0; i < colaVideos.length; i++) {
+            var c = colaVideos[i];
+            if (!c || !c.blob || !c.blob.size || !(c.dur > 0)) continue;
+            var bps = Math.max(0, c.blob.size * 8 / c.dur - AUDIO_FUENTE_ESTIMADO);
+            // al grabar a menos píxeles no hace falta la tasa entera
+            if (c.ancho > 0 && c.alto > 0 && ancho > 0 && alto > 0) {
+                bps *= Math.min(1, (ancho * alto) / (c.ancho * c.alto));
+            }
+            if (bps > tasa) tasa = bps;
+        }
+        return Math.min(TECHO_BITRATE_FUENTE, Math.round(tasa));
+    }
     function bitrateSalida(ancho, alto, fps) {
         var bpp = BPP_CALIDAD[selCalidad.value] || BPP_CALIDAD.media;
         if (!(fps > 0)) fps = FPS;
-        return Math.max(400000, Math.round(ancho * alto * fps * bpp));
+        var base = Math.max(400000, Math.round(ancho * alto * fps * bpp));
+        var suelo = bitrateFuente(ancho, alto);
+        return suelo > base ? suelo : base;
     }
 
     /* Q · la calidad a la vista: bajo el selector se ve el bitrate que va
@@ -5862,8 +5896,14 @@
     function actualizaInfoCalidad() {
         if (!BPP_CALIDAD || !lineaCalidad) return;   // antes de M4, nada que ver
         var d = dimsSalida();
-        lineaCalidad.textContent = '≈ ' + formatoBitrate(bitrateSalida(d.w, d.h, FPS)) +
+        var bps = bitrateSalida(d.w, d.h, FPS);
+        var texto = '≈ ' + formatoBitrate(bps) +
             ' · ' + d.w + '×' + d.h + ' · ' + FPS + ' fps';
+        /* Q3: cuando manda el suelo del clip, se dice —así se entiende que
+           subir «Calidad» ya no cambia la tasa y que el archivo no se degrada */
+        var suelo = bitrateFuente(d.w, d.h);
+        if (suelo && suelo >= bps) texto += ' · se graba a la tasa del clip original';
+        lineaCalidad.textContent = texto;
     }
     selCalidad.addEventListener('change', actualizaInfoCalidad);
     actualizaInfoCalidad();
