@@ -2528,6 +2528,13 @@
             var p = selTam.value.split('x');
             w = parseInt(p[0], 10);
             h = parseInt(p[1], 10);
+            /* Q4 · un valor que ya no existe (historial viejo, opción retirada)
+               dejaba el lienzo en 0×0 y la salida en NaN: se cae a la fuente */
+            if (!(w > 0) || !(h > 0)) {
+                var img0 = imagenes && imagenes[0] && imagenes[0].img;
+                w = (videoCargado && vidFuente.videoWidth) || (img0 && img0.naturalWidth) || 1280;
+                h = (videoCargado && vidFuente.videoHeight) || (img0 && img0.naturalHeight) || 720;
+            }
         }
         var lado = Math.max(w, h);
         if (lado > MAX_LADO) {
@@ -2535,6 +2542,24 @@
             return { w: Math.round(w * esc), h: Math.round(h * esc), reducido: true };
         }
         return { w: w, h: h, reducido: false };
+    }
+
+    /* Q4 · cuánto se encoge o se agranda el contenido al entrar en la salida.
+       1 = píxel a píxel; < 1 = se reduce (sobra nitidez); > 1 = se amplía y
+       eso ya es blandura que no se recupera. Cuenta el ajuste elegido, el
+       cuerpo que deja la plantilla y el zoom manual del contenido. */
+    function escalaContenido() {
+        var fuente = videoCargado ? vidFuente
+            : (imagenes && imagenes[0] && imagenes[0].img);
+        var iw = fuente && (fuente.videoWidth || fuente.naturalWidth);
+        var ih = fuente && (fuente.videoHeight || fuente.naturalHeight);
+        if (!iw || !ih) return 0;
+        var z = zonaDibujo();
+        if (!z.w || !z.h) return 0;
+        var base = (selAjuste.value === 'contain' || selAjuste.value === 'blur')
+            ? Math.min(z.w / iw, z.h / ih)
+            : Math.max(z.w / iw, z.h / ih);
+        return base * (noticiaActiva ? contEsc : 1);
     }
 
     /* F1 · duración: el input puede ser «segundos por imagen» o «total del
@@ -2605,6 +2630,12 @@
     }
 
     function pintarFondo() {
+        /* Q4 · el filtro bueno, SIEMPRE. Antes solo se activaba al pintar una
+           barra de plantilla, así que sin plantilla el navegador reescalaba el
+           vídeo y las fotos con el filtro rápido (más blando y con dientes de
+           sierra al cambiar de tamaño). Va aquí porque pintarFondo es el
+           primer dibujo de cada fotograma, antes del contenido. */
+        ctx.imageSmoothingQuality = 'high';
         ctx.fillStyle = inpFondo.value;
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
         // F5d/Q2/R6: plantilla = barra arriba y/o abajo + cuerpo (blanco
@@ -2614,7 +2645,6 @@
         if (!b || !b.lista || !b.img.naturalWidth) return;
         var img = b.img;
         var bh = altoBarraNews();
-        ctx.imageSmoothingQuality = 'high';   // Q2: la barra a la mayor nitidez
         if (b.segmento) {
             // R6: la imagen es un segmento (407×93): franja negra con la
             // marca a la izquierda (su fondo ya es negro opaco)
@@ -2715,6 +2745,7 @@
         pintaAjusteRapido();   // M2: resalta el atajo tras el posible cambio a «contener»
         repintarSuperp();
         actualizaManijaContenido();
+        actualizaInfoCalidad();   // Q4: la plantilla cambia el % de contenido
     }
     selPlantilla.addEventListener('change', aplicaPlantilla);
 
@@ -2764,6 +2795,7 @@
         }
         contEsc = (parseFloat(inpEscContenido.value) || 100) / 100;
         valContenido.textContent = inpEscContenido.value + ' %';   // M1
+        actualizaInfoCalidad();   // Q4: el zoom del contenido cambia su %
         redibujarArrastre();
         actualizaManijaContenido();
     });
@@ -5903,6 +5935,21 @@
            subir «Calidad» ya no cambia la tasa y que el archivo no se degrada */
         var suelo = bitrateFuente(d.w, d.h);
         if (suelo && suelo >= bps) texto += ' · se graba a la tasa del clip original';
+        /* Q4: el tamaño elegido y la plantilla cambian cuántos píxeles ocupa
+           el contenido. Si se amplía, se avisa: es la única pérdida que el
+           bitrate no arregla (no hay detalle que recuperar) */
+        var esc = escalaContenido();
+        lineaCalidad.title = '';
+        if (esc && Math.abs(esc - 1) > 0.05) {
+            var pct = Math.round(esc * 100);
+            texto += ' · contenido al ' + pct + ' %';
+            lineaCalidad.title = esc < 1
+                ? 'El contenido ocupa el ' + pct + ' % de su tamaño original dentro de la ' +
+                  'salida: se reduce, así que no pierde nitidez.'
+                : 'El contenido se amplía al ' + pct + ' % de su tamaño original dentro de ' +
+                  'la salida: se verá más blando. Para conservar nitidez, «Contener» o un ' +
+                  'tamaño de salida más cercano al del clip.';
+        }
         lineaCalidad.textContent = texto;
     }
     selCalidad.addEventListener('change', actualizaInfoCalidad);
