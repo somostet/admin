@@ -2780,8 +2780,13 @@
         var b = barraDePlantilla();
         var ratio = BARRA_RATIO;
         /* Q1f: la variante azul mide 97 px de alto; usar su proporción real
-           evita que salga estirada o con una franja de otro grosor */
-        if (b && b.img && b.img.naturalWidth > 0 && b.img.naturalHeight > 0) {
+           evita que salga estirada o con una franja de otro grosor.
+           R6 · somostet es un RECORTE (407×93) que se pega sobre negro, no una
+           barra completa: con su proporción saldría 3 veces más alta y el logo
+           estirado a todo el ancho. Para los recortes manda la barra estándar
+           (93/1200) y el recorte se escala con `segmento`. */
+        if (b && !b.segmento && b.img && b.img.naturalWidth > 0 &&
+            b.img.naturalHeight > 0) {
             ratio = b.img.naturalHeight / b.img.naturalWidth;
         }
         var bh = Math.round(lienzo.width * ratio);
