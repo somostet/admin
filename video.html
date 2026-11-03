@@ -374,6 +374,8 @@
                                 <option value="reel">Reel (Instagram) — 1080×1920</option>
                                 <option value="short">Short (YouTube) — 1080×1920</option>
                                 <option value="youtube">YouTube (16:9) — 1920×1080</option>
+                                <option value="youtube4k">YouTube 4K (16:9) — 3840×2160</option>
+                                <option value="vertical4k">Vertical 4K (9:16) — 2160×3840</option>
                                 <option value="ig1">Feed de IG (1:1) — 1080×1080</option>
                                 <option value="ig45">Feed de IG (4:5) — 1080×1350</option>
                                 <option value="custom">Personalizado</option>
@@ -383,15 +385,18 @@
                                     <div class="flex-fill">
                                         <label class="form-label mb-1" for="vid-plat-ancho">Ancho (px)</label>
                                         <input type="number" class="form-control" id="vid-plat-ancho"
-                                               min="160" max="1920" step="2" value="1080" inputmode="numeric">
+                                               min="160" max="3840" step="2" value="1080" inputmode="numeric">
                                     </div>
                                     <div class="flex-fill">
                                         <label class="form-label mb-1" for="vid-plat-alto">Alto (px)</label>
                                         <input type="number" class="form-control" id="vid-plat-alto"
-                                               min="160" max="1920" step="2" value="1920" inputmode="numeric">
+                                               min="160" max="3840" step="2" value="1920" inputmode="numeric">
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-text">En 4K la vista previa se edita en Full HD para que
+                                no haya tirones. La grabación intenta 4K a 30 fps y, si el equipo no puede
+                                mantenerla, se queda en Full HD automáticamente para que el vídeo salga fluido.</div>
                         </div>
                         <div class="col-12" hidden>
                             <label class="form-label" for="vid-tamano">Resolución de salida</label>
@@ -414,6 +419,7 @@
                             <label class="form-label" for="vid-plantilla">Plantilla</label>
                             <select class="form-select" id="vid-plantilla">
                                 <option value="ninguna" selected>Sin plantilla</option>
+                                <option value="blanco">Lienzo blanco (mover el vídeo a antojo)</option>
                                 <option value="news">Tet News (noticias)</option>
                                 <option value="newsnuevo">Tet News (nuevo)</option>
                                 <option value="somostet">somostet</option>
@@ -425,14 +431,15 @@
                                 <option value="arriba" selected>Solo arriba</option>
                                 <option value="abajo">Solo abajo</option>
                             </select>
-                            <div class="form-text">Con plantilla, el contenido se coloca dentro del cuerpo.</div>
+                            <div class="form-text">Con plantilla, el contenido se coloca dentro del cuerpo.
+                                Con «Lienzo blanco» ocupa todo el lienzo y se puede mover y escalar libremente.</div>
                         </div>
                     </div>
 
                     <!-- M1 · controles del contenido, ahora en su propia pestaña -->
                     <p class="form-text mb-0" id="vid-tamano-vacio">El tamaño del contenido se
-                        ajusta cuando hay una plantilla activa. Elige una arriba para
-                        escalar, centrar, llenar o ajustar el contenido.</p>
+                        ajusta cuando hay una plantilla o un lienzo blanco activo. Elige uno arriba
+                        para escalar, centrar, llenar o ajustar el contenido.</p>
                     <div class="vid-contenido-controles" id="vid-contenido-controles" hidden>
                         <button type="button" class="btn btn-outline-secondary vid-contenido-centrar"
                                 id="vid-contenido-bloquear" aria-pressed="false" disabled>
@@ -912,6 +919,12 @@
                                    id="vid-chip-youtube" value="youtube" autocomplete="off">
                             <label class="btn btn-outline-primary" for="vid-chip-youtube">YouTube</label>
                             <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-youtube4k" value="youtube4k" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-youtube4k">YouTube 4K</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
+                                   id="vid-chip-vertical4k" value="vertical4k" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="vid-chip-vertical4k">Vertical 4K</label>
+                            <input type="radio" class="btn-check" name="vid-chip-plat"
                                    id="vid-chip-ig1" value="ig1" autocomplete="off">
                             <label class="btn btn-outline-primary" for="vid-chip-ig1">IG 1:1</label>
                             <input type="radio" class="btn-check" name="vid-chip-plat"
@@ -1063,7 +1076,7 @@
     <!-- ?v= obliga a traer la versión con TET_FORMATOS aunque la caché HTTP tenga la anterior -->
     <script src="./public/js/formatos.js?v=e1b"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r33"></script>
+    <script src="./public/js/video.js?v=r45"></script>
     <!-- Voz: lee la narración con las voces del sistema (pestaña «Voz») -->
     <script src="./public/js/voz.js?v=v5"></script>
     <script src="./public/js/piper-editor.js?v=p1"></script>

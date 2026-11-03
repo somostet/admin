@@ -20,7 +20,10 @@
         var v = parseInt(selArranque.value, 10);
         return (v === 0 || (v >= 0 && v <= 2000)) ? v : ARRANQUE_PAD;
     }
-    var MAX_LADO = 1920;          // tope de píxeles (los presets más grandes se reducen con aviso)
+    var MAX_LADO = 3840;          // tope de píxeles (4K; los presets mayores se reducen con aviso)
+    var LADO_FLUIDO = 1920;       // si el 4K no da 30 fps, la salida se queda en Full HD
+    var PRESUPUESTO_4K_MS = 20;   // ms de dibujo por fotograma para mantener 30 fps con margen
+    var PRESUPUESTO_CODEC_MS = 25; // ms de codificación por fotograma (30 fps = 33 ms)
     var MAX_TOTAL_SEG = 300;      // 5 minutos: se graba en tiempo real, no conviene más (E4)
     var MINUTOS_MAX = Math.round(MAX_TOTAL_SEG / 60);   // «5» para los avisos (E4)
     var MIN_POR_IMAGEN = 0.1;      // 10 fotogramas/s por imagen: menos no lo distingue el grabador
@@ -170,7 +173,7 @@
     var btnLlenar = document.getElementById('vid-contenido-llenar');       // M2: atajo «Llenar»
     var btnAjustar = document.getElementById('vid-contenido-ajustar');     // M2: atajo «Ajustar»
     var manijaContenido = document.getElementById('vid-manija-contenido'); // F5d
-    var noticiaActiva = false;   // F5d/R6: hay plantilla con barra (Tet News o somostet)
+    var noticiaActiva = false;   // F5d/R6: plantilla o lienzo blanco: el contenido se puede mover y escalar
     var contPos = null;          // F5d: centro del contenido en fracciones (null = automático)
     var contEsc = 1;             // F5d: multiplicador del ajuste automático (1 = auto)
     var contBloq = false;       // Q1g: impide mover o escalar el contenido en el lienzo
@@ -483,6 +486,8 @@
         reel: { nombre: 'Reel (Instagram)', tam: '1080x1920' },
         short: { nombre: 'Short (YouTube)', tam: '1080x1920' },
         youtube: { nombre: 'YouTube (16:9)', tam: '1920x1080' },
+        youtube4k: { nombre: 'YouTube 4K (16:9)', tam: '3840x2160' },
+        vertical4k: { nombre: 'Vertical 4K (9:16)', tam: '2160x3840' },
         ig1: { nombre: 'Feed de IG (1:1)', tam: '1080x1080' },
         ig45: { nombre: 'Feed de IG (4:5)', tam: '1080x1350' },
         custom: { nombre: 'Personalizado', tam: null }
@@ -2544,6 +2549,166 @@
         return { w: w, h: h, reducido: false };
     }
 
+    /* ---------- 4K con red de seguridad ---------- */
+    /* Grabar es en tiempo real: si el equipo no pinta y codifica un fotograma
+       de 4K a tiempo (30 fps = 33 ms), el vídeo sale con tirones aunque la
+       resolución sea mayor. Antes de empezar se mide el dibujo real y se
+       codifican unos fotogramas de prueba; si no cabe en el presupuesto, se
+       baja a Full HD. La decisión se toma solo para esa grabación: el selector
+       de tamaño no se toca. */
+    function esSalida4K(d) {
+        return !!(d && (d.w > LADO_FLUIDO || d.h > LADO_FLUIDO));
+    }
+
+    function reduceSalidaFluida(d) {
+        var lado = Math.max(d.w, d.h);
+        if (lado <= LADO_FLUIDO) return d;
+        var esc = LADO_FLUIDO / lado;
+        return {
+            w: Math.max(2, Math.round(d.w * esc / 2) * 2),
+            h: Math.max(2, Math.round(d.h * esc / 2) * 2),
+            reducido: true
+        };
+    }
+
+    function mideDibujo(pinta) {
+        var n = 3;
+        pinta(0);   // primer trazo: texturas, escalados y fuentes ya en caliente
+        var t0 = performance.now();
+        for (var i = 1; i <= n; i++) pinta(i);
+        return (performance.now() - t0) / n;
+    }
+
+    /* La vista previa de un 4K se pinta en Full HD: en pantalla no se aprecia
+       la diferencia y editar con un canvas de 3840×2160 en cada arrastre hacía
+       que el móvil fuera a tirones. La grabación sí sale a la resolución
+       elegida (con su comprobación de fluidez). */
+    function dimsPreview() {
+        var d = dimsSalida();
+        if (!esSalida4K(d)) return d;
+        return reduceSalidaFluida(d);
+    }
+
+    function salidaFluida(d, pinta) {
+        if (!esSalida4K(d) || typeof pinta !== 'function') return Promise.resolve(d);
+        lienzo.width = d.w;
+        lienzo.height = d.h;
+        var ms;
+        try {
+            ms = mideDibujo(pinta);
+        } catch (e) {
+            return Promise.resolve(d);   // si la prueba falla, no se cambia la calidad elegida
+        }
+        if (ms > PRESUPUESTO_4K_MS) return Promise.resolve(decideSalida(d, ms));
+        /* Dibujar cabe de sobra, pero en tiempo real lo que suele atragantarse
+           es codificar 4K: se prueban unos fotogramas reales con WebCodecs. */
+        if (typeof estado !== 'undefined' && estado) {
+            estado.textContent = 'Comprobando fluidez del 4K…';
+        }
+        return mideCodificacion(pinta).then(function (msCodec) {
+            if (typeof estado !== 'undefined' && estado) estado.textContent = '';
+            try { pinta(0); } catch (e) { }   // deja el lienzo con el fotograma real
+            if (msCodec < 0 || msCodec <= PRESUPUESTO_CODEC_MS) return d;
+            return decideSalida(d, msCodec);
+        });
+    }
+
+    function decideSalida(d, ms) {
+        var r = reduceSalidaFluida(d);
+        aviso('4K no mantiene 30 fps en este equipo (' + Math.round(ms) +
+            ' ms por fotograma): se graba en ' + r.w + '×' + r.h +
+            ' px (Full HD) para que salga fluido', 'warning');
+        return r;
+    }
+
+    /* Coste real de codificar a la resolución de salida: se pintan unos
+       fotogramas distintos (contenido en movimiento, como en una grabación de
+       verdad) y se codifican con WebCodecs sin esperar al reloj, que es lo que
+       mide si el equipo puede seguir el ritmo de 30 fps. Devuelve -1 si el
+       navegador no puede hacer la prueba: entonces manda solo el dibujo. */
+    function mideCodificacion(pinta) {
+        return new Promise(function (resolve) {
+            if (typeof VideoEncoder !== 'function' || typeof VideoFrame !== 'function') {
+                return resolve(-1);
+            }
+            var hecho = false;
+            function acabar(v) {
+                if (hecho) return;
+                hecho = true;
+                resolve(v);
+            }
+            var codecs = ['avc1.640033', 'avc1.4d0033', 'avc1.42E033', 'vp09.00.10.08', 'vp8'];
+            var k = 0;
+            function siguiente() {
+                if (hecho) return;
+                if (k >= codecs.length) return acabar(-1);
+                var cfg = {
+                    codec: codecs[k++],
+                    width: lienzo.width,
+                    height: lienzo.height,
+                    bitrate: bitrateSalida(lienzo.width, lienzo.height, FPS),
+                    framerate: FPS
+                };
+                VideoEncoder.isConfigSupported(cfg).then(function (sop) {
+                    if (!sop || !sop.supported) return siguiente();
+                    probar(cfg);
+                }).catch(function () { siguiente(); });
+            }
+            function probar(cfg) {
+                var enc;
+                try {
+                    enc = new VideoEncoder({
+                        output: function () { },
+                        error: function () { cerrar(); siguiente(); }
+                    });
+                    enc.configure(cfg);
+                } catch (e) {
+                    cerrar();
+                    return siguiente();
+                }
+                var cerrado = false;
+                function cerrar() {
+                    if (cerrado) return;
+                    cerrado = true;
+                    try { enc.close(); } catch (e) { }
+                }
+                var n = 4, i = 0, t0 = 0;
+                function fotograma() {
+                    if (i >= n + 1) {          // el primero calienta el codificador
+                        return enc.flush().then(function () {
+                            var ms = (performance.now() - t0) / n;
+                            cerrar();
+                            acabar(ms);
+                        }).catch(function () { cerrar(); siguiente(); });
+                    }
+                    try {
+                        pinta(i);
+                        /* con un clip parado, `pinta` repite el mismo fotograma
+                           y el codificador lo tendría fácil: una banda que se
+                           desplaza simula el movimiento de una grabación real */
+                        var c2 = lienzo.getContext('2d');
+                        c2.fillStyle = 'rgba(120,160,255,0.08)';
+                        c2.fillRect(0, (i / 6) * lienzo.height, lienzo.width,
+                            Math.max(2, lienzo.height * 0.15));
+                        var f = new VideoFrame(lienzo, {
+                            timestamp: Math.round(i * 1000000 / FPS)
+                        });
+                        if (i === 1) t0 = performance.now();
+                        enc.encode(f, { keyFrame: i === 0 });
+                        f.close();
+                    } catch (e) {
+                        cerrar();
+                        return siguiente();
+                    }
+                    i++;
+                    fotograma();
+                }
+                fotograma();
+            }
+            siguiente();
+        });
+    }
+
     /* Q4 · cuánto se encoge o se agranda el contenido al entrar en la salida.
        1 = píxel a píxel; < 1 = se reduce (sobra nitidez); > 1 = se amplía y
        eso ya es blandura que no se recupera. Cuenta el ajuste elegido, el
@@ -2554,11 +2719,18 @@
         var iw = fuente && (fuente.videoWidth || fuente.naturalWidth);
         var ih = fuente && (fuente.videoHeight || fuente.naturalHeight);
         if (!iw || !ih) return 0;
+        /* la vista previa puede ir a Full HD aunque la salida sea 4K: la
+           cuenta se hace con el tamaño REAL de la grabación */
+        var d = dimsSalida();
+        if (!d.w || !d.h) return 0;
         var z = zonaDibujo();
-        if (!z.w || !z.h) return 0;
+        var k = d.w / (lienzo.width || d.w);
+        var zw = z.w * k;
+        var zh = z.h * k;
+        if (!zw || !zh) return 0;
         var base = (selAjuste.value === 'contain' || selAjuste.value === 'blur')
-            ? Math.min(z.w / iw, z.h / ih)
-            : Math.max(z.w / iw, z.h / ih);
+            ? Math.min(zw / iw, zh / ih)
+            : Math.max(zw / iw, zh / ih);
         return base * (noticiaActiva ? contEsc : 1);
     }
 
@@ -2587,7 +2759,7 @@
     var RUTA_BARRA_ESTRENOS_AZUL = './public/img/bars/estrenos_streaming_azul.png';   // Q1f
     var RUTA_LOGO_DEFECTO = './public/img/Logotet.png';   // Q3: logo de tet
     var BARRA_RATIO = 93 / 1200;
-    var plantillaActiva = 'ninguna';   // R6/Q1f: 'news' | 'newsnuevo' | 'somostet' | 'estrenosrojo' | 'estrenosazul'
+    var plantillaActiva = 'ninguna';   // R6/Q1f: 'blanco' | 'news' | 'newsnuevo' | 'somostet' | 'estrenosrojo' | 'estrenosazul'
     var barraPos = 'arriba';            // R8: 'arriba' | 'abajo' (sin «ambas»)
 
     /* Q1f · barra que corresponde a la plantilla elegida. `segmento` solo lo
@@ -2622,7 +2794,11 @@
        dentro —fondo, contenido, textos y manijas— se adapta al tamaño
        elegido sin perder el marco de Tet News */
     function zonaDibujo() {
-        if (plantillaActiva === 'ninguna') return { x: 0, y: 0, w: lienzo.width, h: lienzo.height };
+        /* «blanco» no lleva barra: es un lienzo entero para colocar el vídeo
+           a antojo, así que la zona útil es todo el canvas. */
+        if (plantillaActiva === 'ninguna' || plantillaActiva === 'blanco') {
+            return { x: 0, y: 0, w: lienzo.width, h: lienzo.height };
+        }
         var barH = altoBarraNews();
         var nBarras = 1;   // R8: ya no existe la posición «ambas»
         var y0 = (barraPos === 'abajo') ? 0 : barH;
@@ -2730,14 +2906,18 @@
        cuerpo, contenido y centrado (como en el canvas de imágenes) */
     function aplicaPlantilla() {
         plantillaActiva = selPlantilla.value;
+        /* «blanco» es una plantilla sin barra: activa las manijas y los
+           controles de tamaño, pero deja todo el lienzo para el contenido. */
         noticiaActiva = (plantillaActiva !== 'ninguna');
+        var conBarra = (plantillaActiva !== 'ninguna' && plantillaActiva !== 'blanco');
+        if (plantillaActiva === 'blanco') inpFondo.value = '#ffffff';   // lienzo blanco de partida
         barraPos = (selBarraPos.value === 'abajo') ? 'abajo' : 'arriba';   // R8
         actualizaBloqueoContenido();
         inpEscContenido.value = String(Math.round(contEsc * 100));
         valContenido.textContent = inpEscContenido.value + ' %';   // M1
         wrapContenido.hidden = !noticiaActiva;   // M1: controles en la pestaña «Tamaño»
         if (tamVacio) tamVacio.hidden = noticiaActiva;
-        if (noticiaActiva && selAjuste.value === 'cover') {
+        if (conBarra && selAjuste.value === 'cover') {
             // cover recortaría los bordes del cuerpo: mejor contenerlo
             selAjuste.value = 'contain';
             aviso('Ajuste cambiado a «contener» para que se vea el contenido en la plantilla', 'info');
@@ -3616,7 +3796,7 @@
             lienzo.style.display = 'block';
             vacio.hidden = true;
             pistaLienzo.hidden = false;
-            var dm = dimsSalida();
+            var dm = dimsPreview();
             if (lienzo.width !== dm.w || lienzo.height !== dm.h) {
                 lienzo.width = dm.w;
                 lienzo.height = dm.h;
@@ -3629,7 +3809,7 @@
             lienzo.style.display = 'block';
             vacio.hidden = true;
             pistaLienzo.hidden = false;   // M1: hay lienzo que tocar
-            var dv = dimsSalida();
+            var dv = dimsPreview();
             if (lienzo.width !== dv.w || lienzo.height !== dv.h) {
                 lienzo.width = dv.w;
                 lienzo.height = dv.h;
@@ -3650,7 +3830,7 @@
         rielSalWrap.hidden = false;
         lienzo.style.display = 'block';
         pistaLienzo.hidden = false;   // M1: hay lienzo que tocar
-        var d = dimsSalida();
+        var d = dimsPreview();
         if (lienzo.width !== d.w || lienzo.height !== d.h) {
             lienzo.width = d.w;
             lienzo.height = d.h;
@@ -4519,7 +4699,7 @@
     }
 
     function nuevoTexto(txt, n, tipo) {
-        /* Q1c/R4 · «texto fácil en móvil»: el nuevo nace con 10 s, negro,
+        /* Q1c/R4 · «texto fácil en móvil»: el nuevo nace con 10 s, blanco,
            tamaño 5, fundido de entrada y salida y SIN sombra (antes fuerte:
            90; R4: por defecto ninguna), y EMPIEZA cuando termina el
            anterior (si el anterior dura «hasta el final», +10 s). El título
@@ -4549,7 +4729,7 @@
             salidaDur: 0.5,
             inicio: ini,
             dur: 10,
-            color: '#000000',   // F9 · Q1c: negro por defecto
+            color: '#ffffff',   // F9 · Q1c: blanco por defecto
             fuente: 'sistema',  // F9
             peso: 'negrita',    // F9
             sombra: 0,               // P9/R4: sin sombra por defecto
@@ -5935,6 +6115,7 @@
            subir «Calidad» ya no cambia la tasa y que el archivo no se degrada */
         var suelo = bitrateFuente(d.w, d.h);
         if (suelo && suelo >= bps) texto += ' · se graba a la tasa del clip original';
+        if (esSalida4K(d)) texto += ' · 4K adaptativo';
         /* Q4: el tamaño elegido y la plantilla cambian cuántos píxeles ocupa
            el contenido. Si se amplía, se avisa: es la única pérdida que el
            bitrate no arregla (no hay detalle que recuperar) */
@@ -5995,7 +6176,7 @@
         }
     });
 
-    function crearVideo() {
+    async function crearVideo() {
         var durMs = Math.max(Math.round(MIN_POR_IMAGEN * 1000),
             Math.round(calculoDuracion().porImagen * 1000));
         var PAD = padArranque();
@@ -6021,6 +6202,11 @@
         if (d.reducido) {
             aviso('Salida reducida a ' + d.w + '×' + d.h + ' px para que el vídeo no sea gigante', 'info');
         }
+        d = await salidaFluida(d, function (i) {
+            var paso = Math.max(0, i) * Math.max(120, Math.min(400, durMs / 2));
+            dibujarEn(durLineaMs > 0 ? paso % durLineaMs : 0, durMs);
+        });
+        if (cancelado) return;   // se canceló mientras se comprobaba el 4K
         lienzo.width = d.w;
         lienzo.height = d.h;
 
@@ -6251,7 +6437,7 @@
         iniciaDirecto();
     });
 
-    function iniciaDirecto() {
+    async function iniciaDirecto() {
         if (grabandoDirecto || grabando || capturando || pidiendo) {
             aviso('Espera a que termine lo que está en marcha', 'info');
             return;
@@ -6284,6 +6470,11 @@
                                     // fotograma: sin repaint captureStream corta)
 
         var d = dimsSalida();
+        d = await salidaFluida(d, function (i) {
+            if (videoCargado) dibujarFrame(vidFuente);
+            else dibujarEn(Math.max(0, i) * 250, durMsPorImagen());
+        });
+        if (!grabandoDirecto || cancelado) return;   // se paró durante la prueba
         if (lienzo.width !== d.w || lienzo.height !== d.h) {
             lienzo.width = d.w;
             lienzo.height = d.h;
@@ -7279,7 +7470,7 @@
         return segs;
     }
 
-    function crearVideoRecorte() {
+    async function crearVideoRecorte() {
         var audio = conectarAudio();
         var PAD = padArranque();   // R6d: se fija al empezar, no cambia a mitad
         var total = Math.round(totalRecorte() * 1000) + PAD;   // E5b + R6d
@@ -7328,6 +7519,8 @@
         if (d.reducido) {
             aviso('Salida reducida a ' + d.w + '×' + d.h + ' px para que el vídeo no sea gigante', 'info');
         }
+        d = await salidaFluida(d, function () { dibujarFrame(vidFuente); });
+        if (cancelado) return;   // se canceló mientras se comprobaba el 4K
         lienzo.width = d.w;
         lienzo.height = d.h;
 
@@ -7538,7 +7731,7 @@
        cambia es que ahora conviven los dos relojes —el de `performance.now()`
        para las fotos y el del propio <video> para los clips— y que en cada
        salto hay que cortar o arrancar el sonido del vídeo. */
-    function crearVideoPista(segs) {
+    async function crearVideoPista(segs) {
         var audio = colaVideos.length ? conectarAudio() : null;
         var PAD = padArranque();   // R6d: se fija al empezar, no cambia a mitad
         var total = Math.round(totalPista() * 1000) + PAD;   // R6d: incluye el calentamiento
@@ -7581,6 +7774,15 @@
         if (d.reducido) {
             aviso('Salida reducida a ' + d.w + '×' + d.h + ' px para que el vídeo no sea gigante', 'info');
         }
+        d = await salidaFluida(d, function (i) {
+            var el = null;
+            for (var j = 0; j < vids.length; j++) {
+                if (vids[j] && vids[j].readyState >= 2) { el = vids[j]; break; }
+            }
+            if (el) dibujarFrame(el);
+            else pintaPlanPista(segs, Math.max(0, i) * 0.25);
+        });
+        if (cancelado) return;   // se canceló mientras se comprobaba el 4K
         lienzo.width = d.w;
         lienzo.height = d.h;
 
