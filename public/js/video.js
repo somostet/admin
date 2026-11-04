@@ -35,6 +35,12 @@
             stream = lienzo.captureStream(0);
             var pista = stream.getVideoTracks()[0];
             if (pista && typeof pista.requestFrame === 'function') {
+                /* R6e · primer `requestFrame` de inicialización. Chrome consume
+                   esta primera solicitud al preparar la pista; la siguiente,
+                   ya con el fotograma definitivo, es la que se codifica como
+                   frame 0. Sin ella, ese frame 0 podía quedarse con el lienzo
+                   anterior (vacío) y las redes lo usaban como miniatura. */
+                try { pista.requestFrame(); } catch (e) { }
                 return { stream: stream, pista: pista, manual: true };
             }
         } catch (e) { /* algunos móviles solo admiten captura automática */ }
@@ -6483,12 +6489,16 @@
         if (lienzo.width !== d.w || lienzo.height !== d.h) {
             lienzo.width = d.w;
             lienzo.height = d.h;
-            if (videoCargado) {
-                dibujarFrame(vidFuente);   // F10: pinta aunque la fuente
-                                           // aún no tenga fotogramas
-            } else {
-                dibujarEn(0, durMsPorImagen());   // fotograma semilla del stream
-            }
+        }
+        /* R6e · se pinta SIEMPRE antes de abrir la captura, no solo cuando
+           cambia el tamaño: con la captura automática del móvil, un lienzo
+           sin repintar desde la prueba de fluidez podía llegar vacío y el
+           primer fotograma del vídeo salía negro. */
+        if (videoCargado) {
+            dibujarFrame(vidFuente);   // F10: pinta aunque la fuente
+                                       // aún no tenga fotogramas
+        } else {
+            dibujarEn(0, durMsPorImagen());   // fotograma semilla del stream
         }
 
         var captura = creaCapturaLienzo();
@@ -7528,6 +7538,11 @@
         if (cancelado) return;   // se canceló mientras se comprobaba el 4K
         lienzo.width = d.w;
         lienzo.height = d.h;
+        /* R6e · cambiar el tamaño del lienzo lo borra. Se pinta el fotograma
+           ANTES de abrir la captura: si el navegador no admite `requestFrame`
+           (Safari/móvil, captura automática), el stream arrancaba con el
+           lienzo vacío y el primer fotograma grabado salía negro. */
+        dibujarFrame(vidFuente);
 
         var captura = creaCapturaLienzo();
         var stream = captura.stream;
@@ -7790,8 +7805,28 @@
         if (cancelado) return;   // se canceló mientras se comprobaba el 4K
         lienzo.width = d.w;
         lienzo.height = d.h;
+        /* R6e · si el plan empieza por un clip, su primer fotograma tiene que
+           estar YA pintado cuando se abre la captura: el codificador se queda
+           con lo que haya en ese instante y las redes lo usan de miniatura.
+           Antes se abría con el lienzo recién redimensionado (en blanco,
+           porque el clip todavía no se había cargado) y el vídeo arrancaba con
+           un frame 0 vacío. Se carga y busca el clip ahora, se pinta, y se
+           suelta: `preparaClipPista` lo vuelve a tomar al arrancar de verdad. */
+        if (segs[0].tipo === 'clip') {
+            await ponPrimerClipEnLienzo(segs[0]);
+            if (cancelado) return;   // se canceló mientras se cargaba el clip
+        } else {
+            /* Igual que en el recorte: al redimensionar el lienzo se borra,
+               así que se pinta el arranque del plan antes de crear la captura.
+               Con la captura automática el primer fotograma ya lleva contenido. */
+            pintaArranque();
+        }
 
         var captura = creaCapturaLienzo();
+        /* R6e · el clip se cargó solo para dejar su primer fotograma en el
+           lienzo; se suelta y `preparaClipPista` lo vuelve a tomar al arrancar
+           de verdad (ya está cargado y en su punto, así que entra en el acto). */
+        if (segs[0].tipo === 'clip') sueltaVids();
         var stream = captura.stream;
         if ((audio || hayMusica) && audioDest) {
             audioDest.stream.getAudioTracks().forEach(function (tr) { stream.addTrack(tr); });
@@ -7837,6 +7872,45 @@
             pintaPlanPista(segs, segs[0].desde);
         }
 
+        /* R6e · deja el primer fotograma del primer clip en el lienzo (y el
+           <video> listo en su punto de entrada) antes de abrir la captura. Se
+           suelta al terminar para que el grabador lo vuelva a tomar como si
+           nada; el lienzo conserva lo pintado. */
+        function ponPrimerClipEnLienzo(s) {
+            return new Promise(function (res) {
+                var c = colaVideos[s.idx];
+                var el = vids[0];
+                if (!c || !el) return res();
+                var cerrado = false;
+                var termina = function () {
+                    if (cerrado) return;
+                    cerrado = true;
+                    el.removeEventListener('loadedmetadata', busca);
+                    el.removeEventListener('seeked', busca);
+                    el.removeEventListener('error', termina);
+                    clearTimeout(tope);
+                    pintaArranque();
+                    try { el.pause(); } catch (er) { }
+                    res();
+                };
+                var busca = function () {
+                    if (el.readyState >= 2 && Math.abs(el.currentTime - s.a) < 0.06) {
+                        return termina();
+                    }
+                    el.addEventListener('seeked', busca, { once: true });
+                    try { el.currentTime = s.a; } catch (er) { termina(); }
+                };
+                var tope = setTimeout(termina, 4000);
+                clipEn[0] = s.idx;
+                el.addEventListener('error', termina);
+                if (urlEn(0) !== c.url || el.readyState < 1) {
+                    el.addEventListener('loadedmetadata', busca);
+                    urlFuente = c.url;
+                    el.src = c.url;
+                } else busca();
+            });
+        }
+
         /* R6d · el grabador NO arranca aquí sino cuando el primer segmento ya
            está en pantalla. Antes arrancaba antes de tiempo y, con la pista
            empezando por un clip, el primer fotograma salía en el color del
@@ -7859,6 +7933,21 @@
         function calientaYArranca(ya) {
             if (grabIniciado) { ya(); return; }
             grabIniciado = true;
+            /* R6e · deja el primer fotograma REAL en el lienzo antes de
+               arrancar el grabador. El codificador se queda con lo que haya
+               en ese instante; si el plan empieza por un clip, antes se
+               pintaba solo el fondo y el frame 0 (la miniatura de las redes)
+               salía en blanco/negro. */
+            pintaArranque();
+            /* R6e · y se lo entrega YA a la pista manual. En `captureStream(0)`
+               el codificador no recibe nada hasta el primer `requestFrame()`;
+               si ese primero llega después de `rec.start`, el frame 0 se queda
+               con el lienzo anterior (vacío). Sembrarlo aquí hace que el
+               primer fotograma codificado sea el real. */
+            if (captura.manual && captura.pista &&
+                    typeof captura.pista.requestFrame === 'function') {
+                try { captura.pista.requestFrame(); } catch (e) { }
+            }
             sincronizaCapturaLienzo(rec, captura, pintaArranque);
             rec.start(200);
             pantallaDespierta(true);
@@ -8060,6 +8149,13 @@
             /* R6d · el primero no entra hasta que el grabador está arrancado
                (y calentado) con su primer fotograma ya en pantalla */
             if (!grabIniciado) {
+                /* R6e · marcar el clip ANTES del calentamiento. `pintaArranque`
+                   busca el <video> por `clipEn`; si aún vale -1 solo pinta el
+                   fondo y esos primeros fotogramas (los que usan las redes
+                   para la miniatura) salen vacíos. El clip ya está cargado y
+                   buscado en su punto: `preparaClipPista` no llama aquí hasta
+                   que `readyState >= 2`. */
+                clipEn[e] = segs[k].idx;
                 calientaYArranca(function () { arrancaClipPista(k, e, tEntrada); });
                 return;
             }
