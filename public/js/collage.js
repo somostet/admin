@@ -217,6 +217,16 @@
         });
     }
 
+    /* el clip se dibuja dentro de la caché de la foto: al cambiarlo hay que
+       marcar el objeto como «dirty» o Fabric reutiliza la caché anterior y el
+       recorte nuevo no se ve (al mover la foto parecía que el hueco viajaba
+       con ella en vez de quedarse fijo en la celda) */
+    function aplicarClip(foto, c) {
+        foto.clipPath = clipDeCelda(foto, c);
+        foto.dirty = true;
+        foto.setCoords();
+    }
+
     function colocaFoto(foto, c, guardada, indice, modoForzado) {
         var r = rectLocal(c);
         var modo = modoForzado || modo;
@@ -238,9 +248,15 @@
             scaleY: guardada ? guardada.scaleY : esc,
             strokeUniform: true,
             lockRotation: true,
+            /* sin escalado libre: el clip local usa scaleX para el eje X y el
+               eje Y; estirar la foto la deformaba y descuadraba el recorte */
+            lockUniScaling: true,
             name: 'Foto ' + (indice + 1)
         });
-        foto.clipPath = clipDeCelda(foto, c);
+        /* la celda va con la foto: al arrastrarla o ampliarla no se cambia de
+           celda aunque invada la vecina (antes mandaba el mayor solape) */
+        foto.tetCelda = indice;
+        aplicarClip(foto, c);
         return {
             src: foto.getSrc(),
             left: foto.left,
@@ -266,7 +282,15 @@
 
     function resincroniza() {
         var dis = DISENOS[disenioActual];
-        var fotos = canvas.getObjects().filter(function (o) { return o instanceof fabric.Image; });
+        var todas = canvas.getObjects().filter(function (o) { return o instanceof fabric.Image; });
+        /* las fotos del collage llevan tetCelda; las pegadas sueltas, no.
+           Tras un deshacer, el historial las devuelve con esa marca, así que
+           se recolocan en SU celda y las sueltas se quedan donde estaban. */
+        var conCelda = todas.filter(function (o) { return typeof o.tetCelda === 'number'; });
+        var fotos = conCelda.length ? conCelda : todas;
+        var sueltas = conCelda.length
+            ? todas.filter(function (o) { return typeof o.tetCelda !== 'number'; })
+            : [];
 
         /* el repintado no debe apilar nada: capas.js ya ha dejado el puntero
            de historial donde corresponde, y un estado nuevo aquí hacia que
@@ -279,12 +303,14 @@
             canvas.backgroundColor = fondo;
             celdas = dis.map(function () { return null; });
 
-            fotos.forEach(function (foto, i) {
-                if (i >= dis.length) { return; }   /* sobran: no se pintan */
+            fotos.forEach(function (foto, orden) {
+                var i = typeof foto.tetCelda === 'number' ? foto.tetCelda : orden;
+                if (i < 0 || i >= dis.length) { return; }
                 var c = celdaEnPx(dis[i]);
                 celdas[i] = colocaFoto(foto, c, null, i);
                 canvas.add(foto);
             });
+            sueltas.forEach(function (foto) { canvas.add(foto); });
             dis.forEach(function (norm, i) {
                 if (celdas[i]) return;
                 var c = celdaEnPx(norm);
@@ -366,14 +392,32 @@
     /* El usuario movió o amplió la foto a mano: se marca como «tocada» (para
        que tetCollageModo no le imponga un encuadre) y se recalcula el recorte
        con la transformación nueva, porque el clip local se deformaría. */
+    function fijarClip(foto) {
+        /* solo las fotos que viven en una celda: las que se pegan sueltas
+           (sin celda elegida) no deben quedar recortadas al moverlas */
+        if (typeof foto.tetCelda !== 'number') return false;
+        var i = celdaDeFoto(foto);
+        if (i < 0) return false;
+        aplicarClip(foto, celdaEnPx(DISENOS[disenioActual][i]));
+        return true;
+    }
+
+    /* El recorte se recalcula MIENTRAS se mueve o se amplía: la ventana se
+       queda clavada en la celda y la foto se ve desplazarse dentro del
+       cuadrado. Antes el clip viajaba con la foto y solo se recolocaba al
+       soltar: parecía que la imagen se salía del hueco. */
+    canvas.on('object:moving', function (ev) {
+        if (ev.target && ev.target instanceof fabric.Image) fijarClip(ev.target);
+    });
+    canvas.on('object:scaling', function (ev) {
+        if (ev.target && ev.target instanceof fabric.Image) fijarClip(ev.target);
+    });
+
     canvas.on('object:modified', function (ev) {
         var o = ev.target;
         if (!o || !(o instanceof fabric.Image)) return;
-        var i = celdaDeFoto(o);
-        if (i < 0) return;
+        if (!fijarClip(o)) return;
         o.tetMovida = true;
-        o.clipPath = clipDeCelda(o, celdaEnPx(DISENOS[disenioActual][i]));
-        o.setCoords();
         actualizarBordes();
         canvas.renderAll();
         if (window.tetGuardarEstado) window.tetGuardarEstado();
@@ -392,16 +436,18 @@
 
             canvas.getObjects().forEach(function (foto) {
                 if (!(foto instanceof fabric.Image)) return;
+                if (typeof foto.tetCelda !== 'number') return;
                 var i = celdaDeFoto(foto);
                 if (i < 0) return;
-                foto.clipPath = clipDeCelda(foto, celdaEnPx(dis[i]));
-                foto.setCoords();
+                aplicarClip(foto, celdaEnPx(dis[i]));
             });
 
             /* marcos donde aún no hay foto */
             var ocupadas = {};
             canvas.getObjects().forEach(function (foto) {
-                if (foto instanceof fabric.Image) ocupadas[celdaDeFoto(foto)] = true;
+                if (foto instanceof fabric.Image && typeof foto.tetCelda === 'number') {
+                    ocupadas[foto.tetCelda] = true;
+                }
             });
             dis.forEach(function (norm, i) {
                 if (ocupadas[i]) return;
@@ -417,16 +463,17 @@
 
     function guardarEstadoFotos() {
         celdas = canvas.getObjects()
-            .filter(function (o) { return o instanceof fabric.Image; })
-            .map(function (foto) {
-                var indice = celdaDeFoto(foto);
-                return indice < 0 ? null
-                    : {
-                        indice: indice, src: foto.getSrc(), left: foto.left, top: foto.top,
-                        scaleX: foto.scaleX, scaleY: foto.scaleY, movida: foto.tetMovida === true
-                    };
+            .filter(function (o) {
+                return o instanceof fabric.Image && typeof o.tetCelda === 'number';
             })
-            .filter(Boolean);
+            .map(function (foto) {
+                return {
+                    indice: foto.tetCelda, src: foto.getSrc(),
+                    left: foto.left, top: foto.top,
+                    scaleX: foto.scaleX, scaleY: foto.scaleY,
+                    movida: foto.tetMovida === true
+                };
+            });
         /* se reordena por celda */
         var porCelda = [];
         celdas.forEach(function (g) { porCelda[g.indice] = g; });
@@ -434,6 +481,12 @@
     }
 
     function celdaDeFoto(foto) {
+        /* las fotos que ya están en una celda llevan su índice pegado; así
+           moverlas o ampliarlas no las reasigna a la celda vecina */
+        if (typeof foto.tetCelda === 'number' && foto.tetCelda >= 0 &&
+            foto.tetCelda < DISENOS[disenioActual].length) {
+            return foto.tetCelda;
+        }
         var mejor = -1, mejorArea = 0;
         DISENOS[disenioActual].forEach(function (norm, i) {
             var c = celdaEnPx(norm);
@@ -614,6 +667,20 @@
         canvas.renderAll();
     }
 
+    /* celda que hay debajo del puntero (incluidas las bandas que deja la foto
+       cuando entra entera) */
+    function indiceCeldaEnPunto(e) {
+        var p = canvas.getPointer(e);
+        var dis = DISENOS[disenioActual];
+        for (var i = 0; i < dis.length; i++) {
+            var c = celdaEnPx(dis[i]);
+            if (p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     canvas.on('mouse:down', function (opt) {
         var t = opt.target;
         if (t && t.data && t.data.celda) {
@@ -641,6 +708,25 @@
             resaltaCelda(-1);
             textoEstado('Toca una celda para llenarla');
         } else {
+            /* un clic en el hueco de una celda llena (las bandas que deja la
+               foto al entrar entera) también la selecciona y la arrastra:
+               antes no había objeto bajo el dedo y no pasaba nada */
+            var idxHueco = indiceCeldaEnPunto(opt.e);
+            var fotoHueco = idxHueco >= 0 ? fotoDeCelda(idxHueco) : null;
+            if (fotoHueco) {
+                celdaActiva = idxHueco;
+                canvas.setActiveObject(fotoHueco);
+                resaltaCelda(idxHueco);
+                /* Fabric ya ha procesado el clic sin objetivo: se arranca el
+                   arrastre a mano para que el gesto funcione desde la banda */
+                if (canvas._setupCurrentTransform) {
+                    canvas._groupSelector = null;
+                    canvas._setupCurrentTransform(opt.e, fotoHueco);
+                }
+                textoEstado('Celda ' + (idxHueco + 1) +
+                    ' con foto · arrástrala para encuadrarla');
+                return;
+            }
             celdaActiva = -1;
             resaltaCelda(-1);
             textoEstado('Toca una celda para llenarla');
@@ -691,6 +777,64 @@
             : 'Las fotos se ven enteras dentro de la celda');
     };
 
+    /* vuelve a centrar en su celda la foto elegida (o todas si no hay
+       ninguna seleccionada). Sirve después de mover o ampliar: antes no
+       había forma de recuperar el encuadre original sin quitar la foto. */
+    window.tetCollageCentrar = function () {
+        var dis = DISENOS[disenioActual];
+        var activo = canvas.getActiveObject();
+        var objetivo = [];
+
+        if (activo instanceof fabric.Image && typeof activo.tetCelda === 'number') {
+            objetivo.push(activo);
+        } else if (celdaActiva >= 0) {
+            var elegida = fotoDeCelda(celdaActiva);
+            if (elegida) objetivo.push(elegida);
+        }
+        if (!objetivo.length) {
+            objetivo = canvas.getObjects().filter(function (o) {
+                return o instanceof fabric.Image && typeof o.tetCelda === 'number';
+            });
+        }
+        if (!objetivo.length) {
+            aviso('Toca una foto para centrarla en su celda', 'warning');
+            return;
+        }
+
+        var bloque = window.tetHistorialBloque || function (fn) {
+            fn();
+            if (window.tetGuardarEstado) window.tetGuardarEstado();
+        };
+
+        bloque(function () {
+            objetivo.forEach(function (foto) {
+                var i = celdaDeFoto(foto);
+                if (i < 0) return;
+                var c = celdaEnPx(dis[i]);
+                var r = rectLocal(c);
+                var esc = escalaFoto(foto, r, modo);
+                var w = foto.width * esc;
+                var h = foto.height * esc;
+                foto.set({
+                    originX: 'left',
+                    originY: 'top',
+                    scaleX: esc,
+                    scaleY: esc,
+                    left: c.x + margen + (r.width - w) / 2,
+                    top: c.y + margen + (r.height - h) / 2,
+                    tetMovida: false
+                });
+                aplicarClip(foto, c);
+            });
+            actualizarBordes();
+            canvas.renderAll();
+        });
+
+        textoEstado(objetivo.length === 1
+            ? 'Foto centrada en su celda'
+            : 'Fotos centradas en sus celdas');
+    };
+
     /* ---------- formato de salida ----------
        El collage se recompone al tamaño del preset (1080×1350, 1080×1920…),
        en vez de dejar el lienzo en 1200×1200 y recortarlo después. Antes el
@@ -706,6 +850,7 @@
            de proporción la foto se recoloca y se reescala con ella */
         canvas.getObjects().forEach(function (o) {
             if (!(o instanceof fabric.Image)) return;
+            if (typeof o.tetCelda !== 'number') return;
             var i = celdaDeFoto(o);
             if (i < 0) return;
             var c = celdaEnPx(dis[i]);
@@ -759,8 +904,7 @@
                     scaleX: sx,
                     scaleY: sy
                 });
-                p.foto.clipPath = clipDeCelda(p.foto, c);
-                p.foto.setCoords();
+                aplicarClip(p.foto, c);
             });
 
             /* rehace marcos de celdas vacías, recortes y bordes */

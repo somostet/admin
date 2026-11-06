@@ -132,6 +132,17 @@
                                 </div>
 
                                 <div class="row mt-2">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-outline-secondary w-100"
+                                            onclick="tetCollageCentrar()"
+                                            title="Devuelve la foto seleccionada al centro de su celda">
+                                            <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                                            Centrar la foto en su celda
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
                                     <div class="col-12 col-sm-6">
                                         <label for="radioCollage" class="form-label">Esquinas redondas:</label>
                                         <input type="range" class="form-range" id="radioCollage" min="0" max="80" value="22" aria-label="Esquinas redondas" oninput="tetCollageRadio(this.value)">
@@ -163,6 +174,10 @@
 
                                 <div class="sh-atajos solo-desktop" role="group" aria-label="Atajos de teclado">
                                     <h6 class="sh-atajos-tit">Atajos</h6>
+                                    <div class="sh-atajo" role="presentation">
+                                        <span class="sh-kbd"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
+                                        <span class="sh-atajo-desc">copiar la imagen del collage</span>
+                                    </div>
                                     <div class="sh-atajo" role="presentation">
                                         <span class="sh-kbd"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
                                         <span class="sh-atajo-desc">pegar foto en la celda elegida</span>
@@ -311,9 +326,9 @@
             bootstrap.Tooltip.getOrCreateInstance(el);
         });
     </script>
-    <script src="./public/js/collage.js?v=d9"></script>
-    <script src="./public/js/capas.js?v=p13"></script>
-    <script src="./public/js/formatos.js?v=a6"></script>
+    <script src="./public/js/collage.js?v=d12"></script>
+    <script src="./public/js/capas.js?v=p16"></script>
+    <script src="./public/js/formatos.js?v=a7"></script>
     <script src="./public/js/shell.js?v=sh35"></script>
     <script src="./public/js/editar.js?v=e11"></script>
     <script src="./public/js/publicacion.js?v=p4"></script>

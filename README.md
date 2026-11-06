@@ -118,11 +118,16 @@ cuadras, en PNG). El script borra la versión que no mejora.
   4, 5, 6 fotos y diseños de revista). Tocas una celda para elegirla y luego
   pones la foto desde **Galería**, **Cargar** o Ctrl+V — la galería no se abre
   sola. La foto entra **entera** en la celda; con «Rellena la celda» se recorta.
-  Dentro de la celda se mueve y se acerca para encuadrar, y el recorte sigue a
-  la foto. Color de fondo, hueco, esquinas redondeadas y borde de las fotos
-  ajustables en vivo. Al cambiar el formato de salida el collage se recompone
-  entero (no se recorta): la imagen copiada y la descargada salen ya con el
-  tamaño de la red elegida.
+  Dentro de la celda se mueve y se acerca para encuadrar (también desde las
+  bandas del hueco, no solo sobre la foto), y el recorte se queda fijo en la
+  celda mientras la imagen se desplaza. El botón «Centrar la foto en su celda»
+  devuelve el encuadre original. Color de fondo, hueco, esquinas redondeadas y
+  borde de las fotos ajustables en vivo. Al cambiar el formato de salida el
+  collage se recompone entero (no se recorta): la imagen copiada (botón
+  Compartir o Ctrl+C) y la descargada salen ya con el tamaño de la red elegida.
+
+  Si el navegador no permite escribir imágenes en el portapapeles (file://,
+  permisos denegados), Compartir/Ctrl+C descarga el PNG en su lugar.
 - **Accesibilidad**: Lighthouse (accesibilidad / buenas prácticas / SEO) da
   1,00 / 1,00 / 1,00 en las 10 páginas, sin scroll horizontal en rail ni barra
   superior, y objetivos táctiles de 24 px como mínimo.

@@ -423,9 +423,17 @@
                     objectCaching: false
                 });
             }
-            /* sin cachés de objeto: se crearon a escala 1 y saldrían
-               pixeladas al pintar ×k */
-            objs.forEach(function (o) { o.objectCaching = false; });
+            /* sin cachés de objeto salvo en los recortados: se crearon a
+               escala 1 y saldrían pixeladas al pintar ×k. OJO: en Fabric
+               2.4.3 un objeto con clipPath y SIN caché pinta su recorte con
+               «destination-in» sobre el lienzo principal, y eso borra todo
+               lo dibujado antes (solo quedaba la última foto del collage).
+               Los que llevan clipPath conservan su caché durante la
+               exportación; como el collage ya mide lo mismo que la salida,
+               k = 1 y no se pierde resolución. */
+            objs.forEach(function (o) {
+                o.objectCaching = o.clipPath ? true : false;
+            });
 
             canvas.setDimensions({
                 width: Math.round(c.cw * k),
@@ -494,6 +502,9 @@
     chkGuia.addEventListener('change', actualizarGuia);
     if (selAncla) selAncla.addEventListener('change', actualizarGuia);
     btnDescargar.addEventListener('click', descargar);
+    /* «Compartir» reutiliza esta misma descarga cuando el portapapeles no
+       está disponible (file://, permisos denegados, Firefox…) */
+    window.tetDescargar = descargar;
     window.addEventListener('resize', actualizarGuia);
 
     /* ---------- PNG opaco del lienzo, para Compartir / portapapeles ----------

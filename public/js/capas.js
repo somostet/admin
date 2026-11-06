@@ -163,7 +163,7 @@
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="dup" title="Duplicar capa seleccionada" aria-label="Duplicar capa"><i class="fas fa-clone" aria-hidden="true"></i><span class="solo-movil ms-1">Duplicar</span></button>' +
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="save" title="Guardar proyecto (.json)" aria-label="Guardar proyecto"><i class="fas fa-save" aria-hidden="true"></i><span class="solo-movil ms-1">Guardar</span></button>' +
             '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="load" title="Cargar proyecto (.json)" aria-label="Cargar proyecto"><i class="fas fa-folder-open" aria-hidden="true"></i><span class="solo-movil ms-1">Cargar</span></button>' +
-            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="share" title="Compartir imagen" aria-label="Compartir imagen"><i class="fas fa-share-alt" aria-hidden="true"></i><span class="solo-movil ms-1">Compartir</span></button>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="share" title="Compartir o copiar imagen" aria-label="Compartir o copiar imagen"><i class="fas fa-share-alt" aria-hidden="true"></i><span class="solo-movil ms-1">Compartir</span></button>' +
         '</div>' +
         '<input type="file" id="capas-cargar" accept="application/json,.json" aria-label="Cargar un proyecto" hidden>' +
         '<div class="capas-list" id="capas-list"></div>';
@@ -515,7 +515,11 @@
         'tetSombraOpacidad',
         'tetSombraBlur',
         'tetSombraX',
-        'tetSombraY'
+        'tetSombraY',
+        /* collage: la celda y el «tocado a mano» viajan en el historial para
+           que deshacer/rehacer no reasigne una foto a la celda vecina */
+        'tetCelda',
+        'tetMovida'
     ];
 
     function guardarEstado() {
@@ -793,29 +797,49 @@
         }
 
         /* en escritorio no siempre hay hoja de compartir: se copia al
-           portapapeles (pégala donde quieras) y, si no, se descarga */
+           portapapeles (pégala donde quieras) y, si no, se descarga. En el
+           móvil se prefiere la hoja del sistema. */
         function porPortapapeles() {
-            if (navigator.clipboard && window.ClipboardItem) {
-                navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-                    .then(function () {
-                        aviso('Imagen copiada al portapapeles: pégala donde quieras', 'success');
-                    })
-                    .catch(porDescarga);
-            } else {
+            if (!navigator.clipboard || !navigator.clipboard.write || !window.ClipboardItem) {
                 porDescarga();
+                return;
             }
+            var escribir;
+            try {
+                /* ClipboardItem puede no admitir image/png en algunos
+                   navegadores: que el fallo no se lleve por delante el botón */
+                escribir = navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+            } catch (err) {
+                porDescarga();
+                return;
+            }
+            escribir.then(function () {
+                aviso('Imagen copiada al portapapeles: pégala donde quieras', 'success');
+            }).catch(function () {
+                /* permiso denegado, file://, navegador sin soporte…: al menos
+                   que la persona se lleve la imagen descargada */
+                aviso('No se pudo copiar; se descarga la imagen', 'warning');
+                porDescarga();
+            });
         }
 
         function porDescarga() {
-            if (typeof download === 'function') {
-                download(); // el propio editor avisa "Imagen descargada"
+            if (typeof window.tetDescargar === 'function') {
+                window.tetDescargar(); // el propio editor avisa "Descargado…"
+            } else if (typeof download === 'function') {
+                download();
             } else {
-                aviso('Tu navegador no admite compartir; usa Descargar', 'warning');
+                var btn = document.getElementById('formato-descargar');
+                if (btn) btn.click();
+                else aviso('Tu navegador no admite copiar; usa Descargar', 'warning');
             }
         }
 
         var archivo = new File([blob], 'tet.png', { type: 'image/png' });
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+        var esMovil = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+        if (esMovil && navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
             navigator.share({ files: [archivo], title: 'tet admin' }).catch(function (err) {
                 if (err && err.name === 'AbortError') return; // cancelado por el usuario
                 porPortapapeles();
@@ -843,7 +867,7 @@
         });
     }
 
-    // Atajos de teclado: Ctrl+Z deshacer, Ctrl+Shift+Z / Ctrl+Y rehacer
+    // Atajos: Ctrl+Z deshacer, Ctrl+Shift+Z / Ctrl+Y rehacer, Ctrl+C copiar
     document.addEventListener('keydown', function (e) {
         var tag = e.target && e.target.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
@@ -852,6 +876,11 @@
         if (k === 'z' && e.shiftKey) { e.preventDefault(); rehacer(); }
         else if (k === 'z') { e.preventDefault(); deshacer(); }
         else if (k === 'y') { e.preventDefault(); rehacer(); }
+        else if (k === 'c' && !e.shiftKey && !e.altKey) {
+            /* no hay texto seleccionado en el lienzo: se copia la imagen */
+            e.preventDefault();
+            compartir();
+        }
     });
 
     /* ---------- adaptar imágenes subidas al lienzo (sin agrandar) ----------
