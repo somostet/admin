@@ -119,7 +119,10 @@ cuadras, en PNG). El script borra la versión que no mejora.
   pones la foto desde **Galería**, **Cargar** o Ctrl+V — la galería no se abre
   sola. La foto entra **entera** en la celda; con «Rellena la celda» se recorta.
   Dentro de la celda se mueve y se acerca para encuadrar, y el recorte sigue a
-  la foto. Color de fondo, hueco y esquinas redondeadas ajustables en vivo.
+  la foto. Color de fondo, hueco, esquinas redondeadas y borde de las fotos
+  ajustables en vivo. Al cambiar el formato de salida el collage se recompone
+  entero (no se recorta): la imagen copiada y la descargada salen ya con el
+  tamaño de la red elegida.
 - **Accesibilidad**: Lighthouse (accesibilidad / buenas prácticas / SEO) da
   1,00 / 1,00 / 1,00 en las 10 páginas, sin scroll horizontal en rail ni barra
   superior, y objetivos táctiles de 24 px como mínimo.

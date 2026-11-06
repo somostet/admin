@@ -389,6 +389,15 @@
         var retina0 = canvas.enableRetinaScaling;
         var objs = canvas.getObjects();
         var cache0 = objs.map(function (o) { return o.objectCaching; });
+        /* las guías del editor (marcos punteados del collage, marcos de
+           recorte…) no se pintan en el PNG. Fabric solo respeta
+           excludeFromExport al serializar, así que se ocultan a mano durante
+           el render y se restauran en el finally. Los marcos de celda del
+           collage se reconocen por su data.celda (no llevan excludeFromExport
+           para que sigan entrando en el historial y en el proyecto). */
+        var ocultos = objs.filter(function (o) {
+            return o.visible && (o.excludeFromExport || (o.data && o.data.celda));
+        });
         var bg = canvas.backgroundImage;
         var bgCache0 = bg ? bg.objectCaching : null;
         var bgL = bg ? bg.left : 0, bgT = bg ? bg.top : 0;
@@ -400,6 +409,7 @@
                salía a c.cw*k*3 × c.ch*k*3 (×9 de memoria) sin ganar nada:
                era el primer paso del negro en móvil. */
             canvas.set({ enableRetinaScaling: false });
+            ocultos.forEach(function (o) { o.visible = false; });
 
             /* la imagen de fondo se renderiza FUERA del viewportTransform
                (renderCanvas la pinta antes del transform): hay que escalarla
@@ -445,6 +455,7 @@
             canvas.viewportTransform = vpt0;
             canvas.skipOffscreen = off0;
             objs.forEach(function (o, i) { o.objectCaching = cache0[i]; });
+            ocultos.forEach(function (o) { o.visible = true; });
             if (bg) {
                 bg.set({
                     left: bgL, top: bgT, scaleX: bgSX, scaleY: bgSY,
@@ -492,11 +503,18 @@
        en el móvil ese triplicado era justo lo que reventaba la memoria. */
     window.tetLienzoPng = function () {
         var bg0 = canvas.backgroundColor;
+        /* fuera las guías del editor (marcos punteados, «＋», marcos de
+           recorte): no deben salir en la imagen copiada/compartida */
+        var ocultos = canvas.getObjects().filter(function (o) {
+            return o.visible && (o.excludeFromExport || (o.data && o.data.celda));
+        });
         try {
             if (!bg0) canvas.backgroundColor = fondoLienzo();
+            ocultos.forEach(function (o) { o.visible = false; });
             canvas.renderAll();
             return canvas.toDataURL({ format: 'png', enableRetinaScaling: false });
         } finally {
+            ocultos.forEach(function (o) { o.visible = true; });
             canvas.backgroundColor = bg0;
             canvas.renderAll();
         }

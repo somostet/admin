@@ -136,6 +136,15 @@
                                         <label for="radioCollage" class="form-label">Esquinas redondas:</label>
                                         <input type="range" class="form-range" id="radioCollage" min="0" max="80" value="22" aria-label="Esquinas redondas" oninput="tetCollageRadio(this.value)">
                                     </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label for="bordeCollage" class="form-label">Borde de las fotos <span class="form-text">(0 = sin borde)</span>:</label>
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <input type="range" class="form-range" id="bordeCollage" min="0" max="40" value="0" aria-label="Borde de las fotos" oninput="tetCollageBorde(this.value)">
+                                            <div class="input-color-container">
+                                                <input type="color" id="colorBordeCollage" class="input-color" value="#ffffff" aria-label="Color del borde de las fotos" oninput="tetCollageBordeColor(this.value)">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="row mt-2">
@@ -283,6 +292,12 @@
             lector.onload = function (e) {
                 fabric.Image.fromURL(e.target.result, function (img) {
                     if (!img || !img.width) return;
+                    /* si hay una celda elegida, la foto entra en ella recortada
+                       como el resto (antes se añadía suelta y no encajaba) */
+                    if (typeof window.tetCollagePegar === 'function' && window.tetCollagePegar(img)) {
+                        if (window.mostrarAviso) window.mostrarAviso('Foto en la celda · muévela o acércala', 'success');
+                        return;
+                    }
                     img.set({ strokeUniform: true });
                     canvas.add(img);
                     canvas.setActiveObject(img);
@@ -296,9 +311,9 @@
             bootstrap.Tooltip.getOrCreateInstance(el);
         });
     </script>
-    <script src="./public/js/collage.js?v=d5"></script>
+    <script src="./public/js/collage.js?v=d9"></script>
     <script src="./public/js/capas.js?v=p13"></script>
-    <script src="./public/js/formatos.js?v=a4"></script>
+    <script src="./public/js/formatos.js?v=a6"></script>
     <script src="./public/js/shell.js?v=sh35"></script>
     <script src="./public/js/editar.js?v=e11"></script>
     <script src="./public/js/publicacion.js?v=p4"></script>

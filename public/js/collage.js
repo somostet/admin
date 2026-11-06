@@ -26,6 +26,8 @@
     /* se pueden cambiar en caliente con los deslizadores del panel */
     var margen = 14;             /* hueco entre celdas y alrededor */
     var radio = 22;              /* esquinas redondeadas */
+    var borde = 0;               /* grosor del borde de cada foto (0 = sin borde) */
+    var colorBorde = '#ffffff';  /* color de ese borde */
 
     var fondo = '#ffffff';
 
@@ -42,7 +44,11 @@
     }
 
     function diana(mensaje) {
-        if (celdaActiva >= 0 && celdas[celdaActiva]) {
+        /* basta con haber tocado una celda: esté vacía o ya tenga foto.
+           Antes se exigía celdas[celdaActiva], así que en una celda vacía
+           «Galería», «Cargar» y «Pegar» contestaban «toca primero una celda»
+           y no había forma de llenarla. */
+        if (celdaActiva >= 0) {
             textoEstado('Celda ' + (celdaActiva + 1) + ' lista · ' + mensaje);
             return true;
         }
@@ -285,6 +291,7 @@
                 canvas.add(marcoDe(c, i));
                 canvas.add(masDe(c));
             });
+            actualizarBordes();
             celdaActiva = -1;
             canvas.renderAll();
         } finally {
@@ -324,13 +331,17 @@
                         canvas.renderAll();
                         /* cada foto que vuelve es un paso de deshacer propio:
                            así «poner una foto» se deshace con un solo Ctrl+Z */
-                        if (++cargadas >= conFotos && window.tetGuardarEstado) window.tetGuardarEstado();
+                        if (++cargadas >= conFotos) {
+                            actualizarBordes();
+                            if (window.tetGuardarEstado) window.tetGuardarEstado();
+                        }
                     });
                 } else {
                     canvas.add(marcoDe(c, i));
                     canvas.add(masDe(c));
                 }
             });
+            actualizarBordes();
             canvas.renderAll();
         });
     }
@@ -363,6 +374,7 @@
         o.tetMovida = true;
         o.clipPath = clipDeCelda(o, celdaEnPx(DISENOS[disenioActual][i]));
         o.setCoords();
+        actualizarBordes();
         canvas.renderAll();
         if (window.tetGuardarEstado) window.tetGuardarEstado();
     });
@@ -398,6 +410,7 @@
                 canvas.add(masDe(c));
             });
 
+            actualizarBordes();
             canvas.renderAll();
         });
     }
@@ -431,6 +444,66 @@
         });
         return mejor;
     }
+
+    /* ---------- borde de las fotos ----------
+       Es una capa aparte encima de la foto (no el stroke de la imagen: la
+       imagen sobresale de la celda y su borde saldría por fuera). Con el
+       deslizador a 0 no se dibuja nada, así que se puede quitar y volver a
+       poner sin recargar las fotos. */
+    function rectBorde(c, i) {
+        var r = rectLocal(c);
+        return new fabric.Rect({
+            originX: 'left',
+            originY: 'top',
+            left: c.x + margen,
+            top: c.y + margen,
+            width: r.width,
+            height: r.height,
+            rx: Math.min(radio, r.width / 4),
+            ry: Math.min(radio, r.height / 4),
+            fill: 'rgba(0,0,0,0)',
+            stroke: colorBorde,
+            strokeWidth: Math.max(1, borde),
+            strokeUniform: true,
+            selectable: false,
+            evented: false,
+            hoverCursor: 'default',
+            name: 'Borde ' + (i + 1),
+            data: { borde: true, indice: i }
+        });
+    }
+
+    var actualizandoBordes = false;
+    function actualizarBordes() {
+        if (actualizandoBordes) return;
+        actualizandoBordes = true;
+        var fn = function () {
+            canvas.getObjects().slice().forEach(function (o) {
+                if (o.data && o.data.borde) canvas.remove(o);
+            });
+            if (borde > 0) {
+                DISENOS[disenioActual].forEach(function (norm, i) {
+                    if (!fotoDeCelda(i)) return;
+                    canvas.add(rectBorde(celdaEnPx(norm), i));
+                });
+            }
+        };
+        try {
+            if (window.tetHistorialEnBloque) fn();
+            else if (window.tetHistorialBloque) window.tetHistorialBloque(fn);
+            else fn();
+        } finally {
+            actualizandoBordes = false;
+            canvas.renderAll();
+        }
+    }
+
+    /* si se borra una foto, su borde se va con ella */
+    canvas.on('object:removed', function (ev) {
+        var o = ev.target;
+        if (o && o.data && o.data.borde) return;
+        if (o instanceof fabric.Image) actualizarBordes();
+    });
 
     function aplicarDisenio(nombre) {
         if (!DISENOS[nombre]) return;
@@ -473,10 +546,16 @@
                 Math.abs(o.left - (c.x + c.w / 2)) < 1 && Math.abs(o.top - (c.y + c.h / 2)) < 1) canvas.remove(o);
         });
 
+        /* si la celda ya tenía foto, se sustituye (antes se apilaba otra
+           encima y quedaban las dos en la celda) */
+        var anterior = fotoDeCelda(i);
+        if (anterior) canvas.remove(anterior);
+
         celdas[i] = colocaFoto(foto, c, null, i);
         foto.set({ lockRotation: true });
         canvas.add(foto);
         canvas.setActiveObject(foto);
+        actualizarBordes();
         canvas.renderAll();
         celdaActiva = -1;
         textoEstado('Foto puesta en la celda ' + (i + 1) +
@@ -485,10 +564,13 @@
         return true;
     };
 
-    /* Ctrl+V con la celda elegida (capas.js llama a tetCollagePegar) */
+    /* Ctrl+V con la celda elegida (capas.js llama a tetCollagePegar).
+       La celda puede estar vacía: es justo cuando se pega la primera foto.
+       Antes se exigía celdas[celdaActiva] y, al fallar, capas.js pegaba la
+       imagen suelta al 70 % del lienzo (no encajaba en la celda). */
     window.tetCollagePegar = function (foto) {
-        if (celdaActiva >= 0 && celdas[celdaActiva]) {
-            if (foto.width) window.tetDestinoImagen(foto);
+        if (celdaActiva >= 0 && foto && foto.width) {
+            window.tetDestinoImagen(foto);
             return true;
         }
         return false;
@@ -496,7 +578,7 @@
 
     /* botón «Pegar imagen» del panel: hay que tener celda elegida */
     window.tetCollagePegarDelPortapapeles = function () {
-        if (celdaActiva < 0 || !celdas[celdaActiva]) {
+        if (celdaActiva < 0) {
             aviso('Toca primero una celda del collage', 'warning');
             return;
         }
@@ -541,6 +623,23 @@
             textoEstado('Celda ' + (celdaActiva + 1) + (celdas[celdaActiva]
                 ? ' con foto · toca otra celda o «Galería» para cambiarla'
                 : ' vacía · «Galería», «Cargar» o Ctrl+V para poner una foto'));
+        } else if (t && t instanceof fabric.Image) {
+            /* una celda ya llena no tiene marco: se reconoce por la foto.
+               Antes este clic caía en el «else» y deseleccionaba, así que no
+               había manera de volver a elegir una celda con foto para
+               cambiarla. */
+            var idx = celdaDeFoto(t);
+            if (idx >= 0) {
+                celdaActiva = idx;
+                canvas.setActiveObject(t);
+                resaltaCelda(idx);
+                textoEstado('Celda ' + (idx + 1) +
+                    ' con foto · «Galería», «Cargar», «Pegar» o Ctrl+V para cambiarla');
+                return;
+            }
+            celdaActiva = -1;
+            resaltaCelda(-1);
+            textoEstado('Toca una celda para llenarla');
         } else {
             celdaActiva = -1;
             resaltaCelda(-1);
@@ -592,12 +691,107 @@
             : 'Las fotos se ven enteras dentro de la celda');
     };
 
-    /* ---------- formato de salida ---------- */
+    /* ---------- formato de salida ----------
+       El collage se recompone al tamaño del preset (1080×1350, 1080×1920…),
+       en vez de dejar el lienzo en 1200×1200 y recortarlo después. Antes el
+       formato solo cambiaba el respaldo: la imagen copiada seguía saliendo a
+       1200×1200 y la descargada se recortaba por los lados. */
     function tetAjustarLienzoA(d) {
-        canvas.setDimensions({ width: d.w, height: d.h }, { backstoreOnly: true });
-        guardarEstadoFotos();
-        pintar();
+        if (!d || !(d.w > 0) || !(d.h > 0)) return false;
+
+        var dis = DISENOS[disenioActual];
+        var planeadas = [];
+
+        /* se guarda el encuadre de cada foto RELATIVO a su celda: al cambiar
+           de proporción la foto se recoloca y se reescala con ella */
+        canvas.getObjects().forEach(function (o) {
+            if (!(o instanceof fabric.Image)) return;
+            var i = celdaDeFoto(o);
+            if (i < 0) return;
+            var c = celdaEnPx(dis[i]);
+            var iw = Math.max(1, c.w - margen * 2);
+            var ih = Math.max(1, c.h - margen * 2);
+            planeadas.push({
+                foto: o, i: i, iw: iw, ih: ih,
+                cx: (o.left + o.getScaledWidth() / 2 - (c.x + margen)) / iw,
+                cy: (o.top + o.getScaledHeight() / 2 - (c.y + margen)) / ih,
+                sx: Math.abs(o.scaleX) || 1,
+                sy: Math.abs(o.scaleY) || 1
+            });
+        });
+
+        var bloque = window.tetHistorialBloque || function (fn) {
+            fn();
+            if (window.tetGuardarEstado) window.tetGuardarEstado();
+        };
+        var retina0 = canvas.enableRetinaScaling;
+        var dpr = fabric.devicePixelRatio || 1;
+
+        bloque(function () {
+            canvas.discardActiveObject();
+            /* un preset grande con retina pide respaldo ×dpr² y puede quedarse
+               sin memoria en el móvil (mismo tope que main.js) */
+            if (d.w * d.h * dpr * dpr > 12e6) canvas.set({ enableRetinaScaling: false });
+            /* dimensiones lógicas nuevas: celdas, fotos y recortes se calculan
+               con ellas a partir de aquí */
+            canvas.setDimensions({ width: d.w, height: d.h });
+            canvas.set({ enableRetinaScaling: retina0 });
+
+            planeadas.forEach(function (p) {
+                var c = celdaEnPx(dis[p.i]);
+                var iw = Math.max(1, c.w - margen * 2);
+                var ih = Math.max(1, c.h - margen * 2);
+                /* factor uniforme: la foto no se deforma aunque la celda pase
+                   de cuadrada a vertical; en «cubrir» crece lo justo para
+                   seguir llenando la celda */
+                var fac = (modo === 'cubrir')
+                    ? Math.max(iw / p.iw, ih / p.ih)
+                    : Math.min(iw / p.iw, ih / p.ih);
+                var sx = p.sx * fac;
+                var sy = p.sy * fac;
+                var centroX = c.x + margen + p.cx * iw;
+                var centroY = c.y + margen + p.cy * ih;
+                p.foto.set({
+                    originX: 'left',
+                    originY: 'top',
+                    left: centroX - (p.foto.width * sx) / 2,
+                    top: centroY - (p.foto.height * sy) / 2,
+                    scaleX: sx,
+                    scaleY: sy
+                });
+                p.foto.clipPath = clipDeCelda(p.foto, c);
+                p.foto.setCoords();
+            });
+
+            /* rehace marcos de celdas vacías, recortes y bordes */
+            reaplicarCeldas();
+            guardarEstadoFotos();
+            canvas.calcOffset();
+            canvas.renderAll();
+        });
+
+        window.dispatchEvent(new Event('resize'));
+        if (window.formatosActualizar) window.formatosActualizar();
+        textoEstado('Collage ajustado a ' + d.w + ' × ' + d.h + ' px');
+        return true;
     }
+
+    /* el selector de formato vive en la barra de la shell (formatos.js lo
+       crea después): se escucha en el documento para no depender del orden */
+    window.tetAdaptarAlFormato = function () {
+        var d = window.formatosDims ? window.formatosDims() : null;
+        if (!d || d.orig) return false;      /* «Tamaño original» no cambia nada */
+        if (canvas.getWidth() === d.w && canvas.getHeight() === d.h) return false;
+        var ok = tetAjustarLienzoA(d);
+        if (ok && window.mostrarAviso) {
+            window.mostrarAviso('Collage ajustado a ' + d.w + '×' + d.h +
+                ' · las fotos se han recolocado', 'info');
+        }
+        return ok;
+    };
+    document.addEventListener('change', function (ev) {
+        if (ev.target && ev.target.id === 'formato-salida') window.tetAdaptarAlFormato();
+    });
 
     /* ---------- arranque ---------- */
     var disenioActual = '4 fotos · 2 × 2';
@@ -656,6 +850,15 @@
         fondo = v;
         canvas.backgroundColor = fondo;
         canvas.renderAll();
+    };
+    /* 0 quita el borde; cualquier valor lo vuelve a poner */
+    window.tetCollageBorde = function (v) {
+        borde = Math.max(0, parseInt(v, 10) || 0);
+        actualizarBordes();
+    };
+    window.tetCollageBordeColor = function (v) {
+        colorBorde = v || '#ffffff';
+        if (borde > 0) actualizarBordes();
     };
 
     window.tetCollageListo = true;
