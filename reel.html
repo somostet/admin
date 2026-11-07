@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- CSP: solo en http/https; en file:// no se inyecta para no romper el modo doble-clic -->
+    <script>
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+            var csp = document.createElement('meta');
+            csp.setAttribute('http-equiv', 'Content-Security-Policy');
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            document.head.appendChild(csp);
+            /* frame-buster: en http/https el admin no se deja embeber en un iframe */
+            if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1d2b43">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./public/img/Logotet.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="tet admin">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script>
+        // tema del editor (oscuro por defecto) antes del primer pintado
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tetTema') || 'dark'); }
+        catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    </script>
+    <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
+    <link rel="stylesheet" href="./public/css/style.css?v=r30">
+    <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
+    <link rel="stylesheet" href="./public/css/reel.css?v=r1">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <meta property="og:image" content="./public/img/Logotet.png" />
+    <meta name="description" content="Reel de cuadros: una rejilla de portadas en la que cada cuadro se abre con su texto o vídeo y pasa al siguiente. Exporta MP4 o WebM sin subir nada a ningún servidor.">
+    <title>tet admin · Reel de cuadros</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-layer-group" aria-hidden="true"></i><span class="tet-nav-toggle-txt">Editores</span></a>
+                <ul class="dropdown-menu tet-dd">
+                    <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
+                    <li><a class="dropdown-item" href="./tet2.html">Textos <span class="tet-dd-sub">tet 2</span></a></li>
+                    <li><a class="dropdown-item" href="./dictet.html">Diccionario <span class="tet-dd-sub">tet 3</span></a></li>
+                    <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
+                    <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
+                    <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
+                    <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
+                    <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
+                    <li><a class="dropdown-item" href="./collage.html">Collage <span class="tet-dd-sub">collage</span></a></li>
+                    <li><a class="dropdown-item" href="./reel.html" aria-current="page">Reel de cuadros <span class="tet-dd-sub">reel</span></a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-social">
+            <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+            <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
+        </div>
+    </nav>
+
+    <main class="container-fluid py-3 pb-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="reel-caja">
+                    <div class="reel-caja-cab">
+                        <h1 class="reel-titulo"><i class="fas fa-expand" aria-hidden="true"></i> Reel de cuadros</h1>
+                        <p class="reel-subtitulo">Una rejilla de portadas donde cada cuadro se abre, los demás se ocultan y sale su texto o su vídeo. Después se cierra y pasa al siguiente. Se graba en MP4 o WebM en tu dispositivo, sin subir nada a ningún servidor.</p>
+                    </div>
+
+                    <!-- Vista previa: el lienzo es el mismo que se graba -->
+                    <div class="reel-preview" id="reel-preview">
+                        <canvas id="reel-lienzo" width="1080" height="1080" aria-label="Vista previa del reel"></canvas>
+                    </div>
+
+                    <div class="reel-transporte">
+                        <button type="button" class="btn btn-primary reel-play" id="reel-play" aria-label="Reproducir">
+                            <i class="fas fa-play" aria-hidden="true"></i> <span>Reproducir</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary reel-reiniciar" id="reel-reiniciar" title="Volver al principio" aria-label="Volver al principio">
+                            <i class="fas fa-undo" aria-hidden="true"></i>
+                        </button>
+                        <input type="range" class="form-range reel-tiempo" id="reel-tiempo" min="0" max="1" step="0.01" value="0" aria-label="Posición del reel">
+                        <span class="reel-reloj" id="reel-reloj">0,0 / 0,0 s</span>
+                    </div>
+
+                    <ul class="nav nav-tabs reel-pestanas" id="reel-pestanas" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="reel-tab-cuadros" data-bs-toggle="tab" data-bs-target="#reel-pane-cuadros" type="button" role="tab" aria-controls="reel-pane-cuadros" aria-selected="true">
+                                <i class="fas fa-th-large" aria-hidden="true"></i> Cuadros
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="reel-tab-ajustes" data-bs-toggle="tab" data-bs-target="#reel-pane-ajustes" type="button" role="tab" aria-controls="reel-pane-ajustes" aria-selected="false">
+                                <i class="fas fa-sliders-h" aria-hidden="true"></i> Ajustes
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="reel-tab-exportar" data-bs-toggle="tab" data-bs-target="#reel-pane-exportar" type="button" role="tab" aria-controls="reel-pane-exportar" aria-selected="false">
+                                <i class="fas fa-download" aria-hidden="true"></i> Exportar
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content reel-contenido" id="reel-contenido">
+                        <!-- ---------- cuadros ---------- -->
+                        <section class="tab-pane fade show active" id="reel-pane-cuadros" role="tabpanel" aria-labelledby="reel-tab-cuadros" tabindex="0">
+                            <div class="row g-3 reel-cabecera-campos">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label" for="reel-cabecera">Título de la rejilla</label>
+                                    <input type="text" class="form-control" id="reel-cabecera" value="#ConRobots" maxlength="60">
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label" for="reel-firma">Firma (izquierda)</label>
+                                    <input type="text" class="form-control" id="reel-firma" value="somostet.com" maxlength="40">
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label" for="reel-seccion">Sección (derecha)</label>
+                                    <input type="text" class="form-control" id="reel-seccion" value="Recomendaciones" maxlength="40">
+                                </div>
+                            </div>
+
+                            <div class="reel-lista" id="reel-lista"></div>
+
+                            <div class="reel-lista-pie">
+                                <button type="button" class="btn btn-outline-secondary" id="reel-agregar">
+                                    <i class="fas fa-plus" aria-hidden="true"></i> Agregar cuadro
+                                </button>
+                                <span class="reel-ayuda">Arriba y abajo cambian el orden. Cada cuadro puede llevar una imagen y, si quieres, un vídeo que se reproduce al abrirse.</span>
+                            </div>
+                        </section>
+
+                        <!-- ---------- ajustes ---------- -->
+                        <section class="tab-pane fade" id="reel-pane-ajustes" role="tabpanel" aria-labelledby="reel-tab-ajustes" tabindex="0">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="reel-formato">Formato de salida</label>
+                                    <select class="form-select" id="reel-formato">
+                                        <option value="1080x1080" selected>Cuadrado — 1080 × 1080</option>
+                                        <option value="1080x1350">Vertical 4:5 — 1080 × 1350</option>
+                                        <option value="1080x1920">Historia / Reel — 1080 × 1920</option>
+                                        <option value="1920x1080">Horizontal — 1920 × 1080</option>
+                                        <option value="1200x1200">Cuadrado grande — 1200 × 1200</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="reel-columnas">Columnas</label>
+                                    <select class="form-select" id="reel-columnas">
+                                        <option value="3" selected>3</option>
+                                        <option value="2">2</option>
+                                        <option value="4">4</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="reel-video-min">Vídeos de los cuadros</label>
+                                    <select class="form-select" id="reel-video-min">
+                                        <option value="1" selected>Sí, reproducirlos</option>
+                                        <option value="0">No, solo las portadas</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="reel-duracion">Cuánto se queda cada cuadro abierto <span class="reel-valor" id="reel-duracion-val">2,8 s</span></label>
+                                    <input type="range" class="form-range" id="reel-duracion" min="1.2" max="7" step="0.1" value="2.8">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="reel-transicion">Duración de abrir / cerrar <span class="reel-valor" id="reel-transicion-val">0,65 s</span></label>
+                                    <input type="range" class="form-range" id="reel-transicion" min="0.25" max="1.4" step="0.05" value="0.65">
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label" for="reel-entrada">Entrada de la rejilla <span class="reel-valor" id="reel-entrada-val">0,9 s</span></label>
+                                    <input type="range" class="form-range" id="reel-entrada" min="0" max="2.5" step="0.1" value="0.9">
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label" for="reel-salida">Cierre final <span class="reel-valor" id="reel-salida-val">1,2 s</span></label>
+                                    <input type="range" class="form-range" id="reel-salida" min="0" max="3" step="0.1" value="1.2">
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label" for="reel-acento">Color de acento</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="reel-acento" value="#3ea6ff" title="Color de acento">
+                                </div>
+
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="reel-fondo">Fondo</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="reel-fondo" value="#17181b" title="Color de fondo">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="reel-panel">Tarjetas</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="reel-panel" value="#232529" title="Color de las tarjetas">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="reel-texto">Texto</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="reel-texto" value="#ffffff" title="Color del texto">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="reel-suave">Texto suave</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="reel-suave" value="#9aa4b2" title="Color del texto secundario">
+                                </div>
+                            </div>
+
+                            <p class="reel-ayuda mt-3">El lienzo se redibuja entero en cada fotograma desde cero: lo que ves en la vista previa es exactamente lo que se graba, sin capturas de pantalla ni servidores.</p>
+                        </section>
+
+                        <!-- ---------- exportar ---------- -->
+                        <section class="tab-pane fade" id="reel-pane-exportar" role="tabpanel" aria-labelledby="reel-tab-exportar" tabindex="0">
+                            <div class="reel-exportar-info">
+                                <p class="mb-1"><i class="fas fa-circle-info" aria-hidden="true"></i> <span id="reel-info-salida">1080 × 1080 · 30 fps</span></p>
+                                <p class="mb-0 reel-ayuda">El vídeo se graba en tiempo real. Deja esta pestaña visible y sin minimizar hasta que termine; si el navegador no admite MP4, se descarga WebM.</p>
+                            </div>
+
+                            <div class="reel-musica">
+                                <label class="form-label" for="reel-musica-archivo"><i class="fas fa-music" aria-hidden="true"></i> Música de fondo (opcional)</label>
+                                <div class="reel-musica-fila">
+                                    <input type="file" class="form-control" id="reel-musica-archivo" accept="audio/*">
+                                    <button type="button" class="btn btn-outline-secondary" id="reel-musica-quitar" hidden title="Quitar la música" aria-label="Quitar la música">
+                                        <i class="fas fa-times" aria-hidden="true"></i>
+                                    </button>
+                                    <span class="reel-musica-nombre" id="reel-musica-nombre">Sin música</span>
+                                </div>
+                                <label class="form-label mt-2" for="reel-musica-vol">Volumen <span class="reel-valor" id="reel-musica-vol-val">70 %</span></label>
+                                <input type="range" class="form-range" id="reel-musica-vol" min="0" max="1" step="0.05" value="0.7">
+                            </div>
+
+                            <div class="reel-grabar-fila">
+                                <button type="button" class="btn btn-primary reel-grabar" id="reel-grabar">
+                                    <i class="fas fa-video" aria-hidden="true"></i> Grabar vídeo
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="reel-cancelar" hidden>
+                                    <i class="fas fa-stop" aria-hidden="true"></i> Detener
+                                </button>
+                                <span class="reel-estado" id="reel-estado" role="status" aria-live="polite"></span>
+                            </div>
+
+                            <div class="reel-progreso" id="reel-progreso" hidden>
+                                <div class="progress" role="progressbar" aria-label="Progreso de la grabación" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                    <div class="progress-bar" id="reel-barra" style="width:0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="reel-resultado" id="reel-resultado" hidden>
+                                <video id="reel-video-resultado" controls playsinline preload="metadata"></video>
+                                <div class="reel-resultado-acciones">
+                                    <a class="btn btn-primary" id="reel-descargar" href="#" download="reel.mp4">
+                                        <i class="fas fa-download" aria-hidden="true"></i> Descargar vídeo
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary" id="reel-compartir" hidden>
+                                        <i class="fas fa-share-alt" aria-hidden="true"></i> Compartir
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="reel-descartar">
+                                        <i class="fas fa-trash" aria-hidden="true"></i> Descartar
+                                    </button>
+                                </div>
+                                <p class="reel-ayuda" id="reel-peso"></p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer font-small text-light bg-tet-footer">
+        <div class="container tet-footer-grid">
+            <div class="tet-footer-col">
+                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo" loading="lazy" width="88" height="88">
+                <p class="tet-footer-tag">La tecnología tiene su espacio</p>
+                <a class="tet-footer-web" href="https://www.somostet.com" target="_blank" rel="noopener">somostet.com</a>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Crear</h2>
+                <ul class="tet-footer-list">
+                    <li><a href="./tet1.html">Noticias</a></li>
+                    <li><a href="./tet2.html">Textos</a></li>
+                    <li><a href="./dictet.html">Diccionario</a></li>
+                    <li><a href="./art.html">Arte</a></li>
+                    <li><a href="./miniatura.html">Miniaturas</a></li>
+                    <li><a href="./modcre.html">Creaciones</a></li>
+                    <li><a href="./gif.html">GIF animado</a></li>
+                    <li><a href="./video.html">Vídeo</a></li>
+                    <li><a href="./collage.html">Collage</a></li>
+                    <li><a href="./reel.html">Reel de cuadros</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Redes</h2>
+                <ul class="tet-footer-list tet-footer-social">
+                    <li><a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook</a></li>
+                    <li><a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i> Instagram</a></li>
+                    <li><a href="https://twitter.com/somostet" target="_blank" rel="noopener"><i class="fab fa-twitter" aria-hidden="true"></i> Twitter / X</a></li>
+                    <li><a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener"><i class="fab fa-youtube" aria-hidden="true"></i> YouTube</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Proyecto</h2>
+                <ul class="tet-footer-list">
+                    <li><a href="https://somostet.github.io/" target="_blank" rel="noopener">tet (sitio)</a></li>
+                    <li><a href="./index.html">tet admin</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+    <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
+
+    <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="./public/js/reel.js?v=r1"></script>
+</body>
+
+</html>
