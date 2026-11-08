@@ -1,5 +1,5 @@
 /* public/js/portada.js — filtros de la portada (index.html)
-   Ocho editores en tarjetas: en un teléfono obligan a hacer scroll y scroll.
+   Diez editores en tarjetas: en un teléfono obligan a hacer scroll y scroll.
    Con los chips se pasa de "todo" a "solo GIF" o "solo imágenes" de un toque.  */
 (function () {
     'use strict';

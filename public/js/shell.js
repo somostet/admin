@@ -259,7 +259,7 @@
         var hueco = huecoDisponible();
         if (!base || !(base.w > 0) || !hueco) return;
         zoomManual = true;
-        aplicarZoom(Math.min(hueco.w / base.w, hueco.h / base.w));
+        aplicarZoom(Math.min(hueco.w / base.w, hueco.h / base.h));
     }
     /* encaje automático: solo mientras el usuario no haya tocado el zoom y
        nunca por encima del 100 % (no hace falta agrandar un diseño pequeño) */
@@ -269,7 +269,7 @@
         var base = lienzoActual();
         var hueco = huecoDisponible();
         if (!base || !(base.w > 0) || !hueco) return;
-        aplicarZoom(Math.max(0.05, Math.min(hueco.w / base.w, hueco.h / base.w, 1)));
+        aplicarZoom(Math.max(0.05, Math.min(hueco.w / base.w, hueco.h / base.h, 1)));
     }
 
     /* Tamaño de maquetación del lienzo calculado, no el del triángulo fijo que traía el HTML.
@@ -1572,7 +1572,8 @@
 
     var campoTitulo = document.getElementById('titular');
     var btnTitulo = document.querySelector('[aria-label="Insertar título"]');
-    var mantenerTituloEnPropiedades = !!window.tetDeco;
+    var mantenerTituloEnPropiedades = !!window.tetDeco ||
+        document.body.classList.contains('editor-miniaturas');
 
     /* «Insertar título» junto a su campo. En tet1 ya estaba así; en art,
        miniatura y modcre vivía en la fila de acciones del lienzo y, al subir

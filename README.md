@@ -33,13 +33,14 @@ En producción, GitHub Pages sirve `master/` en `/admin/`.
 | `gif.html` | GIF animado a partir de imágenes (lote D) |
 | `video.html` | Vídeo MP4/WebM a partir de imágenes (lote E) |
 | `collage.html` | Collage: varias fotos en una sola imagen con plantillas de celdas |
+| `reel.html` | Reel de cuadros: rejilla de portadas que se abren una a una y se exportan a vídeo |
 | `piper.html` | Voz neuronal con Piper (español) — no está en la portada; se llega desde la pestaña «Voz» de `video.html`; `noindex` |
 
 ## Portada (`index.html`)
 
-Rejilla con los **8 editores**, cada tarjeta con su categoría, su tamaño de
+Rejilla con los **10 editores**, cada tarjeta con su categoría, su tamaño de
 salida y una descripción de una línea, más filtros (Todos · Imágenes · GIF ·
-Vídeo) y los tres pasos del flujo. En el móvil son dos columnas y la tarjeta
+Vídeo · Collage) y los tres pasos del flujo. En el móvil son dos columnas y la tarjeta
 entera es pulsable. `public/js/portada.js` solo se ocupa de los filtros.
 
 Las capturas de las tarjetas pesan 186 KB en total (eran 413 KB): se generan con
@@ -128,14 +129,25 @@ cuadras, en PNG). El script borra la versión que no mejora.
 
   Si el navegador no permite escribir imágenes en el portapapeles (file://,
   permisos denegados), Compartir/Ctrl+C descarga el PNG en su lugar.
+- **Reel de cuadros** (`reel.html` + `reel.js`): una rejilla de portadas donde
+  cada cuadro se abre, los demás se atenúan y salen su texto o su vídeo; luego
+  se cierra y pasa al siguiente. Cada cuadro acepta una portada y un vídeo, y
+  hay ajustes de formato (cuadrado, 4:5, historia/reel, horizontal y 1200×1200),
+  columnas, duración, entrada, salida y colores. Todo se dibuja en un solo
+  `<canvas>`, así que la vista previa y el MP4/WebM exportado son idénticos. La
+  grabación usa `captureStream(0)` con `requestFrame()` manual: cada fotograma
+  pintado se envía a la vez que avanza el reloj real, de modo que el contenido
+  no se adelanta si el codificador tarda en arrancar. Admite música de fondo
+  mezclada con Web Audio y comparte el parche de duración de MP4 de `video.js`.
 - **Accesibilidad**: Lighthouse (accesibilidad / buenas prácticas / SEO) da
   1,00 / 1,00 / 1,00 en las 10 páginas, sin scroll horizontal en rail ni barra
   superior, y objetivos táctiles de 24 px como mínimo.
 - PWA: service worker vanilla en `sw.js` (raíz) con caché de estáticos.
 
 > Al tocar `shell.js`, `shell.css`, `style.css` o `formatos.js`, sube el `?v=`
-> en los `<link>`/`<script>` de las nueve páginas: el service worker sirve el CSS
-> con *stale-while-revalidate* y, sin cambiar la URL, seguiría dando el viejo.
+> en los `<link>`/`<script>` de las páginas que los cargan: el service worker
+> sirve el CSS con *stale-while-revalidate* y, sin cambiar la URL, seguiría
+> dando el viejo.
 
 ## Stack
 

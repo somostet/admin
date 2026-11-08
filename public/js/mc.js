@@ -53,13 +53,16 @@ document.getElementById('sombra').oninput = function sombrear() {
 }
 
 // Color texto en tiempo real
-document.getElementById('color').oninput = function colored() {
+document.getElementById('colorT').oninput = function colored() {
     var color = this.value;
     var obj = canvas.getActiveObject();
     if (obj) {
-        var style = {};
-        style['fill'] = color;
-        obj.setSelectionStyles(style).setCoords();
+        if (obj.type === 'i-text' && obj.isEditing && obj.selectionStart !== obj.selectionEnd) {
+            obj.setSelectionStyles({ fill: color }, obj.selectionStart, obj.selectionEnd);
+        } else {
+            obj.set('fill', color);
+        }
+        obj.setCoords();
     }
 
     canvas.renderAll();
@@ -121,24 +124,26 @@ function set_title() {
     var titulo = titular.value;
     var size = font_size.value;
 
-    canvas.add(new fabric.IText(titulo, {
+    var obj = new fabric.IText(titulo, {
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
         textAlign: 'center',
         fill: col,
         fontSize: size,
         top: 360,
+        lockMovementX: false,
+        lockMovementY: false,
+        lockScalingX: false,
+        lockScalingY: false,
+        lockUniScaling: false,
         cornerColor: 'black',
         borderColor: 'black',
         transparentCorners: false
-    }));
-
-    var canvas_objects = canvas._objects;
-    if (canvas_objects.length !== 0) {
-        var last = canvas_objects[canvas_objects.length - 1]; //Get last object   
-        last.centerH();
-        canvas.renderAll();
-    }
+    });
+    obj.centerH();
+    canvas.add(obj);
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
 
 }
 
@@ -163,11 +168,16 @@ function generate() {
         /* contain con margen y centrada; nunca por encima del nativo */
         if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(oImg);
         canvas.add(oImg.set({
-            //hasControls: false,
-            //lockMovementY: true,
             lockRotation: true,
+            lockMovementX: false,
+            lockMovementY: false,
+            lockScalingX: false,
+            lockScalingY: false,
+            lockUniScaling: false,
             strokeUniform: true
         }));
+        canvas.setActiveObject(oImg);
+        canvas.renderAll();
 
     });
 

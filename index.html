@@ -15,7 +15,7 @@
     </script>
     <meta charset="utf-8">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta name="description" content="tet admin: crea con plantillas las imágenes, los GIF y los vídeos de somostet. Ocho editores (noticias, textos, diccionario, arte, miniaturas, creaciones, GIF y vídeo), sin instalar nada y con el tamaño exacto de cada red social.">
+    <meta name="description" content="tet admin: crea con plantillas las imágenes, los GIF y los vídeos de somostet. Diez editores (noticias, textos, diccionario, arte, miniaturas, creaciones, GIF, vídeo, collage y reel de cuadros), sin instalar nada y con el tamaño exacto de cada red social.">
     <meta name="keywords" content="tet,somostet,diseño,plantillas,redes sociales,imagenes,gif,video,editor">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#1d2b43">
@@ -23,7 +23,7 @@
     <title>tet admin · Crea imágenes, GIF y vídeos para tet</title>
 
     <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="./public/css/style.css?v=r30">
+    <link rel="stylesheet" href="./public/css/style.css?v=r34">
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
 
     <!-- manifest del app + iconos -->
@@ -65,6 +65,7 @@
                     <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
                     <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
                     <li><a class="dropdown-item" href="./collage.html">Collage <span class="tet-dd-sub">collage</span></a></li>
+                    <li><a class="dropdown-item" href="./reel.html">Reel de cuadros <span class="tet-dd-sub">reel</span></a></li>
                 </ul>
             </li>
         </ul>
@@ -81,7 +82,7 @@
         <section class="portada-hero">
             <div class="container">
                 <h1 class="portada-titulo">tet admin</h1>
-                <p class="portada-lead">Ocho editores con las plantillas de tet ya hechas: elige una, escribe, coloca
+                <p class="portada-lead">Diez editores con las plantillas de tet ya hechas: elige una, escribe, coloca
                     y descarga. Sin instalar nada y con el tamaño exacto de cada red social.</p>
                 <ul class="portada-datos">
                     <li><i class="fas fa-check" aria-hidden="true"></i> Funciona en el móvil</li>
@@ -97,7 +98,7 @@
                 <div class="portada-cabecera">
                     <div>
                         <h2 class="portada-titulo-seccion">Elige qué quieres crear</h2>
-                        <p class="portada-sub" id="portada-conteo">8 editores</p>
+                        <p class="portada-sub" id="portada-conteo">10 editores</p>
                     </div>
                     <div class="portada-filtros" role="group" aria-label="Filtrar editores por tipo de contenido">
                         <button type="button" class="chip is-activo" data-filtro="todos" aria-pressed="true">Todos</button>
@@ -228,6 +229,21 @@
                         </div>
                     </article>
 
+                    <article class="tarjeta" data-cat="video">
+                        <a class="tarjeta-media" href="reel.html" tabindex="-1" aria-hidden="true">
+                            <img src="public/img/indexIMG/reel.png" alt="" width="1020" height="654"
+                                loading="lazy" decoding="async">
+                        </a>
+                        <div class="tarjeta-body">
+                            <p class="tarjeta-cat">Vídeo · cuadros animados</p>
+                            <h3 class="tarjeta-titulo">Reel de cuadros <span class="tarjeta-sub">reel</span></h3>
+                            <p class="tarjeta-desc">Una rejilla de portadas que se abren de una en una, con su texto
+                                o su vídeo dentro, y se descarga como MP4.</p>
+                            <a class="tarjeta-cta" href="reel.html">Abrir editor<i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></a>
+                        </div>
+                    </article>
+
                     <article class="tarjeta" data-cat="collage">
                         <a class="tarjeta-media" href="collage.html" tabindex="-1" aria-hidden="true">
                             <img src="public/img/indexIMG/collage.png" alt="" width="760" height="586"
@@ -286,7 +302,7 @@
                 <a class="tet-footer-web" href="https://www.somostet.com" target="_blank" rel="noopener">somostet.com</a>
             </div>
             <div class="tet-footer-col">
-                <h2 class="tet-footer-title">Crear</h6>
+                <h2 class="tet-footer-title">Crear</h2>
                 <ul class="tet-footer-list">
                     <li><a href="./tet1.html">Noticias</a></li>
                     <li><a href="./tet2.html">Textos</a></li>
@@ -297,10 +313,11 @@
                     <li><a href="./gif.html">GIF animado</a></li>
                     <li><a href="./video.html">Vídeo</a></li>
                     <li><a href="./collage.html">Collage</a></li>
+                    <li><a href="./reel.html">Reel de cuadros</a></li>
                 </ul>
             </div>
             <div class="tet-footer-col">
-                <h2 class="tet-footer-title">Redes</h6>
+                <h2 class="tet-footer-title">Redes</h2>
                 <ul class="tet-footer-list tet-footer-social">
                     <li><a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook</a></li>
                     <li><a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i> Instagram</a></li>
@@ -309,7 +326,7 @@
                 </ul>
             </div>
             <div class="tet-footer-col">
-                <h2 class="tet-footer-title">Proyecto</h6>
+                <h2 class="tet-footer-title">Proyecto</h2>
                 <ul class="tet-footer-list">
                     <li><a href="https://somostet.github.io/" target="_blank" rel="noopener">tet (sitio)</a></li>
                     <li><a href="./index.html">tet admin</a></li>

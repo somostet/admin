@@ -2,6 +2,8 @@
 
 var globalpic;
 var oImg;
+var picPromesa = Promise.resolve();
+var picError = null;
 var hc = 360;
 var wc = 640;
 
@@ -28,12 +30,15 @@ var canvas = new fabric.Canvas('tet', {
 canvas.setHeight(hc);
 canvas.setWidth(wc);
 canvas.setDimensions({ width: 1280, height: 720 }, { backstoreOnly: true });
+canvas.backgroundColor = document.getElementById('color').value;
 
-document.querySelectorAll(".fondocol").forEach(function(el) {
-    el.addEventListener("change", function() {
-        canvas.backgroundColor = color.value;
-        canvas.renderAll();
-    });
+var selectorFondo = document.getElementById('color');
+selectorFondo.addEventListener('input', function() {
+    canvas.backgroundColor = selectorFondo.value;
+    canvas.renderAll();
+});
+selectorFondo.addEventListener('change', function() {
+    if (window.tetGuardarEstado) window.tetGuardarEstado();
 });
 
 /* fin canvas code*/
@@ -61,9 +66,12 @@ document.getElementById('colorT').oninput = function colored() {
     var color = this.value;
     var obj = canvas.getActiveObject();
     if (obj) {
-        var style = {};
-        style['fill'] = color;
-        obj.setSelectionStyles(style).setCoords();
+        if (obj.type === 'i-text' && obj.isEditing && obj.selectionStart !== obj.selectionEnd) {
+            obj.setSelectionStyles({ fill: color }, obj.selectionStart, obj.selectionEnd);
+        } else {
+            obj.set('fill', color);
+        }
+        obj.setCoords();
     }
 
     canvas.renderAll();
@@ -111,12 +119,22 @@ function picload() {
         return;
     }
 
-    reader.onloadend = function() {
-        globalpic = reader.result;
-    }
-
+    picError = null;
+    picPromesa = new Promise(function(resolve) {
+        reader.onload = function() {
+            globalpic = reader.result;
+            resolve(globalpic);
+        };
+        reader.onerror = function() {
+            picError = reader.error || new Error('No se pudo leer la imagen');
+            if (window.mostrarAviso) window.mostrarAviso('No se pudo leer la imagen seleccionada', 'danger');
+            console.warn('tet: no se pudo leer la imagen', picError);
+            resolve(null);
+        };
+    });
     reader.readAsDataURL(file);
     fileName.textContent = file.name;
+    return picPromesa;
 }
 
 // Colocar titulo
@@ -125,25 +143,240 @@ function set_title() {
     var titulo = titular.value;
     var size = font_size.value;
 
-    canvas.add(new fabric.IText(titulo, {
+    if (!titulo.trim()) {
+        if (window.mostrarAviso) window.mostrarAviso('Escribe un título primero', 'warning');
+        return;
+    }
+
+    var obj = new fabric.IText(titulo, {
         fontFamily: 'sans-serif',
         fontWeight: 'bold',
         textAlign: 'center',
         fill: col,
         fontSize: size,
         top: 360,
+        lockMovementX: false,
+        lockMovementY: false,
+        lockScalingX: false,
+        lockScalingY: false,
+        lockUniScaling: false,
         cornerColor: 'black',
         borderColor: 'black',
         transparentCorners: false
-    }));
+    });
+    obj.centerH();
+    canvas.add(obj);
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
 
-    var canvas_objects = canvas._objects;
-    if (canvas_objects.length !== 0) {
-        var last = canvas_objects[canvas_objects.length - 1]; //Get last object   
-        last.centerH();
-        canvas.renderAll();
+}
+
+function set_detail() {
+    var detalle = document.getElementById('detalles').value.trim();
+    if (!detalle) {
+        if (window.mostrarAviso) window.mostrarAviso('Escribe los detalles primero', 'warning');
+        return;
     }
 
+    var obj = new fabric.Textbox(detalle, {
+        width: canvas.getWidth() - 96,
+        left: 48,
+        top: 480,
+        fontFamily: 'sans-serif',
+        fontSize: parseInt(document.getElementById('font_sizeD').value, 10) || 40,
+        fill: document.getElementById('colorT').value,
+        lockMovementX: false,
+        lockMovementY: false,
+        lockScalingX: false,
+        lockScalingY: false,
+        lockUniScaling: false,
+        lockRotation: true,
+        splitByGrapheme: false,
+        cornerColor: 'black',
+        borderColor: 'black',
+        transparentCorners: false
+    });
+    obj.tetZona = 'miniatura-detalle';
+    canvas.add(obj);
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
+}
+
+function objetoMiniatura(zona) {
+    var objetos = canvas.getObjects();
+    for (var i = objetos.length - 1; i >= 0; i--) {
+        if (objetos[i].tetZona === zona) return objetos[i];
+    }
+    return null;
+}
+
+function ajustarTextoMiniatura(obj, texto, opciones) {
+    obj.set(opciones);
+    obj.set({ text: texto });
+    if (obj.initDimensions) obj.initDimensions();
+    obj.setCoords();
+    return obj;
+}
+
+function cargarFotoParaComponer() {
+    if (!globalpic) return Promise.resolve(null);
+    return new Promise(function(resolve, reject) {
+        var imagen = new Image();
+        imagen.onload = function() { resolve(new fabric.Image(imagen)); };
+        imagen.onerror = function() { reject(new Error('No se pudo decodificar la imagen')); };
+        imagen.src = globalpic;
+    });
+}
+
+function componerMiniatura(foto) {
+    var titulo = titular.value.trim();
+    var detalle = document.getElementById('detalles').value.trim();
+    var W = canvas.getWidth(), H = canvas.getHeight();
+    var margen = Math.round(W * 0.045);
+    var anchoTexto = W - margen * 2;
+    var zonaTitulo = 'miniatura-titulo';
+    var zonaDetalle = 'miniatura-detalle';
+    var tituloObj = objetoMiniatura(zonaTitulo);
+    var detalleObj = objetoMiniatura(zonaDetalle);
+    var colorTexto = document.getElementById('colorT').value;
+    var estilosBase = {
+        left: margen,
+        width: anchoTexto,
+        fontFamily: 'sans-serif',
+        fill: colorTexto,
+        textAlign: 'left',
+        fontWeight: 'bold',
+        lineHeight: 1.05,
+        padding: 14,
+        backgroundColor: 'rgba(255,255,255,0.88)',
+        lockMovementX: false,
+        lockMovementY: false,
+        lockScalingX: false,
+        lockScalingY: false,
+        lockUniScaling: false,
+        lockRotation: true,
+        selectable: true,
+        evented: true
+    };
+
+    if (titulo) {
+        var opTitulo = Object.assign({}, estilosBase, {
+            fontSize: Math.min(parseInt(document.getElementById('font_size').value, 10) || 72, 96)
+        });
+        if (!tituloObj) {
+            tituloObj = new fabric.Textbox(titulo, opTitulo);
+            tituloObj.tetZona = zonaTitulo;
+        } else {
+            ajustarTextoMiniatura(tituloObj, titulo, opTitulo);
+        }
+    }
+
+    if (detalle) {
+        var opDetalle = Object.assign({}, estilosBase, {
+            fontWeight: 'normal',
+            fontSize: parseInt(document.getElementById('font_sizeD').value, 10) || 40
+        });
+        if (!detalleObj) {
+            detalleObj = new fabric.Textbox(detalle, opDetalle);
+            detalleObj.tetZona = zonaDetalle;
+        } else {
+            ajustarTextoMiniatura(detalleObj, detalle, opDetalle);
+        }
+    }
+
+    var altoMaximo = Math.round(H * 0.58);
+    while (tituloObj && detalleObj &&
+        tituloObj.height + detalleObj.height + 16 > altoMaximo &&
+        tituloObj.fontSize > 30) {
+        tituloObj.set('fontSize', tituloObj.fontSize - 2);
+        tituloObj.initDimensions();
+    }
+    while (tituloObj && detalleObj &&
+        tituloObj.height + detalleObj.height + 16 > altoMaximo &&
+        detalleObj.fontSize > 22) {
+        detalleObj.set('fontSize', detalleObj.fontSize - 2);
+        detalleObj.initDimensions();
+    }
+
+    var base = H - margen;
+    if (detalleObj) {
+        detalleObj.set({ left: margen, top: base - detalleObj.height });
+        detalleObj.setCoords();
+        base = detalleObj.top - 16;
+    }
+    if (tituloObj) {
+        tituloObj.set({ left: margen, top: Math.max(margen, base - tituloObj.height) });
+        tituloObj.setCoords();
+    }
+
+    if (foto) {
+        var escalaFoto = Math.max(W / foto.width, H / foto.height);
+        canvas.getObjects().slice().forEach(function(obj) {
+            if (obj.tetAutoImagen && obj !== foto) canvas.remove(obj);
+        });
+        foto.set({
+            scaleX: escalaFoto,
+            scaleY: escalaFoto,
+            left: (W - foto.width * escalaFoto) / 2,
+            top: (H - foto.height * escalaFoto) / 2,
+            tetAutoImagen: true,
+            lockMovementX: false,
+            lockMovementY: false,
+            lockScalingX: false,
+            lockScalingY: false,
+            lockUniScaling: false,
+            lockRotation: true,
+            selectable: true,
+            evented: true
+        });
+        if (!foto.canvas) canvas.add(foto);
+        canvas.sendToBack(foto);
+    }
+    if (tituloObj && !tituloObj.canvas) canvas.add(tituloObj);
+    if (detalleObj && !detalleObj.canvas) canvas.add(detalleObj);
+    if (tituloObj) canvas.bringToFront(tituloObj);
+    if (detalleObj) canvas.bringToFront(detalleObj);
+
+    var activo = detalleObj || tituloObj || foto;
+    if (activo) canvas.setActiveObject(activo);
+    canvas.renderAll();
+}
+
+function tetComponerMiniatura() {
+    var titulo = titular.value.trim();
+    var detalle = document.getElementById('detalles').value.trim();
+    var boton = document.getElementById('btn-auto-miniatura');
+    var fotoActual = canvas.getObjects().filter(function(obj) { return obj.type === 'image'; }).pop() || null;
+
+    if (!titulo && !detalle && !globalpic && !fotoActual) {
+        if (window.mostrarAviso) window.mostrarAviso('Escribe un título, añade detalles o carga una imagen', 'warning');
+        return Promise.resolve(false);
+    }
+
+    boton.disabled = true;
+    var fotoLista = picPromesa.then(function() {
+        if (picError) throw picError;
+        return cargarFotoParaComponer();
+    }).then(function(fotoNueva) {
+        return fotoNueva || fotoActual;
+    });
+    return fotoLista.then(function(foto) {
+        var aplicar = function() { componerMiniatura(foto); };
+        if (window.tetHistorialBloque) window.tetHistorialBloque(aplicar);
+        else {
+            aplicar();
+            if (window.tetGuardarEstado) window.tetGuardarEstado();
+        }
+        if (window.mostrarAviso) window.mostrarAviso('Miniatura compuesta · Ctrl+Z deshace', 'success');
+        return true;
+    }).catch(function(err) {
+        console.warn('tet: no se pudo componer la miniatura', err);
+        if (window.mostrarAviso) window.mostrarAviso('No se pudo componer la miniatura', 'danger');
+        return false;
+    }).then(function(resultado) {
+        boton.disabled = false;
+        return resultado;
+    });
 }
 
 
@@ -169,11 +402,16 @@ function generate() {
         /* contain con margen y centrada; nunca por encima del nativo */
         if (window.ajustarImagenAlLienzo) window.ajustarImagenAlLienzo(oImg);
         canvas.add(oImg.set({
-            //hasControls: false,
-            //lockMovementY: true,
             lockRotation: true,
+            lockMovementX: false,
+            lockMovementY: false,
+            lockScalingX: false,
+            lockScalingY: false,
+            lockUniScaling: false,
             strokeUniform: true
         }));
+        canvas.setActiveObject(oImg);
+        canvas.renderAll();
 
     });
 

@@ -41,6 +41,8 @@
     var rafGrab = null;
     var grabInicio = 0;
     var grabDur = 0;
+    var pistaVideo = null;
+    var proximoEnvio = 0;
     var cancelado = false;
 
     var musicaEl = null;
@@ -1284,8 +1286,17 @@
         }
         var tipo = mime.indexOf('mp4') !== -1 ? 'video/mp4' : 'video/webm';
         var stream;
+        pistaVideo = null;
         try {
-            stream = lienzo.captureStream(FPS);
+            /* captura manual: se envía un fotograma por cada pintado del bucle.
+               Así el tiempo del vídeo sigue al reloj real y no se adelanta el
+               contenido cuando el codificador tarda en arrancar. */
+            stream = lienzo.captureStream(0);
+            pistaVideo = stream.getVideoTracks()[0];
+            if (!pistaVideo || typeof pistaVideo.requestFrame !== 'function') {
+                pistaVideo = null;
+                stream = lienzo.captureStream(FPS);
+            }
         } catch (e) {
             aviso('No se pudo capturar el lienzo: ' + e.message, 'danger');
             return;
@@ -1349,9 +1360,6 @@
 
         rec.onstop = function () {
             grabando = false;
-            if (window.__reelRec) {
-                window.__reelRec.fin = { t: performance.now(), d: Date.now(), tActual: tActual, grabDur: grabDur };
-            }
             if (rafGrab) { cancelAnimationFrame(rafGrab); rafGrab = null; }
             if (musicaEl) {
                 try { musicaEl.pause(); musicaEl.currentTime = 0; } catch (e) { }
@@ -1370,24 +1378,40 @@
 
         rec.start(200);
         grabInicio = 0;
-        window.__reelRec = { t0: performance.now(), d0: Date.now(), frames: 0, fin: null };
+        proximoEnvio = 0;
         rafGrab = requestAnimationFrame(bucleGrabacion);
     }
 
     function bucleGrabacion(ts) {
         if (!grabando) return;
-        if (window.__reelRec) window.__reelRec.frames++;
-        if (!grabInicio) grabInicio = ts;
-        var t = (ts - grabInicio) / 1000;
+        if (!grabInicio) {
+            grabInicio = ts;
+            proximoEnvio = ts;
+        }
+        /* el tiempo sale del reloj real: lo que se ve en pantalla y lo que
+           queda grabado avanzan a la vez, aunque el navegador pierda algún
+           fotograma al empezar */
         var D = duracionTotal();
+        var t = Math.min(D, (ts - grabInicio) / 1000);
+        var paso = 1000 / FPS;
+
         if (t >= D) {
             pintar(D);
+            if (pistaVideo) { try { pistaVideo.requestFrame(); } catch (e) { } }
             actualizaProgreso(D);
             detieneGrabacion();
             return;
         }
-        pintar(t);
-        actualizaProgreso(t);
+
+        if (ts + 0.5 >= proximoEnvio) {
+            proximoEnvio += paso;
+            if (proximoEnvio <= ts) {
+                proximoEnvio = ts + paso;
+            }
+            pintar(t);
+            if (pistaVideo) { try { pistaVideo.requestFrame(); } catch (e) { } }
+            actualizaProgreso(t);
+        }
         rafGrab = requestAnimationFrame(bucleGrabacion);
     }
 

@@ -3198,3 +3198,8 @@ textarea:focus-visible,
     background: #7cc4ff;
     border-color: #7cc4ff;
 }
+
+.page-footer {
+    margin-top: 1.5rem !important;
+    padding-top: 2rem !important;
+}
