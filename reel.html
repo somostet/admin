@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css?v=r34">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
-    <link rel="stylesheet" href="./public/css/reel.css?v=r2">
+    <link rel="stylesheet" href="./public/css/reel.css?v=r3">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Reel de cuadros: una rejilla de portadas en la que cada cuadro se abre con su texto o vídeo y pasa al siguiente. Exporta MP4 o WebM sin subir nada a ningún servidor.">
@@ -220,7 +220,9 @@
                             </div>
 
                             <div class="reel-musica">
-                                <label class="form-label" for="reel-musica-archivo"><i class="fas fa-music" aria-hidden="true"></i> Música de fondo (opcional)</label>
+                                <div class="form-label" id="reel-musica-titulo"><i class="fas fa-music" aria-hidden="true"></i> Música de fondo (opcional)</div>
+                                <div class="reel-musica-lista" id="reel-musica-lista" role="radiogroup" aria-labelledby="reel-musica-titulo"></div>
+                                <label class="form-text" for="reel-musica-archivo">…o sube un MP3, WAV o M4A:</label>
                                 <div class="reel-musica-fila">
                                     <input type="file" class="form-control" id="reel-musica-archivo" accept="audio/*">
                                     <button type="button" class="btn btn-outline-secondary" id="reel-musica-quitar" hidden title="Quitar la música" aria-label="Quitar la música">
@@ -230,6 +232,7 @@
                                 </div>
                                 <label class="form-label mt-2" for="reel-musica-vol">Volumen <span class="reel-valor" id="reel-musica-vol-val">70 %</span></label>
                                 <input type="range" class="form-range" id="reel-musica-vol" min="0" max="1" step="0.05" value="0.7">
+                                <p class="form-text mb-0">Se mezcla al grabar (no suena en la vista previa); si la canción es más corta que el vídeo, se repite en bucle.</p>
                             </div>
 
                             <div class="reel-grabar-fila">
@@ -313,7 +316,8 @@
     <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
 
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
-    <script src="./public/js/reel.js?v=r2"></script>
+    <script src="./public/js/musica-lista.js?v=r1"></script>
+    <script src="./public/js/reel.js?v=r3"></script>
 </body>
 
 </html>

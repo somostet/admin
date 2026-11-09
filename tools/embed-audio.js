@@ -7,8 +7,8 @@
    suben al repo (ver .gitignore): este script se ejecuta en local
    despues de anadir o cambiar una pista.
 
-   Los ids se leen de LISTA_MUSICA (public/js/video.js), que es la unica
-   fuente de verdad: anade ahi la pista, deja el MP3 recortado en
+   Los ids se leen de TET_LISTA_MUSICA (public/js/musica-lista.js), que es
+   la unica fuente de verdad: anade ahi la pista, deja el MP3 recortado en
    public/audio/<id>.mp3 y ejecuta este script.
 
    Uso:  node tools/embed-audio.js
@@ -22,15 +22,15 @@ var raiz = path.join(__dirname, '..');
 
 /* id = nombre del archivo sin extension. */
 function leePistas() {
-    var js = fs.readFileSync(path.join(raiz, 'public', 'js', 'video.js'), 'utf8');
-    var bloque = js.match(/var LISTA_MUSICA = \[([\s\S]*?)\n    \];/);
+    var js = fs.readFileSync(path.join(raiz, 'public', 'js', 'musica-lista.js'), 'utf8');
+    var bloque = js.match(/window\.TET_LISTA_MUSICA\s*=\s*\[([\s\S]*?)\n\];/);
     if (!bloque) {
-        throw new Error('no se encontro LISTA_MUSICA en public/js/video.js');
+        throw new Error('no se encontro TET_LISTA_MUSICA en public/js/musica-lista.js');
     }
     var ids = [], m;
     var re = /id:\s*'([^']+)'/g;
     while ((m = re.exec(bloque[1]))) ids.push(m[1]);
-    if (!ids.length) throw new Error('LISTA_MUSICA esta vacia en public/js/video.js');
+    if (!ids.length) throw new Error('TET_LISTA_MUSICA esta vacia en public/js/musica-lista.js');
     return ids;
 }
 

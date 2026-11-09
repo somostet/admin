@@ -355,6 +355,45 @@
     margin-bottom: .9rem;
 }
 
+.reel-musica-lista {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    margin-bottom: .6rem;
+}
+
+.reel-pista-item {
+    display: flex;
+    align-items: stretch;
+    gap: .5rem;
+}
+
+.reel-pista-nombre {
+    flex: 1 1 auto;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: .1rem;
+    padding: .35rem .85rem;
+    text-align: left;
+    overflow: hidden;
+}
+
+.reel-pista-meta {
+    font-size: .8rem;
+    font-weight: normal;
+    opacity: .75;
+}
+
+.reel-pista-play {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
 .reel-musica-fila {
     display: flex;
     align-items: center;

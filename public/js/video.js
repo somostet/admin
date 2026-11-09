@@ -7075,34 +7075,14 @@
     });
 
     /* ---------- Q4 · lista de música incluida ---------- */
-    /* Pistas de Mixkit y composiciones originales CC0 que viajan embebidas
-       en audio-data.js (generado por
-       tools/embed-audio.js, que lee ESTA lista): el embed solo se pide al
+    /* La lista vive en public/js/musica-lista.js para compartirla con
+       reel.html. Las pistas viajan embebidas en audio-data.js (generado por
+       tools/embed-audio.js, que lee esa lista): el embed solo se pide al
        primer uso porque pesa MB, y una vez como data: URL funciona igual a
        doble clic (file://, sin fetch de binarios) que con servidor. Elegir
        una pista la convierte en File y pasa por el MISMO camino que un
-       archivo subido: validación, historial, «Quitar» y volumen incluidos.
-
-       Las pistas cubren noticias, tecnología, videojuegos y estados de ánimo.
-       `grupo` es solo la etiqueta que se pinta en la fila. `dur` son los
-       60 s a los que se recortan todas (public/audio/LEEME.md). */
-    var LISTA_MUSICA = [
-        { id: 'driving-ambition', titulo: 'Driving Ambition', autor: 'Ahjay Stelino', dur: 60, grupo: 'Noticias' },
-        { id: 'delayed-flight', titulo: 'Delayed Flight', autor: 'Michael Ramir C.', dur: 60, grupo: 'Última hora' },
-        { id: 'almost-game-time', titulo: 'Almost Game Time', autor: 'Ahjay Stelino', dur: 60, grupo: 'Última hora' },
-        { id: 'tech-house-vibes', titulo: 'Tech House vibes', autor: 'Alejandro Magaña (A. M.)', dur: 60, grupo: 'Tecnología' },
-        { id: 'new-bass-01', titulo: 'New Bass 01', autor: 'Lily J', dur: 60, grupo: 'Tecnología' },
-        { id: 'digital-clouds', titulo: 'Digital Clouds', autor: 'Alejandro Magaña (A. M.)', dur: 60, grupo: 'Tecnología' },
-        { id: 'sci-fi-score', titulo: 'Sci-Fi Score', autor: 'Arulo', dur: 60, grupo: 'Tecnología' },
-        { id: 'epic-games', titulo: 'Epic Games', autor: 'Ahjay Stelino', dur: 60, grupo: 'Videojuegos' },
-        { id: 'games-music', titulo: 'Games Music', autor: 'Grigoriy Nuzhny', dur: 60, grupo: 'Videojuegos' },
-        { id: 'hip-hop-02', titulo: 'Hip Hop 02', autor: 'Lily J', dur: 60, grupo: 'General' },
-        { id: 'epical-drums-01', titulo: 'Epical Drums 01', autor: 'Grigoriy Nuzhny', dur: 60, grupo: 'Acción' },
-        { id: 'clasica-original-cc0', titulo: 'Aire clásico original', autor: 'Composición original tet · CC0 1.0', dur: 60, grupo: 'Clásica' },
-        { id: 'clasica-dramatica-cc0', titulo: 'Clásica dramática', autor: 'Composición original tet · CC0 1.0', dur: 60, grupo: 'Clásica' },
-        { id: 'clasica-feliz-cc0', titulo: 'Clásica feliz', autor: 'Composición original tet · CC0 1.0', dur: 60, grupo: 'Clásica' },
-        { id: 'clasica-triste-cc0', titulo: 'Clásica triste', autor: 'Composición original tet · CC0 1.0', dur: 60, grupo: 'Clásica' }
-    ];
+       archivo subido: validación, historial, «Quitar» y volumen incluidos. */
+    var LISTA_MUSICA = window.TET_LISTA_MUSICA || [];
 
     function pintaListaMusica() {
         if (!listaMusica) return;

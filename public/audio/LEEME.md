@@ -1,11 +1,12 @@
 # Música de `public/audio/`
 
-Once temas de la biblioteca de música de **Mixkit** bajo la **Stock Music
-Free License** (uso comercial y no comercial, sin atribución obligatoria),
-más cuatro piezas clásicas originales creadas para este proyecto y
-dedicadas a **CC0 1.0**: una instrumental, una dramática, una feliz y una
-triste. Todas duran un minuto. Las condiciones de Mixkit están más abajo,
-en «Licencia».
+Veintidós temas: once de la biblioteca de música de **Mixkit** bajo la
+**Stock Music Free License** (uso comercial y no comercial, sin atribución
+obligatoria), cuatro piezas clásicas originales creadas para este proyecto y
+dedicadas a **CC0 1.0** (una instrumental, una dramática, una feliz y una
+triste) y siete pistas aportadas al proyecto para estos editores. La mayoría
+está recortada a un minuto; `digital-horizon` dura 43 s y `future`, 34 s.
+Las condiciones de Mixkit están más abajo, en «Licencia».
 
 Los MP3 fuente no viajan como archivos independientes en el repo. La música
 que usa el editor está embebida en
