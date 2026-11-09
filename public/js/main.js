@@ -22,6 +22,7 @@ var Blan = "./public/img/bars/somostetBlanco.png";
 var barTetNewsNuevo = "./public/img/bars/tetnews_nuevo.jpg";
 var barRecomendaciones = "./public/img/bars/recomendaciones.jpg";
 var barEstrenos = "./public/img/bars/estrenos_streaming.png";
+var barEstrenosAmarillo = "./public/img/bars/estrenos_geel.png";
 /* Q1f · variantes de color del encabezado de estrenos (mismas medidas,
    1200 × 93/97, para que la cabecera mida lo mismo en todas las plantillas) */
 var barEstrenosRojo = "./public/img/bars/estrenos_streaming_rojo.png";
@@ -867,7 +868,8 @@ var PLANTILLAS = [
     { img: barRecomendaciones, barra: barRecomendaciones, color: 'color', arte: false },
     { img: barEstrenos, barra: barEstrenos, color: 'color', arte: false },
     { img: barEstrenosRojo, barra: barEstrenosRojo, color: 'color', arte: false },
-    { img: barEstrenosAzul, barra: barEstrenosAzul, color: 'color', arte: false }
+    { img: barEstrenosAzul, barra: barEstrenosAzul, color: 'color', arte: false },
+    { img: barEstrenosAmarillo, barra: barEstrenosAmarillo, color: 'color', arte: false }
 ];
 
 /* Imagen de la plantilla que toca: solo si es el dibujo. */
