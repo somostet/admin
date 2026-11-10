@@ -249,6 +249,19 @@
     color: var(--sh-text);
 }
 
+.reel-texto-campo {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.reel-contador {
+    align-self: flex-end;
+    color: var(--sh-muted);
+    font-size: .75rem;
+    font-variant-numeric: tabular-nums;
+}
+
 .reel-ficha-campos .form-control:focus {
     background: var(--sh-input-bg);
     color: var(--sh-text);

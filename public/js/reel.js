@@ -424,14 +424,14 @@
         var lh = 0;
         for (var intento = 0; intento < 40; intento++) {
             ctx.font = peso + ' ' + tam + 'px ' + FUENTE;
-            lineas = parteTexto(texto, maxW, 4);
+            lineas = parteTexto(texto, maxW, 6);
             lh = tam * 1.08;
             if (lineas.length * lh <= maxH || tam <= tamMin) break;
             tam -= Math.max(1, tam * 0.06);
         }
         tam = Math.max(tamMin, tam);
         ctx.font = peso + ' ' + tam + 'px ' + FUENTE;
-        lineas = parteTexto(texto, maxW, 4);
+        lineas = parteTexto(texto, maxW, 6);
         lh = tam * 1.08;
         ctx.fillStyle = color || ajustes.texto;
         ctx.textAlign = 'left';
@@ -639,7 +639,7 @@
             var tamTexto = u * 0.028;
             var lh = tamTexto * 1.45;
             var maxLineas = Math.max(2, Math.floor((t.h - (yFin - t.y) - u * 0.10) / lh));
-            maxLineas = Math.min(maxLineas, hg.vertical ? 4 : 7);
+            maxLineas = Math.min(maxLineas, hg.vertical ? 6 : 9);
             ctx.font = '400 ' + tamTexto + 'px ' + FUENTE;
             ctx.fillStyle = ajustes.suave;
             var lineas = parteTexto(c.texto, t.w, maxLineas);
@@ -871,8 +871,10 @@
                 '</label>' +
                 '<input type="file" class="d-none" id="reel-img-' + i + '" accept="image/*" data-img="' + i + '">' +
                 '<div class="reel-ficha-campos">' +
-                '<input type="text" class="form-control" data-campo="titulo" data-i="' + i + '" maxlength="80" value="' + esc(c.titulo) + '" placeholder="Título del cuadro" aria-label="Título del cuadro ' + (i + 1) + '">' +
-                '<textarea class="form-control" data-campo="texto" data-i="' + i + '" rows="2" maxlength="240" placeholder="Texto que sale al abrirse (opcional)" aria-label="Texto del cuadro ' + (i + 1) + '">' + esc(c.texto) + '</textarea>' +
+                '<div class="reel-texto-campo"><input type="text" class="form-control" data-campo="titulo" data-i="' + i + '" maxlength="160" value="' + esc(c.titulo) + '" placeholder="Título del cuadro" aria-label="Título del cuadro ' + (i + 1) + '">' +
+                '<small class="reel-contador" data-contador="titulo" data-i="' + i + '">' + c.titulo.length + ' / 160 caracteres</small></div>' +
+                '<div class="reel-texto-campo"><textarea class="form-control" data-campo="texto" data-i="' + i + '" rows="5" maxlength="600" placeholder="Explica el cuadro con más detalle (opcional)" aria-label="Texto del cuadro ' + (i + 1) + '">' + esc(c.texto) + '</textarea>' +
+                '<small class="reel-contador" data-contador="texto" data-i="' + i + '">' + c.texto.length + ' / 600 caracteres</small></div>' +
                 '<div class="reel-ficha-media">' +
                 '<label class="btn btn-sm btn-outline-secondary" for="reel-video-' + i + '"><i class="fas fa-film" aria-hidden="true"></i> Vídeo</label>' +
                 '<input type="file" class="d-none" id="reel-video-' + i + '" accept="video/*" data-video="' + i + '">' +
@@ -1680,6 +1682,10 @@
         var campo = el.dataset.campo;
         if (isNaN(i) || !campo || !cuadros[i]) return;
         cuadros[i][campo] = el.value;
+        if (campo === 'titulo' || campo === 'texto') {
+            var contador = lista.querySelector('[data-contador="' + campo + '"][data-i="' + i + '"]');
+            if (contador) contador.textContent = el.value.length + ' / ' + (campo === 'titulo' ? 160 : 600) + ' caracteres';
+        }
         if (!grabando) pintar(tActual);
     });
 

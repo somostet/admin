@@ -488,7 +488,7 @@
         var tam = tamMax;
         var lineas = [];
         var lh = 0;
-        var maxLineas = 5;
+        var maxLineas = 6;
         for (var k = 0; k < 80; k++) {
             ctx.font = peso + ' ' + tam + 'px ' + FUENTE;
             lineas = parteTexto(texto, maxW, maxLineas);
@@ -523,7 +523,7 @@
         var footerH = footerTam * 1.4;
         var detTam = u * (vertical ? (ratio > 1.6 ? 0.028 : (ratio > 1.15 ? 0.028 : 0.026)) : 0.024);
         var detLh = detTam * 1.45;
-        var detMax = vertical ? (ratio > 1.6 ? 6 : 4) : 6;
+        var detMax = vertical ? (ratio > 1.6 ? 8 : 6) : 8;
 
         ctx.font = '400 ' + detTam + 'px ' + FUENTE;
         var detLineas = c.detalle ? parteTexto(c.detalle, t.w, detMax) : [];
@@ -1086,8 +1086,10 @@
                 '</label>' +
                 '<input type="file" class="d-none" id="rn-img-' + i + '" accept="image/*" data-img="' + i + '">' +
                 '<div class="reel-ficha-campos">' +
-                '<input type="text" class="form-control" data-campo="titulo" data-i="' + i + '" maxlength="90" value="' + esc(c.titulo) + '" placeholder="Titular de la noticia" aria-label="Título de la noticia ' + (i + 1) + '">' +
-                '<textarea class="form-control" data-campo="detalle" data-i="' + i + '" rows="2" maxlength="320" placeholder="Entradilla o detalle (opcional)" aria-label="Detalle de la noticia ' + (i + 1) + '">' + esc(c.detalle) + '</textarea>' +
+                '<div class="reel-texto-campo"><input type="text" class="form-control" data-campo="titulo" data-i="' + i + '" maxlength="160" value="' + esc(c.titulo) + '" placeholder="Titular de la noticia" aria-label="Título de la noticia ' + (i + 1) + '">' +
+                '<small class="reel-contador" data-contador="titulo" data-i="' + i + '">' + c.titulo.length + ' / 160 caracteres</small></div>' +
+                '<div class="reel-texto-campo"><textarea class="form-control" data-campo="detalle" data-i="' + i + '" rows="5" maxlength="800" placeholder="Amplía la noticia con una entradilla o explicación" aria-label="Detalle de la noticia ' + (i + 1) + '">' + esc(c.detalle) + '</textarea>' +
+                '<small class="reel-contador" data-contador="detalle" data-i="' + i + '">' + c.detalle.length + ' / 800 caracteres</small></div>' +
                 '<div class="rn-ficha-ajuste">' +
                 '<label for="rn-ajuste-' + i + '">Imagen</label>' +
                 '<select class="form-select" id="rn-ajuste-' + i + '" data-campo="ajuste" data-i="' + i + '" aria-label="Ajuste de imagen de la noticia ' + (i + 1) + '">' +
@@ -2036,6 +2038,10 @@
             var campo = el.dataset.campo;
             if (isNaN(i) || !campo || !noticias[i]) return;
             noticias[i][campo] = el.value;
+            if (campo === 'titulo' || campo === 'detalle') {
+                var contador = lista.querySelector('[data-contador="' + campo + '"][data-i="' + i + '"]');
+                if (contador) contador.textContent = el.value.length + ' / ' + (campo === 'titulo' ? 160 : 800) + ' caracteres';
+            }
             if (!grabando) pintar(tActual);
         });
 
