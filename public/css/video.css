@@ -480,11 +480,42 @@
     white-space: nowrap;
 }
 
+.vid-pista-duracion {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    flex: 0 0 auto;
+    padding: 0 .45rem;
+    font-size: .75rem;
+    opacity: .85;
+}
+
+.vid-pista-duracion input {
+    width: 4.5rem;
+    min-height: 2rem;
+    padding: .2rem .3rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .35rem;
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+    font-size: .82rem;
+}
+
 .vid-pista-acciones {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
     padding-right: .35rem;
+}
+
+@media (max-width: 480px) {
+    .vid-pista-duracion {
+        padding: 0 .25rem;
+    }
+
+    .vid-pista-duracion input {
+        width: 3.8rem;
+    }
 }
 
 /* marca de transición: entre dos fotos seguidas o en un corte con solape */

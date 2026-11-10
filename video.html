@@ -40,7 +40,7 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css?v=r34">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
-    <link rel="stylesheet" href="./public/css/video.css?v=r8">
+    <link rel="stylesheet" href="./public/css/video.css?v=r9">
     <link rel="stylesheet" href="./public/css/voz.css?v=v6">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
@@ -912,6 +912,21 @@
                     </div>
                     <div class="tab-pane fade" id="vid-pane-exportar" role="tabpanel"
                          aria-labelledby="vid-tab-exportar" tabindex="0">
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="vid-tarjeta-final">
+                                <label class="form-check-label" for="vid-tarjeta-final">Mostrar tarjeta final</label>
+                            </div>
+                            <div class="form-text">Añade al final el mismo cierre de Reel de noticias (logo, «tet», lema y somostet.com).</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="vid-tarjeta-duracion">Duración adicional de la tarjeta (s)</label>
+                            <input type="number" class="form-control" id="vid-tarjeta-duracion"
+                                   min="0.5" max="10" step="0.1" value="1.2" inputmode="decimal" disabled>
+                            <div class="form-text">Este tiempo se suma a la duración del montaje.</div>
+                        </div>
+                    </div>
                     <!-- Q5 · acceso rápido a la plataforma junto a «Crear vídeo»;
                          el selector principal vive en Tamaño y esta opción manda
                          en el tamaño de salida y en el nombre del archivo -->
@@ -1098,7 +1113,7 @@
     <!-- Lista de música compartida con reel.html (la lee tools/embed-audio.js) -->
     <script src="./public/js/musica-lista.js?v=r1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r56"></script>
+    <script src="./public/js/video.js?v=r59"></script>
     <!-- Voz: lee la narración con las voces del sistema (pestaña «Voz») -->
     <script src="./public/js/voz.js?v=v5"></script>
     <script src="./public/js/piper-editor.js?v=p1"></script>

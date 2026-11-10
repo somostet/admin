@@ -350,6 +350,8 @@
     var inpTxtColor = document.getElementById('vid-txt-color');     // F9
     var inpTxtCaja = document.getElementById('vid-txt-caja');
     var inpTxtCajaColor = document.getElementById('vid-txt-caja-color');
+    var inpTarjetaFinal = document.getElementById('vid-tarjeta-final');
+    var inpTarjetaDuracion = document.getElementById('vid-tarjeta-duracion');
     var selTxtSombra = document.getElementById('vid-txt-sombra');       // P9
     var inpTxtSombra = document.getElementById('vid-txt-sombra-int');   // P9
     var inpTxtBorde = document.getElementById('vid-txt-borde');           // P3.2
@@ -631,6 +633,17 @@
         repintarSuperp();
     });
 
+    function actualizaTarjetaFinal() {
+        var habilitada = inpTarjetaFinal.checked;
+        inpTarjetaDuracion.disabled = !habilitada;
+        actualizaCrear();
+        reiniciarPreview();
+    }
+
+    [inpTarjetaFinal, inpTarjetaDuracion].forEach(function (inp) {
+        inp.addEventListener(inp.type === 'checkbox' ? 'change' : 'input', actualizaTarjetaFinal);
+    });
+
     function cargarImagen(f) {
         return new Promise(function (resolver) {
             if (!/^image\//.test(f.type)) {
@@ -648,7 +661,7 @@
             var url = URL.createObjectURL(f);
             var img = new Image();
             img.onload = function () {
-                imagenes.push({ url: url, img: img, nombre: f.name });
+                imagenes.push({ url: url, img: img, nombre: f.name, dur: null });
                 usosUrl[url] = (usosUrl[url] || 0) + 1;
                 pistaInserta('img', imagenes.length - 1);   // R6: al final de la salida
                 pintarTira();
@@ -853,20 +866,24 @@
     }
 
     /* R6d · cuándo hace falta el motor del plan (el que recorre la pista con
-       solapes y dos <video>). Con fotos y clips juntos, siempre. Con solo
-       clips, solo si hay un fundido que aplicar: fundir dos clips exige el
-       segundo decodificador, que ese motor ya tiene, mientras que el camino
-       antiguo de solo-vídeo (uno solo, corte seco) sigue como siempre con
-       «Ninguna», que es lo que ya está probado. */
+       solapes y dos <video>). También lo requieren las duraciones individuales
+       y la tarjeta final. Con fotos y clips juntos, siempre. Con solo clips,
+       solo si hay un fundido que aplicar: fundir dos clips exige el segundo
+       decodificador, que ese motor ya tiene, mientras que el camino antiguo
+       de solo-vídeo (uno solo, corte seco) sigue como siempre con «Ninguna». */
     function usaMotorPista() {
+        if (inpTarjetaFinal && inpTarjetaFinal.checked) return true;
+        for (var k = 0; k < imagenes.length; k++) {
+            if (imagenes[k] && imagenes[k].dur > 0) return true;
+        }
         if (esMixta()) return true;
         if (!videoCargado || colaVideos.length < 2) return false;
         return selTrans.value !== 'ninguna';
     }
 
     /* El plan de la salida: un segmento por elemento de la pista, EN ese orden.
-       Los de imagen miden lo que diga el control de duración; los de clip, su
-       recorte. `desde` es el instante en que empieza dentro de la salida (s).
+       Cada imagen usa su duración particular o, si no tiene, la global; los
+       clips usan su recorte. `desde` es el instante en que empieza (s).
 
        R6c · en un corte con vídeo hay SOLAPE: el elemento k empieza `solIn`
        segundos antes de que acabe el k-1 y los dos se mezclan durante ese
@@ -875,12 +892,11 @@
        descuenta en cada solape). */
     function planPista() {
         var bruto = [], sol = [], segs = [], salida = 0, k, it, c, r;
-        var durImg = durMsPorImagen() / 1000;
         for (k = 0; k < pista.length; k++) {
             it = pista[k];
             if (it.t === 'img') {
                 if (!imagenes[it.i]) continue;
-                bruto.push({ tipo: 'img', idx: it.i, pos: k, dur: durImg });
+                bruto.push({ tipo: 'img', idx: it.i, pos: k, dur: duracionImagen(it.i) });
             } else {
                 c = colaVideos[it.i];
                 if (!c) continue;
@@ -935,6 +951,18 @@
         if (!segs.length) return 0;
         var u = segs[segs.length - 1];
         return Math.max(0, u.desde + u.dur);
+    }
+
+    function duracionTarjetaFinal() {
+        if (!inpTarjetaFinal || !inpTarjetaFinal.checked) return 0;
+        var dur = parseFloat(inpTarjetaDuracion.value);
+        return dur >= 0.5 && dur <= 10 ? dur : 1.2;
+    }
+
+    function duracionBaseSalida() {
+        if (usaMotorPista()) return totalPista();
+        if (videoCargado) return totalRecorte();
+        return calculoDuracion().total;
     }
 
     /* Segundos que ahorran los solapes: lo que se descuenta de la suma simple.
@@ -1858,13 +1886,12 @@
        graba. Sustituye a la tira y a la cola: la tira y la cola siguen en el
        DOM y sus funciones las siguen actualizando (los pools mandan), pero no
        se ven. Al tocar un vídeo se abre su recorte; al tocar una foto, nada
-       especial (sus tiempos van en la pestaña Textos). */
+       especial (su duración se ajusta en la propia fila). */
     var selPista = -1;   // fila seleccionada del riel
 
     function pintaPista() {
         if (!listaPista) return;
         listaPista.innerHTML = '';
-        var durImg = durMsPorImagen() / 1000;
         var modo = selTrans.value;
         /* R6c · el plan decide dónde va cada marca de fundido: los cortes con
            solape (foto ↔ vídeo) y los fundidos entre dos fotos seguidas */
@@ -1920,7 +1947,7 @@
             nom.textContent = obj.nombre || (esImg ? 'imagen' : 'vídeo');
             var dur = document.createElement('span');
             dur.className = 'vid-pista-dur';
-            dur.textContent = esImg ? fmtSeg(durImg) + ' s' : fmtSeg(durRecorte(obj)) + ' s';
+            dur.textContent = esImg ? fmtSeg(duracionImagen(it.i)) + ' s' : fmtSeg(durRecorte(obj)) + ' s';
             var tipo = document.createElement('span');
             tipo.className = 'vid-pista-tipo';
             tipo.textContent = esImg ? 'foto' : 'vídeo';
@@ -1931,6 +1958,40 @@
 
             b.addEventListener('click', function () { seleccionaEnPista(pos); });
             fila.appendChild(b);
+            if (esImg) {
+                var controlDur = document.createElement('label');
+                controlDur.className = 'vid-pista-duracion';
+                controlDur.appendChild(document.createTextNode('s'));
+                var inpDurImg = document.createElement('input');
+                inpDurImg.type = 'number';
+                inpDurImg.min = String(MIN_POR_IMAGEN);
+                inpDurImg.max = String(MAX_TOTAL_SEG);
+                inpDurImg.step = '0.1';
+                inpDurImg.value = String(Math.round(duracionImagen(it.i) * 10) / 10);
+                inpDurImg.setAttribute('aria-label', 'Duración de ' + (obj.nombre || 'la imagen') + ' en segundos');
+                inpDurImg.title = 'Duración individual de esta imagen';
+                inpDurImg.addEventListener('click', function (ev) { ev.stopPropagation(); });
+                inpDurImg.addEventListener('keydown', function (ev) { ev.stopPropagation(); });
+                inpDurImg.addEventListener('change', function (ev) {
+                    ev.stopPropagation();
+                    var valor = parseFloat(inpDurImg.value);
+                    if (!(valor >= MIN_POR_IMAGEN && valor <= MAX_TOTAL_SEG)) {
+                        inpDurImg.value = String(Math.round(duracionImagen(it.i) * 10) / 10);
+                        aviso('La duración por imagen debe estar entre ' + fmt(MIN_POR_IMAGEN) +
+                            ' y ' + fmt(MAX_TOTAL_SEG) + ' segundos', 'warning');
+                        return;
+                    }
+                    valor = Math.round(valor * 10) / 10;
+                    inpDurImg.value = String(valor);
+                    var base = durMsPorImagen() / 1000;
+                    imagenes[it.i].dur = Math.abs(valor - base) < 0.05 ? null : valor;
+                    pintaPista();
+                    actualizaCrear();
+                    reiniciarPreview();
+                });
+                controlDur.appendChild(inpDurImg);
+                fila.appendChild(controlDur);
+            }
             fila.appendChild(accionesPista(it, pos));
             listaPista.appendChild(fila);
         });
@@ -2095,7 +2156,7 @@
             }
             var f = imagenes[it.i];
             usosUrl[f.url] = (usosUrl[f.url] || 1) + 1;
-            imagenes.splice(it.i + 1, 0, f);   // el clon no guarda blob propio: comparte
+            imagenes.splice(it.i + 1, 0, { url: f.url, img: f.img, nombre: f.nombre, dur: f.dur });
             pistaInserta('img', it.i + 1, pos + 1);
             selPista = pos + 1;
             refrescaPista();
@@ -2141,12 +2202,7 @@
     /* Mapea el tiempo de salida (0..total): en vídeo es el recorte, en
        imágenes la duración total. Una barra por texto + cabezal con scrub. */
     function totalSalida() {
-        /* R6: con imagenes y clips mezclados manda el plan de la pista */
-        if (usaMotorPista()) return Math.max(0.2, totalPista());
-        if (videoCargado) {
-            return Math.max(0.2, totalRecorte());   // E5b: suma de los recortes
-        }
-        return Math.max(0.5, calculoDuracion().total);
+        return Math.max(0.2, duracionBaseSalida() + duracionTarjetaFinal());
     }
 
     function poneCabezalSalida(ms) {
@@ -2189,7 +2245,11 @@
             if (usaMotorPista()) {
             var segs = preparaPista();
             var t = tMs / 1000;
-            var k = segEntraEnPista(segs, t);
+                if (t >= totalPista()) {
+                    dibujaTarjetaFinal(tMs);
+                    return;
+                }
+                var k = segEntraEnPista(segs, t);
             if (k < 0) return;
             var s = segs[k];
             var D = s.solIn;
@@ -2521,7 +2581,7 @@
         if (sel < 0 || imagenes.length >= MAX_IMAGENES) return;
         var f = imagenes[sel];
         usosUrl[f.url] = (usosUrl[f.url] || 1) + 1;
-        imagenes.splice(sel + 1, 0, f);
+        imagenes.splice(sel + 1, 0, { url: f.url, img: f.img, nombre: f.nombre, dur: f.dur });
         /* R6: el clon va justo detrás del original, también en la pista */
         pistaInserta('img', sel + 1, posEnPista('img', sel) + 1);
         sel = sel + 1;
@@ -2868,6 +2928,15 @@
         return (location.protocol === 'file:' && window.TET_PLANTILLAS &&
             window.TET_PLANTILLAS[ruta]) || ruta;
     }
+
+    var logoTarjetaFinal = new Image();
+    logoTarjetaFinal.onload = function () {
+        repintarSuperp();
+    };
+    logoTarjetaFinal.onerror = function () {
+        aviso('No se pudo cargar el logo de tet para la tarjeta final', 'danger');
+    };
+    logoTarjetaFinal.src = urlRecurso(RUTA_LOGO_DEFECTO);
 
     /* Q1f · carga una barra y marca su bandera; solo avisa si es la que se
        está usando (evita un error rojo por plantillas que no tocan) */
@@ -3230,6 +3299,7 @@
         var w = lienzo.width;
         var h = lienzo.height;
         if (!w || !h) return;
+        if (dibujaTarjetaFinal(tMs)) return;
         var margen = Math.max(6, Math.round(Math.min(w, h) * 0.03));
         var fuente = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
 
@@ -3277,6 +3347,7 @@
                 dibujaCapaImg(capasImg[it.i], tMs, w, h, it.i === capaImgSel, it.i);
             }
         }
+
         actualizaManija();   // F5b/F5e: coloca (o esconde) la manija sobre el texto
         actualizaManijaImg();   // R5: idem con la imagen seleccionada
         actualizaManijaContenido();   // F5d: idem para el contenido de Tet News
@@ -3285,6 +3356,61 @@
         if (!grabando && !rielSalScrub && tMs != null && isFinite(tMs)) {
             poneCabezalSalida(tMs);
         }
+    }
+
+    function dibujaTarjetaFinal(tMs) {
+        if (!inpTarjetaFinal || !inpTarjetaFinal.checked) return false;
+        var dur = duracionTarjetaFinal();
+        var base = duracionBaseSalida();
+        if (!(base > 0) || tMs < base * 1000) return false;
+        var p = Math.max(0, Math.min(1, (tMs / 1000 - base) / dur));
+        var w = lienzo.width;
+        var h = lienzo.height;
+        var u = Math.min(w, h);
+        var cx = w / 2;
+        var cy = h * 0.46;
+        ctx.save();
+        ctx.fillStyle = '#1d2b43';
+        ctx.fillRect(0, 0, w, h);
+        var fondo = ctx.createLinearGradient(0, 0, w, h);
+        fondo.addColorStop(0, '#1d2b43');
+        fondo.addColorStop(1, '#0b1220');
+        ctx.fillStyle = fondo;
+        ctx.fillRect(0, 0, w, h);
+        var brillo = ctx.createRadialGradient(w * 0.78, h * 0.16, 0,
+            w * 0.78, h * 0.16, Math.max(w, h) * 0.75);
+        brillo.addColorStop(0, 'rgba(62,166,255,0.16)');
+        brillo.addColorStop(0.6, 'rgba(62,166,255,0.03)');
+        brillo.addColorStop(1, 'rgba(62,166,255,0)');
+        ctx.fillStyle = brillo;
+        ctx.fillRect(0, 0, w, h);
+        var viñeta = ctx.createRadialGradient(w / 2, h / 2, u * 0.2,
+            w / 2, h / 2, Math.max(w, h) * 0.75);
+        viñeta.addColorStop(0, 'rgba(0,0,0,0)');
+        viñeta.addColorStop(1, 'rgba(0,0,0,0.35)');
+        ctx.fillStyle = viñeta;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalAlpha = Math.min(1, p / 0.25);
+        if (logoTarjetaFinal.naturalWidth && logoTarjetaFinal.naturalHeight) {
+            var lado = u * 0.24;
+            var escala = Math.min(lado / logoTarjetaFinal.naturalWidth, lado / logoTarjetaFinal.naturalHeight);
+            var dw = logoTarjetaFinal.naturalWidth * escala;
+            var dh = logoTarjetaFinal.naturalHeight * escala;
+            ctx.drawImage(logoTarjetaFinal, cx - dw / 2, cy - dh / 2, dw, dh);
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 ' + (u * 0.075) + 'px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+        ctx.fillText('tet', cx, cy + u * 0.16);
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.font = '400 ' + (u * 0.028) + 'px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+        ctx.fillText('La tecnología tiene su espacio', cx, cy + u * 0.27, w * 0.9);
+        ctx.fillStyle = '#3ea6ff';
+        ctx.font = '700 ' + (u * 0.026) + 'px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+        ctx.fillText('somostet.com', cx, cy + u * 0.34);
+        ctx.restore();
+        return true;
     }
 
     /* F9 · familias y pesos disponibles para los textos (antes todo el mundo
@@ -3707,9 +3833,7 @@
             for (var s = 0; s < segs.length; s++) {
                 if (segs[s].tipo === 'img') nImg++; else nClip++;
             }
-            var totalMix = totalPista();
-            var dImg = durMsPorImagen() / 1000;
-            var cortoMix = nImg > 0 && dImg < MIN_POR_IMAGEN;
+            var totalMix = totalSalida();
             var excedeMix = totalMix > MAX_TOTAL_SEG;
             recIn.disabled = grabando || capturando;   // el plan no se toca
             recFin.disabled = grabando || capturando;   // mientras se graba
@@ -3718,12 +3842,12 @@
                 ? (nImg + (nImg === 1 ? ' imagen · ' : ' imágenes · ') +
                    nClip + (nClip === 1 ? ' vídeo' : ' vídeos') +
                    ' en ese orden = ' + fmtSeg(totalMix) + ' s' +
+                   (duracionTarjetaFinal() ? ' (incluye ' + fmtSeg(duracionTarjetaFinal()) + ' s de tarjeta final)' : '') +
                    (cortesMix ? ' (−' + fmtSeg(ahorroPista()) + ' s por los solapes)' : '') +
                    ' · se graba en tiempo real' +
-                   (excedeMix ? ' (máximo ' + MINUTOS_MAX + ' minutos: recorta los vídeos o quita elementos)' :
-                    cortoMix ? ' (cada imagen necesita al menos ' + fmt(MIN_POR_IMAGEN) + ' s)' : ''))
+                   (excedeMix ? ' (máximo ' + MINUTOS_MAX + ' minutos: recorta los vídeos o quita elementos)' : ''))
                 : '';
-            btnCrear.disabled = grabando || capturando || !segs.length || excedeMix || cortoMix;
+            btnCrear.disabled = grabando || capturando || !segs.length || excedeMix;
             pintarRiel();
             return;
         }
@@ -3780,6 +3904,13 @@
     function durMsPorImagen() {
         return Math.max(Math.round(MIN_POR_IMAGEN * 1000),
             Math.round(calculoDuracion().porImagen * 1000));
+    }
+
+    function duracionImagen(i) {
+        var f = imagenes[i];
+        var personalizada = f && parseFloat(f.dur);
+        return personalizada >= MIN_POR_IMAGEN && personalizada <= MAX_TOTAL_SEG
+            ? personalizada : durMsPorImagen() / 1000;
     }
 
     /* F5e/F5f: la previa necesita bucle si los textos animan o tienen ventana */
@@ -3948,7 +4079,8 @@
         if (preview || grabando) return;
         var segs = preparaPista();
         if (!segs.length) return;
-        var total = totalPista();
+        var base = totalPista();
+        var total = totalSalida();
         var fase = previewFase / 1000;
         previewFase = 0;
         var t0 = performance.now() - fase * 1000;
@@ -3958,6 +4090,13 @@
             if (grabando) { preview = null; return; }
             var t = (performance.now() - t0) / 1000;
             if (t >= total) { t = t % total; t0 = performance.now() - t * 1000; }   // bucle
+            if (t >= base) {
+                ajustaVidsPista(segs, base);
+                dibujaTarjetaFinal(t * 1000);
+                poneCabezalSalida(t * 1000);
+                preview = requestAnimationFrame(paso);
+                return;
+            }
             var k = segEntraEnPista(segs, t);
             if (k < 0) { preview = requestAnimationFrame(paso); return; }
             var s = segs[k];
@@ -5674,14 +5813,8 @@
                 aviso('No hay nada que grabar en la salida', 'warning');
                 return;
             }
-            if (totalPista() > MAX_TOTAL_SEG) {
+            if (totalSalida() > MAX_TOTAL_SEG) {
                 aviso('Máximo ' + MINUTOS_MAX + ' minutos: recorta los vídeos o quita elementos', 'warning');
-                return;
-            }
-            var nImgMix = 0;
-            for (var s = 0; s < segs.length; s++) if (segs[s].tipo === 'img') nImgMix++;
-            if (nImgMix && durMsPorImagen() / 1000 < MIN_POR_IMAGEN) {
-                aviso('Cada imagen necesita al menos ' + fmt(MIN_POR_IMAGEN) + ' s', 'warning');
                 return;
             }
             vibra(10);
@@ -7793,7 +7926,7 @@
     async function crearVideoPista(segs) {
         var audio = colaVideos.length ? conectarAudio() : null;
         var PAD = padArranque();   // R6d: se fija al empezar, no cambia a mitad
-        var total = Math.round(totalPista() * 1000) + PAD;   // R6d: incluye el calentamiento
+        var total = Math.round(totalSalida() * 1000) + PAD;   // duración de salida + calentamiento
         var hayMusica = preparaMusica(total / 1000);
         var mime = elegirMime(!!audio || hayMusica) || elegirMime(false);
         if (!mime) {
@@ -7809,6 +7942,10 @@
         var cargando = -1;       // R6c · segmento que se está cargando por delante
         var precargado = null;   // R6d · vídeo siguiente listo antes de empezar el fundido
         var rampAbajo = false;   // R6c · el audio del clip saliente ya está bajando
+        var tIniSeg = 0;
+        var clipAjuste = 0;
+        var inicioTarjetaFinal = null;
+        var bucleOn = false;
         var calT0 = performance.now();   // R6d: arranque del calentamiento
 
         grabando = true;
@@ -8020,9 +8157,6 @@
              · una foto entra en el acto, sin esperar a nada.
            R6d · el bucle es UNO solo y se pide desde un solo sitio: dos rAF
            vivos a la vez se pisan y «Cancelar» deja de parar la grabación. */
-        var tIniSeg = 0;    // reloj del segmento de imagen en curso
-        var clipAjuste = 0; // R6c · retraso del clip al tomar el mando
-
         /* R11 · el plan se pinta como mucho una vez por FPS de salida. A 60 Hz
            se duplicaba el trabajo de dibujo y el codificador se quedaba sin
            tiempo; los cambios de segmento y el final fuerzan el fotograma. */
@@ -8238,7 +8372,6 @@
 
         /* Un bucle y solo uno: `bucleOn` es la puerta, para que un `pideBucle()` desde
            dentro del propio fotograma no lata una segunda vuelta (R6d). */
-        var bucleOn = false;
         function pideBucle() {
             if (!grabando || bucleOn) return;
             bucleOn = true;
@@ -8260,6 +8393,28 @@
             var fin = s.desde + s.dur;
             var t = relojPista(s);
             var iniciaSigClip = -1;
+
+            var baseSalida = totalPista();
+            var durTarjeta = duracionTarjetaFinal();
+            if (durTarjeta && t >= baseSalida - 0.004) {
+                if (inicioTarjetaFinal === null) {
+                    inicioTarjetaFinal = performance.now();
+                    sueltaVids();
+                }
+                t = baseSalida + (performance.now() - inicioTarjetaFinal) / 1000;
+                dibujaTarjetaFinal(t * 1000);
+                var secsTarjeta = total / 1000;
+                var tiempoTarjeta = Math.min(secsTarjeta, PAD / 1000 + t);
+                var pctTarjeta = Math.max(0, Math.min(100, Math.round(tiempoTarjeta / secsTarjeta * 100)));
+                barra.style.width = pctTarjeta + '%';
+                barra.textContent = pctTarjeta + '%';
+                estado.textContent = 'Grabando… ' + fmt(tiempoTarjeta) + ' / ' + fmt(secsTarjeta) + ' s';
+                if (t >= baseSalida + durTarjeta) {
+                    grabando = false;
+                    if (recAct && recAct.state !== 'inactive') recAct.stop();
+                }
+                return;
+            }
 
             preparaSiguienteClip(segIdx);
 
@@ -8349,7 +8504,9 @@
 
     function histCaptura() {
         return {
-            imagenes: imagenes.slice(),
+            imagenes: imagenes.map(function (im) {
+                return { url: im.url, img: im.img, nombre: im.nombre, dur: im.dur };
+            }),
             pista: pista.map(function (it) { return { t: it.t, i: it.i }; }),   // R6
             textos: JSON.parse(JSON.stringify(textos)),
             textoSel: textoSel,
@@ -8385,7 +8542,8 @@
                 ajuste: selAjuste.value, trans: selTrans.value, fondo: inpFondo.value,
                 plantilla: selPlantilla.value, barraPos: selBarraPos.value, calidad: selCalidad.value,
                 esc: inpEscContenido.value, pos: supLogoPos.value,
-                tamLog: supLogoTam.value, logoAuto: supLogoAuto.checked   // Q3
+                tamLog: supLogoTam.value, logoAuto: supLogoAuto.checked,
+                tarjeta: inpTarjetaFinal.checked, tarjetaDur: inpTarjetaDuracion.value   // Q3
             }
         };
     }
@@ -8394,7 +8552,7 @@
        serializan como {}): con ella el dedupe no guarda estados idénticos. */
     function histClave(e) {
         return JSON.stringify({
-            img: e.imagenes.map(function (i) { return i.url + '|' + i.nombre; }),
+            img: e.imagenes.map(function (i) { return i.url + '|' + i.nombre + '|' + i.dur; }),
             pista: e.pista,   // R6: el orden de la salida también es historial
             txt: e.textos, sel: e.textoSel, tira: e.selTira,
             /* R5 · las imágenes sueltas también entran en la clave: sin esto el
@@ -8495,7 +8653,9 @@
             quitarVideo(true);   // silencio: el aviso ya se dio la primera vez
         }
         /* imágenes, textos y selección */
-        imagenes = e.imagenes.slice();
+        imagenes = e.imagenes.map(function (im) {
+            return { url: im.url, img: im.img, nombre: im.nombre, dur: im.dur };
+        });
         pista = (e.pista && e.pista.length) ? e.pista.map(function (it) {
             return { t: it.t, i: it.i };
         }) : pistaPorDefecto();   // R6
@@ -8547,6 +8707,9 @@
         selBarraPos.value = (e.form.barraPos === 'abajo') ? 'abajo' : 'arriba';   // R8: sin «ambas»
         aplicaPlantilla();
         inpEscContenido.value = e.form.esc;
+        inpTarjetaFinal.checked = e.form.tarjeta === true;
+        inpTarjetaDuracion.value = e.form.tarjetaDur || '1.2';
+        inpTarjetaDuracion.disabled = !inpTarjetaFinal.checked;
         [selTam, inpDur, selModoDur, selAjuste, selTrans, inpFondo, selCalidad,
             supLogoPos, supLogoTam].forEach(function (el) {
                 el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -8569,6 +8732,7 @@
         pintaPista();        // R6b: el riel vuelve al estado restaurado
         repintarSuperp();
         actualizaCrear();
+        reiniciarPreview();
         actualizaManija();
         actualizaManijaImg();   // R5
         /* Algún handler normaliza valores (la duración al cambiar de modo):
