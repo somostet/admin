@@ -632,6 +632,7 @@
                                     <select class="form-select" id="vid-txt-anim">
                                         <option value="ninguna">Ninguna (sin animación)</option>
                                         <option value="aparecer">Aparecer (fundido)</option>
+                                        <option value="pop">Pop-up</option>
                                         <option value="deslizar">Deslizar</option>
                                         <option value="escribir">Escribir (máquina de escribir)</option>
                                     </select>
@@ -670,6 +671,17 @@
                                     <label class="form-label" for="vid-txt-color">Color de la letra</label>
                                     <input type="color" class="form-control form-control-color w-100"
                                            id="vid-txt-color" value="#ffffff" title="Color de la letra">
+                                </div>
+                                <div class="col-6 col-lg-4 d-flex align-items-end">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="vid-txt-caja">
+                                        <label class="form-check-label" for="vid-txt-caja">Texto en caja</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-4">
+                                    <label class="form-label" for="vid-txt-caja-color">Color de la caja</label>
+                                    <input type="color" class="form-control form-control-color w-100"
+                                           id="vid-txt-caja-color" value="#0b0f14" title="Color de la caja del texto">
                                 </div>
                                 <div class="col-6 col-lg-5">
                                     <label class="form-label" for="vid-txt-fuente">Tipografía</label>
@@ -1086,7 +1098,7 @@
     <!-- Lista de música compartida con reel.html (la lee tools/embed-audio.js) -->
     <script src="./public/js/musica-lista.js?v=r1"></script>
     <!-- ?v=r1 obliga a traer la versión con los defaults R4 y los tokens de CSS aunque la caché HTTP tenga la anterior -->
-    <script src="./public/js/video.js?v=r55"></script>
+    <script src="./public/js/video.js?v=r56"></script>
     <!-- Voz: lee la narración con las voces del sistema (pestaña «Voz») -->
     <script src="./public/js/voz.js?v=v5"></script>
     <script src="./public/js/piper-editor.js?v=p1"></script>

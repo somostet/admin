@@ -68,6 +68,7 @@
         coloresAuto: true,
         ajuste: 'cover',
         cajaTitulo: false,
+        cajaDetalle: false,
         fondo: BARRAS[0].fondo,
         fondo2: BARRAS[0].fondo2,
         texto: BARRAS[0].texto,
@@ -136,6 +137,7 @@
     var selFormato = document.getElementById('rn-formato');
     var selAjuste = document.getElementById('rn-ajuste');
     var selCajaTitulo = document.getElementById('rn-caja-titulo');
+    var selCajaDetalle = document.getElementById('rn-caja-detalle');
     var inpFondo = document.getElementById('rn-fondo');
     var inpFondo2 = document.getElementById('rn-fondo2');
     var inpTexto = document.getElementById('rn-texto');
@@ -538,8 +540,11 @@
         var titAlto = tit.alto + 2 * boxPad;
         var titleTextY = titleY + boxPad;
         var detailY = titleY + titAlto + (tieneDetalle ? u * 0.03 : 0);
+        var detalleBoxPad = ajustes.cajaDetalle && tieneDetalle ? u * 0.022 : 0;
+        var detalleW = Math.max(u * 0.08, t.w - 2 * detalleBoxPad);
         var detalle = tieneDetalle
-            ? ajustaDetalle(c.detalle, t.w, Math.max(u * 0.04, contentBottom - detailY), detMax, u * 0.008)
+            ? ajustaDetalle(c.detalle, detalleW,
+                Math.max(u * 0.04, contentBottom - detailY - 2 * detalleBoxPad), detMax, u * 0.008)
             : { lineas: [], tam: detMax, lh: detMax * 1.45, alto: 0 };
 
         return {
@@ -547,6 +552,8 @@
             footerTam: footerTam, footerH: footerH,
             detTam: detalle.tam, detLh: detalle.lh, detLineas: detalle.lineas, detAlto: detalle.alto,
             mostrarContador: mostrarContador,
+            detalleBoxPad: detalleBoxPad, detalleBoxW: t.w,
+            detalleBoxH: detalle.alto + 2 * detalleBoxPad,
             boxPad: boxPad, titleMaxW: titleMaxW, titleMaxH: titleMaxH,
             tit: tit, titAlto: titAlto,
             labelY: labelY, lineY: lineY, titleY: titleY,
@@ -771,29 +778,43 @@
 
         /* entradilla */
         if (L.detLineas.length) {
-            var dA = (animD === 'subir' || animD === 'fundido') ? entry : 1;
+            var dA = (animD === 'subir' || animD === 'fundido' || animD === 'pop') ? entry : 1;
             var dDy = animD === 'subir' ? (1 - entry) * u * 0.05 : 0;
             ctx.save();
             ctx.globalAlpha = exitA * dA;
             var dcx = t.x + t.w / 2;
             var dcy = L.detailY + L.detAlto / 2;
             ctx.translate(dcx, dcy + dDy + exitDy);
-            ctx.scale(exitScale, exitScale);
+            var dScale = animD === 'pop' ? (0.82 + 0.18 * easeOutBack(entryRaw)) : 1;
+            ctx.scale(dScale * exitScale, dScale * exitScale);
             ctx.translate(-dcx, -dcy);
+            if (ajustes.cajaDetalle) {
+                var bx = t.x + L.detalleBoxPad;
+                var by = L.detailY - L.detalleBoxPad;
+                var bw = L.detalleBoxW;
+                var bh = L.detalleBoxH;
+                ctx.fillStyle = rgba(ajustes.caja, 0.92);
+                rectRedondeado(ctx, bx, by, bw, bh, u * 0.018);
+                ctx.fill();
+                ctx.fillStyle = ajustes.acento;
+                rectRedondeado(ctx, bx, by, u * 0.012, bh, u * 0.006);
+                ctx.fill();
+            }
             ctx.fillStyle = rgba(ajustes.texto, 0.78);
             ctx.font = '400 ' + L.detTam + 'px ' + FUENTE;
             ctx.textAlign = centrado ? 'center' : 'left';
             ctx.textBaseline = 'top';
-            var dx = centrado ? t.x + t.w / 2 : t.x;
+            var dx = centrado ? t.x + t.w / 2 : t.x + L.detalleBoxPad;
+            var dy = L.detailY + L.detalleBoxPad;
             if (animD === 'linea') {
                 L.detLineas.forEach(function (linea, li) {
                     var al = clamp((entryRaw * (L.detLineas.length + 2) - li) / 1.5, 0, 1);
                     ctx.globalAlpha = exitA * al;
-                    ctx.fillText(linea, dx, L.detailY + li * L.detLh + (1 - al) * u * 0.008);
+                    ctx.fillText(linea, dx, dy + li * L.detLh + (1 - al) * u * 0.008);
                 });
             } else {
                 L.detLineas.forEach(function (linea, li) {
-                    ctx.fillText(linea, dx, L.detailY + li * L.detLh);
+                    ctx.fillText(linea, dx, dy + li * L.detLh);
                 });
             }
             ctx.restore();
@@ -1327,6 +1348,7 @@
         if (inpColoresAuto) inpColoresAuto.checked = ajustes.coloresAuto;
         if (selAjuste) selAjuste.value = ajustes.ajuste;
         if (selCajaTitulo) selCajaTitulo.value = ajustes.cajaTitulo ? '1' : '0';
+        if (selCajaDetalle) selCajaDetalle.value = ajustes.cajaDetalle ? '1' : '0';
         if (inpFondo) inpFondo.value = ajustes.fondo;
         if (inpFondo2) inpFondo2.value = ajustes.fondo2;
         if (inpTexto) inpTexto.value = ajustes.texto;
@@ -1950,6 +1972,13 @@
     if (selCajaTitulo) {
         selCajaTitulo.addEventListener('change', function () {
             ajustes.cajaTitulo = selCajaTitulo.value === '1';
+            pintar(tActual);
+        });
+    }
+
+    if (selCajaDetalle) {
+        selCajaDetalle.addEventListener('change', function () {
+            ajustes.cajaDetalle = selCajaDetalle.value === '1';
             pintar(tActual);
         });
     }

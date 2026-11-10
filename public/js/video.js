@@ -348,6 +348,8 @@
     var inpTxtInicio = document.getElementById('vid-txt-inicio');
     var inpTxtDur = document.getElementById('vid-txt-dur');
     var inpTxtColor = document.getElementById('vid-txt-color');     // F9
+    var inpTxtCaja = document.getElementById('vid-txt-caja');
+    var inpTxtCajaColor = document.getElementById('vid-txt-caja-color');
     var selTxtSombra = document.getElementById('vid-txt-sombra');       // P9
     var inpTxtSombra = document.getElementById('vid-txt-sombra-int');   // P9
     var inpTxtBorde = document.getElementById('vid-txt-borde');           // P3.2
@@ -614,6 +616,19 @@
         lista.forEach(function (f) {
             cola = cola.then(function () { return cargarImagen(f); });
         });
+    });
+
+    inpTxtCaja.addEventListener('change', function () {
+        var t = textoActual();
+        if (!t) return;
+        t.caja = inpTxtCaja.checked;
+        repintarSuperp();
+    });
+    inpTxtCajaColor.addEventListener('input', function () {
+        var t = textoActual();
+        if (!t) return;
+        t.cajaColor = inpTxtCajaColor.value;
+        repintarSuperp();
     });
 
     function cargarImagen(f) {
@@ -3449,6 +3464,12 @@
         var centroBloque = (anclaje === 'centro') ? ty
             : (anclaje === 'arriba') ? ty + lh * (n - 1) / 2
             : ty - lh * (n - 1) / 2;
+        var altoBloque = (n - 1) * lh + fs * 1.2;
+        var padCajaX = fs * 0.65;
+        var padCajaY = fs * 0.4;
+        var xBloque = (ctx.textAlign === 'center') ? tx - maxTw / 2
+            : (ctx.textAlign === 'right') ? tx - maxTw : tx;
+        var yBloque = centroBloque - altoBloque / 2;
         // F5e/N1: caja de reposo del bloque para situar la manija y los toques
         if (esSel || typeof indice === 'number') {
             var caja = { x: tx, y: centroBloque, w: maxTw, h: (n - 1) * lh + fs * 1.2 };
@@ -3464,10 +3485,44 @@
         var abajo = ty > h / 2;   // el texto entra y sale por su propio borde
         var viaje = fs * 1.5;
         if (t.anim === 'aparecer') ctx.globalAlpha = p;        // fundido de entrada
+        if (t.anim === 'pop') ctx.globalAlpha = p;
         if (t.salida === 'fundido') ctx.globalAlpha *= (1 - q); // fundido de salida
         var dy = 0;
         if (p < 1 && t.anim === 'deslizar') dy = (abajo ? viaje : -viaje) * (1 - p);
         else if (q > 0 && t.salida === 'deslizar') dy = (abajo ? viaje : -viaje) * q;
+        if (t.anim === 'pop') {
+            var popEase = 1 - Math.pow(1 - p, 3);
+            var popScale = 0.72 + 0.28 * popEase;
+            ctx.translate(tx, centroBloque);
+            ctx.scale(popScale, popScale);
+            ctx.translate(-tx, -centroBloque);
+        }
+
+        if (t.caja === true) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0)';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.fillStyle = t.cajaColor || '#0b0f14';
+            var cajaX = xBloque - padCajaX;
+            var cajaY = yBloque - padCajaY + dy;
+            var cajaW = maxTw + padCajaX * 2;
+            var cajaH = altoBloque + padCajaY * 2;
+            var radio = Math.min(fs * 0.35, cajaH / 2, cajaW / 2);
+            ctx.beginPath();
+            ctx.moveTo(cajaX + radio, cajaY);
+            ctx.lineTo(cajaX + cajaW - radio, cajaY);
+            ctx.quadraticCurveTo(cajaX + cajaW, cajaY, cajaX + cajaW, cajaY + radio);
+            ctx.lineTo(cajaX + cajaW, cajaY + cajaH - radio);
+            ctx.quadraticCurveTo(cajaX + cajaW, cajaY + cajaH, cajaX + cajaW - radio, cajaY + cajaH);
+            ctx.lineTo(cajaX + radio, cajaY + cajaH);
+            ctx.quadraticCurveTo(cajaX, cajaY + cajaH, cajaX, cajaY + cajaH - radio);
+            ctx.lineTo(cajaX, cajaY + radio);
+            ctx.quadraticCurveTo(cajaX, cajaY, cajaX + radio, cajaY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
 
         /* máquina de escribir: se revela sobre las líneas ya partidas para que
            el bloque no salte de sitio mientras se escribe */
@@ -4741,6 +4796,8 @@
             inicio: ini,
             dur: 10,
             color: '#ffffff',   // F9 · Q1c: blanco por defecto
+            caja: false,
+            cajaColor: '#0b0f14',
             fuente: 'sistema',  // F9
             peso: 'negrita',    // F9
             sombra: 0,               // P9/R4: sin sombra por defecto
@@ -4909,6 +4966,8 @@
         inpTxtInicio.value = String(t.inicio);
         inpTxtDur.value = String(t.dur);
         inpTxtColor.value = t.color || '#ffffff';   // F9
+        inpTxtCaja.checked = t.caja === true;
+        inpTxtCajaColor.value = t.cajaColor || '#0b0f14';
         flotColor.value = t.color || '#ffffff';     // P2: el swatch de la barra sigue al texto
         selTxtFuente.value = FUENTES_VIDEO[t.fuente] ? t.fuente : 'sistema';
         selTxtPeso.value = PESOS_VIDEO[t.peso] ? t.peso : 'negrita';
