@@ -18,8 +18,10 @@ de 0,4 s al final para que el bucle no chasquee).
 
 ## Cómo añadir una pista nueva
 
-1. Añade la entrada en `LISTA_MUSICA` (`public/js/video.js`) — es la
-   única fuente de verdad: el `id` es el nombre del MP3 sin extensión.
+1. Añade la entrada en `TET_LISTA_MUSICA` (`public/js/musica-lista.js`) —
+   es la única fuente de verdad y la comparten el editor de vídeo
+   (`video.html`) y el reel (`reel.html`): el `id` es el nombre del MP3 sin
+   extensión.
 2. Descarga el tema de Mixkit y recórtalo a 60 s / 112 kbps con ffmpeg
    (lo hace `tools/descargar-musica.js`, que además borra el crudo):
 
@@ -39,7 +41,7 @@ en la página de cada tema y en la columna «Original».
 
 ## Temas incluidos
 
-| id (`LISTA_MUSICA`) | Tema | Autor | Grupo | Página | Original |
+| id (`TET_LISTA_MUSICA`) | Tema | Autor | Grupo | Página | Original |
 |---|---|---|---|---|---|
 | `driving-ambition` | Driving Ambition | Ahjay Stelino | Noticias | <https://mixkit.co/free-stock-music/driving-ambition/> | <https://assets.mixkit.co/music/32/32.mp3> |
 | `delayed-flight` | Delayed Flight | Michael Ramir C. | Última hora | <https://mixkit.co/free-stock-music/delayed-flight/> | <https://assets.mixkit.co/music/1024/1024.mp3> |
@@ -56,10 +58,18 @@ en la página de cada tema y en la columna «Original».
 | `clasica-dramatica-cc0` | Clásica dramática | Composición original tet · CC0 1.0 | Clásica | Generada en `tools/generar-musica-clasica.js` | — |
 | `clasica-feliz-cc0` | Clásica feliz | Composición original tet · CC0 1.0 | Clásica | Generada en `tools/generar-musica-clasica.js` | — |
 | `clasica-triste-cc0` | Clásica triste | Composición original tet · CC0 1.0 | Clásica | Generada en `tools/generar-musica-clasica.js` | — |
+| `canyons` | Canyons | Pista del proyecto | General | Aportada al proyecto | — |
+| `comedy-corridor` | Comedy Corridor | Pista del proyecto | General | Aportada al proyecto | — |
+| `countless` | Countless | Pista del proyecto | General | Aportada al proyecto | — |
+| `digital-horizon` | Digital Horizon | Pista del proyecto | Tecnología | Aportada al proyecto (43 s) | — |
+| `future` | Future | Pista del proyecto | Tecnología | Aportada al proyecto (34 s) | — |
+| `war` | War | Pista del proyecto | Acción | Aportada al proyecto | — |
+| `neon-futuristic` | Neon Futuristic | ikoliks_aj | Tecnología | Aportada al proyecto | — |
 
-En el editor aparecen en **Ajustes → Música de fondo**: un ▶ para
-escucharlas y un clic en el título para elegirla (con volumen, «Quitar»
-y deshacer, igual que un archivo subido).
+En ambos editores aparece la misma lista: en `video.html`, en **Ajustes →
+Música de fondo**; en `reel.html`, en **Exportar → Música de fondo**. Cada
+fila tiene un ▶ para escucharla y un clic en el título para elegirla (con
+volumen, «Quitar» y deshacer, igual que un archivo subido).
 
 ## Licencia (Mixkit Stock Music Free License)
 
@@ -104,6 +114,13 @@ feliz** y **Clásica triste** no utilizan grabaciones ni composiciones de
 terceros. Sus composiciones y grabaciones sintetizadas se dedican a
 **CC0 1.0**; el código que las genera está disponible en
 `tools/generar-musica-clasica.js`.
+
+Las siete pistas **aportadas al proyecto** (`canyons`, `comedy-corridor`,
+`countless`, `digital-horizon`, `future`, `war` y `neon-futuristic`) no
+vienen de Mixkit: se incorporaron a petición del proyecto. Antes de
+redistribuirlas fuera de él, confirma con quien las aportó que tiene
+derechos para usarlas; `neon-futuristic` se atribuye a **ikoliks_aj** y el
+resto figura como «Pista del proyecto».
 
 Alternativas libres para seguir ampliando: **YouTube Audio Library**,
 **Pixabay Music**, **Uppbeat**, **Free Music Archive** (revisa la

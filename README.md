@@ -139,6 +139,13 @@ cuadras, en PNG). El script borra la versión que no mejora.
   pintado se envía a la vez que avanza el reloj real, de modo que el contenido
   no se adelanta si el codificador tarda en arrancar. Admite música de fondo
   mezclada con Web Audio y comparte el parche de duración de MP4 de `video.js`.
+- **Música de fondo incluida** (editor de vídeo y reel): un catálogo de **22
+  pistas** compartido por `public/js/musica-lista.js` y embebido en
+  `public/js/audio-data.js` para que funcione a doble clic (`file://`). Cada
+  fila se puede escuchar con ▶ o elegir con un clic; la música se mezcla con
+  Web Audio al grabar y se repite en bucle si el vídeo es más largo. Para
+  añadir una pista: entrada en `musica-lista.js`, MP3 recortado en
+  `public/audio/` y `node tools/embed-audio.js`.
 - **Accesibilidad**: Lighthouse (accesibilidad / buenas prácticas / SEO) da
   1,00 / 1,00 / 1,00 en las 10 páginas, sin scroll horizontal en rail ni barra
   superior, y objetivos táctiles de 24 px como mínimo.
