@@ -75,6 +75,7 @@
         caja: BARRAS[0].caja,
         degradado: true,
         progreso: true,
+        mostrarContador: true,
         tarjetaFinal: true,
         zonaSegura: true,
         hold: 3.2,
@@ -142,6 +143,7 @@
     var inpCaja = document.getElementById('rn-caja');
     var inpDegradado = document.getElementById('rn-degradado');
     var inpProgreso = document.getElementById('rn-progreso');
+    var inpMostrarContador = document.getElementById('rn-mostrar-contador');
     var inpTarjetaFinal = document.getElementById('rn-tarjeta-final');
     var inpZonaSegura = document.getElementById('rn-zona-segura');
     var inpDuracion = document.getElementById('rn-duracion');
@@ -424,7 +426,7 @@
     }
 
     /* ---------- texto ---------- */
-    function parteTexto(texto, maxW, maxLineas) {
+    function parteTexto(texto, maxW) {
         var limpio = String(texto || '').replace(/\s+/g, ' ').trim();
         if (!limpio) return [];
         var palabras = limpio.split(' ');
@@ -440,18 +442,10 @@
             }
         }
         if (actual) lineas.push(actual);
-        if (maxLineas && lineas.length > maxLineas) {
-            lineas = lineas.slice(0, maxLineas);
-            var ultima = lineas[maxLineas - 1];
-            while (ultima.length > 1 && ctx.measureText(ultima + '…').width > maxW) {
-                ultima = ultima.slice(0, -1);
-            }
-            lineas[maxLineas - 1] = ultima.replace(/[\s,;:.\-]+$/, '') + '…';
-        }
         return lineas;
     }
 
-    function parteTextoPalabras(texto, maxW, maxLineas) {
+    function parteTextoPalabras(texto, maxW) {
         var limpio = String(texto || '').replace(/\s+/g, ' ').trim();
         if (!limpio) return [];
         var palabras = limpio.split(' ');
@@ -470,10 +464,6 @@
             ancho += (actual.length > 1 ? espacio : 0) + w;
         }
         if (actual.length) lineas.push(actual);
-        if (maxLineas && lineas.length > maxLineas) {
-            lineas = lineas.slice(0, maxLineas);
-            lineas[maxLineas - 1].push({ t: '…', w: ctx.measureText('…').width });
-        }
         return lineas.map(function (linea) {
             var x = 0;
             linea.forEach(function (p) {
@@ -488,26 +478,33 @@
         var tam = tamMax;
         var lineas = [];
         var lh = 0;
-        var maxLineas = 6;
         for (var k = 0; k < 80; k++) {
             ctx.font = peso + ' ' + tam + 'px ' + FUENTE;
-            lineas = parteTexto(texto, maxW, maxLineas);
+            lineas = parteTexto(texto, maxW);
             lh = tam * 1.08;
             if (lineas.length * lh <= maxH || tam <= tamMin) break;
-            tam = Math.max(tamMin, tam - Math.max(1, tam * 0.055));
+            tam = Math.max(tamMin, tam - Math.max(0.5, tam * 0.055));
         }
         ctx.font = peso + ' ' + tam + 'px ' + FUENTE;
-        lineas = parteTexto(texto, maxW, maxLineas);
+        lineas = parteTexto(texto, maxW);
         lh = tam * 1.08;
-        var cabe = Math.max(1, Math.floor(maxH / lh));
-        if (lineas.length > cabe) {
-            lineas = lineas.slice(0, cabe);
-            var ultima = lineas[cabe - 1];
-            while (ultima.length > 1 && ctx.measureText(ultima + '…').width > maxW) {
-                ultima = ultima.slice(0, -1);
-            }
-            lineas[cabe - 1] = ultima.replace(/[\s,;:.\-]+$/, '') + '…';
+        return { lineas: lineas, tam: tam, lh: lh, alto: lineas.length * lh };
+    }
+
+    function ajustaDetalle(texto, maxW, maxH, tamMax, tamMin) {
+        var tam = tamMax;
+        var lineas = [];
+        var lh = 0;
+        for (var k = 0; k < 100; k++) {
+            ctx.font = '400 ' + tam + 'px ' + FUENTE;
+            lineas = parteTexto(texto, maxW);
+            lh = tam * 1.45;
+            if (lineas.length * lh <= maxH || tam <= tamMin) break;
+            tam = Math.max(tamMin, tam - Math.max(0.5, tam * 0.06));
         }
+        ctx.font = '400 ' + tam + 'px ' + FUENTE;
+        lineas = parteTexto(texto, maxW);
+        lh = tam * 1.45;
         return { lineas: lineas, tam: tam, lh: lh, alto: lineas.length * lh };
     }
 
@@ -516,41 +513,40 @@
         var t = geo.txt;
         var vertical = geo.vertical;
         var ratio = H / W;
+        var mostrarContador = ajustes.mostrarContador;
         var labelTam = u * (vertical ? 0.026 : 0.022);
-        var labelH = labelTam * 1.2;
+        var labelH = mostrarContador ? labelTam * 1.2 : 0;
         var gap = u * 0.018;
         var footerTam = u * 0.019;
         var footerH = footerTam * 1.4;
-        var detTam = u * (vertical ? (ratio > 1.6 ? 0.028 : (ratio > 1.15 ? 0.028 : 0.026)) : 0.024);
-        var detLh = detTam * 1.45;
-        var detMax = vertical ? (ratio > 1.6 ? 8 : 6) : 8;
-
-        ctx.font = '400 ' + detTam + 'px ' + FUENTE;
-        var detLineas = c.detalle ? parteTexto(c.detalle, t.w, detMax) : [];
-        var detAlto = detLineas.length * detLh;
+        var detMax = u * (vertical ? (ratio > 1.6 ? 0.028 : 0.026) : 0.024);
 
         var boxPad = ajustes.cajaTitulo ? u * 0.028 : 0;
         var titleMaxW = Math.max(u * 0.1, t.w - 2 * boxPad);
-        var titleMaxH = t.h - labelH - gap - (detAlto ? gap + detAlto : 0) - footerH - u * 0.05;
-        titleMaxH = Math.max(u * 0.09, titleMaxH);
-
-        var titMax = u * (vertical ? (ratio > 1.6 ? 0.078 : (ratio > 1.15 ? 0.068 : 0.058)) : 0.066);
-        var titMin = u * 0.036;
-        var tit = ajustaTitulo(c.titulo || ('Noticia ' + (i + 1)),
-            titleMaxW, Math.max(u * 0.06, titleMaxH - 2 * boxPad), '800', titMax, titMin);
-        var titAlto = tit.alto + 2 * boxPad;
-
         var labelY = t.y;
-        var lineY = labelY + labelH + u * 0.006;
-        var titleY = lineY + u * 0.022;
-        var titleTextY = titleY + boxPad;
-        var detailY = titleY + titAlto + u * 0.03;
+        var lineY = labelY + labelH + (mostrarContador ? u * 0.006 : 0);
+        var titleY = lineY + (mostrarContador ? u * 0.022 : u * 0.01);
         var footerY = t.y + t.h - footerH;
+        var contentBottom = footerY - u * 0.018;
+        var contentH = Math.max(u * 0.08, contentBottom - titleY);
+        var tieneDetalle = !!c.detalle;
+        var titleMaxH = tieneDetalle ? contentH * 0.42 : contentH;
+        var titMax = u * (vertical ? (ratio > 1.6 ? 0.078 : (ratio > 1.15 ? 0.068 : 0.058)) : 0.066);
+        var titMin = u * 0.01;
+        var tit = ajustaTitulo(c.titulo || ('Noticia ' + (i + 1)),
+            titleMaxW, Math.max(u * 0.04, titleMaxH - 2 * boxPad), '800', titMax, titMin);
+        var titAlto = tit.alto + 2 * boxPad;
+        var titleTextY = titleY + boxPad;
+        var detailY = titleY + titAlto + (tieneDetalle ? u * 0.03 : 0);
+        var detalle = tieneDetalle
+            ? ajustaDetalle(c.detalle, t.w, Math.max(u * 0.04, contentBottom - detailY), detMax, u * 0.008)
+            : { lineas: [], tam: detMax, lh: detMax * 1.45, alto: 0 };
 
         return {
             labelTam: labelTam, labelH: labelH, gap: gap,
             footerTam: footerTam, footerH: footerH,
-            detTam: detTam, detLh: detLh, detLineas: detLineas, detAlto: detAlto,
+            detTam: detalle.tam, detLh: detalle.lh, detLineas: detalle.lineas, detAlto: detalle.alto,
+            mostrarContador: mostrarContador,
             boxPad: boxPad, titleMaxW: titleMaxW, titleMaxH: titleMaxH,
             tit: tit, titAlto: titAlto,
             labelY: labelY, lineY: lineY, titleY: titleY,
@@ -703,17 +699,19 @@
         var centrado = L.align === 'center';
         ctx.save();
         ctx.globalAlpha = exitA * entry;
-        ctx.fillStyle = ajustes.acento;
-        ctx.font = '700 ' + L.labelTam + 'px ' + FUENTE;
-        ctx.textAlign = centrado ? 'center' : 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText('NOTICIA ' + pad2(i + 1) + ' / ' + pad2(noticias.length),
-            centrado ? t.x + t.w / 2 : t.x, L.labelY);
-        ctx.fillStyle = rgba(ajustes.acento, 0.9);
-        if (centrado) {
-            ctx.fillRect(t.x + t.w / 2 - u * 0.035, L.lineY, u * 0.07, Math.max(2, u * 0.004));
-        } else {
-            ctx.fillRect(t.x, L.lineY, u * 0.07, Math.max(2, u * 0.004));
+        if (L.mostrarContador) {
+            ctx.fillStyle = ajustes.acento;
+            ctx.font = '700 ' + L.labelTam + 'px ' + FUENTE;
+            ctx.textAlign = centrado ? 'center' : 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('NOTICIA ' + pad2(i + 1) + ' / ' + pad2(noticias.length),
+                centrado ? t.x + t.w / 2 : t.x, L.labelY);
+            ctx.fillStyle = rgba(ajustes.acento, 0.9);
+            if (centrado) {
+                ctx.fillRect(t.x + t.w / 2 - u * 0.035, L.lineY, u * 0.07, Math.max(2, u * 0.004));
+            } else {
+                ctx.fillRect(t.x, L.lineY, u * 0.07, Math.max(2, u * 0.004));
+            }
         }
         ctx.restore();
 
@@ -751,7 +749,7 @@
         var ty = L.titleTextY;
 
         if (animT === 'palabra') {
-            var lineasP = parteTextoPalabras(c.titulo || ('Noticia ' + (i + 1)), L.titleMaxW, 5);
+            var lineasP = parteTextoPalabras(c.titulo || ('Noticia ' + (i + 1)), L.titleMaxW);
             var total = 0;
             lineasP.forEach(function (l) { total += l.palabras.length; });
             var wi = 0;
@@ -1336,6 +1334,7 @@
         if (inpCaja) inpCaja.value = ajustes.caja;
         if (inpDegradado) inpDegradado.checked = ajustes.degradado;
         if (inpProgreso) inpProgreso.checked = ajustes.progreso;
+        if (inpMostrarContador) inpMostrarContador.checked = ajustes.mostrarContador;
         if (inpTarjetaFinal) inpTarjetaFinal.checked = ajustes.tarjetaFinal;
         if (inpZonaSegura) inpZonaSegura.checked = ajustes.zonaSegura;
         if (inpDuracion) inpDuracion.value = ajustes.hold;
@@ -1979,6 +1978,7 @@
 
     enlazaCheck(inpDegradado, 'degradado');
     enlazaCheck(inpProgreso, 'progreso');
+    enlazaCheck(inpMostrarContador, 'mostrarContador');
     enlazaCheck(inpTarjetaFinal, 'tarjetaFinal');
     enlazaCheck(inpZonaSegura, 'zonaSegura');
 
