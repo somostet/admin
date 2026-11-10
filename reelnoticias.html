@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- CSP: solo en http/https; en file:// no se inyecta para no romper el modo doble-clic -->
+    <script>
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+            var csp = document.createElement('meta');
+            csp.setAttribute('http-equiv', 'Content-Security-Policy');
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            document.head.appendChild(csp);
+            /* frame-buster: en http/https el admin no se deja embeber en un iframe */
+            if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1d2b43">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./public/img/Logotet.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="tet admin">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script>
+        // tema del editor (oscuro por defecto) antes del primer pintado
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tetTema') || 'dark'); }
+        catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    </script>
+    <link rel="stylesheet" href="./public/vendor/bootstrap5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
+    <link rel="stylesheet" href="./public/css/style.css?v=r34">
+    <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
+    <link rel="stylesheet" href="./public/css/reel.css?v=r3">
+    <link rel="stylesheet" href="./public/css/reelnoticias.css?v=rn1">
+    <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
+    <meta property="og:image" content="./public/img/Logotet.png" />
+    <meta name="description" content="Reel de noticias: convierte las portadas de tet 1 en un vídeo animado con pop-up, zoom suave, entrada y salida de texto, vídeo por noticia y música. Exporta MP4 o WebM sin subir nada a ningún servidor.">
+    <title>tet admin · Reel de noticias</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-layer-group" aria-hidden="true"></i><span class="tet-nav-toggle-txt">Editores</span></a>
+                <ul class="dropdown-menu tet-dd">
+                    <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
+                    <li><a class="dropdown-item" href="./tet2.html">Textos <span class="tet-dd-sub">tet 2</span></a></li>
+                    <li><a class="dropdown-item" href="./dictet.html">Diccionario <span class="tet-dd-sub">tet 3</span></a></li>
+                    <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
+                    <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
+                    <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
+                    <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
+                    <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
+                    <li><a class="dropdown-item" href="./collage.html">Collage <span class="tet-dd-sub">collage</span></a></li>
+                    <li><a class="dropdown-item" href="./reel.html">Reel de cuadros <span class="tet-dd-sub">reel</span></a></li>
+                    <li><a class="dropdown-item" href="./reelnoticias.html" aria-current="page">Reel de noticias <span class="tet-dd-sub">reel tet 1</span></a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-social">
+            <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+            <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X de tet" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
+        </div>
+    </nav>
+
+    <main class="container-fluid py-3 pb-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="reel-caja rn-caja">
+                    <div class="reel-caja-cab">
+                        <h1 class="reel-titulo"><i class="fas fa-newspaper" aria-hidden="true"></i> Reel de noticias</h1>
+                        <p class="reel-subtitulo">Las portadas de tet 1, ahora en movimiento: pop-up y zoom suave en la imagen, entrada y salida del texto, vídeo por noticia y música. Todo se dibuja en un solo canvas y se graba en MP4 o WebM en tu dispositivo, sin subir nada a ningún servidor.</p>
+                    </div>
+
+                    <!-- Vista previa: el lienzo es el mismo que se graba -->
+                    <div class="reel-preview rn-preview" id="rn-preview">
+                        <canvas id="rn-lienzo" width="1080" height="1920" aria-label="Vista previa del reel de noticias"></canvas>
+                    </div>
+
+                    <div class="reel-transporte">
+                        <button type="button" class="btn btn-primary reel-play" id="rn-play" aria-label="Reproducir">
+                            <i class="fas fa-play" aria-hidden="true"></i> <span>Reproducir</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary reel-reiniciar" id="rn-reiniciar" title="Volver al principio" aria-label="Volver al principio">
+                            <i class="fas fa-undo" aria-hidden="true"></i>
+                        </button>
+                        <input type="range" class="form-range reel-tiempo" id="rn-tiempo" min="0" max="1" step="0.01" value="0" aria-label="Posición del reel">
+                        <span class="reel-reloj" id="rn-reloj">0,0 / 0,0 s</span>
+                    </div>
+
+                    <ul class="nav nav-tabs reel-pestanas" id="rn-pestanas" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="rn-tab-guion" data-bs-toggle="tab" data-bs-target="#rn-pane-guion" type="button" role="tab" aria-controls="rn-pane-guion" aria-selected="true">
+                                <i class="fas fa-list-ol" aria-hidden="true"></i> Guion
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rn-tab-estilo" data-bs-toggle="tab" data-bs-target="#rn-pane-estilo" type="button" role="tab" aria-controls="rn-pane-estilo" aria-selected="false">
+                                <i class="fas fa-palette" aria-hidden="true"></i> Estilo
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rn-tab-animacion" data-bs-toggle="tab" data-bs-target="#rn-pane-animacion" type="button" role="tab" aria-controls="rn-pane-animacion" aria-selected="false">
+                                <i class="fas fa-magic" aria-hidden="true"></i> Animación
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rn-tab-exportar" data-bs-toggle="tab" data-bs-target="#rn-pane-exportar" type="button" role="tab" aria-controls="rn-pane-exportar" aria-selected="false">
+                                <i class="fas fa-download" aria-hidden="true"></i> Exportar
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content reel-contenido" id="rn-contenido">
+                        <!-- ---------- guion ---------- -->
+                        <section class="tab-pane fade show active" id="rn-pane-guion" role="tabpanel" aria-labelledby="rn-tab-guion" tabindex="0">
+                            <div class="row g-3 rn-cabecera-campos">
+                                <div class="col-12 col-md-7">
+                                    <label class="form-label" for="rn-barra">Cabecera (plantilla de tet 1)</label>
+                                    <select class="form-select" id="rn-barra"></select>
+                                    <div class="form-text">Es la misma franja superior de las portadas de tet 1. Al cambiarla se ajustan el fondo, el texto y el acento.</div>
+                                </div>
+                                <div class="col-12 col-md-5 d-flex align-items-end">
+                                    <div class="form-check form-switch rn-switch">
+                                        <input class="form-check-input" type="checkbox" id="rn-colores-auto" checked>
+                                        <label class="form-check-label" for="rn-colores-auto">Colores automáticos de la cabecera</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rn-lista" id="rn-lista"></div>
+
+                            <div class="reel-lista-pie">
+                                <button type="button" class="btn btn-outline-secondary" id="rn-agregar">
+                                    <i class="fas fa-plus" aria-hidden="true"></i> Agregar noticia
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="rn-vaciar">
+                                    <i class="fas fa-eraser" aria-hidden="true"></i> Vaciar guion
+                                </button>
+                                <span class="reel-ayuda">Cada noticia puede llevar una imagen (portada) y, si quieres, un vídeo que se reproduce en su hueco. Arriba y abajo cambian el orden.</span>
+                            </div>
+                        </section>
+
+                        <!-- ---------- estilo ---------- -->
+                        <section class="tab-pane fade" id="rn-pane-estilo" role="tabpanel" aria-labelledby="rn-tab-estilo" tabindex="0">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="rn-formato">Formato de salida</label>
+                                    <select class="form-select" id="rn-formato">
+                                        <option value="1080x1920" selected>Reel / Historia — 1080 × 1920</option>
+                                        <option value="1080x1350">Vertical 4:5 — 1080 × 1350</option>
+                                        <option value="1080x1080">Cuadrado — 1080 × 1080</option>
+                                        <option value="1920x1080">Horizontal — 1920 × 1080</option>
+                                        <option value="1200x1200">Cuadrado tet 1 — 1200 × 1200</option>
+                                    </select>
+                                    <div class="form-text">Para Reels, TikTok y Shorts usa 1080 × 1920. Para el feed, 1080 × 1350 o 1080 × 1080.</div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-ajuste">Ajuste de imagen</label>
+                                    <select class="form-select" id="rn-ajuste">
+                                        <option value="cover" selected>Rellenar</option>
+                                        <option value="contain">Entera</option>
+                                        <option value="marco">Marco redondeado</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-caja-titulo">Título</label>
+                                    <select class="form-select" id="rn-caja-titulo">
+                                        <option value="0" selected>Suelto</option>
+                                        <option value="1">En caja</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-fondo">Fondo</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="rn-fondo" value="#405767" title="Color de fondo">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-fondo2">Fondo 2</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="rn-fondo2" value="#2c3e4b" title="Segundo color del degradado">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-texto">Texto</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="rn-texto" value="#ffffff" title="Color del texto">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-acento">Acento</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="rn-acento" value="#7fb3d5" title="Color de acento">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-caja">Caja del título</label>
+                                    <input type="color" class="form-control form-control-color reel-color" id="rn-caja" value="#0b0f14" title="Color de la caja del título">
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="form-check form-switch rn-switch">
+                                        <input class="form-check-input" type="checkbox" id="rn-degradado" checked>
+                                        <label class="form-check-label" for="rn-degradado">Degradado de fondo</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="form-check form-switch rn-switch">
+                                        <input class="form-check-input" type="checkbox" id="rn-progreso" checked>
+                                        <label class="form-check-label" for="rn-progreso">Barra de progreso</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="form-check form-switch rn-switch">
+                                        <input class="form-check-input" type="checkbox" id="rn-tarjeta-final" checked>
+                                        <label class="form-check-label" for="rn-tarjeta-final">Tarjeta final</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="form-check form-switch rn-switch">
+                                        <input class="form-check-input" type="checkbox" id="rn-zona-segura" checked>
+                                        <label class="form-check-label" for="rn-zona-segura">Zona segura inferior en vertical</label>
+                                    </div>
+                                    <div class="form-text">Deja aire abajo para que los botones de Instagram, TikTok o Shorts no tapen el texto.</div>
+                                </div>
+                            </div>
+
+                            <p class="reel-ayuda mt-3">El lienzo se redibuja entero en cada fotograma desde cero: lo que ves en la vista previa es exactamente lo que se graba, sin capturas de pantalla ni servidores.</p>
+                        </section>
+
+                        <!-- ---------- animación ---------- -->
+                        <section class="tab-pane fade" id="rn-pane-animacion" role="tabpanel" aria-labelledby="rn-tab-animacion" tabindex="0">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="rn-duracion">Cuánto se queda cada noticia <span class="reel-valor" id="rn-duracion-val">3,2 s</span></label>
+                                    <input type="range" class="form-range" id="rn-duracion" min="1.5" max="8" step="0.1" value="3.2">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="rn-entrada">Duración de la entrada <span class="reel-valor" id="rn-entrada-val">0,9 s</span></label>
+                                    <input type="range" class="form-range" id="rn-entrada" min="0.3" max="2" step="0.05" value="0.9">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="rn-salida">Duración de la salida <span class="reel-valor" id="rn-salida-val">0,6 s</span></label>
+                                    <input type="range" class="form-range" id="rn-salida" min="0.2" max="1.5" step="0.05" value="0.6">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="rn-cierre">Cierre final <span class="reel-valor" id="rn-cierre-val">1,2 s</span></label>
+                                    <input type="range" class="form-range" id="rn-cierre" min="0" max="3" step="0.1" value="1.2">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="rn-zoom">Zoom ligero de la imagen <span class="reel-valor" id="rn-zoom-val">6 %</span></label>
+                                    <input type="range" class="form-range" id="rn-zoom" min="0" max="0.16" step="0.005" value="0.06">
+                                </div>
+
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-anim-img">Entrada de la imagen</label>
+                                    <select class="form-select" id="rn-anim-img">
+                                        <option value="zoom" selected>Zoom suave</option>
+                                        <option value="pop">Pop-up</option>
+                                        <option value="deslizar">Deslizar</option>
+                                        <option value="ninguna">Ninguna</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-anim-titulo">Entrada del título</label>
+                                    <select class="form-select" id="rn-anim-titulo">
+                                        <option value="subir" selected>Subir</option>
+                                        <option value="pop">Pop-up</option>
+                                        <option value="palabra">Palabra a palabra</option>
+                                        <option value="ninguna">Ninguna</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-anim-detalle">Entrada del detalle</label>
+                                    <select class="form-select" id="rn-anim-detalle">
+                                        <option value="linea" selected>Línea a línea</option>
+                                        <option value="subir">Subir</option>
+                                        <option value="fundido">Fundido</option>
+                                        <option value="ninguna">Ninguna</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="rn-salida-texto">Salida del texto</label>
+                                    <select class="form-select" id="rn-salida-texto">
+                                        <option value="subir" selected>Subir y desvanecer</option>
+                                        <option value="fundido">Solo desvanecer</option>
+                                        <option value="escala">Escalar</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="rn-sugerencias mt-4">
+                                <h2 class="rn-sugerencias-tit"><i class="fas fa-lightbulb" aria-hidden="true"></i> Sugerencias rápidas</h2>
+                                <ul>
+                                    <li><strong>Noticias:</strong> imagen en «Rellenar», entrada «Pop-up», título «Subir» y detalle «Línea a línea». Un zoom del 5–8 % da vida sin marear.</li>
+                                    <li><strong>Recomendaciones o cine:</strong> imagen en «Entera» o «Marco redondeado», fondo claro y título «En caja» para que el póster respire.</li>
+                                    <li><strong>Ritmo:</strong> 3–4 s por noticia y 3–6 noticias. Para historias, 2,5–3 s y textos muy cortos.</li>
+                                    <li><strong>Vídeo:</strong> si pones imagen y vídeo en la misma noticia, la imagen hace de portada y el vídeo entra suavemente encima.</li>
+                                    <li><strong>Música:</strong> elige una pista del catálogo o sube tu MP3 en «Exportar». Se mezcla al grabar y se repite si el vídeo es más largo.</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <!-- ---------- exportar ---------- -->
+                        <section class="tab-pane fade" id="rn-pane-exportar" role="tabpanel" aria-labelledby="rn-tab-exportar" tabindex="0">
+                            <div class="reel-exportar-info">
+                                <p class="mb-1"><i class="fas fa-circle-info" aria-hidden="true"></i> <span id="rn-info-salida">1080 × 1920 · 30 fps</span></p>
+                                <p class="mb-0 reel-ayuda">El vídeo se graba en tiempo real. Deja esta pestaña visible y sin minimizar hasta que termine; si el navegador no admite MP4, se descarga WebM.</p>
+                            </div>
+
+                            <div class="reel-musica">
+                                <div class="form-label" id="rn-musica-titulo"><i class="fas fa-music" aria-hidden="true"></i> Música de fondo (opcional)</div>
+                                <div class="reel-musica-lista" id="rn-musica-lista" role="radiogroup" aria-labelledby="rn-musica-titulo"></div>
+                                <label class="form-text" for="rn-musica-archivo">…o sube un MP3, WAV o M4A:</label>
+                                <div class="reel-musica-fila">
+                                    <input type="file" class="form-control" id="rn-musica-archivo" accept="audio/*">
+                                    <button type="button" class="btn btn-outline-secondary" id="rn-musica-quitar" hidden title="Quitar la música" aria-label="Quitar la música">
+                                        <i class="fas fa-times" aria-hidden="true"></i>
+                                    </button>
+                                    <span class="reel-musica-nombre" id="rn-musica-nombre">Sin música</span>
+                                </div>
+                                <label class="form-label mt-2" for="rn-musica-vol">Volumen <span class="reel-valor" id="rn-musica-vol-val">70 %</span></label>
+                                <input type="range" class="form-range" id="rn-musica-vol" min="0" max="1" step="0.05" value="0.7">
+                                <p class="form-text mb-0">Se mezcla al grabar (no suena en la vista previa); si la canción es más corta que el vídeo, se repite en bucle.</p>
+                            </div>
+
+                            <div class="reel-grabar-fila">
+                                <button type="button" class="btn btn-primary reel-grabar" id="rn-grabar">
+                                    <i class="fas fa-video" aria-hidden="true"></i> Grabar vídeo
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="rn-cancelar" hidden>
+                                    <i class="fas fa-stop" aria-hidden="true"></i> Detener
+                                </button>
+                                <span class="reel-estado" id="rn-estado" role="status" aria-live="polite"></span>
+                            </div>
+
+                            <div class="reel-progreso" id="rn-progreso-grab" hidden>
+                                <div class="progress" role="progressbar" aria-label="Progreso de la grabación" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                    <div class="progress-bar" id="rn-barra-prog" style="width:0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="reel-resultado" id="rn-resultado" hidden>
+                                <video id="rn-video-resultado" controls playsinline preload="metadata"></video>
+                                <div class="reel-resultado-acciones">
+                                    <a class="btn btn-primary" id="rn-descargar" href="#" download="reel-noticias.mp4">
+                                        <i class="fas fa-download" aria-hidden="true"></i> Descargar vídeo
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary" id="rn-compartir" hidden>
+                                        <i class="fas fa-share-alt" aria-hidden="true"></i> Compartir
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="rn-descartar">
+                                        <i class="fas fa-trash" aria-hidden="true"></i> Descartar
+                                    </button>
+                                </div>
+                                <p class="reel-ayuda" id="rn-peso"></p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer font-small text-light bg-tet-footer">
+        <div class="container tet-footer-grid">
+            <div class="tet-footer-col">
+                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo" loading="lazy" width="88" height="88">
+                <p class="tet-footer-tag">La tecnología tiene su espacio</p>
+                <a class="tet-footer-web" href="https://www.somostet.com" target="_blank" rel="noopener">somostet.com</a>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Crear</h2>
+                <ul class="tet-footer-list">
+                    <li><a href="./tet1.html">Noticias</a></li>
+                    <li><a href="./tet2.html">Textos</a></li>
+                    <li><a href="./dictet.html">Diccionario</a></li>
+                    <li><a href="./art.html">Arte</a></li>
+                    <li><a href="./miniatura.html">Miniaturas</a></li>
+                    <li><a href="./modcre.html">Creaciones</a></li>
+                    <li><a href="./gif.html">GIF animado</a></li>
+                    <li><a href="./video.html">Vídeo</a></li>
+                    <li><a href="./collage.html">Collage</a></li>
+                    <li><a href="./reel.html">Reel de cuadros</a></li>
+                    <li><a href="./reelnoticias.html">Reel de noticias</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Redes</h2>
+                <ul class="tet-footer-list tet-footer-social">
+                    <li><a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook</a></li>
+                    <li><a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i> Instagram</a></li>
+                    <li><a href="https://twitter.com/somostet" target="_blank" rel="noopener"><i class="fab fa-twitter" aria-hidden="true"></i> Twitter / X</a></li>
+                    <li><a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener"><i class="fab fa-youtube" aria-hidden="true"></i> YouTube</a></li>
+                </ul>
+            </div>
+            <div class="tet-footer-col">
+                <h2 class="tet-footer-title">Proyecto</h2>
+                <ul class="tet-footer-list">
+                    <li><a href="https://somostet.github.io/" target="_blank" rel="noopener">tet (sitio)</a></li>
+                    <li><a href="./index.html">tet admin</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+    <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
+
+    <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="./public/js/musica-lista.js?v=r1"></script>
+    <script src="./public/js/reelnoticias.js?v=rn1"></script>
+</body>
+
+</html>

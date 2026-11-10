@@ -1,0 +1,165 @@
+/* Página del reel de noticias (reelnoticias.html) — estilos propios, prefijo .rn-.
+   Reutiliza los tokens --sh-* de shell.css y las piezas comunes de reel.css. */
+
+.rn-caja {
+    max-width: 1040px;
+}
+
+.rn-preview {
+    min-height: 220px;
+}
+
+#rn-lienzo {
+    display: block;
+    max-width: 100%;
+    max-height: 540px;
+    width: auto;
+    height: auto;
+    border-radius: .5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .4);
+    background: #17181b;
+}
+
+.rn-cabecera-campos {
+    margin-bottom: .9rem;
+}
+
+/* ---------- controles del panel ---------- */
+.rn-caja .form-select,
+.rn-caja .form-control:not([type="color"]):not([type="range"]):not([type="file"]) {
+    background-color: var(--sh-input-bg);
+    border-color: var(--sh-border);
+    color: var(--sh-text);
+}
+
+.rn-caja .form-select:focus,
+.rn-caja .form-control:not([type="color"]):not([type="range"]):not([type="file"]):focus {
+    background-color: var(--sh-input-bg);
+    color: var(--sh-text);
+    border-color: var(--sh-accent);
+    box-shadow: 0 0 0 .15rem rgba(77, 171, 247, .18);
+}
+
+.rn-caja .form-select option {
+    background: var(--sh-input-bg);
+    color: var(--sh-text);
+}
+
+.rn-caja .form-range::-webkit-slider-thumb {
+    background: var(--sh-accent);
+}
+
+.rn-caja .form-range::-moz-range-thumb {
+    background: var(--sh-accent);
+}
+
+.rn-switch {
+    padding-left: 2.6rem;
+    min-height: 1.8rem;
+}
+
+.rn-switch .form-check-input {
+    margin-left: -2.6rem;
+}
+
+.rn-switch .form-check-label {
+    color: var(--sh-text);
+    cursor: pointer;
+}
+
+/* ---------- lista de noticias ---------- */
+.rn-lista {
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+}
+
+.rn-ficha .reel-ficha-thumb {
+    width: 96px;
+    height: 96px;
+}
+
+.rn-ficha .reel-ficha-campos {
+    gap: .45rem;
+}
+
+.rn-ficha .reel-ficha-campos textarea {
+    min-height: 3.2rem;
+}
+
+.rn-ficha-ajuste {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+}
+
+.rn-ficha-ajuste label {
+    flex: 0 0 auto;
+    margin: 0;
+    color: var(--sh-text);
+    font-size: .78rem;
+    opacity: .7;
+}
+
+.rn-ficha-ajuste .form-select {
+    flex: 0 1 13rem;
+    min-height: 34px;
+    padding-top: .15rem;
+    padding-bottom: .15rem;
+    font-size: .82rem;
+}
+
+/* ---------- sugerencias ---------- */
+.rn-sugerencias {
+    padding: .8rem .95rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .6rem;
+    background: rgba(127, 127, 127, .08);
+    color: var(--sh-text);
+}
+
+.rn-sugerencias-tit {
+    margin: 0 0 .45rem;
+    font-size: .95rem;
+    color: var(--sh-text);
+}
+
+.rn-sugerencias-tit i {
+    color: var(--sh-marker);
+}
+
+.rn-sugerencias ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: .84rem;
+    line-height: 1.5;
+    opacity: .88;
+}
+
+.rn-sugerencias li + li {
+    margin-top: .25rem;
+}
+
+/* ---------- móvil ---------- */
+@media (max-width: 575.98px) {
+    #rn-lienzo {
+        max-height: 380px;
+    }
+
+    .rn-ficha .reel-ficha-thumb {
+        width: 70px;
+        height: 70px;
+    }
+
+    .rn-ficha .reel-ficha-campos {
+        flex: 1 1 calc(100% - 70px - 2.5rem);
+    }
+
+    .rn-ficha-ajuste {
+        flex-wrap: wrap;
+    }
+
+    .rn-ficha-ajuste .form-select {
+        flex: 1 1 100%;
+    }
+}
