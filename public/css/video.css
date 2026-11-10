@@ -406,6 +406,15 @@
     box-shadow: inset 3px 0 0 #0d6efd;
 }
 
+.vid-pista-final {
+    background: rgba(13, 110, 253, .08);
+    border-top: 1px dashed var(--sh-border);
+}
+
+.vid-pista-final .vid-pista-sel {
+    cursor: default;
+}
+
 .vid-pista-sel {
     flex: 1 1 auto;
     min-width: 0;
