@@ -307,12 +307,12 @@
 
     function noticiasIniciales() {
         return [
-            noticiaVacia('OpenAI presenta su nueva generación de modelos',
-                'La compañía ha presentado una nueva familia de modelos con mejor razonamiento, más contexto y respuestas más rápidas.'),
-            noticiaVacia('Playwright se actualiza con mejoras para equipos',
-                'La herramienta de pruebas de Microsoft estrena depuración más clara, trazas completas y ejecución paralela más sencilla.'),
-            noticiaVacia('FLOW amplía sus herramientas de creación',
-                'La plataforma de creación con inteligencia artificial lleva sus funciones a más dispositivos y nuevos planes de uso.')
+            noticiaVacia('Ajuste en Silicon Valley: la cautela sobre los costes de la IA frena la ambiciosa ronda de OpenAI.',
+                'OpenAI ha completado el primer tramo de su nueva ronda de financiación tras cerrar 11.000 millones de dólares a una valoración de 1,25 billones. La noticia cobra peso porque evidencia un ajuste respecto al objetivo inicial de 30.000 millones, impulsado por las reservas de los inversores ante los astronómicos costes operativos y de infraestructura de la IA.'),
+            noticiaVacia('Debate sobre Playwright y Chromium: Microsoft aclara la seguridad del navegador y la configuración del sandbox.',
+                'El creador de contenido sobre seguridad Iván Pérez advirtió a la comunidad sobre el riesgo de ejecutar agentes de código e IA con Playwright debido a versiones atrasadas de Chromium y el sandbox deshabilitado por defecto. Microsoft respondió aclarando que las compilaciones fijadas existen deliberadamente para evitar que los tests E2E fallen ante cambios del navegador, mientras que herramientas como Playwright MCP usan el Chrome estable del sistema. La polémica afecta directamente a desarrolladores web, especialistas en QA automation e ingenieros que integran agentes de IA para navegar por páginas no confiables.'),
+            noticiaVacia('FLOW',
+                'Una conmovedora película de animación independiente que sigue a un gato solitario obligado a superar su miedo al agua uniendo fuerzas con otros animales en un mundo postapocalíptico.')
         ];
     }
 
@@ -337,7 +337,7 @@
         };
         var vertical = H > W * 0.92;
         if (vertical) {
-            var frac = ratio > 1.6 ? 0.55 : (ratio > 1.15 ? 0.52 : 0.48);
+            var frac = ratio > 1.6 ? 0.50 : (ratio > 1.15 ? 0.48 : 0.44);
             var imgH = area.h * frac;
             var imgV = { x: area.x, y: area.y, w: area.w, h: imgH };
             var txtV = {
@@ -480,7 +480,7 @@
                 p.x = x;
                 x += p.w + espacio;
             });
-            return { palabras: linea };
+            return { palabras: linea, ancho: Math.max(0, x - espacio) };
         });
     }
 
@@ -521,9 +521,9 @@
         var gap = u * 0.018;
         var footerTam = u * 0.019;
         var footerH = footerTam * 1.4;
-        var detTam = u * (vertical ? 0.030 : 0.024);
+        var detTam = u * (vertical ? (ratio > 1.6 ? 0.028 : (ratio > 1.15 ? 0.028 : 0.026)) : 0.024);
         var detLh = detTam * 1.45;
-        var detMax = vertical ? (ratio > 1.6 ? 5 : (ratio > 1.15 ? 4 : 3)) : 6;
+        var detMax = vertical ? (ratio > 1.6 ? 6 : 4) : 6;
 
         ctx.font = '400 ' + detTam + 'px ' + FUENTE;
         var detLineas = c.detalle ? parteTexto(c.detalle, t.w, detMax) : [];
@@ -534,7 +534,7 @@
         var titleMaxH = t.h - labelH - gap - (detAlto ? gap + detAlto : 0) - footerH - u * 0.05;
         titleMaxH = Math.max(u * 0.09, titleMaxH);
 
-        var titMax = u * (vertical ? 0.088 : 0.066);
+        var titMax = u * (vertical ? (ratio > 1.6 ? 0.078 : (ratio > 1.15 ? 0.068 : 0.058)) : 0.066);
         var titMin = u * 0.036;
         var tit = ajustaTitulo(c.titulo || ('Noticia ' + (i + 1)),
             titleMaxW, Math.max(u * 0.06, titleMaxH - 2 * boxPad), '800', titMax, titMin);
@@ -554,7 +554,8 @@
             boxPad: boxPad, titleMaxW: titleMaxW, titleMaxH: titleMaxH,
             tit: tit, titAlto: titAlto,
             labelY: labelY, lineY: lineY, titleY: titleY,
-            titleTextY: titleTextY, detailY: detailY, footerY: footerY
+            titleTextY: titleTextY, detailY: detailY, footerY: footerY,
+            align: vertical ? 'center' : 'left'
         };
     }
 
@@ -699,15 +700,21 @@
         else if (ajustes.salidaTexto === 'escala') exitScale = 1 + ex * 0.09;
 
         /* índice y regla */
+        var centrado = L.align === 'center';
         ctx.save();
         ctx.globalAlpha = exitA * entry;
         ctx.fillStyle = ajustes.acento;
         ctx.font = '700 ' + L.labelTam + 'px ' + FUENTE;
-        ctx.textAlign = 'left';
+        ctx.textAlign = centrado ? 'center' : 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText('NOTICIA ' + pad2(i + 1) + ' / ' + pad2(noticias.length), t.x, L.labelY);
+        ctx.fillText('NOTICIA ' + pad2(i + 1) + ' / ' + pad2(noticias.length),
+            centrado ? t.x + t.w / 2 : t.x, L.labelY);
         ctx.fillStyle = rgba(ajustes.acento, 0.9);
-        ctx.fillRect(t.x, L.lineY, u * 0.07, Math.max(2, u * 0.004));
+        if (centrado) {
+            ctx.fillRect(t.x + t.w / 2 - u * 0.035, L.lineY, u * 0.07, Math.max(2, u * 0.004));
+        } else {
+            ctx.fillRect(t.x, L.lineY, u * 0.07, Math.max(2, u * 0.004));
+        }
         ctx.restore();
 
         /* titular */
@@ -727,15 +734,20 @@
             rectRedondeado(ctx, t.x, L.titleY, t.w, L.titAlto, u * 0.018);
             ctx.fill();
             ctx.fillStyle = ajustes.acento;
-            rectRedondeado(ctx, t.x, L.titleY, u * 0.012, L.titAlto, u * 0.006);
+            if (centrado) {
+                rectRedondeado(ctx, t.x + t.w / 2 - u * 0.035, L.titleY + u * 0.012,
+                    u * 0.07, u * 0.004, u * 0.002);
+            } else {
+                rectRedondeado(ctx, t.x, L.titleY, u * 0.012, L.titAlto, u * 0.006);
+            }
             ctx.fill();
         }
 
         ctx.fillStyle = ajustes.texto;
         ctx.font = '800 ' + L.tit.tam + 'px ' + FUENTE;
-        ctx.textAlign = 'left';
+        ctx.textAlign = centrado ? 'center' : 'left';
         ctx.textBaseline = 'top';
-        var tx = t.x + L.boxPad;
+        var tx = centrado ? t.x + L.boxPad + L.titleMaxW / 2 : t.x + L.boxPad;
         var ty = L.titleTextY;
 
         if (animT === 'palabra') {
@@ -744,10 +756,11 @@
             lineasP.forEach(function (l) { total += l.palabras.length; });
             var wi = 0;
             lineasP.forEach(function (l, li) {
+                var despl = centrado ? (L.titleMaxW - l.ancho) / 2 : 0;
                 l.palabras.forEach(function (p) {
                     var ap = clamp((entryRaw * (total + 3) - wi) / 3, 0, 1);
                     ctx.globalAlpha = exitA * ap;
-                    ctx.fillText(p.t, tx + p.x, ty + li * L.tit.lh);
+                    ctx.fillText(p.t, t.x + L.boxPad + despl + p.x, ty + li * L.tit.lh);
                     wi++;
                 });
             });
@@ -771,17 +784,18 @@
             ctx.translate(-dcx, -dcy);
             ctx.fillStyle = rgba(ajustes.texto, 0.78);
             ctx.font = '400 ' + L.detTam + 'px ' + FUENTE;
-            ctx.textAlign = 'left';
+            ctx.textAlign = centrado ? 'center' : 'left';
             ctx.textBaseline = 'top';
+            var dx = centrado ? t.x + t.w / 2 : t.x;
             if (animD === 'linea') {
                 L.detLineas.forEach(function (linea, li) {
                     var al = clamp((entryRaw * (L.detLineas.length + 2) - li) / 1.5, 0, 1);
                     ctx.globalAlpha = exitA * al;
-                    ctx.fillText(linea, t.x, L.detailY + li * L.detLh + (1 - al) * u * 0.008);
+                    ctx.fillText(linea, dx, L.detailY + li * L.detLh + (1 - al) * u * 0.008);
                 });
             } else {
                 L.detLineas.forEach(function (linea, li) {
-                    ctx.fillText(linea, t.x, L.detailY + li * L.detLh);
+                    ctx.fillText(linea, dx, L.detailY + li * L.detLh);
                 });
             }
             ctx.restore();

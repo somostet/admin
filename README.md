@@ -34,11 +34,12 @@ En producción, GitHub Pages sirve `master/` en `/admin/`.
 | `video.html` | Vídeo MP4/WebM a partir de imágenes (lote E) |
 | `collage.html` | Collage: varias fotos en una sola imagen con plantillas de celdas |
 | `reel.html` | Reel de cuadros: rejilla de portadas que se abren una a una y se exportan a vídeo |
+| `reelnoticias.html` | Reel de noticias: las portadas de tet 1 en vídeo con pop-up, zoom suave, entrada y salida de texto, vídeo por noticia y música |
 | `piper.html` | Voz neuronal con Piper (español) — no está en la portada; se llega desde la pestaña «Voz» de `video.html`; `noindex` |
 
 ## Portada (`index.html`)
 
-Rejilla con los **10 editores**, cada tarjeta con su categoría, su tamaño de
+Rejilla con los **11 editores**, cada tarjeta con su categoría, su tamaño de
 salida y una descripción de una línea, más filtros (Todos · Imágenes · GIF ·
 Vídeo · Collage) y los tres pasos del flujo. En el móvil son dos columnas y la tarjeta
 entera es pulsable. `public/js/portada.js` solo se ocupa de los filtros.
@@ -139,7 +140,21 @@ cuadras, en PNG). El script borra la versión que no mejora.
   pintado se envía a la vez que avanza el reloj real, de modo que el contenido
   no se adelanta si el codificador tarda en arrancar. Admite música de fondo
   mezclada con Web Audio y comparte el parche de duración de MP4 de `video.js`.
-- **Música de fondo incluida** (editor de vídeo y reel): un catálogo de **22
+- **Reel de noticias** (`reelnoticias.html` + `public/js/reelnoticias.js` +
+  `public/css/reelnoticias.css`): las portadas de tet 1 convertidas en un vídeo
+  animado. Cada noticia entra con pop-up o zoom suave, el titular y la
+  entradilla se animan al entrar (subir, pop, palabra a palabra / línea a línea)
+  y al salir (subir y desvanecer, fundido o escala). Se puede poner una imagen
+  por noticia (con ajuste rellenar, entera o marco redondeado), un vídeo por
+  noticia, cabecera de tet 1 (tet news, recomendaciones, estrenos…) con colores
+  automáticos, formatos 1080×1920, 1080×1350, 1080×1080, 1920×1080 y 1200×1200,
+  barra de progreso, zona segura inferior y tarjeta final. El tiempo por noticia
+  se define con el deslizador «Cuánto se queda cada noticia» (1,5–8 s); con una
+  sola noticia el vídeo muestra solo esa. La grabación es local con
+  `canvas.captureStream(0)` + `requestFrame()` y MediaRecorder (MP4/WebM), y la
+  música de fondo se mezcla con Web Audio. Todo se dibuja en un solo canvas, así
+  que la vista previa y el vídeo exportado son idénticos.
+- **Música de fondo incluida** (editor de vídeo, reel de cuadros y reel de noticias): un catálogo de **22
   pistas** compartido por `public/js/musica-lista.js` y embebido en
   `public/js/audio-data.js` para que funcione a doble clic (`file://`). Cada
   fila se puede escuchar con ▶ o elegir con un clic; la música se mezcla con
@@ -147,7 +162,7 @@ cuadras, en PNG). El script borra la versión que no mejora.
   añadir una pista: entrada en `musica-lista.js`, MP3 recortado en
   `public/audio/` y `node tools/embed-audio.js`.
 - **Accesibilidad**: Lighthouse (accesibilidad / buenas prácticas / SEO) da
-  1,00 / 1,00 / 1,00 en las 10 páginas, sin scroll horizontal en rail ni barra
+  1,00 / 1,00 / 1,00 en las 11 páginas, sin scroll horizontal en rail ni barra
   superior, y objetivos táctiles de 24 px como mínimo.
 - PWA: service worker vanilla en `sw.js` (raíz) con caché de estáticos.
 
