@@ -148,9 +148,13 @@ cuadras, en PNG). El script borra la versión que no mejora.
   por noticia (con ajuste rellenar, entera o marco redondeado), un vídeo por
   noticia, cabecera de tet 1 (tet news, recomendaciones, estrenos…) con colores
   automáticos, formatos 1080×1920, 1080×1350, 1080×1080, 1920×1080 y 1200×1200,
-  barra de progreso, zona segura inferior y tarjeta final. El tiempo por noticia
-  se define con el deslizador «Cuánto se queda cada noticia» (1,5–8 s); con una
-  sola noticia el vídeo muestra solo esa. La grabación es local con
+  barra de progreso, zona segura inferior y tarjeta final. El titular y el
+  detalle admiten caja propia, se muestran completos (sin puntos suspensivos) y
+  reducen su tamaño para caber; el deslizador «Espacio del texto» reparte el
+  alto entre imagen y texto. El número de noticia (02 / 03) se puede ocultar.
+  El tiempo por noticia se define con el deslizador «Cuánto se queda cada
+  noticia» (1,5-8 s); con una sola noticia el vídeo muestra solo esa. La
+  grabación es local con
   `canvas.captureStream(0)` + `requestFrame()` y MediaRecorder (MP4/WebM), y la
   música de fondo se mezcla con Web Audio. Todo se dibuja en un solo canvas, así
   que la vista previa y el vídeo exportado son idénticos.

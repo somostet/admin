@@ -69,6 +69,7 @@
         ajuste: 'cover',
         cajaTitulo: false,
         cajaDetalle: false,
+        espacioTexto: 1,
         fondo: BARRAS[0].fondo,
         fondo2: BARRAS[0].fondo2,
         texto: BARRAS[0].texto,
@@ -138,6 +139,8 @@
     var selAjuste = document.getElementById('rn-ajuste');
     var selCajaTitulo = document.getElementById('rn-caja-titulo');
     var selCajaDetalle = document.getElementById('rn-caja-detalle');
+    var inpEspacioTexto = document.getElementById('rn-espacio-texto');
+    var valEspacioTexto = document.getElementById('rn-espacio-texto-val');
     var inpFondo = document.getElementById('rn-fondo');
     var inpFondo2 = document.getElementById('rn-fondo2');
     var inpTexto = document.getElementById('rn-texto');
@@ -340,9 +343,14 @@
             h: Math.max(u * 0.2, contentBottom - contentTop)
         };
         var vertical = H > W * 0.92;
+        var espacio = clamp(parseFloat(ajustes.espacioTexto) || 1, 0.85, 1.2);
         if (vertical) {
-            var frac = ratio > 1.6 ? 0.50 : (ratio > 1.15 ? 0.48 : 0.44);
-            var imgH = area.h * frac;
+            /* «Espacio del texto»: 100 % mantiene el reparto automático de
+               tet 1 (mitad imagen, mitad texto en 9:16); más porcentaje da
+               más alto al bloque de texto y menos a la imagen. */
+            var textShareAuto = ratio > 1.6 ? 0.50 : (ratio > 1.15 ? 0.52 : 0.56);
+            var textShare = clamp(textShareAuto * espacio, 0.28, 0.72);
+            var imgH = area.h * (1 - textShare);
             var imgV = { x: area.x, y: area.y, w: area.w, h: imgH };
             var txtV = {
                 x: area.x,
@@ -355,7 +363,8 @@
                 img: imgV, txt: txtV, safeBottom: safeBottom
             };
         }
-        var imgW = area.w * 0.52;
+        var textShareH = clamp(0.48 * espacio, 0.30, 0.66);
+        var imgW = area.w * (1 - textShareH);
         var imgH2 = { x: area.x, y: area.y, w: imgW, h: area.h };
         var txtH = {
             x: area.x + imgW + u * 0.055,
@@ -531,7 +540,7 @@
         var footerY = t.y + t.h - footerH;
         var contentBottom = footerY - u * 0.018;
         var contentH = Math.max(u * 0.08, contentBottom - titleY);
-        var tieneDetalle = !!c.detalle;
+        var tieneDetalle = !!(c.detalle && c.detalle.trim());
         var titleMaxH = tieneDetalle ? contentH * 0.42 : contentH;
         var titMax = u * (vertical ? (ratio > 1.6 ? 0.078 : (ratio > 1.15 ? 0.068 : 0.058)) : 0.066);
         var titMin = u * 0.01;
@@ -781,7 +790,8 @@
             var dA = (animD === 'subir' || animD === 'fundido' || animD === 'pop') ? entry : 1;
             var dDy = animD === 'subir' ? (1 - entry) * u * 0.05 : 0;
             ctx.save();
-            ctx.globalAlpha = exitA * dA;
+            var alfaDetalle = exitA * dA;
+            ctx.globalAlpha = alfaDetalle;
             var dcx = t.x + t.w / 2;
             var dcy = L.detailY + L.detAlto / 2;
             ctx.translate(dcx, dcy + dDy + exitDy);
@@ -789,7 +799,10 @@
             ctx.scale(dScale * exitScale, dScale * exitScale);
             ctx.translate(-dcx, -dcy);
             if (ajustes.cajaDetalle) {
-                var bx = t.x + L.detalleBoxPad;
+                /* la caja entra con el bloque, aunque las líneas vayan
+                   apareciendo una a una */
+                ctx.globalAlpha = exitA * entry;
+                var bx = t.x;
                 var by = L.detailY - L.detalleBoxPad;
                 var bw = L.detalleBoxW;
                 var bh = L.detalleBoxH;
@@ -799,6 +812,7 @@
                 ctx.fillStyle = ajustes.acento;
                 rectRedondeado(ctx, bx, by, u * 0.012, bh, u * 0.006);
                 ctx.fill();
+                ctx.globalAlpha = alfaDetalle;
             }
             ctx.fillStyle = rgba(ajustes.texto, 0.78);
             ctx.font = '400 ' + L.detTam + 'px ' + FUENTE;
@@ -848,6 +862,8 @@
                 dibujaFondo(W, H);
                 ctx.restore();
             }
+            /* el fondo nuevo tapa el texto anterior antes de que entre el
+               nuevo: evita el doble texto y deja solo un destello de fondo */
             entryRaw = clamp((entryRaw - 0.25) / 0.75, 0, 1);
         }
 
@@ -1364,6 +1380,8 @@
         if (inpSalida) inpSalida.value = ajustes.salida;
         if (inpCierre) inpCierre.value = ajustes.cierre;
         if (inpZoom) inpZoom.value = ajustes.zoom;
+        if (inpEspacioTexto) inpEspacioTexto.value = ajustes.espacioTexto;
+        if (valEspacioTexto) valEspacioTexto.textContent = Math.round(ajustes.espacioTexto * 100) + ' %';
         if (valDuracion) valDuracion.textContent = seg(ajustes.hold);
         if (valEntrada) valEntrada.textContent = seg(ajustes.entrada);
         if (valSalida) valSalida.textContent = seg(ajustes.salida);
@@ -2029,6 +2047,7 @@
     enlazaRango(inpSalida, 'salida', valSalida, seg);
     enlazaRango(inpCierre, 'cierre', valCierre, seg);
     enlazaRango(inpZoom, 'zoom', valZoom, function (v) { return Math.round(v * 100) + ' %'; });
+    enlazaRango(inpEspacioTexto, 'espacioTexto', valEspacioTexto, function (v) { return Math.round(v * 100) + ' %'; });
 
     function enlazaSelect(sel, clave) {
         if (!sel) return;
