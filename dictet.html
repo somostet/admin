@@ -7,7 +7,7 @@
         if (location.protocol === 'http:' || location.protocol === 'https:') {
             var csp = document.createElement('meta');
             csp.setAttribute('http-equiv', 'Content-Security-Policy');
-            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
+            csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self'; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none';";
             document.head.appendChild(csp);
             /* frame-buster: en http/https el admin no se deja embeber en un iframe */
             if (window.top !== window.self) { try { window.top.location = location.href; } catch (e) { } }
@@ -23,7 +23,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="tet admin">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <script>
+    <script>
         // tema del editor (oscuro por defecto) antes del primer pintado
         try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tetTema') || 'dark'); }
         catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
@@ -32,117 +32,312 @@
     <link rel="stylesheet" href="./public/vendor/fontawesome_5_13_0/css/all.min.css">
     <link rel="stylesheet" href="./public/css/style.css?v=r34">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
+    <link rel="stylesheet" href="./public/css/reel.css?v=r4">
+    <link rel="stylesheet" href="./public/css/aprende.css?v=ap1">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
-    <meta name="description" content="Esta página busca darle un espacio a todo tipo de tecnologías, proyectos y curiosidades e informar a la comunidad en general de su existencia. Actualmente contamos con una audiencia recurrente de más de 34.000 personas, que día a día apoyan fielmente el conocimiento brindado por nuestra página. ">
-    <title>tet admin | Diccionario Tecnológico</title>
+    <meta name="description" content="Diccionario animado de tet 3: cada término se presenta con su definición, un contexto de uso real y una imagen opcional. Exporta MP4 o WebM y PNG sin subir nada a ningún servidor.">
+    <title>tet admin · Diccionario animado</title>
 </head>
 
 <body>
-            <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
-            <a class="navbar-brand" href="index.html">
-                <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
-                <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
-            </a>
-            <ul class="navbar-nav tet-nav-menu">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-layer-group" aria-hidden="true"></i><span class="tet-nav-toggle-txt">Editores</span></a>
-                    <ul class="dropdown-menu tet-dd">
-                        <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
-                        <li><a class="dropdown-item" href="./tet2.html">Textos <span class="tet-dd-sub">tet 2</span></a></li>
-                        <li><a class="dropdown-item" href="./dictet.html" aria-current="page">Diccionario <span class="tet-dd-sub">tet 3</span></a></li>
-                        <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
-                        <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
-                        <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
-                        <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
-                        <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
-                        <li><a class="dropdown-item" href="./collage.html">Collage <span class="tet-dd-sub">collage</span></a></li>
-                        <li><a class="dropdown-item" href="./reel.html">Reel de cuadros <span class="tet-dd-sub">reel</span></a></li>
+    <nav class="navbar navbar-dark bg-tet-nav tet-nav" aria-label="Navegación principal">
+        <a class="navbar-brand" href="index.html">
+            <img src="./public/img/Logotet.png" alt="" class="tet-nav-logo" width="32" height="32">
+            <span class="tet-nav-name">tet admin <span class="tet-nav-accent">canvas</span></span>
+        </a>
+        <ul class="navbar-nav tet-nav-menu">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-layer-group" aria-hidden="true"></i><span class="tet-nav-toggle-txt">Editores</span></a>
+                <ul class="dropdown-menu tet-dd">
+                    <li><a class="dropdown-item" href="./tet1.html">Noticias <span class="tet-dd-sub">tet 1</span></a></li>
+                    <li><a class="dropdown-item" href="./tet2.html">Clases animadas <span class="tet-dd-sub">tet 2</span></a></li>
+                    <li><a class="dropdown-item" href="./dictet.html" aria-current="page">Diccionario animado <span class="tet-dd-sub">tet 3</span></a></li>
+                    <li><a class="dropdown-item" href="./art.html">Arte <span class="tet-dd-sub">tet 4</span></a></li>
+                    <li><a class="dropdown-item" href="./miniatura.html">Miniaturas <span class="tet-dd-sub">tet 5</span></a></li>
+                    <li><a class="dropdown-item" href="./modcre.html">Creaciones <span class="tet-dd-sub">tet 6</span></a></li>
+                    <li><a class="dropdown-item" href="./gif.html">GIF animado <span class="tet-dd-sub">gif</span></a></li>
+                    <li><a class="dropdown-item" href="./video.html">Vídeo <span class="tet-dd-sub">video</span></a></li>
+                    <li><a class="dropdown-item" href="./collage.html">Collage <span class="tet-dd-sub">collage</span></a></li>
+                    <li><a class="dropdown-item" href="./reel.html">Reel de cuadros <span class="tet-dd-sub">reel</span></a></li>
+                    <li><a class="dropdown-item" href="./reelnoticias.html">Reel de noticias <span class="tet-dd-sub">reel tet 1</span></a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-social">
+            <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+            <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X de tet" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
+        </div>
+    </nav>
 
-                        <li><a class="dropdown-item" href="./reelnoticias.html">Reel de noticias <span class="tet-dd-sub">reel tet 1</span></a></li>
+    <main class="container-fluid py-3 pb-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="reel-caja ap-caja">
+                    <div class="reel-caja-cab">
+                        <h1 class="reel-titulo"><i class="fas fa-book" aria-hidden="true"></i> Diccionario animado</h1>
+                        <p class="reel-subtitulo">Cada entrada se presenta como una mini clase: entra el término, aparece su definición y después un contexto de uso real, con una imagen opcional. Puedes grabar un solo término o encadenar varios. Todo se dibuja en un solo canvas y se graba en MP4 o WebM en tu dispositivo.</p>
+                    </div>
+
+                    <!-- Vista previa: el lienzo es el mismo que se graba -->
+                    <div class="reel-preview ap-preview" id="ap-preview">
+                        <canvas id="ap-lienzo" width="1080" height="1920" aria-label="Vista previa del diccionario animado"></canvas>
+                    </div>
+
+                    <div class="reel-transporte">
+                        <button type="button" class="btn btn-primary reel-play" id="ap-play" aria-label="Reproducir">
+                            <i class="fas fa-play" aria-hidden="true"></i> <span>Reproducir</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary reel-reiniciar" id="ap-reiniciar" title="Volver al principio" aria-label="Volver al principio">
+                            <i class="fas fa-undo" aria-hidden="true"></i>
+                        </button>
+                        <input type="range" class="form-range reel-tiempo" id="ap-tiempo" min="0" max="1" step="0.01" value="0" aria-label="Posición del vídeo">
+                        <span class="reel-reloj" id="ap-reloj">0,0 / 0,0 s</span>
+                    </div>
+
+                    <ul class="nav nav-tabs reel-pestanas" id="ap-pestanas" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="ap-tab-conceptos" data-bs-toggle="tab" data-bs-target="#ap-pane-conceptos" type="button" role="tab" aria-controls="ap-pane-conceptos" aria-selected="true">
+                                <i class="fas fa-list-ol" aria-hidden="true"></i> Entradas
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ap-tab-estilo" data-bs-toggle="tab" data-bs-target="#ap-pane-estilo" type="button" role="tab" aria-controls="ap-pane-estilo" aria-selected="false">
+                                <i class="fas fa-palette" aria-hidden="true"></i> Estilo
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ap-tab-animacion" data-bs-toggle="tab" data-bs-target="#ap-pane-animacion" type="button" role="tab" aria-controls="ap-pane-animacion" aria-selected="false">
+                                <i class="fas fa-magic" aria-hidden="true"></i> Animación
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ap-tab-exportar" data-bs-toggle="tab" data-bs-target="#ap-pane-exportar" type="button" role="tab" aria-controls="ap-pane-exportar" aria-selected="false">
+                                <i class="fas fa-download" aria-hidden="true"></i> Exportar
+                            </button>
+                        </li>
                     </ul>
-                </li>
-            </ul>
-            <div class="navbar-social">
-                <a href="https://www.facebook.com/TuEspacioT/" target="_blank" rel="noopener" aria-label="Facebook de tet" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
-                <a href="https://www.instagram.com/somostet/" target="_blank" rel="noopener" aria-label="Instagram de tet" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
-                <a href="https://twitter.com/somostet" target="_blank" rel="noopener" aria-label="Twitter / X de tet" title="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>
-                <a href="https://www.youtube.com/channel/UCMcEqIcV15N-KW6NOeepmvg" target="_blank" rel="noopener" aria-label="YouTube de tet" title="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>
-            </div>
-        </nav>
-    <!-- Cuerpo -->
-    <main id="contenido">
-    <div class="container-fluid">
-        <div class="row mt-3">
-            <div class="col-12">
-                <form autocomplete="on" class="pb-5">
-                    <div class="container-fluid pt-3 pb-3">
-                        <div class="row">
-                            <div class="col-12 col-lg-4 shadow pt-3 border editor-panel">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <label for="detalles">Plantilla:</label>
-                                        <select class="form-control" id="plantilla" aria-label="Plantilla">
-                                            <option value="0">Code</option>
-                                            <option value="1">Tech</option>
-                                            <option value="2">Game</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12 text-center p-2">
-                                        <button type="button" class="btn btn-info" data-bs-toggle="tooltip" data-bs-placement="right" title="Cargar plantilla" onclick="reload()" aria-label="Cargar plantilla"><i class="fas fa-sync"></i><span class="ms-1">Cargar plantilla</span></button>
-                                    </div>
+
+                    <div class="tab-content reel-contenido" id="ap-contenido">
+                        <!-- ---------- entradas ---------- -->
+                        <section class="tab-pane fade show active" id="ap-pane-conceptos" role="tabpanel" aria-labelledby="ap-tab-conceptos" tabindex="0">
+                            <div class="ap-lista" id="ap-lista"></div>
+
+                            <div class="reel-lista-pie">
+                                <button type="button" class="btn btn-outline-secondary" id="ap-agregar">
+                                    <i class="fas fa-plus" aria-hidden="true"></i> Añadir entrada
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="ap-vaciar">
+                                    <i class="fas fa-eraser" aria-hidden="true"></i> Vaciar
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="ap-restablecer">
+                                    <i class="fas fa-rotate-left" aria-hidden="true"></i> Restablecer ejemplos
+                                </button>
+                                <span class="reel-ayuda">Con una sola entrada sale un vídeo corto. Con varias, se encadenan en el orden de la lista. La imagen es opcional: si no la pones, el contexto ocupa todo el espacio.</span>
+                            </div>
+                        </section>
+
+                        <!-- ---------- estilo ---------- -->
+                        <section class="tab-pane fade" id="ap-pane-estilo" role="tabpanel" aria-labelledby="ap-tab-estilo" tabindex="0">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-tema">Plantilla</label>
+                                    <select class="form-select" id="ap-tema"></select>
+                                    <div class="form-text">Cada plantilla recupera la barra, el icono y los colores de las portadas de tet 3.</div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="titular">Término:</label>
-                                    <input type="text" class="form-control" placeholder="Inserte el término" id="titular" autofocus>
-                                </div>
-                                <div class="form-group">
-                                    <label for="detalles">Significado:</label>
-                                    <textarea class="form-control text-justify" placeholder="Inserte el significado" id="detalles" rows="4" cols="50"></textarea>
-                                </div>
-                                <label for="detalles">Tamaño de letra:</label>
-                                <div class="col-sm">
-                                    <select class="form-control" id="font_sizeD" aria-label="Tamaño de la letra">
-                                        <option value="64">64</option>
-                                        <option value="56">56</option>
-                                        <option value="48">48</option>
-                                        <option value="40">40</option>
-                                        <option value="36">36</option>
-                                        <option value="32">32</option>
-                                        <option value="30">30</option>
-                                        <option value="28">28</option>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-formato">Formato de salida</label>
+                                    <select class="form-select" id="ap-formato">
+                                        <option value="1080x1920" selected>Reel / Historia — 1080 × 1920</option>
+                                        <option value="1080x1350">Vertical 4:5 — 1080 × 1350</option>
+                                        <option value="1080x1080">Cuadrado — 1080 × 1080</option>
                                     </select>
                                 </div>
 
-                                <br> <br>
-                                <div class="text-center"> <button type="button" class="btn btn-primary text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="Generar" onclick="generate()" aria-label="Generar"><i class="fa fa-cogs"
-                                        aria-hidden="true"></i><span class="ms-1">Generar</span></button>
-                                    <button type="button" class="btn btn-info text-center " data-bs-toggle="tooltip" data-bs-placement="top" title="Centrar elemento" onclick="center()" aria-label="Centrar elemento"><i
-                                        class="fa fa-align-center" aria-hidden="true"></i><span class="ms-1">Centrar</span></button>
-                                    <button type="button" class="btn btn-danger text-center " data-bs-toggle="tooltip" data-bs-placement="top" title="Remover seleccionado" onclick="remover()" aria-label="Remover seleccionado"><i class="fas fa-trash-alt"
-                                        aria-hidden="true"></i><span class="ms-1">Remover</span></button>
-                                    <button type="button" class="btn btn-success text-center " data-bs-toggle="tooltip" data-bs-placement="top" title="Descargar" onclick="download()" aria-label="Descargar"><i class="fa fa-download" aria-hidden="true"></i><span class="ms-1">Descargar</span></button></div>
-                                <br> <br>
-                            </div>
-
-                            <div class="col-12 col-lg-8 editor-lienzo">
-                                <br>
-                                <div id="img" class="" crossOrigin="anonymous">
-                                    <div class="text-center"><canvas id="code" crossOrigin="anonymous"></canvas></div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="ap-fondo">Fondo</label>
+                                    <input type="color" class="form-control form-control-color w-100" id="ap-fondo" value="#0055d4">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="ap-texto">Texto</label>
+                                    <input type="color" class="form-control form-control-color w-100" id="ap-texto" value="#ffffff">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label" for="ap-acento">Acento</label>
+                                    <input type="color" class="form-control form-control-color w-100" id="ap-acento" value="#8ec5ff">
+                                </div>
+                                <div class="col-6 col-md-3 d-flex align-items-end">
+                                    <button type="button" class="btn btn-outline-secondary w-100" id="ap-colores-tema">
+                                        <i class="fas fa-palette" aria-hidden="true"></i> Colores de la plantilla
+                                    </button>
                                 </div>
 
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-escala-texto">Espacio para el texto <span class="reel-valor" id="ap-escala-texto-val">100 %</span></label>
+                                    <input type="range" class="form-range" id="ap-escala-texto" min="0.8" max="1.2" step="0.01" value="1">
+                                    <div class="form-text">Si una definición es muy larga, baja el porcentaje para que quepa entera sin recortes.</div>
+                                </div>
+
+                                <div class="col-6 col-md-3">
+                                    <div class="form-check form-switch ap-switch">
+                                        <input class="form-check-input" type="checkbox" id="ap-mostrar-logo" checked>
+                                        <label class="form-check-label" for="ap-mostrar-logo">Icono de la plantilla</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="form-check form-switch ap-switch">
+                                        <input class="form-check-input" type="checkbox" id="ap-mostrar-marca" checked>
+                                        <label class="form-check-label" for="ap-mostrar-marca">Marca tet</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="form-check form-switch ap-switch">
+                                        <input class="form-check-input" type="checkbox" id="ap-progreso" checked>
+                                        <label class="form-check-label" for="ap-progreso">Barra de progreso</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="form-check form-switch ap-switch">
+                                        <input class="form-check-input" type="checkbox" id="ap-tarjeta-final" checked>
+                                        <label class="form-check-label" for="ap-tarjeta-final">Tarjeta final</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="form-check form-switch ap-switch">
+                                        <input class="form-check-input" type="checkbox" id="ap-zona-segura">
+                                        <label class="form-check-label" for="ap-zona-segura">Zona segura inferior en vertical</label>
+                                    </div>
+                                    <div class="form-text">Solo se ve en la vista previa: deja aire para que los botones de Instagram, TikTok o Shorts no tapen el texto.</div>
+                                </div>
                             </div>
-                        </div>
+
+                            <p class="reel-ayuda mt-3">Los textos reducen su tamaño automáticamente para mostrarse completos, sin puntos suspensivos. El lienzo se redibuja entero en cada fotograma: lo que ves es exactamente lo que se graba.</p>
+                        </section>
+
+                        <!-- ---------- animación ---------- -->
+                        <section class="tab-pane fade" id="ap-pane-animacion" role="tabpanel" aria-labelledby="ap-tab-animacion" tabindex="0">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-t-def">Duración del término y la definición <span class="reel-valor" id="ap-t-def-val">3,2 s</span></label>
+                                    <input type="range" class="form-range" id="ap-t-def" min="1.5" max="8" step="0.1" value="3.2">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-t-ej">Duración del contexto <span class="reel-valor" id="ap-t-ej-val">3,8 s</span></label>
+                                    <input type="range" class="form-range" id="ap-t-ej" min="1.5" max="8" step="0.1" value="3.8">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-trans">Transición entre escenas <span class="reel-valor" id="ap-trans-val">0,4 s</span></label>
+                                    <input type="range" class="form-range" id="ap-trans" min="0.2" max="1" step="0.05" value="0.4">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-cierre">Tarjeta final <span class="reel-valor" id="ap-cierre-val">1,8 s</span></label>
+                                    <input type="range" class="form-range" id="ap-cierre" min="0" max="4" step="0.1" value="1.8">
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-anim-entrada">Entrada del término</label>
+                                    <select class="form-select" id="ap-anim-entrada">
+                                        <option value="pop" selected>Pop-up</option>
+                                        <option value="zoom">Zoom suave</option>
+                                        <option value="fundido">Solo fundido</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="ap-anim-salida">Salida de las escenas</label>
+                                    <select class="form-select" id="ap-anim-salida">
+                                        <option value="fundido" selected>Solo desvanecer</option>
+                                        <option value="subir">Subir y desvanecer</option>
+                                        <option value="zoom">Escalar y desvanecer</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="ap-sugerencias mt-4">
+                                <h2 class="ap-sugerencias-tit"><i class="fas fa-lightbulb" aria-hidden="true"></i> Sugerencias rápidas</h2>
+                                <ul>
+                                    <li><strong>Definición:</strong> una o dos frases claras, sin tecnicismos innecesarios. Si el término es inglés, añade la traducción entre paréntesis.</li>
+                                    <li><strong>Contexto:</strong> una frase donde el término aparezca de verdad. Así se entiende mejor que con una definición sola.</li>
+                                    <li><strong>Imagen:</strong> opcional. Una captura o un icono ayuda, pero no es obligatorio: sin imagen el contexto ocupa todo el espacio.</li>
+                                    <li><strong>Ritmo:</strong> 2,5–3,5 s para la definición y 3–4 s para el contexto. Con tres o cuatro entradas ya tienes un reel completo.</li>
+                                    <li><strong>Música:</strong> elige una pista del catálogo o sube tu MP3 en «Exportar». Se mezcla al grabar y se repite si el vídeo es más largo.</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <!-- ---------- exportar ---------- -->
+                        <section class="tab-pane fade" id="ap-pane-exportar" role="tabpanel" aria-labelledby="ap-tab-exportar" tabindex="0">
+                            <div class="reel-exportar-info">
+                                <p class="mb-1"><i class="fas fa-circle-info" aria-hidden="true"></i> <span id="ap-info-salida">1080 × 1920 · 30 fps</span></p>
+                                <p class="mb-0 reel-ayuda">El vídeo se graba en tiempo real. Deja esta pestaña visible y sin minimizar hasta que termine; si el navegador no admite MP4, se descarga WebM.</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-secondary" id="ap-descargar-png">
+                                    <i class="fas fa-image" aria-hidden="true"></i> Descargar imagen PNG del fotograma actual
+                                </button>
+                                <span class="reel-ayuda d-inline-block ms-2">Descarga lo que se ve ahora mismo en la vista previa, sin la zona segura.</span>
+                            </div>
+
+                            <div class="reel-musica">
+                                <div class="form-label" id="ap-musica-titulo"><i class="fas fa-music" aria-hidden="true"></i> Música de fondo (opcional)</div>
+                                <div class="reel-musica-lista ap-musica-lista" id="ap-musica-lista" role="radiogroup" aria-labelledby="ap-musica-titulo"></div>
+                                <label class="form-text" for="ap-musica-archivo">…o sube un MP3, WAV o M4A:</label>
+                                <div class="reel-musica-fila">
+                                    <input type="file" class="form-control" id="ap-musica-archivo" accept="audio/*">
+                                    <button type="button" class="btn btn-outline-secondary" id="ap-musica-quitar" hidden title="Quitar la música" aria-label="Quitar la música">
+                                        <i class="fas fa-times" aria-hidden="true"></i>
+                                    </button>
+                                    <span class="reel-musica-nombre" id="ap-musica-nombre">Sin música</span>
+                                </div>
+                                <label class="form-label mt-2" for="ap-musica-vol">Volumen <span class="reel-valor" id="ap-musica-vol-val">70 %</span></label>
+                                <input type="range" class="form-range" id="ap-musica-vol" min="0" max="1" step="0.05" value="0.7">
+                                <p class="form-text mb-0">Se mezcla al grabar (no suena en la vista previa); si la canción es más corta que el vídeo, se repite en bucle.</p>
+                            </div>
+
+                            <div class="reel-grabar-fila">
+                                <button type="button" class="btn btn-primary reel-grabar" id="ap-grabar">
+                                    <i class="fas fa-video" aria-hidden="true"></i> Grabar vídeo
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="ap-cancelar" hidden>
+                                    <i class="fas fa-stop" aria-hidden="true"></i> Detener
+                                </button>
+                                <span class="reel-estado" id="ap-estado" role="status" aria-live="polite"></span>
+                            </div>
+
+                            <div class="reel-progreso" id="ap-export-progreso" hidden>
+                                <div class="progress" role="progressbar" aria-label="Progreso de la grabación" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                    <div class="progress-bar" id="ap-barra-prog" style="width:0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="reel-resultado" id="ap-resultado" hidden>
+                                <video id="ap-video-resultado" controls playsinline preload="metadata"></video>
+                                <div class="reel-resultado-acciones">
+                                    <a class="btn btn-primary" id="ap-descargar" href="#" download="diccionario-tet3.mp4">
+                                        <i class="fas fa-download" aria-hidden="true"></i> Descargar vídeo
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary" id="ap-compartir" hidden>
+                                        <i class="fas fa-share-alt" aria-hidden="true"></i> Compartir
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="ap-descartar">
+                                        <i class="fas fa-trash" aria-hidden="true"></i> Descartar
+                                    </button>
+                                </div>
+                                <p class="reel-ayuda" id="ap-peso"></p>
+                            </div>
+                        </section>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
     </main>
-        <footer class="page-footer font-small text-light bg-tet-footer">
+
+    <footer class="page-footer font-small text-light bg-tet-footer">
         <div class="container tet-footer-grid">
             <div class="tet-footer-col">
-                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo">
+                <img src="./public/img/Logotet.png" alt="Logo tet" class="footer-logo" loading="lazy" width="88" height="88">
                 <p class="tet-footer-tag">La tecnología tiene su espacio</p>
                 <a class="tet-footer-web" href="https://www.somostet.com" target="_blank" rel="noopener">somostet.com</a>
             </div>
@@ -150,8 +345,8 @@
                 <h2 class="tet-footer-title">Crear</h2>
                 <ul class="tet-footer-list">
                     <li><a href="./tet1.html">Noticias</a></li>
-                    <li><a href="./tet2.html">Textos</a></li>
-                    <li><a href="./dictet.html">Diccionario</a></li>
+                    <li><a href="./tet2.html">Clases animadas</a></li>
+                    <li><a href="./dictet.html">Diccionario animado</a></li>
                     <li><a href="./art.html">Arte</a></li>
                     <li><a href="./miniatura.html">Miniaturas</a></li>
                     <li><a href="./modcre.html">Creaciones</a></li>
@@ -159,7 +354,6 @@
                     <li><a href="./video.html">Vídeo</a></li>
                     <li><a href="./collage.html">Collage</a></li>
                     <li><a href="./reel.html">Reel de cuadros</a></li>
-
                     <li><a href="./reelnoticias.html">Reel de noticias</a></li>
                 </ul>
             </div>
@@ -182,33 +376,78 @@
         </div>
     </footer>
     <div class="tet-copy bg-tet-bar"><a href="https://somostet.github.io/" class="text-white">&copy; 2026 tet · tu espacio tecnológico</a></div>
-    <!-- Scripts -->
-    <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
 
-
-    <script src="./public/vendor/fabricjs/fabric.min.js"></script>
-    <script src="./public/js/plantillas-data.js?v=pl3"></script>
-    <script src="./public/vendor/reimg/reimg.js"></script>
-    <script src="./public/js/dictet.js"></script>
-    <script src="./public/js/capas.js?v=p16"></script>
-    <script src="./public/js/formatos.js"></script>
-    <script src="./public/js/shell.js?v=sh37"></script>
-    <script src="./public/js/editar.js?v=e11"></script>
-    <script src="./public/js/publicacion.js?v=p4"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
-                bootstrap.Tooltip.getOrCreateInstance(el);
-            });
-        });
+        window.TET_APRENDE_CONFIG = {
+            clave: 'dictet',
+            archivo: 'diccionario-tet3',
+            compartirTitulo: 'Diccionario animado de tet',
+            cierreTitulo: 'Diccionario Tecnológico',
+            formato: '1080x1920',
+            tema: 'code',
+            campoEjemplo: 'contexto',
+            mostrarImagen: true,
+            mostrarResultado: false,
+            etiquetas: {
+                termino: 'Término',
+                definicion: 'Definición',
+                ejemplo: 'Contexto de uso',
+                imagen: 'Imagen (opcional)'
+            },
+            temas: [
+                {
+                    id: 'code', nombre: 'Código', estilo: 'barra',
+                    fondo: '#0055d4', fondo2: '#0043a8', texto: '#ffffff', acento: '#8ec5ff',
+                    barra: '#1a1a1a', pie: 'Diccionario Tecnológico',
+                    logo: './public/img/dictec/icon_code.png', logoAlto: 0.10,
+                    lenguaje: 'text'
+                },
+                {
+                    id: 'tech', nombre: 'Tecnología', estilo: 'barra',
+                    fondo: '#0055d4', fondo2: '#0043a8', texto: '#ffffff', acento: '#8ec5ff',
+                    barra: '#1a1a1a', pie: 'Diccionario Tecnológico',
+                    logo: './public/img/dictec/icon_tech.png', logoAlto: 0.16,
+                    lenguaje: 'text'
+                },
+                {
+                    id: 'game', nombre: 'Videojuegos', estilo: 'barra',
+                    fondo: '#0055d4', fondo2: '#0043a8', texto: '#ffffff', acento: '#8ec5ff',
+                    barra: '#1a1a1a', pie: 'Diccionario Tecnológico',
+                    logo: './public/img/dictec/icon_game.png', logoAlto: 0.14,
+                    lenguaje: 'text'
+                }
+            ],
+            ejemplos: [
+                {
+                    termino: 'API',
+                    definicion: 'Interfaz que permite a dos programas comunicarse y pedirse datos entre sí.',
+                    ejemplo: 'La app del tiempo usa una API para pedir la temperatura de tu ciudad cada hora.',
+                    imagen: ''
+                },
+                {
+                    termino: 'Bug',
+                    definicion: 'Error en el código que provoca un comportamiento raro o inesperado.',
+                    ejemplo: 'Encontré un bug: el botón de guardar no responde en el móvil, pero sí en el ordenador.',
+                    imagen: ''
+                },
+                {
+                    termino: 'Open source',
+                    definicion: 'Software cuyo código fuente es público y cualquiera puede estudiarlo, modificarlo o mejorarlo.',
+                    ejemplo: 'Blender es open source: la comunidad puede revisar su código y crear mejoras.',
+                    imagen: ''
+                },
+                {
+                    termino: 'Algoritmo',
+                    definicion: 'Conjunto ordenado de pasos que resuelve un problema o completa una tarea.',
+                    ejemplo: 'El algoritmo de recomendaciones decide qué vídeos te enseña después de cada uno.',
+                    imagen: ''
+                }
+            ]
+        };
     </script>
-
-    <script>
-        if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('./sw.js');
-            });
-        }
-    </script></body>
+    <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="./public/js/musica-lista.js?v=r1"></script>
+    <script src="./public/js/aprende.js?v=ap2"></script>
+</body>
 
 </html>

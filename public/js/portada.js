@@ -29,7 +29,8 @@
 
             var visibles = 0;
             tarjetas.forEach(function (t) {
-                var ver = filtro === 'todos' || t.dataset.cat === filtro;
+                var ver = filtro === 'todos' ||
+                    (t.dataset.cat || '').split(/\s+/).indexOf(filtro) !== -1;
                 t.hidden = !ver;
                 if (ver) visibles++;
             });

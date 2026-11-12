@@ -25,8 +25,8 @@ En producción, GitHub Pages sirve `master/` en `/admin/`.
 |---|---|
 | `index.html` | Portada con acceso a los editores |
 | `tet1.html` | Tet (noticias) 1200×1200 |
-| `tet2.html` | Tet (miniatura mh) |
-| `dictet.html` | Diccionario / código `#code` |
+| `tet2.html` | Clases animadas: término, definición y ejemplo de código en vídeo o PNG |
+| `dictet.html` | Diccionario animado: definición, contexto de uso e imagen en vídeo o PNG |
 | `art.html` | Arte 1280×720 |
 | `miniatura.html` | Miniatura 1280×720 |
 | `modcre.html` | Mod creaciones |
@@ -158,7 +158,21 @@ cuadras, en PNG). El script borra la versión que no mejora.
   `canvas.captureStream(0)` + `requestFrame()` y MediaRecorder (MP4/WebM), y la
   música de fondo se mezcla con Web Audio. Todo se dibuja en un solo canvas, así
   que la vista previa y el vídeo exportado son idénticos.
-- **Música de fondo incluida** (editor de vídeo, reel de cuadros y reel de noticias): un catálogo de **22
+- **Clases animadas y Diccionario animado** (`tet2.html`, `dictet.html` +
+  `public/js/aprende.js` + `public/css/aprende.css`): el motor compartido que
+  convierte una lista de conceptos en un reel educativo. Cada concepto entra con
+  **término → definición → ejemplo** (en tet 2 el ejemplo es código con resaltado
+  por lenguaje y una mini demo para etiquetas HTML habituales; en el diccionario
+  es un contexto de uso y admite una imagen opcional). Se pueden encadenar uno o
+  varios conceptos, elegir tema (HTML, CSS, JS, GNU/Linux e Historia en tet 2;
+  código, tecnología y videojuegos en el diccionario), formato vertical,
+  cuadrado o 4:5, y ajustar el tamaño del texto. Tres estilos de fondo
+  —cartel plano, tarjeta oscura y barras— reutilizan los colores de las
+  plantillas. Exporta **MP4/WebM** con música y **PNG** del fotograma actual,
+  todo en local. La grabación usa `captureStream(0)` + `requestFrame()` y el
+  mismo parche de duración de MP4 que el resto de reels; el estado y las
+  imágenes se guardan en `localStorage` (`aprende-tet2`, `aprende-dictet`).
+- **Música de fondo incluida** (editor de vídeo, reel de cuadros, reel de noticias, clases animadas y diccionario animado): un catálogo de **22
   pistas** compartido por `public/js/musica-lista.js` y embebido en
   `public/js/audio-data.js` para que funcione a doble clic (`file://`). Cada
   fila se puede escuchar con ▶ o elegir con un clic; la música se mezcla con

@@ -1,0 +1,264 @@
+/* Página de clases animadas (tet2.html) y diccionario animado (dictet.html).
+   Prefijo .ap-. Reutiliza reel.css (pestañas, fichas, música y exportación)
+   y los tokens --sh-* de shell.css. */
+
+.ap-caja {
+    max-width: 1100px;
+}
+
+.ap-preview {
+    min-height: 240px;
+}
+
+#ap-lienzo {
+    display: block;
+    max-width: 100%;
+    max-height: 560px;
+    width: auto;
+    height: auto;
+    border-radius: .5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .45);
+    background: #17181b;
+}
+
+/* ---------- controles del panel ---------- */
+.ap-caja .form-select,
+.ap-caja .form-control:not([type="color"]):not([type="range"]):not([type="file"]) {
+    background-color: var(--sh-input-bg);
+    border-color: var(--sh-border);
+    color: var(--sh-text);
+}
+
+.ap-caja .form-select:focus,
+.ap-caja .form-control:not([type="color"]):not([type="range"]):not([type="file"]):focus {
+    background-color: var(--sh-input-bg);
+    color: var(--sh-text);
+    border-color: var(--sh-accent);
+    box-shadow: 0 0 0 .15rem rgba(77, 171, 247, .18);
+}
+
+.ap-caja .form-select option {
+    background: var(--sh-input-bg);
+    color: var(--sh-text);
+}
+
+.ap-caja .form-range::-webkit-slider-thumb {
+    background: var(--sh-accent);
+}
+
+.ap-caja .form-range::-moz-range-thumb {
+    background: var(--sh-accent);
+}
+
+.ap-switch {
+    padding-left: 2.6rem;
+    min-height: 1.8rem;
+}
+
+.ap-switch .form-check-input {
+    margin-left: -2.6rem;
+}
+
+.ap-switch .form-check-label {
+    color: var(--sh-text);
+    cursor: pointer;
+}
+
+/* ---------- lista de conceptos ---------- */
+.ap-lista {
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+}
+
+.ap-ficha {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    padding: .65rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .7rem;
+    background: rgba(127, 127, 127, .08);
+}
+
+.ap-ficha-cab {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.ap-ficha-num {
+    flex: 0 0 auto;
+    width: 1.9rem;
+    color: var(--sh-text);
+    font-size: .8rem;
+    font-weight: 700;
+    text-align: center;
+    opacity: .55;
+    font-variant-numeric: tabular-nums;
+}
+
+.ap-ficha-titulo {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--sh-text);
+    font-size: .86rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ap-ficha-acciones {
+    flex: 0 0 auto;
+    display: flex;
+    gap: .2rem;
+}
+
+.ap-ficha-acciones button {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: .4rem;
+    background: transparent;
+    color: var(--sh-text);
+    opacity: .65;
+    cursor: pointer;
+}
+
+.ap-ficha-acciones button:hover:not(:disabled),
+.ap-ficha-acciones button:focus-visible {
+    opacity: 1;
+    border-color: var(--sh-border);
+    background: var(--sh-hover);
+}
+
+.ap-ficha-acciones button:disabled {
+    opacity: .2;
+    cursor: not-allowed;
+}
+
+.ap-ficha-acciones button[data-accion="quitar"]:hover {
+    color: #ff8888;
+    border-color: rgba(255, 136, 136, .5);
+}
+
+.ap-ficha .form-label {
+    margin: 0;
+    color: var(--sh-text);
+    font-size: .78rem;
+    opacity: .75;
+}
+
+.ap-ficha textarea {
+    resize: vertical;
+    min-height: 2.8rem;
+}
+
+.ap-ficha textarea.ap-code {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .86rem;
+}
+
+.ap-ficha-media {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .45rem;
+}
+
+.ap-ficha-media .btn {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.ap-mini {
+    width: 54px;
+    height: 54px;
+    border: 1px dashed var(--sh-border);
+    border-radius: .45rem;
+    background: rgba(0, 0, 0, .22);
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.ap-mini img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ap-vacio {
+    padding: 1.2rem;
+    border: 1px dashed var(--sh-border);
+    border-radius: .6rem;
+    color: var(--sh-text);
+    text-align: center;
+    opacity: .7;
+}
+
+/* ---------- avisos y sugerencias ---------- */
+.ap-ayuda {
+    color: var(--sh-text);
+    opacity: .72;
+    font-size: .82rem;
+    line-height: 1.45;
+}
+
+.ap-sugerencias {
+    padding: .8rem .95rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .6rem;
+    background: rgba(127, 127, 127, .08);
+    color: var(--sh-text);
+}
+
+.ap-sugerencias-tit {
+    margin: 0 0 .45rem;
+    font-size: .95rem;
+    color: var(--sh-text);
+}
+
+.ap-sugerencias-tit i {
+    color: var(--sh-marker);
+}
+
+.ap-sugerencias ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: .84rem;
+    line-height: 1.5;
+    opacity: .88;
+}
+
+.ap-sugerencias li + li {
+    margin-top: .25rem;
+}
+
+/* ---------- música compacta ---------- */
+.ap-musica-lista {
+    max-height: 190px;
+    overflow: auto;
+    padding-right: .2rem;
+}
+
+.ap-musica-lista .reel-pista-item {
+    margin-bottom: .35rem;
+}
+
+/* ---------- móvil ---------- */
+@media (max-width: 575.98px) {
+    #ap-lienzo {
+        max-height: 400px;
+    }
+
+    .ap-ficha-acciones button {
+        width: 40px;
+        height: 40px;
+    }
+}
