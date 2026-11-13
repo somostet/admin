@@ -1011,17 +1011,6 @@
         if (!ajustes.mostrarMarca || tema.estilo === 'barra') return;
         var u = Math.min(W, H);
         ctx.save();
-        var logo = tema.marcaLogo ? cacheImgs[tema.marcaLogo] : null;
-        if (logo) {
-            var alto = u * (tema.marcaAlto || 0.04);
-            var ancho = alto * (logo.width / logo.height);
-            var mx = tema.estilo === 'tarjeta' ? W / 2 : W - u * 0.07 - ancho / 2;
-            var my = tema.estilo === 'tarjeta' ? H - u * 0.036 : H - u * 0.075 - alto / 2;
-            ctx.globalAlpha = 0.95;
-            ctx.drawImage(logo, mx - ancho / 2, my - alto / 2, ancho, alto);
-            ctx.restore();
-            return;
-        }
         ctx.fillStyle = tema.marcaColor || rgba(tema.texto, tema.estilo === 'tarjeta' ? 0.55 : 0.9);
         ctx.font = '700 ' + (u * 0.045) + 'px ' + fuenteActual();
         ctx.textAlign = tema.estilo === 'tarjeta' ? 'center' : 'right';
@@ -1103,9 +1092,16 @@
     /* ---------- línea de tiempo ---------- */
     function duracionConcepto() { return ajustes.tDef + ajustes.tEj + 2 * ajustes.trans; }
 
+    /* El vídeo empieza 0,5 s dentro del primer concepto: así el primer
+       fotograma ya muestra el término (sirve de miniatura en las redes) en
+       vez de salir en blanco mientras termina la entrada. */
+    var LEAD = 0.5;
+
     function duracionTotal() {
         var n = conceptos.length;
-        return n * duracionConcepto() + (ajustes.tarjetaFinal ? ajustes.cierre : 0);
+        if (!n) return 0;
+        return Math.max(0, n * duracionConcepto() - LEAD) +
+            (ajustes.tarjetaFinal ? ajustes.cierre : 0);
     }
 
     function estadoEn(t) {
@@ -1114,16 +1110,21 @@
         t = clamp(t, 0, D);
         if (!n) return { vacio: true };
         var bloque = duracionConcepto();
-        var i = Math.floor(t / bloque);
+        var tt = t + LEAD;
+        var i = Math.floor(tt / bloque);
         if (i >= n) {
             if (!ajustes.tarjetaFinal) return { fin: true, sinTarjeta: true };
-            var ep = ajustes.cierre > 0 ? clamp((t - n * bloque) / ajustes.cierre, 0, 1) : 1;
+            var ep = ajustes.cierre > 0 ? clamp((tt - n * bloque) / ajustes.cierre, 0, 1) : 1;
             return { fin: true, endP: easeOut(ep) };
         }
-        var local = t - i * bloque;
-        var fase = local < ajustes.tDef ? 'def' : 'ej';
-        var localFase = fase === 'def' ? local : local - ajustes.tDef;
-        var durFase = fase === 'def' ? ajustes.tDef : ajustes.tEj;
+        var local = tt - i * bloque;
+        // Cada fase dura su tiempo visible más la transición de salida, para
+        // que el fundido acabe justo al cerrar la fase y no quede un hueco
+        // en blanco entre concepto y concepto.
+        var durDef = ajustes.tDef + ajustes.trans;
+        var fase = local < durDef ? 'def' : 'ej';
+        var localFase = fase === 'def' ? local : local - durDef;
+        var durFase = fase === 'def' ? durDef : ajustes.tEj + ajustes.trans;
         var entryRaw = clamp(localFase / 0.5, 0, 1);
         var exit = clamp((localFase - (durFase - ajustes.trans)) / ajustes.trans, 0, 1);
         return {
@@ -1494,7 +1495,6 @@
             aplicaTema();
             sincronizaColores();
             if (tema.logo) cargaImagen(tema.logo);
-            if (tema.marcaLogo) cargaImagen(tema.marcaLogo);
             invalida();
             pintar(tActual, true);
             guarda();
