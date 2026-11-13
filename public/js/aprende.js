@@ -228,8 +228,9 @@
         var bottom = H - u * 0.05 - barH;
         if (tema.estilo === 'tarjeta') {
             var m = u * 0.055;
+            var mB = u * 0.095;
             top = m + u * 0.16;
-            bottom = H - m - u * 0.05;
+            bottom = H - mB - u * 0.03;
         }
         var p = u * (tema.estilo === 'tarjeta' ? 0.06 : 0.05);
         var headerH;
@@ -582,20 +583,58 @@
 
         if (tema.estilo === 'tarjeta') {
             var m = u * 0.055;
-            var x = m, y = m, w = W - 2 * m, h = H - 2 * m;
+            var mB = u * 0.095;
+            var x = m, y = m, w = W - 2 * m, h = H - m - mB;
             var r = u * 0.025;
+
+            // Bisel del monitor: un marco claro alrededor de la pantalla.
+            ctx.fillStyle = 'rgba(255,255,255,.16)';
+            rectRedondeado(ctx, x - u * 0.016, y - u * 0.016, w + u * 0.032, h + u * 0.032, r + u * 0.008);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,.09)';
+            ctx.lineWidth = Math.max(1, u * 0.0015);
+            rectRedondeado(ctx, x - u * 0.016, y - u * 0.016, w + u * 0.032, h + u * 0.032, r + u * 0.008);
+            ctx.stroke();
+
+            // Sombra de la pantalla sobre el bisel.
             ctx.fillStyle = 'rgba(0,0,0,.22)';
             rectRedondeado(ctx, x + u * 0.008, y + u * 0.008, w, h, r);
             ctx.fill();
+
+            // Pantalla.
             ctx.fillStyle = tema.tarjeta || '#222a2f';
             rectRedondeado(ctx, x, y, w, h, r);
             ctx.fill();
+
+            // Reflejo y curvatura del cristal.
             var cg = ctx.createLinearGradient(x, y, x + w, y + h);
-            cg.addColorStop(0, 'rgba(255,255,255,.035)');
-            cg.addColorStop(1, 'rgba(0,0,0,.10)');
+            cg.addColorStop(0, 'rgba(255,255,255,.05)');
+            cg.addColorStop(0.5, 'rgba(255,255,255,.015)');
+            cg.addColorStop(1, 'rgba(0,0,0,.12)');
             ctx.fillStyle = cg;
             rectRedondeado(ctx, x, y, w, h, r);
             ctx.fill();
+
+            // Líneas de barrido de un monitor de tubo.
+            ctx.save();
+            rectRedondeado(ctx, x, y, w, h, r);
+            ctx.clip();
+            ctx.fillStyle = 'rgba(0,0,0,.045)';
+            var paso = Math.max(3, u * 0.006);
+            for (var sy = y; sy < y + h; sy += paso) {
+                ctx.fillRect(x, sy, w, Math.max(1, u * 0.0015));
+            }
+            var gl = ctx.createLinearGradient(x, y, x + w * 0.7, y + h * 0.5);
+            gl.addColorStop(0, 'rgba(255,255,255,.05)');
+            gl.addColorStop(0.35, 'rgba(255,255,255,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(x, y, w, h);
+            ctx.restore();
+
+            ctx.strokeStyle = 'rgba(255,255,255,.07)';
+            ctx.lineWidth = Math.max(1, u * 0.0015);
+            rectRedondeado(ctx, x, y, w, h, r);
+            ctx.stroke();
             return;
         }
 
@@ -629,9 +668,9 @@
             ctx.save();
             ctx.fillStyle = tema.acento;
             ctx.font = '700 ' + (u * 0.034) + 'px ' + fuenteActual();
-            ctx.textAlign = 'left';
+            ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            ctx.fillText(tema.tituloPlantilla || tema.nombre || '', g.p + u * 0.01, g.top - u * 0.055);
+            ctx.fillText(tema.tituloPlantilla || tema.nombre || '', W / 2, g.top - u * 0.055);
             ctx.restore();
             return;
         }
@@ -1011,13 +1050,31 @@
         if (!ajustes.mostrarMarca || tema.estilo === 'barra') return;
         var u = Math.min(W, H);
         ctx.save();
-        ctx.fillStyle = tema.marcaColor || rgba(tema.texto, tema.estilo === 'tarjeta' ? 0.55 : 0.9);
-        ctx.font = '700 ' + (u * 0.045) + 'px ' + fuenteActual();
-        ctx.textAlign = tema.estilo === 'tarjeta' ? 'center' : 'right';
-        ctx.textBaseline = 'bottom';
         if (tema.estilo === 'tarjeta') {
-            ctx.fillText('tet', W / 2, H - u * 0.03);
+            // La marca va en el bisel inferior del monitor, fuera de la pantalla.
+            var m = u * 0.055;
+            var mB = u * 0.095;
+            var by = H - mB / 2;
+            ctx.fillStyle = tema.marcaColor || 'rgba(90,84,70,.9)';
+            ctx.font = '700 ' + (u * 0.036) + 'px ' + fuenteActual();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('tet', W / 2, by);
+
+            // Piloto de encendido del monitor.
+            var lx = W - m - u * 0.022;
+            ctx.beginPath();
+            ctx.arc(lx, by, u * 0.007, 0, Math.PI * 2);
+            ctx.fillStyle = tema.acento;
+            ctx.shadowColor = tema.acento;
+            ctx.shadowBlur = u * 0.018;
+            ctx.fill();
+            ctx.shadowBlur = 0;
         } else {
+            ctx.fillStyle = tema.marcaColor || rgba(tema.texto, 0.9);
+            ctx.font = '700 ' + (u * 0.045) + 'px ' + fuenteActual();
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
             ctx.fillText('tet', W - u * 0.07, H - u * 0.075);
         }
         ctx.restore();
@@ -1038,13 +1095,13 @@
         ctx.restore();
     }
 
-    function dibujaFin(W, H, endP) {
+    function dibujaFin(W, H, endP, alfa) {
         var u = Math.min(W, H);
         var a = easeOut(endP);
         ctx.save();
         // La tarjeta final se ve desde el primer fotograma (solo se desliza
         // un poco): así el vídeo nunca muestra un cierre en blanco.
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = alfa == null ? 1 : alfa;
         ctx.translate(0, (1 - a) * u * 0.03);
         var logo = cacheImgs['./public/img/Logotet.png'];
         var cy = H * 0.40;
@@ -1127,9 +1184,21 @@
         var durDef = ajustes.tDef + ajustes.trans;
         var fase = local < durDef ? 'def' : 'ej';
         var localFase = fase === 'def' ? local : local - durDef;
-        var durFase = fase === 'def' ? durDef : ajustes.tEj + ajustes.trans;
-        var entryRaw = clamp(localFase / 0.5, 0, 1);
-        var exit = clamp((localFase - (durFase - ajustes.trans)) / ajustes.trans, 0, 1);
+        return estadoFase(i, fase, localFase);
+    }
+
+    /* Estado de una fase concreta. La entrada arranca antes del inicio de la
+       fase (durante la salida de la anterior) para que ambas se crucen: así
+       nunca se ve la tarjeta vacía entre la definición y el ejemplo. */
+    function estadoFase(i, fase, localFase) {
+        var durFase = fase === 'def' ? ajustes.tDef + ajustes.trans : ajustes.tEj + ajustes.trans;
+        var trans = Math.max(0.01, ajustes.trans);
+        // La entrada termina justo al empezar la fase y arranca poco antes,
+        // cuando la fase anterior ya está casi desvanecida. Así el cruce es
+        // corto y nunca queda la tarjeta vacía.
+        var entrada = Math.min(0.16, trans);
+        var entryRaw = clamp((localFase + entrada) / entrada, 0, 1);
+        var exit = clamp((localFase - (durFase - trans)) / trans, 0, 1);
         return {
             i: i, fase: fase, local: localFase, dur: durFase,
             entry: easeOut(entryRaw), entryRaw: entryRaw,
@@ -1137,6 +1206,28 @@
             animEntrada: ajustes.animEntrada,
             animSalida: ajustes.animSalida
         };
+    }
+
+    /* Contenido de la fase siguiente mientras la actual se desvanece. */
+    function alfaCierre(est) {
+        if (!ajustes.tarjetaFinal || est.fase !== 'ej') return 0;
+        if (est.i + 1 < conceptos.length || est.exit <= 0) return 0;
+        return easeOut(est.exit);
+    }
+
+    function dibujaSiguiente(est, W, H, t) {
+        if (est.exit <= 0) return;
+        var pre = est.local - (est.dur - ajustes.trans);
+        if (pre < 0) return;
+        var virtual = pre - ajustes.trans;
+        if (est.fase === 'def') {
+            dibujaEj(est.i, estadoFase(est.i, 'ej', virtual), W, H, t);
+        } else if (est.i + 1 < conceptos.length) {
+            dibujaDef(est.i + 1, estadoFase(est.i + 1, 'def', virtual), W, H, t);
+        } else {
+            var af = alfaCierre(est);
+            if (af > 0) dibujaFin(W, H, 1, af);
+        }
     }
 
     /* ---------- pintado ---------- */
@@ -1154,12 +1245,21 @@
             dibujaCabecera(W, H, t);
             dibujaVacio(W, H);
         } else if (est.fin) {
-            if (!est.sinTarjeta) dibujaFin(W, H, est.endP);
+            if (!est.sinTarjeta) dibujaFin(W, H, est.endP, 1);
             else dibujaCabecera(W, H, t);
         } else {
-            dibujaCabecera(W, H, t);
+            var af = alfaCierre(est);
+            if (af > 0) {
+                ctx.save();
+                ctx.globalAlpha = 1 - af;
+                dibujaCabecera(W, H, t);
+                ctx.restore();
+            } else {
+                dibujaCabecera(W, H, t);
+            }
             if (est.fase === 'def') dibujaDef(est.i, est, W, H, t);
             else dibujaEj(est.i, est, W, H, t);
+            dibujaSiguiente(est, W, H, t);
         }
         dibujaMarca(W, H);
         dibujaProgreso(W, H, t);
