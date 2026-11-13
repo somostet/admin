@@ -234,9 +234,9 @@
         var p = u * (tema.estilo === 'tarjeta' ? 0.06 : 0.05);
         var headerH;
         if (tema.estilo === 'poster') {
-            headerH = u * (tema.logoAlto || 0.16) + u * 0.05;
+            headerH = tema.logo ? u * (tema.logoAlto || 0.16) + u * 0.05 : u * 0.10;
         } else if (tema.estilo === 'barra') {
-            headerH = u * (tema.logoAlto || 0.10) + u * 0.04;
+            headerH = tema.logo ? u * (tema.logoAlto || 0.10) + u * 0.04 : u * 0.09;
         } else {
             headerH = u * 0.04;
         }
@@ -1042,7 +1042,10 @@
         var u = Math.min(W, H);
         var a = easeOut(endP);
         ctx.save();
-        ctx.globalAlpha = a;
+        // La tarjeta final se ve desde el primer fotograma (solo se desliza
+        // un poco): así el vídeo nunca muestra un cierre en blanco.
+        ctx.globalAlpha = 1;
+        ctx.translate(0, (1 - a) * u * 0.03);
         var logo = cacheImgs['./public/img/Logotet.png'];
         var cy = H * 0.40;
         if (logo) {
