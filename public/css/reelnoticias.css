@@ -109,6 +109,120 @@
     font-size: .82rem;
 }
 
+/* ---------- tramo del vídeo ---------- */
+.rn-video-tramo-host:empty {
+    display: none;
+}
+
+.rn-video-tramo {
+    margin-top: .1rem;
+    padding: .5rem .6rem .45rem;
+    border: 1px solid var(--sh-border);
+    border-radius: .55rem;
+    background: rgba(0, 0, 0, .18);
+}
+
+.rn-video-tramo-cab {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .4rem .55rem;
+}
+
+.rn-video-tramo-tit {
+    color: var(--sh-text);
+    font-size: .78rem;
+    font-weight: 600;
+    opacity: .85;
+}
+
+.rn-video-tramo-tit i {
+    color: var(--sh-accent);
+}
+
+.rn-video-tramo-info {
+    flex: 1 1 auto;
+    color: var(--sh-accent);
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.rn-video-tramo-cab .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    min-height: 30px;
+    padding: .1rem .5rem;
+    font-size: .76rem;
+}
+
+.rn-video-tramo-filas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .15rem 1rem;
+    margin-top: .3rem;
+}
+
+.rn-video-tramo-fila {
+    flex: 1 1 13rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-width: 0;
+    margin: 0;
+    color: var(--sh-text);
+    font-size: .74rem;
+    opacity: .9;
+}
+
+.rn-video-tramo-fila > span {
+    flex: 0 0 auto;
+    opacity: .75;
+}
+
+.rn-video-tramo-fila .form-range {
+    flex: 1 1 auto;
+    min-width: 4rem;
+}
+
+.rn-video-tramo-val {
+    flex: 0 0 3.1rem;
+    text-align: right;
+    color: var(--sh-text);
+    font-size: .74rem;
+    font-variant-numeric: tabular-nums;
+    opacity: .85;
+}
+
+.rn-video-tramo-pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .25rem .75rem;
+    margin-top: .25rem;
+}
+
+.rn-video-tramo-pie .rn-switch {
+    min-height: 1.4rem;
+    padding-left: 2.3rem;
+}
+
+.rn-video-tramo-pie .rn-switch .form-check-input {
+    margin-left: -2.3rem;
+}
+
+.rn-video-tramo-pie .rn-switch .form-check-label {
+    font-size: .76rem;
+}
+
+.rn-video-tramo-dur {
+    color: var(--sh-muted);
+    font-size: .74rem;
+    font-variant-numeric: tabular-nums;
+}
+
 /* ---------- sugerencias ---------- */
 .rn-sugerencias {
     padding: .8rem .95rem;
@@ -160,6 +274,10 @@
     }
 
     .rn-ficha-ajuste .form-select {
+        flex: 1 1 100%;
+    }
+
+    .rn-video-tramo-fila {
         flex: 1 1 100%;
     }
 }

@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="./public/css/style.css?v=r34">
     <link rel="stylesheet" href="./public/css/shell.css?v=sp45">
     <link rel="stylesheet" href="./public/css/reel.css?v=r4">
-    <link rel="stylesheet" href="./public/css/reelnoticias.css?v=rn1">
+    <link rel="stylesheet" href="./public/css/reelnoticias.css?v=rn3">
     <link rel="shortcut icon" href="./public/img/Logotet.png" type="image/x-icon">
     <meta property="og:image" content="./public/img/Logotet.png" />
     <meta name="description" content="Reel de noticias: convierte las portadas de tet 1 en un vídeo animado con pop-up, zoom suave, entrada y salida de texto, vídeo por noticia y música. Exporta MP4 o WebM sin subir nada a ningún servidor.">
@@ -78,7 +78,7 @@
                 <div class="reel-caja rn-caja">
                     <div class="reel-caja-cab">
                         <h1 class="reel-titulo"><i class="fas fa-newspaper" aria-hidden="true"></i> Reel de noticias</h1>
-                        <p class="reel-subtitulo">Las portadas de tet 1, ahora en movimiento: pop-up y zoom suave en la imagen, entrada y salida del texto, vídeo por noticia y música. Todo se dibuja en un solo canvas y se graba en MP4 o WebM en tu dispositivo, sin subir nada a ningún servidor.</p>
+                        <p class="reel-subtitulo">Las portadas de tet 1, ahora en movimiento: pop-up y zoom suave en la imagen, entrada y salida del texto, vídeo por noticia (con su sonido si lo quieres) y música que se mezcla sola. Todo se dibuja en un solo canvas y se graba en MP4 o WebM en tu dispositivo, sin subir nada a ningún servidor.</p>
                     </div>
 
                     <!-- Vista previa: el lienzo es el mismo que se graba -->
@@ -146,7 +146,7 @@
                                 <button type="button" class="btn btn-outline-secondary" id="rn-vaciar">
                                     <i class="fas fa-eraser" aria-hidden="true"></i> Vaciar guion
                                 </button>
-                                <span class="reel-ayuda">Cada noticia puede llevar una imagen (portada) y, si quieres, un vídeo que se reproduce en su hueco. Arriba y abajo cambian el orden. Si dejas una sola noticia, el vídeo muestra solo esa noticia; el tiempo que se queda la define el deslizador «Cuánto se queda cada noticia» en la pestaña Animación.</span>
+                                <span class="reel-ayuda">Cada noticia puede llevar una imagen (portada) y, si quieres, un vídeo que se reproduce en su hueco. Al añadirlo aparece su tramo: elige con los deslizadores el segundo inicial y el final, o pulsa «Todo el vídeo» para verlo completo. «Se oye el vídeo» incluye su sonido y, si hay música, esta baja sola mientras suena. Si dejas «La noticia dura lo que el tramo», el reel se alarga para que el vídeo se vea entero; si lo desmarcas, manda el deslizador «Cuánto se queda cada noticia» de la pestaña Animación. Arriba y abajo cambian el orden.</span>
                             </div>
                         </section>
 
@@ -317,7 +317,7 @@
                                     <li><strong>Noticias:</strong> imagen en «Rellenar», entrada «Pop-up», título «Subir» y detalle «Línea a línea». Un zoom del 5–8 % da vida sin marear.</li>
                                     <li><strong>Recomendaciones o cine:</strong> imagen en «Entera» o «Marco redondeado», fondo claro y título «En caja» para que el póster respire.</li>
                                     <li><strong>Ritmo:</strong> 3–4 s por noticia y 3–6 noticias. Para historias, 2,5–3 s y textos muy cortos.</li>
-                                    <li><strong>Vídeo:</strong> si pones imagen y vídeo en la misma noticia, la imagen hace de portada y el vídeo entra suavemente encima.</li>
+                                    <li><strong>Vídeo:</strong> si pones imagen y vídeo en la misma noticia, la imagen hace de portada y el vídeo entra suavemente encima. En su ficha, ajusta el tramo con «Inicio» y «Fin», pulsa «Todo el vídeo» si quieres verlo entero y marca «Se oye el vídeo» si quieres su sonido; con «La noticia dura lo que el tramo» el reel se alarga lo justo para el vídeo.</li>
                                     <li><strong>Música:</strong> elige una pista del catálogo o sube tu MP3 en «Exportar». Se mezcla al grabar y se repite si el vídeo es más largo.</li>
                                 </ul>
                             </div>
@@ -344,6 +344,17 @@
                                 <label class="form-label mt-2" for="rn-musica-vol">Volumen <span class="reel-valor" id="rn-musica-vol-val">70 %</span></label>
                                 <input type="range" class="form-range" id="rn-musica-vol" min="0" max="1" step="0.05" value="0.7">
                                 <p class="form-text mb-0">Se mezcla al grabar (no suena en la vista previa); si la canción es más corta que el vídeo, se repite en bucle.</p>
+                            </div>
+
+                            <div class="reel-musica rn-audio-video">
+                                <div class="form-label"><i class="fas fa-volume-high" aria-hidden="true"></i> Audio del vídeo</div>
+                                <label class="form-label" for="rn-video-vol">Volumen <span class="reel-valor" id="rn-video-vol-val">100 %</span></label>
+                                <input type="range" class="form-range" id="rn-video-vol" min="0" max="1" step="0.05" value="1">
+                                <div class="form-check form-switch rn-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="rn-bajar-musica" checked>
+                                    <label class="form-check-label" for="rn-bajar-musica">Bajar la música mientras suena el vídeo</label>
+                                </div>
+                                <p class="form-text mb-0">Activa «Se oye el vídeo» en la ficha de cada noticia. Su sonido se escucha en la vista previa y se mezcla al grabar; con «Bajar la música…» marcado, la música baja al 25 % mientras se oye el vídeo y vuelve después.</p>
                             </div>
 
                             <div class="reel-grabar-fila">
@@ -429,7 +440,7 @@
 
     <script src="./public/vendor/bootstrap5/js/bootstrap.bundle.min.js"></script>
     <script src="./public/js/musica-lista.js?v=r1"></script>
-    <script src="./public/js/reelnoticias.js?v=rn5"></script>
+    <script src="./public/js/reelnoticias.js?v=rn7"></script>
 </body>
 
 </html>
