@@ -319,6 +319,7 @@
             duraVideo: true,
             videoAudio: false,
             videoFuente: null,
+            videoCache: null,
             ajuste: ''
         };
     }
@@ -633,6 +634,22 @@
         ctx.restore();
     }
 
+    /* Guarda el último fotograma del vídeo en un lienzo pequeño. Sirve para
+       seguir pintando algo mientras el navegador recoloca la reproducción
+       (al volver al inicio del tramo, al repetir, etc.) en vez de enseñar
+       el hueco de «sin imagen». */
+    function cacheaVideo(c) {
+        var v = c.video;
+        if (!v || v.readyState < 2 || !v.videoWidth || !v.videoHeight) return;
+        var cv = c.videoCache;
+        if (!cv) cv = c.videoCache = document.createElement('canvas');
+        var s = Math.min(1, 720 / v.videoWidth);
+        var w = Math.max(1, Math.round(v.videoWidth * s));
+        var h = Math.max(1, Math.round(v.videoHeight * s));
+        if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+        try { cv.getContext('2d').drawImage(v, 0, 0, w, h); } catch (e) { }
+    }
+
     function portadaVacia(i, r) {
         var tonos = [214, 278, 196, 28, 338, 122, 250, 42];
         var h = tonos[i % tonos.length];
@@ -699,15 +716,19 @@
         rectRedondeado(ctx, r.x, r.y, r.w, r.h, radio);
         ctx.clip();
 
-        var main = c.img || (c.video && c.video.readyState >= 2 ? c.video : null);
+        var videoListo = !!(c.video && c.video.readyState >= 2);
+        var main = c.img || (videoListo ? c.video : null);
+        /* si el vídeo todavía no tiene fotograma, se usa el último guardado */
+        var medio = main || (!c.img && c.video ? c.videoCache : null);
+        var soloVideo = !c.img && !!c.video;
 
         if (modo === 'contain') {
             ctx.fillStyle = rgba(ajustes.caja, 0.75);
             ctx.fillRect(r.x, r.y, r.w, r.h);
-            if (main) {
+            if (medio) {
                 ctx.save();
                 ctx.globalAlpha *= 0.20;
-                dibujaMedioAjustado(main, r, 'cover', 1, 1);
+                dibujaMedioAjustado(medio, r, 'cover', 1, 1);
                 ctx.restore();
             }
         }
@@ -716,21 +737,23 @@
             ctx.save();
             rectRedondeado(ctx, rMedio.x, rMedio.y, rMedio.w, rMedio.h, radio * 0.8);
             ctx.clip();
-            if (main) dibujaMedioAjustado(main, rMedio, 'cover', zoomCont, 1);
-            else portadaVacia(i, rMedio);
+            if (medio) dibujaMedioAjustado(medio, rMedio, 'cover', zoomCont, 1);
+            else if (!soloVideo) portadaVacia(i, rMedio);
             if (c.img && c.video && c.video.readyState >= 2) {
                 var va = suave((entryP - 0.3) / 0.5);
                 if (va > 0.01) dibujaMedioAjustado(c.video, rMedio, 'cover', zoomCont, va);
             }
             ctx.restore();
         } else {
-            if (main) dibujaMedioAjustado(main, r, modo, zoomCont, 1);
-            else portadaVacia(i, r);
+            if (medio) dibujaMedioAjustado(medio, r, modo, zoomCont, 1);
+            else if (!soloVideo) portadaVacia(i, r);
             if (c.img && c.video && c.video.readyState >= 2) {
                 var va2 = suave((entryP - 0.3) / 0.5);
                 if (va2 > 0.01) dibujaMedioAjustado(c.video, r, modo, zoomCont, va2);
             }
         }
+
+        if (videoListo && !c.img) cacheaVideo(c);
 
         ctx.restore();
 
@@ -1422,6 +1445,7 @@
         c.videoDur = 0;
         c.videoInicio = 0;
         c.videoFin = 0;
+        c.videoCache = null;
         /* un vídeo nuevo empieza ocupando la noticia entera; si se sustituye
            otro, se respeta lo que hubiera elegido el usuario */
         if (!teniaVideo) c.duraVideo = true;
@@ -1472,6 +1496,7 @@
         c.videoDur = 0;
         c.videoInicio = 0;
         c.videoFin = 0;
+        c.videoCache = null;
         c.duraVideo = true;
         c.videoAudio = false;
         actualizaNombreVideo(i);
