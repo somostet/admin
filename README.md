@@ -81,6 +81,57 @@ cuadras, en PNG). El script borra la versión que no mejora.
   - El modelo se guarda en la caché del navegador (OPFS), así que la segunda
     generación con la misma voz es rápida.
 
+## Publicación
+
+La pestaña **Publicación** del dock (`publicacion.js`) recoge título,
+descripción y hasta 5 hashtags. Encima se monta `publicar.js`, que añade:
+
+- **Una fila por red** (Instagram, Facebook, X, LinkedIn, TikTok, Threads,
+  Bluesky, Mastodon, Pinterest y YouTube) con el tamaño exacto que pide cada
+  una —los presets de `formatos.js`— y el contador de caracteres de su pie.
+  Si el texto no cabe, se acorta **la descripción**, no los hashtags.
+  - Botones por fila: copiar el texto, descargar el PNG de ese tamaño y
+    compartir (hoja del sistema con fichero + texto; en escritorio copia
+    imagen y texto al portapapeles y, si no puede, descarga el PNG).
+  - `formatos.js` expone `tetExportarBlob(grupo, preset, opciones, cb)`, que
+    reutiliza el mismo motor que «Descargar» (sobremuestreo, fondo opaco y
+    guías fuera) y puede devolver PNG o JPEG con la calidad pedida.
+- **Publicar sin backend en Bluesky y Mastodon**: son las dos redes grandes
+  que mandan CORS abierto y autentican con credenciales revocables
+  (contraseña de aplicación en Bluesky, token en Mastodon), así que se publica
+  desde el navegador sin servidor ni secretos.
+  - `publicar-bsky.js`: `createSession` → `uploadBlob` → `createRecord` con
+    `app.bsky.embed.images`, facetas de hashtags y enlaces (desplazamientos en
+    **bytes UTF-8**, como pide el protocolo) y refresco automático de la sesión
+    al caducar. La imagen se manda en JPEG y baja de calidad sola si pasa de
+    1 MB, que es el tope de `embed.images`.
+  - `publicar-mastodon.js`: `POST /api/v2/media` (con `Idempotency-Key`) →
+    `POST /api/v1/statuses`, esperando al procesado si la instancia responde
+    202.
+- **Lo que no se puede sin backend**: Meta (Facebook/Instagram), X, LinkedIn,
+  TikTok y YouTube exigen canjear el código OAuth con un `client_secret` y no
+  mandan CORS, así que necesitan un servidor mínimo (Worker + almacenamiento
+  de medios). No se automatiza el navegador para saltarlo: incumple sus
+  condiciones y acaba en bloqueo de la cuenta.
+
+### Seguridad
+
+- Las credenciales se quedan en **este navegador** (`localStorage`: `tetBsky` y
+  `tetMastodon`) y se borran con «Desconectar». En Bluesky se guarda la
+  *contraseña de aplicación*, nunca la de la cuenta; en Mastodon, un token con
+  `write:statuses` y `write:media`. Ambos se pueden revocar en la propia red.
+- No hay `client_secret` en ningún sitio ni servidor que reciba la imagen.
+- La CSP abre `connect-src` **host por host** (sin comodines) y suma la
+  instancia de Mastodon guardada en cada carga.
+- Para una instancia que no esté en la lista: añádela a `INSTANCIAS`
+  (`publicar-mastodon.js`) **y** al `connect-src` de los cinco editores con
+  pestaña Publicación (`art.html`, `collage.html`, `miniatura.html`,
+  `modcre.html`, `tet1.html`).
+
+Los editores de vídeo (reel, clases, diccionario, noticias) siguen saliendo por
+«Compartir» con la hoja del sistema: sus redes no admiten publicar desde el
+navegador.
+
 ## Funciones del editor
 
 - Plantillas, títulos, imágenes, detalles y capas (arrastrar orden, traer/enviar).

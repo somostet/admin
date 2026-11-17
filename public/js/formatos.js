@@ -361,14 +361,21 @@
        lienzo final. */
     var MAX_PX = 16e6;
 
+    /* Motor de exportación compartido por «Descargar» y por las variantes de
+       «Publicación». Con `descargarAuto` el resultado se guarda como fichero;
+       sin él se entrega el dataURL por `done` para subirlo a una red.
+       `tipo`/`calidad` solo se usan al pedir JPEG (Bluesky limita a 1 MB). */
     function descargar() {
-        var d = dims(formatoActual());
+        exportar(dims(formatoActual()), anclaActual(), true, null);
+    }
+
+    function exportar(d, ancla, descargarAuto, done, tipo, calidad) {
         if (!d) return;
 
         canvas.discardActiveObject();
 
         /* recorte cover centrado en coordenadas lógicas del lienzo */
-        var c = recorte(canvas.width, canvas.height, d.w, d.h, anclaActual());
+        var c = recorte(canvas.width, canvas.height, d.w, d.h, ancla);
 
         /* el respaldo lógico son solo 1200px y los presets llegan a 2560:
            antes se estiraba ese raster (texto suave). Ahora se pinta la
@@ -456,7 +463,7 @@
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(hi, 0, 0, hi.width, hi.height, 0, 0, d.w, d.h);
-            url = off.toDataURL('image/png');
+            url = off.toDataURL(tipo || 'image/png', calidad);
         } catch (err) {
             fallo = err;
         } finally {
@@ -479,10 +486,16 @@
 
         if (!url) {
             // canvas "tainted" (p.ej. abierto como file://): aviso claro en vez de fallar a ciegas
-            if (window.avisoExportacion) window.avisoExportacion(fallo);
-            else if (window.mostrarAviso) window.mostrarAviso('No se pudo exportar la imagen', 'danger');
+            if (descargarAuto) {
+                if (window.avisoExportacion) window.avisoExportacion(fallo);
+                else if (window.mostrarAviso) window.mostrarAviso('No se pudo exportar la imagen', 'danger');
+            }
+            if (done) done(null, fallo);
             return;
         }
+
+        /* variante para publicar: el fichero se queda en memoria */
+        if (done) { done(url, null); return; }
 
         var nombre = 'tet_' + d.w + 'x' + d.h + '.png';
         var a = document.createElement('a');
@@ -534,6 +547,55 @@
     // La shell (shell.js) lo usa al redimensionar / vaciar el lienzo
     window.formatosActualizar = actualizarInfo;
     window.formatosDims = function () { return dims(formatoActual()); };
+
+    /* ---------- variantes para «Publicar» (publicar.js) ----------
+       Entrega un Blob del preset pedido sin descargar nada: lo usan el botón
+       «Compartir» de la pestaña Publicación y las cuentas de Bluesky y
+       Mastodon, que necesitan el fichero en memoria para subirlo.
+       opciones = { ancla, tipo: 'image/png' | 'image/jpeg', calidad } */
+    function buscarFormato(grupo, nombre) {
+        var g = null, f = null;
+        FORMATOS.some(function (x) {
+            if (x.grupo === grupo) { g = x; return true; }
+            return false;
+        });
+        if (!g) return null;
+        g.items.some(function (x) {
+            if (x.n === nombre) { f = x; return true; }
+            return false;
+        });
+        return f;
+    }
+
+    function dataUrlABlob(url) {
+        var partes = url.split(',');
+        var mime = (partes[0].match(/:(.*?);/) || [])[1] || 'image/png';
+        var bin = atob(partes[1]);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new Blob([bytes], { type: mime });
+    }
+
+    window.tetExportarBlob = function (grupo, nombre, opciones, done) {
+        opciones = opciones || {};
+        var fmt = buscarFormato(grupo, nombre);
+        if (!fmt) { done(null, new Error('Formato desconocido: ' + grupo + ' | ' + nombre)); return; }
+        var d = dims(fmt);
+        if (!d) { done(null, new Error('Formato sin dimensiones')); return; }
+        exportar(d, opciones.ancla || anclaActual(), false, function (url, fallo) {
+            if (!url) { done(null, fallo || new Error('No se pudo exportar')); return; }
+            try {
+                done(dataUrlABlob(url), null);
+            } catch (e) {
+                done(null, e);
+            }
+        }, opciones.tipo, opciones.calidad);
+    };
+
+    window.tetFormatoDims = function (grupo, nombre) {
+        var fmt = buscarFormato(grupo, nombre);
+        return fmt ? dims(fmt) : null;
+    };
 
     actualizarInfo();
     // La guía necesita las medidas finales del lienzo

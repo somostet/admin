@@ -1284,6 +1284,190 @@ body.tet-barra-movil {
     line-height: 1.2;
 }
 
+/* ---------- publicar en otra red (publicar.js) ---------- */
+.pub-pub {
+    margin-top: 1rem;
+    padding-top: .8rem;
+    border-top: 1px solid var(--sh-border);
+}
+
+.pub-redes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+/* [nombre + meta] [texto] [png] [compartir] */
+.pub-red {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(3, 30px);
+    align-items: center;
+    gap: .25rem;
+    padding: .3rem .35rem;
+    border: 1px solid var(--sh-border);
+    border-radius: 6px;
+    background: var(--sh-input-bg);
+}
+
+.pub-red.es-excedido {
+    border-color: #ff8f8f;
+}
+
+.pub-red-info {
+    display: flex;
+    flex-direction: column;
+    gap: .05rem;
+    min-width: 0;
+}
+
+.pub-red-meta {
+    display: flex;
+    align-items: baseline;
+    gap: .35rem;
+    min-width: 0;
+    font-size: .68rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted);
+}
+
+.pub-red-nombre {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    min-width: 0;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--sh-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pub-red-nombre i {
+    color: var(--sh-accent);
+    width: 1rem;
+    text-align: center;
+    flex: 0 0 auto;
+}
+
+.pub-red-cuenta {
+    font-size: .68rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted);
+}
+
+.pub-red-cuenta.es-excedido {
+    color: #ff8f8f;
+}
+
+.pub-red-dim {
+    font-size: .68rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sh-muted);
+    white-space: nowrap;
+}
+
+.shell-dock .pub-red-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: .78rem;
+}
+
+/* ---------- cuentas conectadas: Bluesky y Mastodon ---------- */
+.pub-cuenta-card {
+    margin-top: .55rem;
+    padding: .55rem .6rem .6rem;
+    border: 1px solid var(--sh-border);
+    border-radius: 8px;
+    background: var(--sh-panel);
+}
+
+.pub-cuenta-cab {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .4rem;
+    font-size: .85rem;
+    color: var(--sh-text);
+}
+
+.pub-cuenta-cab i {
+    color: var(--sh-accent);
+}
+
+.pub-cuenta-quien {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: .74rem;
+    color: var(--sh-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pub-cuenta-donde {
+    margin-top: .15rem;
+    font-size: .7rem;
+    color: var(--sh-muted);
+}
+
+.shell-dock .pub-cuenta-cab .btn {
+    min-height: 30px;
+    padding: 0 .45rem;
+    font-size: .72rem;
+}
+
+.pub-cuenta-form {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    margin-top: .45rem;
+}
+
+.shell-dock .pub-cuenta-form .form-control,
+.shell-dock .pub-cuenta-form .form-select {
+    font-size: .82rem;
+    padding: .32rem .5rem;
+    min-height: 34px;
+    background-color: var(--sh-input-bg);
+    color: var(--sh-text);
+    border-color: var(--sh-border);
+}
+
+.pub-cuenta-ayuda {
+    display: block;
+    margin-top: .35rem;
+    font-size: .7rem;
+    color: var(--sh-accent);
+}
+
+.shell-dock .pub-cuenta-card > .btn {
+    width: 100%;
+    margin-top: .45rem;
+    min-height: 38px;
+}
+
+.pub-cuenta-estado {
+    margin-top: .35rem;
+    font-size: .74rem;
+    color: var(--sh-muted);
+    min-height: 1rem;
+    word-break: break-word;
+}
+
+.pub-cuenta-estado.es-success { color: #63d471; }
+.pub-cuenta-estado.es-warning { color: #ffc107; }
+.pub-cuenta-estado.es-danger { color: #ff8f8f; }
+.pub-cuenta-estado.es-info { color: var(--sh-accent); }
+
 /* ---------- galería: toca una imagen y va al lienzo ---------- */
 /* el modal era un grupo de <img> donde solo cabía copiar y pegar */
 .galeria-celda {
