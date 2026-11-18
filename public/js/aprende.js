@@ -261,18 +261,42 @@
         var palabras = String(texto || '').replace(/\s+/g, ' ').trim().split(' ');
         var lineas = [];
         var actual = '';
+
+        function trozosPorGuion(palabra) {
+            var piezas = [];
+            var resto = palabra;
+            while (resto) {
+                var k = resto.indexOf('-');
+                if (k < 0 || k === resto.length - 1) { piezas.push(resto); break; }
+                piezas.push(resto.slice(0, k + 1));
+                resto = resto.slice(k + 1);
+            }
+            return piezas;
+        }
+
         function mete(palabra) {
             var prueba = actual ? actual + ' ' + palabra : palabra;
             if (ctx.measureText(prueba).width <= maxW) { actual = prueba; return; }
             if (actual) { lineas.push(actual); actual = ''; }
             if (ctx.measureText(palabra).width <= maxW) { actual = palabra; return; }
+
+            // Palabra más ancha que la línea: primero se intenta partir por los
+            // guiones (align-content → align- / content) y solo si aun así no
+            // cabe se corta por caracteres.
+            var piezas = palabra.indexOf('-') > 0 ? trozosPorGuion(palabra) : [palabra];
             var trozo = '';
-            for (var j = 0; j < palabra.length; j++) {
-                if (ctx.measureText(trozo + palabra[j]).width > maxW && trozo) {
-                    lineas.push(trozo);
-                    trozo = palabra[j];
-                } else {
-                    trozo += palabra[j];
+            for (var p = 0; p < piezas.length; p++) {
+                var pieza = piezas[p];
+                if (ctx.measureText(trozo + pieza).width <= maxW) { trozo += pieza; continue; }
+                if (trozo) { lineas.push(trozo); trozo = ''; }
+                if (ctx.measureText(pieza).width <= maxW) { trozo = pieza; continue; }
+                for (var j = 0; j < pieza.length; j++) {
+                    if (ctx.measureText(trozo + pieza[j]).width > maxW && trozo) {
+                        lineas.push(trozo);
+                        trozo = pieza[j];
+                    } else {
+                        trozo += pieza[j];
+                    }
                 }
             }
             actual = trozo;
