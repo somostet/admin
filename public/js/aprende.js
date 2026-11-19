@@ -262,15 +262,25 @@
         var lineas = [];
         var actual = '';
 
-        function trozosPorGuion(palabra) {
+        // Corte válido: después de un guion (align-content → align- / content)
+        // o antes de una mayúscula en camelCase (getElementsBy → ClassName).
+        function esCorte(palabra, i) {
+            var prev = palabra.charAt(i - 1);
+            var act = palabra.charAt(i);
+            var sig = palabra.charAt(i + 1);
+            if (prev === '-') return true;
+            if (act < 'A' || act > 'Z') return false;
+            if (/[a-z0-9]/.test(prev)) return true;
+            return prev >= 'A' && prev <= 'Z' && /[a-z]/.test(sig);
+        }
+
+        function trozosPorCorte(palabra) {
             var piezas = [];
-            var resto = palabra;
-            while (resto) {
-                var k = resto.indexOf('-');
-                if (k < 0 || k === resto.length - 1) { piezas.push(resto); break; }
-                piezas.push(resto.slice(0, k + 1));
-                resto = resto.slice(k + 1);
+            var desde = 0;
+            for (var i = 1; i < palabra.length; i++) {
+                if (esCorte(palabra, i)) { piezas.push(palabra.slice(desde, i)); desde = i; }
             }
+            piezas.push(palabra.slice(desde));
             return piezas;
         }
 
@@ -280,10 +290,10 @@
             if (actual) { lineas.push(actual); actual = ''; }
             if (ctx.measureText(palabra).width <= maxW) { actual = palabra; return; }
 
-            // Palabra más ancha que la línea: primero se intenta partir por los
-            // guiones (align-content → align- / content) y solo si aun así no
-            // cabe se corta por caracteres.
-            var piezas = palabra.indexOf('-') > 0 ? trozosPorGuion(palabra) : [palabra];
+            // Palabra más ancha que la línea: se intenta partir por los cortes
+            // naturales (guion o mayúscula) y solo si aun así no cabe se corta
+            // por caracteres.
+            var piezas = /[-A-Z]/.test(palabra.slice(1)) ? trozosPorCorte(palabra) : [palabra];
             var trozo = '';
             for (var p = 0; p < piezas.length; p++) {
                 var pieza = piezas[p];
