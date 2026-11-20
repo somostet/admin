@@ -261,6 +261,7 @@
         var palabras = String(texto || '').replace(/\s+/g, ' ').trim().split(' ');
         var lineas = [];
         var actual = '';
+        var forzado = false;
 
         // Corte válido: después de un guion (align-content → align- / content)
         // o antes de una mayúscula en camelCase (getElementsBy → ClassName).
@@ -304,6 +305,7 @@
                     if (ctx.measureText(trozo + pieza[j]).width > maxW && trozo) {
                         lineas.push(trozo);
                         trozo = pieza[j];
+                        forzado = true;
                     } else {
                         trozo += pieza[j];
                     }
@@ -315,7 +317,9 @@
             if (palabras[i]) mete(palabras[i]);
         }
         if (actual) lineas.push(actual);
-        return lineas.length ? lineas : [''];
+        if (!lineas.length) return [''];
+        lineas.forzado = forzado;
+        return lineas;
     }
 
     function esCodigo(s) {
@@ -329,7 +333,10 @@
             ctx.font = peso + ' ' + tam + 'px ' + (codigo ? fuenteCodigoActual() : fuenteActual());
             var lineas = parteTexto(texto, maxW);
             var lh = tam * lhF;
-            if (lineas.length * lh <= maxH || tam <= tamMin) {
+            // En texto normal no se acepta partir una palabra por caracteres:
+            // si no cabe, se baja el tamaño hasta que quepa entera.
+            var cabe = lineas.length * lh <= maxH && !(lineas.forzado && !codigo);
+            if (cabe || tam <= tamMin) {
                 return { lineas: lineas, tam: tam, lh: lh, alto: lineas.length * lh, codigo: !!codigo };
             }
             tam = Math.max(tamMin, tam - Math.max(0.5, tam * 0.06));
